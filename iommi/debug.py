@@ -59,10 +59,11 @@ def endpoint__debug_tree(endpoint, **_):
             p = None
 
         type_name = type(node).__name__ if not is_struct else None
-        base_type_name = type_name
+        prefix = ''
         if isinstance(node, Members):
             if node._declared_members:
-                type_name = f'Members[{node._cls.__name__}]'
+                type_name = node._cls.__name__
+                prefix = 'Contains '
             else:
                 return
 
@@ -70,7 +71,6 @@ def endpoint__debug_tree(endpoint, **_):
         if isinstance(node, dict):
             children = list(node.items())
         elif isinstance(node, Traversable):
-
             children = []
             for k, v in items(declared_members(node)):
                 if node._bound_members is not None and isinstance(node._bound_members.get(k, None), MemberBinder):
@@ -80,11 +80,18 @@ def endpoint__debug_tree(endpoint, **_):
         if (isinstance(node, Members) or isinstance(node, dict)) and not children:
             return
 
+        display_name = type_name
+        shortcut_stack = getattr(node, 'iommi_shortcut_stack', None)
+        shortcut = shortcut_stack[0] if shortcut_stack else None
+        if shortcut:
+            display_name = f'{type_name}.{shortcut}'
         yield Struct(
             name=name,
             obj=node,
-            type=type_name,
-            base_type=base_type_name,
+            prefix=prefix,
+            type_name=type_name,
+            display_name=display_name,
+            shortcut=shortcut,
             path=p,
             dunder_path='__'.join(path),
             included=is_bound,
@@ -132,9 +139,18 @@ def endpoint__debug_tree(endpoint, **_):
         )
         path = Column()
         type = Column(
-            cell__url=lambda row, **_: f'https://docs.iommi.rocks/en/latest/{row.base_type}.html'
-            if row.base_type
-            else None
+            attr=None,
+            cell__format=lambda row, **_: (
+                format_html(
+                    '{prefix}<a href="https://docs.iommi.rocks/en/latest/{type_name}.html{anchor}">{display_name}</a>',
+                    prefix=row.prefix,
+                    type_name=row.type_name,
+                    anchor=f'#{row.shortcut.replace("_", "-")}' if row.shortcut else '',
+                    display_name=row.display_name,
+                )
+                if row.type_name
+                else ''
+            ),
         )
         included = Column.boolean()
 

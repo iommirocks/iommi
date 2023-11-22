@@ -369,7 +369,6 @@ class Filter(Part):
     def choice(cls, **kwargs):
         """
         Field that has one value out of a set.
-        :type choices: list
         """
         instance = cls(**kwargs)
         instance = instance.refine(
@@ -385,7 +384,6 @@ class Filter(Part):
     def multi_choice(cls, **kwargs):
         """
         Field that has one value out of a set.
-        :type choices: list
         """
         instance = cls(**kwargs)
         instance = instance.refine(

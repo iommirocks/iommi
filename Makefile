@@ -48,6 +48,7 @@ coverage:
 	tox -e coverage
 
 docs:
+	rm -f docs/test_doc__*
 	tox -e docs
 
 docs-viewer:

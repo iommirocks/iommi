@@ -20,6 +20,28 @@ h2 {
     font-weight: 400;
 }
 
+#shortcuts section section {
+    padding-left: 2rem;
+}
+
+#shortcuts section {
+    margin-bottom: 2rem;
+}
+
+#shortcuts section h4 {
+    font-size: 1.1rem;
+    font-weight: unset;
+}
+
+#shortcuts section ul {
+    margin-top: 0.5rem;
+}
+
+
+#shortcuts section h3 code {
+    margin-left: -0.3rem;
+}
+
 @media (prefers-color-scheme: dark) {
     .highlight {
         background: #202020;

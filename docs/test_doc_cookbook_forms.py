@@ -47,8 +47,7 @@ def test_how_do_i_supply_a_custom_parser_for_a_field():
     """
     form = Form(
         auto__model=Track,
-        fields__index__parse=
-            lambda field, string_value, **_: int(string_value[:-3]),
+        fields__index__parse=lambda field, string_value, **_: int(string_value[:-3]),
     )
 
     # @test
@@ -77,8 +76,7 @@ def test_how_do_i_make_a_field_non_editable(artist):
 
     form = Form(
         auto__model=Album,
-        fields__name__editable=
-            lambda request, **_: request.user.is_staff,
+        fields__name__editable=lambda request, **_: request.user.is_staff,
         fields__artist__editable=False,
     )
 
@@ -93,7 +91,6 @@ def test_how_do_i_make_a_field_non_editable(artist):
     assert user_form.fields.artist.editable is False
     show_output(user_form)
     # @end
-
 
     # language=rst
     """
@@ -111,16 +108,15 @@ def test_how_do_i_make_a_field_non_editable(artist):
     """
     B) Hardcode the value
     =====================
-    
+
     A common use case is to navigate to some object, then create a sub-object.
     In this example we have a url like `/artists/Black Sabbath/`, where the
     artist name is parsed into an `Artist` instance by an iommi path decoder.
-    
+
     Then under that we have `/artists/Black Sabbath/create_album/`, and in this
     form, we don't want to make the user choose Black Sabbath again. We
-    accomplish this with the `hardcoded` shortcut: 
+    accomplish this with the `hardcoded` shortcut:
     """
-
 
     form = Form.create(
         auto__model=Album,
@@ -175,8 +171,10 @@ def test_how_do_i_supply_a_custom_validator():
     form = Form.create(
         auto__model=Album,
         auto__include=['name'],
-        fields__name__is_valid=
-            lambda form, field, parsed_data, **_: (parsed_data == 'only this value is valid', 'invalid!'),
+        fields__name__is_valid=lambda form, field, parsed_data, **_: (
+            parsed_data == 'only this value is valid',
+            'invalid!',
+        ),
     )
 
     # @test
@@ -205,7 +203,6 @@ def test_how_do_i_supply_a_custom_validator():
     assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
     show_output(form)
     # @end
-
 
 
 def test_how_do_i_validate_multiple_fields_together():
@@ -304,12 +301,17 @@ def test_how_do_i_set_if_a_field_is_required():
 
     bootstrap = Style(
         bootstrap_docs,
-        root__assets__required_css=Asset(tag='style', children__text=mark_safe('''
+        root__assets__required_css=Asset(
+            tag='style',
+            children__text=mark_safe(
+                '''
     .required label:after {
         content: " *";
         color: red;
     }
-    '''))
+    '''
+            ),
+        ),
     )
 
     # @end
@@ -327,7 +329,7 @@ def test_how_do_i_set_if_a_field_is_required():
     # language=rst
     """
     ...and this CSS added to your sites custom style sheet:
-    
+
     .. code-block:: css
 
         .required label:after {
@@ -514,6 +516,7 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
     """
     # @test
     from iommi.style_bootstrap_docs import bootstrap_docs as bootstrap
+
     # @end
 
     my_style = Style(bootstrap, Field__shortcuts__date__input__attrs__type='text')
@@ -550,14 +553,13 @@ def test_how_do_I_change_redirect_target(artist):
 
     form = Form.create(
         auto__model=Album,
-        extra__redirect=
-            lambda form, **_: HttpResponseRedirect(
-                form.instance.get_absolute_url() + 'edit/'
-            ),
+        extra__redirect=lambda form, **_: HttpResponseRedirect(form.instance.get_absolute_url() + 'edit/'),
     )
 
     # @test
-    response = form.bind(request=req('POST', name='Heaven & Hell', artist=artist.pk, year=1980, **{'-submit': ''})).render_to_response()
+    response = form.bind(
+        request=req('POST', name='Heaven & Hell', artist=artist.pk, year=1980, **{'-submit': ''})
+    ).render_to_response()
     assert response.status_code == 302, response.content.decode()
 
     album = Album.objects.get()
@@ -577,7 +579,9 @@ def test_how_do_I_change_redirect_target(artist):
     )
 
     # @test
-    response = form.bind(request=req('POST', name='Heaven & Hell!', artist=artist.pk, year=1980, **{'-submit': ''})).render_to_response()
+    response = form.bind(
+        request=req('POST', name='Heaven & Hell!', artist=artist.pk, year=1980, **{'-submit': ''})
+    ).render_to_response()
     assert response.status_code == 302
     assert response['Location'] == '.'
     # @end
@@ -601,19 +605,17 @@ def test_how_do_I_make_a_fields_choices_depend_on_another_field():
 
     # @test
     form = (
-    # @end
-
-    Form(
-        auto__model=Track,
-        fields__artist=Field.choice_queryset(
-            attr=None,
-            choices=Artist.objects.all(),
-            after=0,
-        ),
-        fields__album__choices=album_choices,
-    )
-
-    # @test
+        # @end
+        Form(
+            auto__model=Track,
+            fields__artist=Field.choice_queryset(
+                attr=None,
+                choices=Artist.objects.all(),
+                after=0,
+            ),
+            fields__album__choices=album_choices,
+        )
+        # @test
     )
     form.bind(request=req('get')).render_to_response()
     # @end
@@ -678,7 +680,17 @@ def test_non_rendered(artist):
 
     # @test
     assert Album.objects.all().count() == 0
-    f2 = f.bind(request=req('post', name='Heaven & Hell', artist=black_sabbath.pk+1, year='1999', **{'-submit': '',}))
+    f2 = f.bind(
+        request=req(
+            'post',
+            name='Heaven & Hell',
+            artist=black_sabbath.pk + 1,
+            year='1999',
+            **{
+                '-submit': '',
+            },
+        )
+    )
     assert f2.get_errors() == {}
     f2.render_to_response()
 
@@ -687,7 +699,6 @@ def test_non_rendered(artist):
     album = Album.objects.all().get()
     show_output(Form(auto__instance=album))
     # @end
-
 
     # language=rst
     """
@@ -720,7 +731,17 @@ def test_non_rendered(artist):
 
     # @test
     Album.objects.all().delete()
-    f2 = f.bind(request=req('post', name='Heaven & Hell', artist=black_sabbath.pk+1, year='1999', **{'-submit': '',}))
+    f2 = f.bind(
+        request=req(
+            'post',
+            name='Heaven & Hell',
+            artist=black_sabbath.pk + 1,
+            year='1999',
+            **{
+                '-submit': '',
+            },
+        )
+    )
     assert f2.get_errors() == {}
     f2.render_to_response()
 
@@ -729,6 +750,7 @@ def test_non_rendered(artist):
     album = Album.objects.all().get()
     show_output(Form(auto__instance=album))
     # @end
+
 
 def test_grouped_fields():
     # language=rst
@@ -748,7 +770,6 @@ def test_grouped_fields():
     # @test
     show_output(form)
     # @end
-
 
 
 def test_form_with_m2m_key_reverse(small_discography):
@@ -814,7 +835,7 @@ def test_fields_template(album):
     .. _Form.fields_template:
 
     How do I use templates for fields?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Sometimes field groups just aren't enough and you may want to use a template to make your forms pretty:
     """
@@ -822,7 +843,8 @@ def test_fields_template(album):
     class CommentForm(Form):
         class Meta:
             # language=html
-            fields_template = Template('''
+            fields_template = Template(
+                '''
                 {{ fields.album.input }}
                 <div class="row">
                     <div class="col">
@@ -833,7 +855,8 @@ def test_fields_template(album):
                     </div>
                 </div>
                 {{ fields.comment }}
-            ''')
+            '''
+            )
 
         name = Field()
         email = Field()

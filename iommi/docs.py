@@ -340,7 +340,7 @@ request = req('get')
         section(1, 'Shortcuts')
 
         for name, shortcut in sorted(shortcuts.items()):
-            section(2, f'`{name}`')
+            section(2, f'`{c.__name__}.{name}`')
 
             if shortcut.__doc__:
                 foo = docstring_param_dict(shortcut)
@@ -355,6 +355,18 @@ request = req('get')
                         w(1, f'* `{v}`')
 
                 w(0, '')
+
+            try:
+                instance = shortcut()
+            except Exception:
+                pass  # todo For now...
+            else:
+                parents = instance.iommi_shortcut_stack[1:]
+                if parents:
+                    parent = parents[0]
+
+                    w(0, f'Parent: {c.__name__}.{parent}_')
+                    w(0, '')
 
             defaults = shortcut if isinstance(shortcut, dict) else getattr(shortcut, '__iommi_with_defaults_kwargs', {})
             if defaults:
