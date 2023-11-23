@@ -75,6 +75,18 @@ except ImportError:  # pragma: no cover
 
         return engine.from_string(template_code)
 
+
+def log_used_template(request, item):
+    if item is None:
+        return
+
+    if request is not None:
+        if isinstance(item, (str, DjangoLoadedTemplate)):
+            if not hasattr(request, 'iommi_used_templates'):
+                request.iommi_used_templates = []
+            request.iommi_used_templates.append(item)
+
+
 def render_template(request, template, context):
     """
     @type request: django.http.HttpRequest
@@ -82,6 +94,8 @@ def render_template(request, template, context):
     @type context: dict
     """
     from iommi._web_compat import template_types
+
+    log_used_template(request, template)
 
     if template is None:
         return ''

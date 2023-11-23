@@ -140,7 +140,7 @@ def test_dispatch_return_part():
     assert b'<div class="baz">bar</div>' in r.content
 
 
-def test_invalid_enpoint_path(settings):
+def test_invalid_endpoint_path(settings):
     p = Page().bind(request=req('get', **{'/foo': ''}))
     assert p.render_to_response().content == b'{"error": "Invalid endpoint path"}'
 
@@ -155,9 +155,11 @@ Given path /foo not found.
     Short alternatives:
         ''
         debug_tree
+        debug_templates_used
     Long alternatives:
         ''
         endpoints/debug_tree
+        endpoints/debug_templates_used
 """.strip()
     )
 

@@ -57,6 +57,7 @@ def test_debug_tree(settings):
 , , MyPage, True
 endpoints, None, Endpoint, True
 endpoints__debug_tree, debug_tree, Endpoint, True
+endpoints__debug_templates_used, debug_templates_used, Endpoint, True
 parts, None, Fragment, True
 parts__bar, bar, Fragment, True
 parts__bar__children, None, Fragment, True
@@ -84,6 +85,7 @@ def test_debug_tree_crash_on_non_editable(settings):
 , , Form, True
 endpoints, None, Endpoint, True
 endpoints__debug_tree, debug_tree, Endpoint, True
+endpoints__debug_templates_used, debug_templates_used, Endpoint, True
 fields, None, Field, True
 fields__foo, foo, Field, True
 fields__foo__endpoints, None, Endpoint, True
