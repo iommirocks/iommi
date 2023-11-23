@@ -6,6 +6,9 @@ from os.path import (
     join,
 )
 
+from django.http import HttpResponse
+from django.template.loader import get_template
+
 from iommi.struct import Struct
 
 from iommi._web_compat import (
@@ -163,6 +166,39 @@ def endpoint__debug_tree(endpoint, **_):
     return TreeTable(rows=rows(root)).bind(request=request)
 
 
+def endpoint__debug_templates_used(endpoint, request, **_):
+    root = endpoint.iommi_root()
+    from iommi.part import render_root
+    render_root(part=root)
+
+    def url_for_template(t):
+        if isinstance(t, str):
+            t = get_template(t).origin.name
+        else:
+            t = t.origin.name
+
+        return local_debug_url_builder(t, 1)
+
+    links = [
+        format_html('<li><a href="{}">{}</a></li>', url_for_template(t), t)
+        for t in request.iommi_used_templates
+    ]
+    links = format_html('{}' * len(links), *links)
+    return HttpResponse(format_html('''
+        <html>
+            <head>
+                <style>
+                </style>
+            </head>
+            <body>
+                <ul>       
+                    {}
+                </ul>
+            </body>
+        </html>
+        ''', links))
+
+
 def local_debug_url_builder(filename, lineno):
     if not isabs(filename):
         filename = join(settings.BASE_DIR, filename)
@@ -240,6 +276,7 @@ def filename_and_line_num_from_part(part):
 
 def iommi_debug_panel(part):
     source_url = source_url_from_part(part)
+    # language=js
     script = r"""
         window.iommi_start_pick = function() {
             window.iommi_pick_stack = [];

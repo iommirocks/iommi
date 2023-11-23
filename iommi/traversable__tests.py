@@ -131,6 +131,7 @@ def test_traverse_on_iommi():
         'csv': 'parts/a_table/endpoints/csv',
         'container': 'parts/a_table/container',
         'debug_tree': 'endpoints/debug_tree',
+        'debug_templates_used': 'endpoints/debug_templates_used',
         'errors': 'parts/a_table/query/endpoints/errors',
         'fisk': 'parts/some_form/fields/fisk',
         'fisk/config': 'parts/some_other_form/fields/fisk/endpoints/config',

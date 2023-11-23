@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 from iommi import Fragment
 from iommi.asset import Asset
 from iommi.debug import (
+    endpoint__debug_templates_used,
     endpoint__debug_tree,
     iommi_debug_on,
 )
@@ -62,6 +63,10 @@ base = Style(
         endpoints__debug_tree=dict(
             include=lambda endpoint, **_: iommi_debug_on(),
             func=endpoint__debug_tree,
+        ),
+        endpoints__debug_templates_used=dict(
+            include=lambda endpoint, **_: iommi_debug_on(),
+            func=endpoint__debug_templates_used,
         ),
         assets=dict(
             jquery=Asset.js(

@@ -9,6 +9,9 @@ from urllib.parse import (
     urlparse,
 )
 
+from django.utils.html import format_html
+
+from iommi.debug import local_debug_url_builder
 from iommi.struct import Struct
 
 from iommi import Fragment
@@ -310,6 +313,7 @@ class Menu(MenuBase):
 def get_debug_menu(**kwargs):
     class DebugMenu(Menu):
         code = MenuItem(tag='li')
+        templates = MenuItem(url='?/debug_templates_used', tag='li', include=lambda request, **_: getattr(request, 'iommi_used_templates', None))
         tree = MenuItem(url='?/debug_tree', tag='li')
         pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
         edit = MenuItem(
