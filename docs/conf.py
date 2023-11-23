@@ -43,7 +43,6 @@ check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest do
 def build_finished(app, exception):
     print('Running build_finished')
     check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python insert_docs_links.py", shell=True)
-    check_call(f'cp "{(Path(__file__).parent.parent).absolute()}/iommi/static/js/iommi.js" "{(Path(__file__).parent).absolute()}/_build/html/_static/"', shell=True)
 
 
 def setup(app):
