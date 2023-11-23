@@ -7,7 +7,7 @@ from iommi.style_bootstrap import bootstrap
 bootstrap_docs = Style(
     bootstrap,
     root__assets__doc_style=Asset.css(attrs__href='https://docs.iommi.rocks/en/latest/_static/iframe_custom.css'),
-    root__assets__iommi_js=Asset.js(attrs=dict(src='/_static/iommi.js')),
+    root__assets__iommi_js=Asset.js(attrs=dict(src='/en/latest/_static/iommi.js')),
     internal=True,
     Container=dict(
         attrs__class={

@@ -50,7 +50,6 @@ coverage:
 docs:
 	rm -f docs/test_doc__*
 	tox -e docs
-	cp iommi/static/js/iommi.js docs/_build/html/_static/
 
 docs-viewer:
 	echo "http://127.0.0.1:10331"
