@@ -775,17 +775,27 @@ def test_build_query_expression_for_model_with_search_fields():
             filter=Filter(query_name='bar', search_fields=['foo']).refine_done(),
             value=foo,
         )
-        == f'bar="{foo.foo}"'  # Vanilla case with only one serach field
-    )
-    assert (
-        build_query_expression(
-            filter=Filter(query_name='bar', search_fields=['foo', 'pk']).refine_done(),
-            value=foo,
-        )
-        == f'bar="{foo.pk}"'  # If more than one, assume the last one is the one that is unique
+        == f'bar.pk={foo.pk}'
     )
 
     from_model._search_fields_by_model = old_search_fields_by_model
+
+
+@pytest.mark.django_db
+def test_choice_queryset_value_to_q_multiple_hits_takes_first():
+    a = Foo.objects.create(foo=42)
+    assert a.pk != a.foo
+    b = Foo.objects.create(foo=a.pk)
+
+    assert choice_queryset_value_to_q(
+        filter=Struct(
+            attr='foo',
+            search_fields=['foo', 'pk'],
+            choices=Foo.objects.all(),
+        ),
+        op='=',
+        value_string_or_f=str(a.pk)
+    ) == Q(foo__pk=b.pk)
 
 
 def test_escape_quote():

@@ -172,11 +172,7 @@ def value_to_str_for_query(filter, v):
 
 def build_query_expression(*, filter, value):
     if isinstance(value, Model):
-        try:
-            # We ignore the return value on purpose here. We are after the raise.
-            get_search_fields(model=type(value))
-        except NoRegisteredSearchFieldException:
-            return f'{filter.query_name}.pk={value.pk}'
+        return f'{filter.query_name}.pk={value.pk}'
 
     return f'{filter.query_name}{filter.query_operator_for_field}{value_to_str_for_query(filter, value)}'
 
@@ -203,6 +199,7 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f, **_):
         for search_field in filter.search_fields:
             try:
                 instance = filter.choices.get(**{search_field: str(value_string_or_f)})
+                break
             except ObjectDoesNotExist:
                 pass
     except MultipleObjectsReturned:
