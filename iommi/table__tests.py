@@ -1919,7 +1919,7 @@ def test_default_formatters(NoSortTable):
                     <tr> <td> </td> </tr>
                     <tr> <td> datetime: Jan. 2, 2020, 3:04 a.m. </td> </tr>
                     <tr> <td> date: Jan. 2, 2020 </td> </tr>
-                     <tr> <td> time: 3:04 a.m. </td> </tr>
+                    <tr> <td> time: 3:04 a.m. </td> </tr>
                 </tbody>
             </table>
         """,

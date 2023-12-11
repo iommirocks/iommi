@@ -11,7 +11,7 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.template.loader import get_template  # noqa: F401
 from django.template.exceptions import TemplateDoesNotExist  # noqa: F401
-from django.utils.html import format_html
+from django.utils.html import format_html as django_format_html
 from django.utils.text import slugify
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -28,6 +28,13 @@ JinjaTemplate = None
 from django.conf import settings
 
 template_types = tuple()
+
+
+def format_html(s, *args, **kwargs):
+    if not args and not kwargs:
+        return mark_safe(s)
+    return django_format_html(s, *args, **kwargs)
+
 
 try:
     if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):

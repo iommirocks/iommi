@@ -89,7 +89,7 @@ setup(
     url='https://github.com/iommirocks/iommi',
     packages=['iommi'],
     include_package_data=True,
-    install_requires=['Django >= 3.1'] + read_reqs('requirements.txt'),
+    install_requires=['Django >= 3.2'] + read_reqs('requirements.txt'),
     license="BSD",
     zip_safe=False,
     keywords='iommi',
