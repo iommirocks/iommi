@@ -1409,11 +1409,16 @@ class Field(Part, Tag):
 
 
 def is_django_promise_with_string_proxy(redirect_to):
+    if not isinstance(redirect_to, Promise):
+        return False
+    # django 5.0+ uses _kw and _args
+    kwargs = getattr(redirect_to, '_proxy____kw', getattr(redirect_to, '_kw', None))
+    args = getattr(redirect_to, '_proxy____args', getattr(redirect_to, '_args', None))
     return (
         isinstance(redirect_to, Promise)
-        and redirect_to._proxy____kw == {}
-        and len(redirect_to._proxy____args) == 1
-        and isinstance(redirect_to._proxy____args[0], str)
+        and kwargs == {}
+        and len(args) == 1
+        and isinstance(args[0], str)
     )
 
 

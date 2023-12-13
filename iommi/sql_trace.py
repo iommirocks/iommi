@@ -17,8 +17,8 @@ from time import monotonic
 from django.db import connections
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.http import HttpResponse
-from django.utils.html import format_html
 
+from iommi._web_compat import format_html
 from iommi.attrs import render_style
 from iommi.thread_locals import (
     get_current_request,
