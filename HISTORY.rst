@@ -1,6 +1,24 @@
 Changelog
 ---------
 
+6.4.0 (2023-12-13)
+~~~~~~~~~~~~~~~~~~
+
+* Django 5.0 support
+
+* New debug tools: Templates used. You can use this to see what templates were used, and jump to them.
+
+* Form based choice_queryset should go pk in the query always (fixes #443)
+
+* Translation update (fixes #457)
+
+* Updated Swedish translation
+
+* Debug: Don't shorten paths, as this makes links un-clickable in pycharm console
+
+* Optimizations
+
+
 6.3.0 (2023-10-24)
 ~~~~~~~~~~~~~~~~~~
 
