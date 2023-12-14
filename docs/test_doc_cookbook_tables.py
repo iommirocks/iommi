@@ -892,7 +892,6 @@ def test_table_with_m2m_key_reverse(small_discography):
     # @end
 
 
-
 def test_insert_arbitrary_html(big_discography):
     # language=rst
     """
@@ -913,6 +912,44 @@ def test_insert_arbitrary_html(big_discography):
         container__children__foo='Foo',
         container__children__bar=html.div('Bar', after=0),
         outer__children__bar=html.div('Baz', after=0),
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    # @end
+
+
+def test_custom_actions(small_discography):
+    # language=rst
+    """
+    How do I add custom actions/links to a table?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    For the entire table:
+
+    """
+
+    t = Table(
+        auto__model=Album,
+        actions__link=Action(attrs__href='/'),
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    # @end
+
+    # language=rst
+    """
+    Or as a column:
+    """
+
+    t = Table(
+        auto__model=Album,
+        columns__link=Column.link(attr=None, cell__url='/', cell__value='Link'),
     )
 
     # @test
