@@ -2215,7 +2215,7 @@ class Table(Part, Tag):
 
         order = request.GET.get(path_join(self.iommi_path, 'order'), self.default_sort_order)
         if order is not None:
-            descending = order[0] == '-'
+            descending = order.startswith('-')
             order_field = order[1:] if descending else order
             sort_column = self.columns.get(order_field, None)
             if sort_column is None:
