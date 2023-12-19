@@ -61,6 +61,7 @@ class IommiBase {
     }
 
     updateURL(params) {
+        this.warnDeprecated('iommi.updateURL is deprecated');
         window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
     }
 
@@ -252,12 +253,36 @@ class IommiBase {
 
     async queryPopulate(form) {
         const formData = new FormData(form);
-        // TODO in the future
-        //  new URLSearchParams(formData) will throw an error for file-inputs in filter forms,
-        //  so delete them from formData
-        const params = new URLSearchParams(formData);
 
-        this.updateURL(params);
+        // we need to preserve filters from other table filters and sorting
+        let params;
+        try {
+            params = new URL(window.location.href).searchParams;
+        } catch {
+            params = new URLSearchParams(window.location.href);
+        }
+
+        // first remove from URL params all that belongs to this filter
+        const deleteParams = new Set();
+        for(const [key, value] of params) {
+            if(typeof form.elements[key] !== "undefined") {
+                deleteParams.add(key);
+            }
+        }
+        for(let key of deleteParams) {
+            params.delete(key);
+        }
+
+        // append to URL params only applied filters
+        for(const [key, value] of formData) {
+            if(value && !(value instanceof File)) {
+                // new URLSearchParams(formData) would throw an error for files
+                params.append(key, value);
+            }
+        }
+
+        window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
+
         await this.validateForm(params, form);
 
         const tableIommiID = form.getAttribute('data-iommi-id-of-table');
@@ -529,8 +554,8 @@ document.addEventListener('readystatechange', () => {
 // deprecated functions - for backward compatibility only
 
 function iommi_update_URL(params) {
-    window.iommi.warnDeprecated('iommi_update_URL is deprecated, use iommi.updateURL instead');
-    return window.iommi.updateURL(params);
+    window.iommi.warnDeprecated('iommi_update_URL is deprecated');
+    window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
 }
 
 function iommi_debounce(func, wait) {
