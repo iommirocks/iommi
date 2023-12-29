@@ -87,7 +87,7 @@ def test_legacy_fbv_step2(small_discography, artist):
 
     # language=rst
     """
-    Now in the template we can add `{{ tracks }}` to render the table, and we can delete all the old manually written table html.
+    Now in the template we can add `{{ albums }}` to render the table, and we can delete all the old manually written table html.
     """
 
 
