@@ -2,6 +2,7 @@
 
 import cProfile
 import os
+import pstats
 import subprocess
 import sys
 from io import StringIO
@@ -10,8 +11,12 @@ from tempfile import NamedTemporaryFile
 
 from django.http import StreamingHttpResponse
 
-from iommi._web_compat import HttpResponse
-from ._web_compat import settings
+from iommi._web_compat import (
+    HttpResponse,
+    settings,
+)
+from iommi.debug import src_debug_url_builder
+
 
 MEDIA_PREFIXES = ['/static/']
 
@@ -33,6 +38,99 @@ def should_profile(request):
     is_staff = hasattr(request, 'user') and request.user.is_staff
 
     return ('_iommi_prof' in request.GET or '_iommi_prof' in request.POST) and ((not disabled and is_staff) or settings.DEBUG)
+
+
+def strip_extra_path(s, token):
+    if token not in s:
+        return s
+    pre, _, post = s.rpartition(' ')
+    post = post[post.rindex(token) + len(token) :]
+    return f'{pre} {post}'
+
+
+class HTMLStats(pstats.Stats):
+    def print_title(self):
+        print('''
+            <thead>
+                <tr>
+                    <th class="numeric"><a href="?_iommi_prof=ncalls">ncalls</a></th>
+                    <th class="numeric"><a href="?_iommi_prof=tottime">tottime</a></th>
+                    <th class="numeric">percall</th>
+                    <th class="numeric"><a href="?_iommi_prof=cumtime">cumtime</a></th>
+                    <th class="numeric">percall</th>
+                    <th>function</th>
+                    <th>filename</th>
+                    <th>lineno</th>
+                </tr>
+            </thead>
+        ''', file=self.stream)
+
+    def print_stats(self, *amount):
+        for filename in self.files:
+            print(filename, file=self.stream)
+        if self.files:
+            print(file=self.stream)
+        indent = ' ' * 8
+        for func in self.top_level:
+            print(indent, func[2], file=self.stream)
+
+        print(indent, self.total_calls, "function calls", end=' ', file=self.stream)
+        if self.total_calls != self.prim_calls:
+            print("(%d primitive calls)" % self.prim_calls, end=' ', file=self.stream)
+        print("in %.3f seconds" % self.total_tt, file=self.stream)
+        print(file=self.stream)
+
+        # this call prints...
+        width, list = self.get_print_list(amount)
+
+        print('<table>', file=self.stream)
+        if list:
+            self.print_title()
+            limit = 280
+            for func in list[:limit]:
+                self.print_line(func)
+            print(file=self.stream)
+            print(file=self.stream)
+
+        print('</table>', file=self.stream)
+        return self
+
+    def print_line(self, func):
+        path, line_number, function_name = func
+
+        base_dir = str(settings.BASE_DIR)
+        should_bold = base_dir in path and '/site-packages/' not in path
+        nice_path = path.replace(base_dir, '')
+        nice_path = strip_extra_path(nice_path, '/site-packages')
+        nice_path = strip_extra_path(nice_path, '/Python.framework/Versions')
+
+        if should_bold:
+            print(f'<tr class="own">', file=self.stream)
+        else:
+            print(f'<tr>', file=self.stream)
+
+        def f8(x):
+            return "%8.3f" % x
+
+        cc, nc, tt, ct, callers = self.stats[func]
+        c = str(nc)
+        if nc != cc:
+            c = c + '/' + str(cc)
+        print(f'<td class="numeric">{c}</td>', file=self.stream)
+        print(f'<td class="numeric">{f8(tt)}</td>', file=self.stream)
+        if nc == 0:
+            print('<td></td>', file=self.stream)
+        else:
+            print(f'<td>{f8(tt/nc)}</td>', file=self.stream)
+        print(f'<td class="numeric">{f8(ct)}</td>', file=self.stream)
+        if cc == 0:
+            print('<td></td>', file=self.stream)
+        else:
+            print(f'<td class="numeric">{f8(ct/cc)}</td>', file=self.stream)
+        print(f'<td><a href="{src_debug_url_builder(path, line_number)}">{function_name}</a></td>', file=self.stream)
+        print(f'<td>{nice_path}</td>', file=self.stream)
+        print(f'<td class="numeric">{line_number}</td>', file=self.stream)
+        print(f'</tr>', file=self.stream)
 
 
 class Middleware:
@@ -70,7 +168,7 @@ class Middleware:
             import pstats
 
             s = StringIO()
-            ps = pstats.Stats(*request._iommi_prof, stream=s)
+            ps = HTMLStats(*request._iommi_prof, stream=s)
 
             prof_command = request.GET.get('_iommi_prof')
 
@@ -130,36 +228,37 @@ class Middleware:
                 ps = ps.sort_stats(prof_command or 'cumulative')
                 ps.print_stats()
 
-                stats_str = s.getvalue()
-
-                limit = 280
-                result = []
-
-                def strip_extra_path(s, token):
-                    if token not in s:
-                        return s
-                    pre, _, post = s.rpartition(' ')
-                    post = post[post.rindex(token) + len(token) :]
-                    return f'{pre} {post}'
-
-                base_dir = str(settings.BASE_DIR)
-                for line in stats_str.split("\n")[:limit]:
-                    should_bold = base_dir in line and '/site-packages/' not in line
-                    line = line.replace(base_dir, '')
-                    line = strip_extra_path(line, '/site-packages')
-                    line = strip_extra_path(line, '/Python.framework/Versions')
-                    if should_bold:
-                        line = f'<b>{line}</b>'
-
-                    line = line.replace(' ', '&nbsp;')
-                    result.append(line)
+                result = s.getvalue()
 
                 # language=html
                 start_html = '''
                     <style>
                         html {
                             font-family: monospace;
+                            white-space: pre-line;
+                        }
+                        
+                        div, table {
+                            white-space: normal;
+                        }
+                        
+                        td, th {
                             white-space: nowrap;
+                            padding-right: 0.5rem;
+                            color: #666;
+                        }
+                        
+                        th {
+                            text-align: left;
+                        }
+                        
+                        .numeric {
+                            text-align: right;
+                        }
+                        
+                        .own td {
+                            font-weight: bold;
+                            color: black;
                         }
 
                         @media (prefers-color-scheme: dark) {
@@ -167,8 +266,19 @@ class Middleware:
                                 background-color: black;
                                 color: #bbb;
                             }
-                            b {
+                            td, th {
+                                color: #888; 
+                            }
+
+                            .own td {
                                 color: white;
+                            }
+                            
+                            a {
+                                color: #1d5aff;
+                            }
+                            a:visited {
+                                color: #681dff;
                             }
                         }
                     </style>
@@ -177,13 +287,11 @@ class Middleware:
                         <a href="?_iommi_prof=graph">graph</a>
                         <a href="?_iommi_prof=snake">snakeviz</a>
                     </div>
-
-                    <div>
+                    
+                    <p></p>
                 '''
-                lines_html = "<br />\n".join(result)
-                end_html = '</div>'
 
-                response.content = start_html + lines_html + end_html
+                response.content = start_html.strip() + result
 
                 response['Content-Type'] = 'text/html'
 
