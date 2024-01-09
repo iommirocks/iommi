@@ -27,3 +27,4 @@ Credits
 * Yury Bulka <setthemfree@privacyrequired.com>
 * Mickey McClellan <77741738+MickeyM79@users.noreply.github.com>
 * Oana Fatu <oana.fatu@trioptima.com>
+* Viktor <dpedesigns@hotmail.com>

@@ -10,6 +10,8 @@ Changelog
 
 * If you had `?order=` in your URL without value, you got `IndexError`(string index out of range) (fixes #495)
 
+* Documentation fixes by first time contributor Viktor <dpedesigns@hotmail.com>
+
 
 6.4.0 (2023-12-13)
 ~~~~~~~~~~~~~~~~~~
