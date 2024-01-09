@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+6.5.0 (2023-01-09)
+~~~~~~~~~~~~~~~~~~
+
+* Improved HTML output of profiler. Clickable links for functions, and sorting.
+
+* Preserving filters from other table filters and sorting (fixes #496)
+
+* If you had `?order=` in your URL without value, you got `IndexError`(string index out of range) (fixes #495)
+
+
 6.4.0 (2023-12-13)
 ~~~~~~~~~~~~~~~~~~
 
