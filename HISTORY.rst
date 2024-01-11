@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-6.5.0 (2023-01-09)
+6.5.0 (2024-01-09)
 ~~~~~~~~~~~~~~~~~~
 
 * Improved HTML output of profiler. Clickable links for functions, and sorting.
