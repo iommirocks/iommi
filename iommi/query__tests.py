@@ -288,6 +288,34 @@ def test_boolean_unary_op_error_messages():
     assert str(e.value) == 'Unknown unary filter "bar", available filters: foo'
 
 
+def test_custom_value_to_q():
+    def fail(**_):
+        raise AssertionError('should not be called')
+
+    class MyQuery(Query):
+        foo = Filter.choice(
+            choices=['banana'],
+            pk_lookup_to_q=fail,
+            value_to_q=lambda op, value_string_or_f, **_: Q(foo__startswith=value_string_or_f),
+        )
+
+    assert repr(MyQuery().bind(request=None).parse_query_string('foo=banana')) == repr(Q(foo__startswith='banana'))
+
+
+def test_custom_pk_lookup_to_q():
+    def fail(**_):
+        raise AssertionError('should not be called')
+
+    class MyQuery(Query):
+        foo = Filter.choice_queryset(
+            choices=Foo.objects.all(),
+            pk_lookup_to_q=lambda pk, **_: Q(pk=pk) & Q(pk__gt=17),
+            value_to_q=fail,
+        )
+
+    assert repr(MyQuery().bind(request=None).parse_query_string('foo.pk=42')) == repr(Q(pk=42) & Q(pk__gt=17))
+
+
 def query_str(query):
     return repr(query).replace('FakeDate', 'datetime.date')
 
@@ -296,10 +324,14 @@ def query_str(query):
     'shortcut, input, expected_parse',
     [
         (Filter.date, '2014-03-07', date(2014, 3, 7)),
-        (Filter.datetime, '2014-03-07 11:13', timezone.make_naive(
-            timezone.make_aware(datetime(2014, 3, 7, 11, 13)),
-            timezone=datetime_timezone.utc,
-        )),
+        (
+            Filter.datetime,
+            '2014-03-07 11:13',
+            timezone.make_naive(
+                timezone.make_aware(datetime(2014, 3, 7, 11, 13)),
+                timezone=datetime_timezone.utc,
+            ),
+        ),
         (Filter.time, '11', time(11)),
         (Filter.time, '11:13', time(11, 13)),
         (Filter.time, '11:13:17', time(11, 13, 17)),
@@ -334,6 +366,7 @@ def test_filter_parsing_simple_number(shortcut, input, expected_parse):
     assert not query.form.get_errors(), query.form.get_errors()
     assert query.form.fields.bazaar.iommi_path == 'bazaar'
     assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__exact': expected_parse}))
+
 
 @pytest.mark.parametrize(
     'shortcut, input, expected_parse',
@@ -794,7 +827,7 @@ def test_choice_queryset_value_to_q_multiple_hits_takes_first():
             choices=Foo.objects.all(),
         ),
         op='=',
-        value_string_or_f=str(a.pk)
+        value_string_or_f=str(a.pk),
     ) == Q(foo__pk=b.pk)
 
 
