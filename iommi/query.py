@@ -246,6 +246,7 @@ class Filter(Part):
     unary = Refinable()
     is_valid_filter = Refinable()
     query_name = EvaluatedRefinable()
+    pk_lookup_to_q = Refinable()
 
     @with_defaults(
         query_operator_for_field='=',
@@ -994,7 +995,10 @@ class Query(Part):
             except ValueError:
                 raise QueryException(f'Could not interpret {value_string_or_filter_name} as an integer')
 
-            return Q(**{f'{filter.attr}__pk': pk})
+            if filter.pk_lookup_to_q:
+                return filter.invoke_callback(filter.pk_lookup_to_q, pk=pk)
+            else:
+                return Q(**{f'{filter.attr}__pk': pk})
 
         if (
             isinstance(value_string_or_filter_name, str)

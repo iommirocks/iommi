@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+6.6.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Add new callback `Filter.pk_lookup_to_q` for building custom filter even when filter value is a model object.
+
+
 6.5.0 (2024-01-09)
 ~~~~~~~~~~~~~~~~~~
 
