@@ -1321,7 +1321,9 @@ def bulk_delete__post_handler(table, form, **_):
     )
 
     class ConfirmPage(Page):
-        title = html.h1(gettext_lazy('Are you sure you want to delete these {count} items?').format(count=queryset.count()))
+        title = html.h1(
+            gettext_lazy('Are you sure you want to delete these {count} items?').format(count=queryset.count())
+        )
         confirm = Table(
             auto__rows=queryset,
             columns__select=dict(
@@ -1426,23 +1428,23 @@ class Paginator(Traversable):
                     pass
         self.page_size = page_size if page_size is not None else table.page_size
 
-        self.attrs = evaluate_attrs(self, **self._evaluate_parameters)
-        self.container.attrs = evaluate_attrs(self.container)
-        self.active_item.attrs = evaluate_attrs(self.active_item)
-        self.item.attrs = evaluate_attrs(self.item)
-        self.link.attrs = evaluate_attrs(self.link)
-
-        self.container.tag = evaluate_strict(self.container.tag)
-        self.active_item.tag = evaluate_strict(self.active_item.tag)
-        self.item.tag = evaluate_strict(self.item.tag)
-        self.link.tag = evaluate_strict(self.link.tag)
-
         rows = table.sorted_and_filtered_rows
-        evaluate_parameters = dict(
+        evaluate_parameters = merged(
+            self.iommi_evaluate_parameters(),
             page_size=self.page_size,
             rows=rows,
-            **self.iommi_evaluate_parameters(),
         )
+
+        self.attrs = evaluate_attrs(self, **evaluate_parameters)
+        self.container.attrs = evaluate_attrs(self.container, **evaluate_parameters)
+        self.active_item.attrs = evaluate_attrs(self.active_item, **evaluate_parameters)
+        self.item.attrs = evaluate_attrs(self.item, **evaluate_parameters)
+        self.link.attrs = evaluate_attrs(self.link, **evaluate_parameters)
+
+        self.container.tag = evaluate_strict(self.container.tag, **evaluate_parameters)
+        self.active_item.tag = evaluate_strict(self.active_item.tag, **evaluate_parameters)
+        self.item.tag = evaluate_strict(self.item.tag, **evaluate_parameters)
+        self.link.tag = evaluate_strict(self.link.tag, **evaluate_parameters)
 
         if self.page_size is None:
             self.number_of_pages = 1
