@@ -3047,7 +3047,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                         </tr>
                     </tbody>
                 </table>
-                <nav aria-label="Pages">
+                <nav aria-label="Pages" data-iommi-page-parameter="page">
                     <ul>
                         <li> <a aria-label="Page 1" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
                         <li> <a aria-label="Page 2" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
@@ -3082,7 +3082,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                         </tr>
                     </tbody>
                 </table>
-                <nav aria-label="Pages">
+                <nav aria-label="Pages" data-iommi-page-parameter="page">
                     <ul>
                         <li> <a aria-label="Page 1" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
                         <li> <a aria-label="Page 2" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
@@ -3863,7 +3863,7 @@ def test_pagination_with_thousands_separator(settings):
         find__name='nav',
         # language=html
         expected_html="""
-            <nav aria-label="Pages">
+            <nav aria-label="Pages" data-iommi-page-parameter="page">
                 <ul>
                     <li> <a href="?page_size=1&amp;page=1" aria-label="First Page" class="iommi_page_link">&laquo;</a> </li>
                     <li> <a href="?page_size=1&amp;page=1001" aria-label="Previous Page" class="iommi_page_link">&lt;</a> </li>
@@ -3970,7 +3970,7 @@ def test_custom_rows():
                             <tr> <td> black </td> </tr>
                         </tbody>
                     </table>
-                    <nav aria-label="Pages">
+                    <nav aria-label="Pages" data-iommi-page-parameter="page">
                         <ul>
                             <li> <a aria-label="Previous Page" class="iommi_page_link" href="?order=banana&amp;page=1"> &lt; </li>
                             <li> <a aria-label="Page 1" class="iommi_page_link" href="?order=banana&amp;page=1"> 1 </a> </li>
@@ -4136,7 +4136,7 @@ def test_table_tag_wrapper():
                         </tbody>
                     </table>
                 </div>
-                <nav aria-label="Pages">
+                <nav aria-label="Pages" data-iommi-page-parameter="page">
                     <ul>
                         <li> <a aria-label="Page 1" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
                         <li> <a aria-label="Page 2" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
