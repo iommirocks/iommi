@@ -281,18 +281,21 @@ class IommiBase {
             }
         }
 
+        const tableIommiID = form.getAttribute('data-iommi-id-of-table');
+        const table = document.querySelector(`[data-iommi-id="${tableIommiID}"]`);
+        const container = table.closest('.iommi-table-container');
+
+        // remove "page" for this table to always jump to the first page after filtering
+        const paginator = container.querySelector('[data-iommi-page-parameter]');
+        if(paginator) {
+            params.delete(paginator.getAttribute('data-iommi-page-parameter'));
+        }
+
         window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
 
         await this.validateForm(params, form);
 
-        const tableIommiID = form.getAttribute('data-iommi-id-of-table');
-        let table = document.querySelector(`[data-iommi-id="${tableIommiID}"]`);
-
-        await this.updateTableContainer(
-            table.closest('.iommi-table-container'),
-            params,
-            {filterForm: form}
-        )
+        await this.updateTableContainer(container, params, {filterForm: form});
     }
 
     hasSameData(prevData, newData) {

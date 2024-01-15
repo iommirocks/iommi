@@ -132,6 +132,7 @@ base = Style(
         active_item__tag='span',
         link__tag='a',
         link__attrs__class__iommi_page_link=True,
+        attrs={"data-iommi-page-parameter": lambda paginator, **_: paginator.iommi_path},
     ),
     Query=dict(
         template='iommi/query/form.html',

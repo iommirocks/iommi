@@ -1,4 +1,4 @@
-<nav aria-label="Pages" class="pagination">
+<nav aria-label="Pages"{{ paginator.attrs }}>
     {% if has_previous %}
         <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="Previous Page" class="pagination-previous">Previous</a>
     {% endif %}
@@ -33,4 +33,3 @@
         {% endif %}
     </ul>
 </nav>
-

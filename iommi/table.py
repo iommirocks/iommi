@@ -1426,7 +1426,7 @@ class Paginator(Traversable):
                     pass
         self.page_size = page_size if page_size is not None else table.page_size
 
-        self.attrs = evaluate_attrs(self)
+        self.attrs = evaluate_attrs(self, **self._evaluate_parameters)
         self.container.attrs = evaluate_attrs(self.container)
         self.active_item.attrs = evaluate_attrs(self.active_item)
         self.item.attrs = evaluate_attrs(self.item)

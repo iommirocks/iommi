@@ -156,6 +156,7 @@ bulma_base = Style(
     ),
     Paginator=dict(
         template='iommi/table/bulma/paginator.html',
+        attrs__class__pagination=True,
     ),
     Errors__attrs__class={
         'help': True,
