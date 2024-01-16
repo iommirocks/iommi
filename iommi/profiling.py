@@ -10,6 +10,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from django.http import StreamingHttpResponse
+from django.utils.html import escape
 
 from iommi._web_compat import (
     HttpResponse,
@@ -127,7 +128,12 @@ class HTMLStats(pstats.Stats):
             print('<td></td>', file=self.stream)
         else:
             print(f'<td class="numeric">{f8(ct/cc)}</td>', file=self.stream)
-        print(f'<td><a href="{src_debug_url_builder(path, line_number)}">{function_name}</a></td>', file=self.stream)
+        
+        if line_number and path:
+            print(f'<td><a href="{src_debug_url_builder(path, line_number)}">{escape(function_name)}</a></td>', file=self.stream)
+        else:
+            print(f'<td>{escape(function_name)}</td>', file=self.stream)
+
         print(f'<td>{nice_path}</td>', file=self.stream)
         print(f'<td class="numeric">{line_number}</td>', file=self.stream)
         print(f'</tr>', file=self.stream)
