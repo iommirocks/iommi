@@ -184,6 +184,12 @@ def test_table_csv(small_discography):
     )
     # @end
 
+    # language=rst
+    """
+    You can also pass kwargs to the `csv.writer` such as `delimiter`, `quotechar`, etc. 
+    with `extra_evaluated__csv_writer_kwargs = {'delimiter': ';', ...}`.
+    """
+
 
 def test_table_of_plain_python_objects():
     # language=rst
