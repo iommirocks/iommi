@@ -12,6 +12,7 @@ from django.db.models import (
     Model,
     OneToOneField,
 )
+from django.core import validators
 
 from iommi import register_search_fields
 
@@ -294,3 +295,8 @@ class OtherModel(Model):
 
 class SomeModel(Model):
     foo = ForeignKey(OtherModel, on_delete=CASCADE)
+
+
+class TestModelValidators(models.Model):
+    bar = CharField(max_length=5)
+    slug = CharField(max_length=255, validators=[validators.validate_slug])
