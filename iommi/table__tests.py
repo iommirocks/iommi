@@ -2813,6 +2813,32 @@ A,B,C
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_csv_writer_kwargs():
+    CSVExportTestModel.objects.create(a=1, b='a', c=2.3)
+    CSVExportTestModel.objects.create(a=2, b='b', c=5.0)
+    CSVExportTestModel.objects.create(a=3, b='c', c=7.0)
+    t = Table(
+        auto__model=CSVExportTestModel,
+        columns__a__extra_evaluated__report_name='A',
+        columns__b__extra_evaluated__report_name='B',
+        columns__c__extra_evaluated__report_name='C',
+        extra_evaluated__report_name='foo',
+        extra_evaluated__csv_writer_kwargs={'delimiter': ';'},
+    ).bind(request=req('get', **{'/csv': ''}))
+    response = t.render_to_response()
+    assert (
+            response.getvalue().decode().replace('\r\n', '\n')
+            == """\
+A;B;C
+1;a;2.3
+2;b;5.0
+3;c;7.0
+"""
+    )
+
+
+@pytest.mark.django_db
 def test_query_from_indexes():
     t = Table(
         auto__model=QueryFromIndexesTestModel,

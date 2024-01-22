@@ -1592,8 +1592,10 @@ def endpoint__csv(table, **_):
         safe_row = [v if i in csv_safe_column_indexes else safe_csv_value(v) for i, v in enumerate(row_strings)]
         writer.writerow(safe_row)
 
+    csv_writer_kwargs = table.extra_evaluated.get('csv_writer_kwargs', {})
+
     f = StringIO()
-    writer = csv.writer(f)
+    writer = csv.writer(f, **csv_writer_kwargs)
     writer.writerow(header)
     for row in rows():
         write_csv_row(writer, row)
