@@ -107,6 +107,7 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+    TestModelValidators,
     UniqueConstraintAlternativeTest,
     UniqueConstraintTest,
 )
@@ -3757,3 +3758,25 @@ def test_render_fields_template():
             <input type="hidden" name="foo" value="bar">
         ''',
     )
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_model_validators():
+    form = Form.create(
+        auto__model=TestModelValidators,
+    ).bind(request=req('get'))
+
+    assert form.fields.bar.is_valid(form, form.fields.bar, 'abcde') == (True, '')
+
+    with pytest.raises(ValidationError) as e:
+        form.fields.bar.is_valid(form, form.fields.bar, 'abcdef')
+
+    assert e.value.messages == ['Ensure this value has at most 5 characters (it has 6).']
+
+    assert form.fields.slug.is_valid(form, form.fields.slug, 'foo-bar') == (True, '')
+
+    with pytest.raises(ValidationError) as e2:
+        form.fields.slug.is_valid(form, form.fields.slug, '#&@')
+
+    assert e2.value.messages == ['Enter a valid “slug” consisting of letters, numbers, underscores or hyphens.']
