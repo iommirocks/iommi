@@ -952,6 +952,14 @@ class Column(Part):
 
     @classmethod
     @with_defaults(
+        bulk__call_target__attribute='duration',
+        filter__call_target__attribute='duration',
+    )
+    def duration(cls, **kwargs):
+        return cls.text(**kwargs)
+
+    @classmethod
+    @with_defaults(
         bulk__call_target__attribute='many_to_many',
         filter__call_target__attribute='many_to_many',
         cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
