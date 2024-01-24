@@ -523,6 +523,13 @@ class Filter(Part):
 
     @classmethod
     @with_defaults(
+        field__call_target__attribute='duration',
+    )
+    def duration(cls, **kwargs):
+        return cls.text(**kwargs)
+
+    @classmethod
+    @with_defaults(
         field__call_target__attribute='foreign_key',
     )
     def foreign_key(cls, model_field, **kwargs):

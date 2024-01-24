@@ -31,6 +31,7 @@ def setup_db_compat_django():
         DateField,
         DateTimeField,
         DecimalField,
+        DurationField,
         EmailField,
         FileField,
         FilePathField,
@@ -122,6 +123,7 @@ def setup_db_compat_django():
     register_factory(FilePathField, shortcut_name='text')
     register_factory(BinaryField, factory=None)
     register_factory(JSONField, shortcut_name='text', include=False)
+    register_factory(DurationField, shortcut_name='duration')
 
     # Column specific
     register_column_factory(BooleanField, shortcut_name='boolean')

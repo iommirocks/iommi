@@ -1,6 +1,9 @@
 import re
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import (
+    datetime,
+    timedelta,
+)
 from decimal import (
     Decimal,
     InvalidOperation,
@@ -519,6 +522,53 @@ def phone_number_is_valid(parsed_data, **_):
             'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
         ),
     )
+
+
+def duration_parse(string_value, **_):
+    string_value = string_value.strip()
+    if not string_value:
+        return None
+
+    suffix_to_kwarg = {
+        's': 'seconds',
+        'm': 'minutes',
+        'h': 'hours',
+        'd': 'days',
+    }
+
+    kwargs = {}
+
+    for part in string_value.split(' '):
+        m = re.match(r'(?P<number>\d+\.?\d*?)(?P<suffix>[smhd])', part)
+        if not m:
+            raise ValidationError(f'Invalid duration pattern {part}')
+        suffix = m.groupdict()['suffix']
+        number = m.groupdict()['number']
+        if suffix not in suffix_to_kwarg:
+            raise ValidationError(f'Invalid suffix {suffix}. Valid suffixes: {", ".join(suffix_to_kwarg.keys())}')
+
+        if suffix in kwargs:
+            raise ValidationError(f'{suffix} specified twice')
+
+        kwargs[suffix_to_kwarg[suffix]] = float(number) if '.' in number else int(number)
+
+    return timedelta(**kwargs)
+
+
+def duration_render_value(value, **_):
+    if value is None:
+        return ''
+    s = value.total_seconds()
+    hours, remainder = divmod(s, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    result = []
+    if hours:
+        result.append(f'{hours:.2f}h')
+    if minutes:
+        result.append(f'{minutes:.2f}m')
+    if seconds:
+        result.append(f'{seconds:.2f}s')
+    return ' '.join(result).replace('.00', '')
 
 
 def default_input_id(field, **_):
@@ -1412,6 +1462,14 @@ class Field(Part, Tag):
     )
     def hardcoded(cls, **kwargs):
         return cls(**kwargs)
+
+    @classmethod
+    @with_defaults(
+        parse=duration_parse,
+        render_value=duration_render_value,
+    )
+    def duration(cls, **kwargs):
+        return cls.text(**kwargs)
 
 
 def is_django_promise_with_string_proxy(redirect_to):

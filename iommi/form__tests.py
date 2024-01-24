@@ -5,6 +5,7 @@ from datetime import (
     date,
     datetime,
     time,
+    timedelta,
 )
 from decimal import Decimal
 from io import (
@@ -60,6 +61,8 @@ from iommi.form import (
     datetime_iso_formats,
     datetime_parse,
     decimal_parse,
+    duration_parse,
+    duration_render_value,
     email_parse,
     Field,
     find_unique_prefixes,
@@ -3780,3 +3783,22 @@ def test_model_validators():
         form.fields.slug.is_valid(form, form.fields.slug, '#&@')
 
     assert e2.value.messages == ['Enter a valid “slug” consisting of letters, numbers, underscores or hyphens.']
+
+
+def test_duration_parse():
+    assert duration_parse('3s') == timedelta(seconds=3)
+    assert duration_parse('3.00s') == timedelta(seconds=3)
+    assert duration_parse('7m') == timedelta(minutes=7)
+    assert duration_parse('11h') == timedelta(hours=11)
+    assert duration_parse('2.1s') == timedelta(seconds=2.1)
+    assert duration_parse('3m 2.1s') == timedelta(minutes=3, seconds=2.1)
+    assert duration_parse('7h 3m 2.1s') == timedelta(hours=7, minutes=3, seconds=2.1)
+
+
+def test_duration_render_value():
+    assert duration_render_value(timedelta(seconds=3)) == '3s'
+    assert duration_render_value(timedelta(minutes=7)) == '7m'
+    assert duration_render_value(timedelta(hours=11)) == '11h'
+    assert duration_render_value(timedelta(seconds=2.1)) == '2.10s'
+    assert duration_render_value(timedelta(minutes=3, seconds=2.1)) == '3m 2.10s'
+    assert duration_render_value(timedelta(hours=7, minutes=3, seconds=2.1)) == '7h 3m 2.10s'
