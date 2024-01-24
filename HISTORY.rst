@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+6.7.0 (2024-01-24)
+~~~~~~~~~~~~~~~~~~
+
+* Added support for DurationTime db field type
+
+* Add missing parameters to attrs and tag callbacks (#501)
+
+* Added option to pass kwargs for `csv.writer` (#503)
+
+* `Field.is_valid()` respecting model field validators by default (#506)
+
+* Fixed profiler output for function names (#502)
+
+* Removing preserved page, to always jump to the first page after filtering (#500)
+
+
 6.6.0 (2024-01-15)
 ~~~~~~~~~~~~~~~~~~
 
