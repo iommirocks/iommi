@@ -785,7 +785,7 @@ def test_boolean_column():
         foo = Column.boolean()
 
     verify_table_html(
-        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='base'),
+        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='base', attrs__class__table=True),
         # language=html
         expected_html="""
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
@@ -804,7 +804,7 @@ def test_boolean_column():
     )
 
     verify_table_html(
-        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bulma'),
+        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bulma', attrs__class__table=True),
         # language=html
         expected_html="""
             <table class="is-fullwidth is-hoverable table" data-endpoint="/endpoints/tbody" data-iommi-id="">
@@ -823,7 +823,7 @@ def test_boolean_column():
     )
 
     verify_table_html(
-        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bootstrap5'),
+        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bootstrap5', attrs__class__table=True),
         # language=html
         expected_html="""
             <table class="table table-sm" data-endpoint="/endpoints/tbody" data-iommi-id="">

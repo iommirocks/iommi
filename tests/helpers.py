@@ -87,9 +87,10 @@ def verify_html(*, actual_html: str, find=None, expected_html: str = None):
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
 
     if find is not None:
+        actual_soup_orig = actual_soup
         actual_soup = actual_soup.find(**find)
         if not actual_soup:  # pragma: no cover
-            prettied_actual = reindent(actual_soup.prettify()).strip()
+            prettied_actual = reindent(actual_soup_orig.prettify()).strip()
             print(prettied_actual)
             assert False, f"Couldn't find selector {find} in actual output"
 
