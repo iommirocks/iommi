@@ -1,3 +1,6 @@
+from django.utils.translation import gettext
+
+from iommi._web_compat import mark_safe
 from iommi.fragment import html
 from iommi.style import Style
 
@@ -14,5 +17,8 @@ bootstrap_icons = Style(
         edit__extra__icon='pencil-square',
         delete__extra__icon='trash',
         download__extra__icon='download',
+        boolean__cell__format=lambda value, **_: mark_safe(
+            f'<i class="bi bi-check-lg fs-3" title="{gettext("Yes")}"></i>'
+        ) if value else '',
     ),
 )
