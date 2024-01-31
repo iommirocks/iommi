@@ -775,3 +775,68 @@ def test_warning_for_config_into_the_void():
         Style(foo__bar=3)
 
     assert records[0].message
+
+
+def test_boolean_column():
+    from iommi.table import Struct, Column
+    from tests.helpers import verify_table_html
+
+    class TestTable(Table):
+        foo = Column.boolean()
+
+    verify_table_html(
+        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='base'),
+        # language=html
+        expected_html="""
+            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <thead>
+                    <tr>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> <span title="Yes">&#10004;</span> </td>
+                    </tr>
+                </tbody>
+            </table>
+        """,
+    )
+
+    verify_table_html(
+        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bulma'),
+        # language=html
+        expected_html="""
+            <table class="is-fullwidth is-hoverable table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <thead>
+                    <tr>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> <i class="fa fa-check" title="Yes"></i> </td>
+                    </tr>
+                </tbody>
+            </table>
+        """,
+    )
+
+    verify_table_html(
+        table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bootstrap5'),
+        # language=html
+        expected_html="""
+            <table class="table table-sm" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <thead>
+                    <tr>
+                        <th class="first_column iommi_sort_header subheader text-nowrap"> <a href="?order=foo"> Foo </a> </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center"> <i class="bi bi-check-lg fs-3" title="Yes"></i> </td>
+                    </tr>
+                </tbody>
+            </table>
+        """,
+    )
