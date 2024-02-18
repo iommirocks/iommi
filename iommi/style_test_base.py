@@ -17,6 +17,7 @@ test = Style(
         icons=None,
         iommi_js=None,
         iommi_js_init=None,
+        meta=None,
     ),
     Field=dict(
         shortcuts=dict(),
