@@ -95,6 +95,11 @@ def setup_db_compat_django():
     register_filter_factory(CharField, factory=char_field_filter_factory)
     register_column_factory(CharField, factory=char_field_column_factory)
 
+    try:
+        from django.contrib.postgres.search import SearchVectorField
+        register_factory(SearchVectorField, factory=None)
+    except ImportError:
+        pass
     register_factory(UUIDField, shortcut_name='text')
     register_factory(TimeField, shortcut_name='time')
     register_factory(EmailField, shortcut_name='email')
