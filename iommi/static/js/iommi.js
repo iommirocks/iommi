@@ -529,7 +529,9 @@ class IommiSelect2 {
         f.on('change', function (e) {
             let element = e.target.closest('form');
             // Fire a non-jquery event so that enhanceFilterForm gets the event
-            element.dispatchEvent(new Event('change'));
+            if(element) {
+                element.dispatchEvent(new Event('change'));
+            }
         });
     }
 }
