@@ -179,9 +179,7 @@ class IommiBase {
     }
 
     async updateTableContainer(container, params, extra){
-        const tbodyPath = container.querySelector('[data-endpoint]').getAttribute(
-            'data-endpoint'
-        );
+        const tbodyPath = container.getAttribute('data-endpoint');
 
         this.callDeprecatedSpinner(true, container);  // deprecated, use event "iommi.loading.start" instead
 

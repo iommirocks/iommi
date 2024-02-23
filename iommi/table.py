@@ -1713,7 +1713,7 @@ class Table(Part, Tag):
         }
         endpoints__csv__func = endpoint__csv
 
-        attrs = Namespace(
+        container__attrs = Namespace(
             {
                 'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
                 'data-iommi-id': lambda table, **_: table.iommi_path,

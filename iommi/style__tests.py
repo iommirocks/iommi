@@ -324,7 +324,6 @@ def test_get_style_error():
 
 
 class MyRefinableObject(RefinableObject):
-
     foo: 'MyRefinableObject' = Refinable()
     bar: int = Refinable()
     baz: int = Refinable()
@@ -789,7 +788,7 @@ def test_boolean_column():
         table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='base', attrs__class__table=True),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table">
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -808,7 +807,7 @@ def test_boolean_column():
         table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bulma', attrs__class__table=True),
         # language=html
         expected_html="""
-            <table class="is-fullwidth is-hoverable table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="is-fullwidth is-hoverable table">
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -827,7 +826,7 @@ def test_boolean_column():
         table=TestTable(rows=(x for x in [Struct(foo=True)]), iommi_style='bootstrap5', attrs__class__table=True),
         # language=html
         expected_html="""
-            <table class="table table-sm" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table table-sm">
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader text-nowrap"> <a href="?order=foo"> Foo </a> </th>

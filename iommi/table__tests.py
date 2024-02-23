@@ -136,7 +136,7 @@ def test_render_impl(table_builder):
         table=table_builder(),
         # language=html
         expected_html="""
-            <table class="another_class table" data-endpoint="/endpoints/tbody" data-iommi-id="" id="table_id">
+            <table class="another_class table" id="table_id">
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader">
@@ -243,7 +243,7 @@ def test_django_table():
         table=t,
         # language=html
         expected_html=f"""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader">
@@ -309,7 +309,7 @@ def test_output():
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="foo table" data-endpoint="/endpoints/tbody" data-iommi-id="" id="table_id">
+            <table class="foo table"  id="table_id">
                 <thead>
                     <tr>
                         <th class="superheader" colspan="1"> </th>
@@ -350,7 +350,7 @@ def test_generator():
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -388,7 +388,7 @@ def test_display_name(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Bar </th> </tr>
                 </thead>
@@ -411,7 +411,7 @@ def test_link(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column subheader"> Foo </th>
@@ -441,7 +441,7 @@ def test_cell__url_with_attr(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column subheader"> Foo </th>
@@ -467,7 +467,7 @@ def test_css_class(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column some_class subheader"> Foo </th>
@@ -493,7 +493,7 @@ def test_header_url(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="/some/url"> Foo </a> </th>
@@ -520,7 +520,7 @@ def test_include(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -548,7 +548,7 @@ def test_include_lambda(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -571,7 +571,7 @@ def test_attr(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column subheader"> Foo </th>
@@ -604,7 +604,7 @@ def test_attrs(NoSortTable):
         table=TestTable(rows=[Struct(yada=1), Struct(yada=2)]),
         # language=html
         expected_html="""
-            <table class="classy table" data-endpoint="/endpoints/tbody" data-iommi-id="" foo="bar">
+            <table class="classy table"  foo="bar">
                 <thead>
                     <tr>
                         <th class="first_column subheader"> Yada </th>
@@ -639,7 +639,7 @@ def test_attrs_new_syntax(NoSortTable):
         table=TestTable(rows=[Struct(yada=1), Struct(yada=2)]),
         # language=html
         expected_html="""
-            <table class="classy table" data-endpoint="/endpoints/tbody" data-iommi-id="" foo="bar">
+            <table class="classy table"  foo="bar">
                 <thead>
                     <tr>
                         <th class="first_column subheader"> Yada </th>
@@ -685,7 +685,7 @@ def test_column_presets(NoSortTable):
         table=table,
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column subheader" />
@@ -728,7 +728,7 @@ def test_select_column_preset(NoSortTable):
         table=TestTable(rows=[Struct()]),
         # language=HTML
         expected_html='''
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column subheader" title="Select all">
@@ -831,7 +831,6 @@ def test_django_table_pagination():
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
         b = Column(include=False)  # should still be able to filter on this though!
 
-
     a, b, c, d = TFoo.objects.all().order_by('pk')[:4]
 
     verify_table_html(
@@ -839,7 +838,7 @@ def test_django_table_pagination():
         query=dict(page_size=2, page=1, query='b="foo"'),
         # language=html
         expected_html=f"""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> A </th> </tr>
                 </thead>
@@ -856,7 +855,7 @@ def test_django_table_pagination():
         query=dict(page_size=2, page=2, query='b="foo"'),
         # language=html
         expected_html=f"""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> A </th> </tr>
                 </thead>
@@ -963,7 +962,9 @@ def test_bulk_edit_table():
 
     # The most important part of the test: don't bulk update with an invalid form!
     t = TestTable(post_bulk_edit=post_bulk_edit).bind(
-        request=req('post', **{f'pk_{x.pk}': '' for x in foos[:2]}, **{'bulk/a': 'asd', 'bulk/b': 'changed', '-bulk/submit': ''}),
+        request=req(
+            'post', **{f'pk_{x.pk}': '' for x in foos[:2]}, **{'bulk/a': 'asd', 'bulk/b': 'changed', '-bulk/submit': ''}
+        ),
     )
     assert t._is_bound
     assert t.bulk._name == 'bulk'
@@ -978,7 +979,9 @@ def test_bulk_edit_table():
 
     # Now do the bulk update
     t = TestTable(post_bulk_edit=post_bulk_edit).bind(
-        request=req('post', **{f'pk_{x.pk}': '' for x in foos[:2]}, **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}),
+        request=req(
+            'post', **{f'pk_{x.pk}': '' for x in foos[:2]}, **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}
+        ),
     )
     assert t._is_bound
     assert t.bulk._name == 'bulk'
@@ -1561,7 +1564,7 @@ def test_cell_template(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -1583,7 +1586,7 @@ def test_no_cell_tag(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -1608,7 +1611,7 @@ def test_no_row_tag(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -1630,7 +1633,7 @@ def test_cell_format_escape(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -1654,7 +1657,7 @@ def test_cell_format_no_escape(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -1693,7 +1696,7 @@ def test_template_string(NoSortTable):
             What filters
             <div class="iommi-table-container">
                 <form action="." method="post">
-                    <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                    <table class="table" >
                         What headers
                         <tbody>
                             Oh, rows: Custom cell: 1
@@ -1718,7 +1721,7 @@ def test_cell_template_string(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -1743,7 +1746,7 @@ def test_no_header_template(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <tbody>
                     <tr> <td> bar </td> </tr>
                 </tbody>
@@ -1766,7 +1769,7 @@ def test_row_template(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                       <th class="first_column subheader"> Foo </th>
@@ -1801,7 +1804,7 @@ def test_cell_lambda(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Sentinel2 </th> </tr>
                 </thead>
@@ -1826,7 +1829,7 @@ def test_auto_rowspan_and_render_twice(NoSortTable):
 
     # language=html
     expected_html = """
-        <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+        <table class="table" >
             <thead>
                 <tr> <th class="first_column subheader"> Foo </th> </tr>
             </thead>
@@ -1905,7 +1908,7 @@ def test_default_formatters(NoSortTable):
         table=TestTable(rows=rows),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr> <th class="first_column subheader"> Foo </th> </tr>
                 </thead>
@@ -2335,7 +2338,7 @@ def test_many_to_many():
         table=Table(auto__model=TBaz),
         # language=html
         expected_html=f"""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
               <thead>
                   <tr> <th class="first_column subheader"> Foo </th> </tr>
               </thead>
@@ -2366,7 +2369,7 @@ def test_preprocess_row():
         table=PreprocessedTable(),
         # language=html
         expected_html=f"""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column  iommi_sort_header subheader">
@@ -2615,7 +2618,7 @@ def test_render_column_attribute():
         table=FooTable(rows=[Struct(a=1)]),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column  iommi_sort_header subheader">
@@ -2634,7 +2637,8 @@ def test_render_column_attribute():
 @pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Column).items())
 def test_shortcuts_map_to_form_and_query(name, shortcut):
     whitelist = {
-        'boolean_tristate',  # this is special in the bulk case where you want a boolean_quadstate: don't change, clear, True, False. For now, we'll wait for someone to report this misfeature/bug :)
+        'boolean_tristate',
+        # this is special in the bulk case where you want a boolean_quadstate: don't change, clear, True, False. For now, we'll wait for someone to report this misfeature/bug :)
         'delete',
         'download',
         'edit',
@@ -2710,7 +2714,7 @@ def test_data_iommi_path():
         table=FooTable(rows=[Struct(a=1)]),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="" data-iommi-path="" data-iommi-type="FooTable">
+            <table class="table"  data-iommi-path="" data-iommi-type="FooTable">
                 <thead>
                     <tr>
                         <th class="superheader" colspan="1" data-iommi-type="ColumnHeader"> foo </th>
@@ -2828,8 +2832,8 @@ def test_csv_writer_kwargs():
     ).bind(request=req('get', **{'/csv': ''}))
     response = t.render_to_response()
     assert (
-            response.getvalue().decode().replace('\r\n', '\n')
-            == """\
+        response.getvalue().decode().replace('\r\n', '\n')
+        == """\
 A;B;C
 1;a;2.3
 2;b;5.0
@@ -3056,7 +3060,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
         # language=html
         expected_html=f"""
             <div class="iommi-table-plus-paginator">
-                <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <table class="table" >
                     <thead>
                         <tr>
                             <th class="first_column iommi_sort_header subheader">
@@ -3091,7 +3095,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
         # language=html
         expected_html=f"""
             <div class="iommi-table-plus-paginator">
-                <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <table class="table" >
                     <thead>
                         <tr>
                             <th class="first_column iommi_sort_header subheader">
@@ -3143,7 +3147,7 @@ def test_sort_list():
         query=dict(order='bar'),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -3174,7 +3178,7 @@ def test_sort_list():
         query=dict(order='-bar'),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -3220,7 +3224,7 @@ def test_sort_with_name():
         query={'order': 'bar'},
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -3263,7 +3267,7 @@ def test_sort_list_with_none_values():
         query=dict(order='bar'),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -3308,7 +3312,7 @@ def test_sort_list_bad_parameter():
         query=dict(order='barfology'),
         # language=html
         expected_html="""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -3347,7 +3351,7 @@ def test_sort_django_table():
         query=dict(order='a'),
         # language=html
         expected_html=f"""\
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-a"> A </a> </th>
@@ -3378,7 +3382,7 @@ def test_sort_django_table():
         query=dict(order='-a'),
         # language=html
         expected_html=f"""\
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                  <thead>
                      <tr>
                          <th class="descending first_column iommi_sort_header sorted subheader"> <a href="?order=a"> A </a> </th>
@@ -3495,7 +3499,7 @@ def test_sort_django_table_from_model():
         query=dict(order='a'),
         # language=html
         expected_html=f"""
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead>
                     <tr>
                         <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-a"> A </a> </th>
@@ -3630,7 +3634,11 @@ def test_empty_message():
         table=Table(empty_message=empty_message, rows=[]),
         find__class='iommi-table-container',
         # language=html
-        expected_html=f"<div class='iommi-table-container'> {empty_message} </div>",
+        expected_html=f"""
+            <div class='iommi-table-container' data-endpoint='/endpoints/tbody' data-iommi-id=''>
+                {empty_message}
+            </div>
+        """,
     )
 
 
@@ -3639,7 +3647,9 @@ def test_empty_empty_message():
         table=Table(empty_message='', rows=[]),
         find__class='iommi-table-container',
         # language=html
-        expected_html="<div class='iommi-table-container'></div>",
+        expected_html="""
+            <div class='iommi-table-container' data-endpoint='/endpoints/tbody' data-iommi-id='' />
+        """,
     )
 
 
@@ -3980,9 +3990,9 @@ def test_custom_rows():
         find__class="iommi-table-container",
         # language=html
         expected_html="""
-            <div class="iommi-table-container">
+            <div class="iommi-table-container" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <div class="iommi-table-plus-paginator">
-                    <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                    <table class="table" >
                         <thead>
                             <tr>
                                 <th class="ascending first_column iommi_sort_header sorted subheader">
@@ -4144,7 +4154,7 @@ def test_table_tag_wrapper():
         expected_html=f"""
             <div class="iommi-table-plus-paginator">
                 <div class="foo">
-                    <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                    <table class="table" >
                         <thead>
                             <tr>
                                 <th class="first_column iommi_sort_header subheader">
@@ -4189,7 +4199,7 @@ def test_late_column_include_removal_trip_up_filter_choices():
         table=t,
         # language=HTML
         expected_html='''
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table" >
                 <thead> <tr/> </thead>
                 <tbody/>
             </table>
@@ -4211,7 +4221,7 @@ def test_tbody_endpoint():
     expected_container_content = '''
         <div> top </div>
         <div class="iommi-table-plus-paginator">
-            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+            <table class="table">
                 <thead>
                     <tr>
                         <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
@@ -4234,8 +4244,8 @@ def test_tbody_endpoint():
         find=dict(class_='iommi-table-container'),
         # language=html
         expected_html=f"""
-            <div class="iommi-table-container">
-                { expected_container_content }
+            <div class="iommi-table-container" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                {expected_container_content}
             </div>
         """,
     )

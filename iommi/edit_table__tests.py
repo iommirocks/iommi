@@ -58,10 +58,10 @@ def test_edit_table_rendering():
         # language=html
         expected_html="""
             <form enctype="multipart/form-data" method="post">
-                <div class="iommi-table-container">
+                <div class="iommi-table-container" data-endpoint="/endpoints/tbody" data-iommi-id="">
                     <div class="iommi-table-plus-paginator">
                         <table class="table" data-add-template=\'&lt;tr data-pk="#sentinel#"&gt;&lt;td&gt;&lt;input id="id_editable_thing__#sentinel#" name="editable_thing/#sentinel#" type="text" value=""&gt;&lt;/td&gt;
-&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;\' data-endpoint="/endpoints/tbody" data-iommi-id="" data-next-virtual-pk="-1">
+&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;\' data-next-virtual-pk="-1">
                             <thead>
                                 <tr>
                                     <th class="first_column subheader"> Editable thing </th>
@@ -336,12 +336,12 @@ def test_edit_table_post_create_hardcoded():
             'POST',
             **{
                 # edit
-                f'columns/a/{foo.pk}': f'2',
+                f'columns/a/{foo.pk}': '2',
                 f'columns/b/{foo.pk}': 'hardcoded column should be ignored',
                 # create
-                'columns/a/-2': f'4',
+                'columns/a/-2': '4',
                 'columns/b/-2': 'hardcoded column should be ignored',
-                'columns/a/-1': f'3',
+                'columns/a/-1': '3',
                 'columns/b/-1': 'hardcoded column should be ignored',
                 '-actions/submit': '',
             },
@@ -351,10 +351,7 @@ def test_edit_table_post_create_hardcoded():
     response = edit_table.render_to_response()
     assert response.status_code == 302
 
-    assert [
-        dict(a=x.a, b=x.b)
-        for x in TFoo.objects.all().order_by('pk')
-    ] == [
+    assert [dict(a=x.a, b=x.b) for x in TFoo.objects.all().order_by('pk')] == [
         dict(a=2, b='asd'),
         dict(a=3, b='hardcoded'),
         dict(a=4, b='hardcoded'),
