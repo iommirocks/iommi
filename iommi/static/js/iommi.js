@@ -65,6 +65,20 @@ class IommiBase {
         window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
     }
 
+    /**
+     * returns iommi table container or null if none found
+     * @param  {Element} element filter form or any other element with data-iommi-id-of-table attribute or any element inside container
+     * @return {(Element|null)} container element or null
+     */
+    getContainer(element) {
+        if(element.hasAttribute('data-iommi-id-of-table')) {
+            return document.querySelector(
+                `.iommi-table-container[data-iommi-id="${element.getAttribute('data-iommi-id-of-table')}"]`
+            );
+        }
+        return element.closest(".iommi-table-container");
+    }
+
     debounce(func, wait) {
         let timeout;
 
@@ -279,9 +293,7 @@ class IommiBase {
             }
         }
 
-        const tableIommiID = form.getAttribute('data-iommi-id-of-table');
-        const table = document.querySelector(`[data-iommi-id="${tableIommiID}"]`);
-        const container = table.closest('.iommi-table-container');
+        const container = this.getContainer(form);
 
         // remove "page" for this table to always jump to the first page after filtering
         const paginator = container.querySelector('[data-iommi-page-parameter]');
@@ -304,10 +316,7 @@ class IommiBase {
     }
 
     enhanceFilterForm(form) {
-        let table = document.querySelector(
-            `[data-iommi-id="${form.getAttribute('data-iommi-id-of-table')}"]`
-        )
-        const container = table.closest('.iommi-table-container');
+        const container = this.getContainer(form);
 
         form.setAttribute('autocomplete', 'off');
         const debouncedPopulate = this.debounce(this.queryPopulate, 400);
