@@ -5,11 +5,11 @@ class HttpRequest:
         self.r = Request(environ)
 
     @property
-    def POST(self):
+    def POST(self):  # noqa: N802
         return self.r.form
 
     @property
-    def GET(self):
+    def GET(self):  # noqa: N802
         return self.r.args
 
     @property
@@ -17,7 +17,7 @@ class HttpRequest:
         return self.r.method
 
     @property
-    def META(self):
+    def META(self):  # noqa: N802
         return self.r.environ
 
     def is_ajax(self):

@@ -140,7 +140,7 @@ class TFoo(Model):
     b = CharField(max_length=255)
 
     def __str__(self):
-        return 'Foo(%s, %s)' % (self.a, self.b)
+        return 'Foo({}, {})'.format(self.a, self.b)
 
     class Meta:
         ordering = ('pk',)
@@ -278,7 +278,7 @@ if django.VERSION[:2] >= (3, 0):
 
 
 class CamelCaseFieldModel(models.Model):
-    camelCaseField = models.BooleanField()
+    camelCaseField = models.BooleanField()  # noqa: N815
 
 
 class CustomField(models.Field):

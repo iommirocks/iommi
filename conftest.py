@@ -48,7 +48,7 @@ def reset_sequences(request, django_db_blocker):
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             for i, (table,) in enumerate(cursor.fetchall()):
                 cursor.execute(f"""
-                    INSERT INTO SQLITE_SEQUENCE (name,seq) SELECT '{table}', {(i + 1) * 1000} WHERE NOT EXISTS 
+                    INSERT INTO SQLITE_SEQUENCE (name,seq) SELECT '{table}', {(i + 1) * 1000} WHERE NOT EXISTS
                         (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);
                     """)
 

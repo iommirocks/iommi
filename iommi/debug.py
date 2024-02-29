@@ -133,8 +133,11 @@ def endpoint__debug_tree(endpoint, **_):
             """
             )
             sortable = False
-            row__attrs__class__included = lambda row, **_: row.included
             page_size = None
+
+            @staticmethod
+            def row__attrs__class__included(row, **_):
+                return row.included
 
         dunder_path = Column(
             cell__value=lambda row, **_: row.dunder_path,
@@ -204,7 +207,7 @@ def local_debug_url_builder(filename, lineno):
         filename = join(settings.BASE_DIR, filename)
     if hasattr(settings, 'IOMMI_DEBUG_URL_MAPPING'):
         filename = filename.replace(*settings.IOMMI_DEBUG_URL_MAPPING)
-    return "pycharm://open?file=%s" % (filename,) + ('' if lineno is None else "&line=%d" % (lineno,))
+    return f"pycharm://open?file={filename}" + ('' if lineno is None else f"&line={lineno:d}")
 
 
 def src_debug_url_builder(filename, lineno=None):

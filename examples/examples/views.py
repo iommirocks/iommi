@@ -239,7 +239,10 @@ class DummyRow:
 class ShortcutSelectorForm(Form):
     class Meta:
         attrs__method = 'get'
-        actions__submit__post_handler = lambda **_: None
+
+        @staticmethod
+        def actions__submit__post_handler(**_):
+            return None
 
     shortcut = Field.multi_choice(
         choices=[

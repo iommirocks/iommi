@@ -136,9 +136,8 @@ def test_declaration_merge():
 
 
 # This function is here to avoid declaring the form at import time, which is annoying when trying to debug unrelated tests
-# noinspection PyPep8Naming
 @pytest.fixture
-def MyTestForm():
+def MyTestForm():  # noqa: N802
     class MyTestForm(Form):
         party = Field.choice(choices=['ABC'], required=False)
         username = Field(
@@ -238,7 +237,7 @@ def test_required_multi_choice():
     assert bound_form.fields.foo.get_errors() == {'This field is required'}
 
 
-def test_required(MyTestForm):
+def test_required(MyTestForm):  # noqa: N803
     form = MyTestForm().bind(request=req('post', **{'-submit': ''}))
     assert form.is_target()
     assert form.is_valid() is False, form.get_errors()
@@ -301,6 +300,7 @@ def test_custom_parsed_value():
         foo = Field(parsed_data=my_form_parsed_data)
 
         class Meta:
+            @staticmethod
             def actions__submit__post_handler(form, **_):
                 pass  # pragma: no cover
 
@@ -316,6 +316,7 @@ def test_custom_parsed_value_none():
         foo = Field(parsed_data=my_form_parsed_data)
 
         class Meta:
+            @staticmethod
             def actions__submit__post_handler(form, **_):
                 pass  # pragma: no cover
 
@@ -323,7 +324,7 @@ def test_custom_parsed_value_none():
     assert form.fields.foo.value == 'bar'
 
 
-def test_parse(MyTestForm):
+def test_parse(MyTestForm):  # noqa: N803
     # The spaces in the data are there to check that we strip input
     form = MyTestForm().bind(
         request=req(
@@ -398,7 +399,7 @@ def test_parse(MyTestForm):
     )
 
 
-def test_parse_errors(MyTestForm):
+def test_parse_errors(MyTestForm):  # noqa: N803
     def post_validation(form, **_):
         form.add_error('General snafu')
 
@@ -545,6 +546,7 @@ def test_post_validation_and_error_checking_full():
         class Meta:
             post_validation = form__post_validation
 
+            @staticmethod
             def actions__submit__post_handler(form, **_):
                 return form
 
@@ -1892,7 +1894,7 @@ def test_mode_full_form_from_request():
         baz = Field.boolean(initial=True)
 
         class Meta:
-            @classmethod
+            @staticmethod
             def actions__submit__post_handler(form, **_):
                 pass  # pragma: no cover
 
@@ -1967,6 +1969,7 @@ def test_form_errors_function():
         foo = Field(is_valid=lambda **_: (False, 'field error'))
 
         class Meta:
+            @staticmethod
             def actions__submit__post_handler(form, **_):
                 pass  # pragma: no cover
 
@@ -2115,7 +2118,9 @@ def test_ajax_config_and_validate():
 def test_custom_endpoint():
     class MyForm(Form):
         class Meta:
-            endpoints__foo__func = lambda value, **_: 'foo' + value
+            @staticmethod
+            def endpoints__foo__func(value, **_):
+                return 'foo' + value
 
     form = MyForm()
     form = form.bind(request=None)

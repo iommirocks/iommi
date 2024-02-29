@@ -137,7 +137,7 @@ def test_generate_docs_kill_obscure_mutant(snapshot):
 
         @with_defaults(
             # this is to handle that mutmut mutates strip(',') to strip('XX,XX')
-            name=lambda X: X,
+            name=lambda X: X,  # noqa: N803
         )
         def __init__(self, **kwargs):
             super(Foo, self).__init__(**kwargs)  # pragma: no cover
@@ -292,7 +292,7 @@ request = req('get')
 
 # language=rst
 """
-
+    
 Foo
 ===
 

@@ -227,9 +227,9 @@ def test_register_search_fields_pk_special_case():
     register_search_fields(model=User, search_fields=['username'], overwrite=True)
 
 
-# noinspection PyPep8Naming
+
 @pytest.fixture
-def MyField():
+def MyField():  # noqa: N802
     class MyField(Field):
         @classmethod
         @with_defaults(
@@ -241,7 +241,7 @@ def MyField():
     return MyField
 
 
-def test_weird_override_bug_working_case(MyField):
+def test_weird_override_bug_working_case(MyField):  # noqa: N803
 
     # This works...
     form = Form(
@@ -250,7 +250,7 @@ def test_weird_override_bug_working_case(MyField):
     assert form.bind().fields.foo.extra.value == 'this is my shortcut'
 
 
-def test_weird_override_bug_working_case_2(MyField):
+def test_weird_override_bug_working_case_2(MyField):  # noqa: N803
     # This also works
     form = Form(
         auto__model=Foo,
@@ -268,7 +268,7 @@ def test_get_field_many_to_many_reverse():
         get_field(Group, 'user')
 
 
-def test_error_includes_reverse_field(MyField):
+def test_error_includes_reverse_field(MyField):  # noqa: N803
     form = Form(
         auto__model=Group,
         auto__include=['does_not_exist']

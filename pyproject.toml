@@ -10,6 +10,9 @@ ignore = [
     "E501",  # Line too long
     "N801",  # Class name should use CapWords convention
     "UP032",  # Use f-string instead of format call
+    "UP008",  # Use `super()` instead of `super(__class__, self)`
+    "N818",  # Exception name `UnknownMissingValueException` should be named with an Error suffix
+
 ]
 select = [
     "E",

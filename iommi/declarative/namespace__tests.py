@@ -470,8 +470,7 @@ def test_namespace_call_attribute_missing():
     assert f().arg == 'arg'
 
 
-# noinspection PyPep8Naming
-def test_namespace_call_attribute_None():
+def test_namespace_call_attribute_None():  # noqa: N802
     class Foo:
         def __init__(self, arg):
             self.arg = arg

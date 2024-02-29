@@ -121,8 +121,13 @@ def explicit_table():
 def declarative_table():
     class TestTable(Table):
         class Meta:
-            attrs__class__another_class = lambda table, **_: True
-            attrs__id = lambda table, **_: 'table_id'
+            @staticmethod
+            def attrs__class__another_class(table, **_):
+                return True
+
+            @staticmethod
+            def attrs__id(table, **_):
+                return 'table_id'
 
         foo = Column()
         bar = Column.number()
@@ -368,9 +373,8 @@ def test_generator():
     )
 
 
-# noinspection PyPep8Naming
 @pytest.fixture
-def NoSortTable():
+def NoSortTable():  # noqa: N802
     class NoSortTable(Table):
         class Meta:
             sortable = False
@@ -378,7 +382,7 @@ def NoSortTable():
     return NoSortTable
 
 
-def test_display_name(NoSortTable):
+def test_display_name(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(display_name="Bar")
 
@@ -400,7 +404,7 @@ def test_display_name(NoSortTable):
     )
 
 
-def test_link(NoSortTable):
+def test_link(NoSortTable):  # noqa: N803  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column.link(cell__url='https://whereever', cell__url_title="whatever")
         bar = Column.link(cell__value='bar', cell__url_title=lambda value, **_: "url_title_goes_here")
@@ -429,7 +433,7 @@ def test_link(NoSortTable):
     )
 
 
-def test_cell__url_with_attr(NoSortTable):
+def test_cell__url_with_attr(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(
             cell__url='https://whereever', cell__url_title="whatever", cell__link__attrs__class__custom='custom'
@@ -457,7 +461,7 @@ def test_cell__url_with_attr(NoSortTable):
     )
 
 
-def test_css_class(NoSortTable):
+def test_css_class(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(header__attrs__class__some_class=True, cell__attrs__class__bar=True)
 
@@ -483,7 +487,7 @@ def test_css_class(NoSortTable):
     )
 
 
-def test_header_url(NoSortTable):
+def test_header_url(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(header__url="/some/url")
 
@@ -509,7 +513,7 @@ def test_header_url(NoSortTable):
     )
 
 
-def test_include(NoSortTable):
+def test_include(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column()
         bar = Column(include=False)
@@ -532,7 +536,7 @@ def test_include(NoSortTable):
     )
 
 
-def test_include_lambda(NoSortTable):
+def test_include_lambda(NoSortTable):  # noqa: N803
     def include_callable(table, column, **_):
         assert isinstance(table, TestTable)
         assert column._name == 'bar'
@@ -560,7 +564,7 @@ def test_include_lambda(NoSortTable):
     )
 
 
-def test_attr(NoSortTable):
+def test_attr(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column()
         bar = Column(attr='foo')
@@ -590,13 +594,20 @@ def test_attr(NoSortTable):
 
 
 # noinspection HtmlUnknownAttribute
-def test_attrs(NoSortTable):
+def test_attrs(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         class Meta:
             attrs__class__classy = True
-            attrs__foo = lambda **_: 'bar'
+
+            @staticmethod
+            def attrs__foo(**_):
+                return 'bar'
+
             row__attrs__class__classier = True
-            row__attrs__foo = lambda **_: "quux"
+
+            @staticmethod
+            def row__attrs__foo(**_):
+                return "quux"
 
         yada = Column()
 
@@ -624,14 +635,20 @@ def test_attrs(NoSortTable):
 
 
 # noinspection HtmlUnknownAttribute
-def test_attrs_new_syntax(NoSortTable):
+def test_attrs_new_syntax(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         class Meta:
             attrs__class__classy = True
-            attrs__foo = lambda table, **_: 'bar'
+
+            @staticmethod
+            def attrs__foo(table, **_):
+                return 'bar'
 
             row__attrs__class__classier = True
-            row__attrs__foo = lambda table, **_: "quux"
+
+            @staticmethod
+            def row__attrs__foo(table, **_):
+                return 'quux'
 
         yada = Column()
 
@@ -658,7 +675,7 @@ def test_attrs_new_syntax(NoSortTable):
     )
 
 
-def test_column_presets(NoSortTable):
+def test_column_presets(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         icon = Column.icon('some-icon')
         edit = Column.edit()
@@ -718,7 +735,7 @@ def test_column_presets(NoSortTable):
     )
 
 
-def test_select_column_preset(NoSortTable):
+def test_select_column_preset(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         select = Column.select()
         checked_select = Column.select(extra__checked=True)
@@ -755,7 +772,7 @@ def test_select_column_preset(NoSortTable):
 
 
 @pytest.mark.skipif(pytest.__name__ == 'hammett', reason='hammett has problems with this warns() thing')
-def test_column_select_shortcut_no_override_call_target(NoSortTable):
+def test_column_select_shortcut_no_override_call_target(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         select = Column.select()
 
@@ -876,7 +893,10 @@ def test_page_size():
     class TestTable(Table):
         class Meta:
             page_size = 3
-            rows = lambda **_: TFoo.objects.all()
+
+            @staticmethod
+            def rows(**_):
+                return TFoo.objects.all()
 
         a = Column()
 
@@ -1554,7 +1574,7 @@ def test_query_filtering():
     )
 
 
-def test_cell_template(NoSortTable):
+def test_cell_template(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(cell__template='test_cell_template.html')
 
@@ -1576,7 +1596,7 @@ def test_cell_template(NoSortTable):
     )
 
 
-def test_no_cell_tag(NoSortTable):
+def test_no_cell_tag(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(cell__tag=None)
 
@@ -1598,7 +1618,7 @@ def test_no_cell_tag(NoSortTable):
     )
 
 
-def test_no_row_tag(NoSortTable):
+def test_no_row_tag(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column()
 
@@ -1623,7 +1643,7 @@ def test_no_row_tag(NoSortTable):
     )
 
 
-def test_cell_format_escape(NoSortTable):
+def test_cell_format_escape(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda request, value, **_: '<foo>')
 
@@ -1647,7 +1667,7 @@ def test_cell_format_escape(NoSortTable):
     )
 
 
-def test_cell_format_no_escape(NoSortTable):
+def test_cell_format_no_escape(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: mark_safe('<foo/>'))
 
@@ -1670,7 +1690,7 @@ def test_cell_format_no_escape(NoSortTable):
 
 
 @pytest.mark.django_db
-def test_template_string(NoSortTable):
+def test_template_string(NoSortTable):  # noqa: N803
     TFoo.objects.create(a=1)
 
     class TestTable(NoSortTable):
@@ -1709,7 +1729,7 @@ def test_template_string(NoSortTable):
     )
 
 
-def test_cell_template_string(NoSortTable):
+def test_cell_template_string(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(
             cell__template=Template('Custom renderedXXXX: {{ row.foo }}'),
@@ -1733,7 +1753,7 @@ def test_cell_template_string(NoSortTable):
     )
 
 
-def test_no_header_template(NoSortTable):
+def test_no_header_template(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         class Meta:
             header__template = None
@@ -1755,13 +1775,15 @@ def test_no_header_template(NoSortTable):
     )
 
 
-def test_row_template(NoSortTable):
+def test_row_template(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column()
         bar = Column()
 
         class Meta:
-            row__template = lambda table, **_: 'test_table_row.html'
+            @staticmethod
+            def row__template(table, **_):
+                return 'test_table_row.html'
 
     rows = [Struct(foo="sentinel", bar="schmentinel")]
 
@@ -1790,12 +1812,12 @@ def test_row_template(NoSortTable):
     )
 
 
-def test_cell_lambda(NoSortTable):
+def test_cell_lambda(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         sentinel1 = 'sentinel1'
 
         sentinel2 = Column(
-            cell__value=lambda table, column, row, **_: '%s %s %s' % (table.sentinel1, column._name, row.sentinel3)
+            cell__value=lambda table, column, row, **_: '{} {} {}'.format(table.sentinel1, column._name, row.sentinel3)
         )
 
     rows = [Struct(sentinel3="sentinel3")]
@@ -1816,7 +1838,7 @@ def test_cell_lambda(NoSortTable):
     )
 
 
-def test_auto_rowspan_and_render_twice(NoSortTable):
+def test_auto_rowspan_and_render_twice(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(auto_rowspan=True)
 
@@ -1859,7 +1881,7 @@ def test_auto_rowspan_fail_on_override():
     assert str(e.value) == 'Explicitly set rowspan html attribute collides with auto_rowspan on column foo'
 
 
-def test_render_table(NoSortTable):
+def test_render_table(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column(display_name="TBar")
 
@@ -1872,7 +1894,7 @@ def test_render_table(NoSortTable):
 
 @pytest.mark.django_db
 @override_settings(TIME_ZONE="Europe/Prague")
-def test_default_formatters(NoSortTable):
+def test_default_formatters(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column()
 
@@ -2053,7 +2075,10 @@ def test_row_extra():
 
         class Meta:
             row__extra__foo = 7
-            row__extra_evaluated__foo = lambda table, row, **_: row.a + row.b
+
+            @staticmethod
+            def row__extra_evaluated__foo(table, row, **_):
+                return row.a + row.b
 
     table = TestTable(rows=[Struct(a=5, b=7)]).bind(
         request=req('get'),
@@ -2185,7 +2210,9 @@ def test_ajax_endpoint():
 def test_ajax_endpoint_empty_response():
     class TestTable(Table):
         class Meta:
-            endpoints__foo__func = lambda **_: []
+            @staticmethod
+            def endpoints__foo__func(**_):
+                return []
 
         bar = Column()
 
@@ -2196,9 +2223,9 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoints__data__func = lambda table, **_: [
-                {cell.column._name: cell.value for cell in cells} for cells in table.cells_for_rows()
-            ]
+            @staticmethod
+            def endpoints__data__func(table, **_):
+                return [{cell.column._name: cell.value for cell in cells} for cells in table.cells_for_rows()]
 
         foo = Column()
         bar = Column()
@@ -2219,7 +2246,9 @@ def test_ajax_data_endpoint():
 def test_ajax_endpoint_namespacing():
     class TestTable(Table):
         class Meta:
-            endpoints__bar__func = lambda **_: 17
+            @staticmethod
+            def endpoints__bar__func(**_):
+                return 17
 
         baz = Column()
 
@@ -2251,7 +2280,9 @@ def test_table_iteration():
 def test_ajax_custom_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoints__foo__func = lambda value, **_: dict(baz=value)
+            @staticmethod
+            def endpoints__foo__func(value, **_):
+                return dict(baz=value)
 
         spam = Column()
 

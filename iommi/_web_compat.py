@@ -1,9 +1,17 @@
+from django.conf import settings
 from django.core.exceptions import (
     ImproperlyConfigured,
+    ValidationError,  # noqa: F401
 )
+from django.core.validators import URLValidator, validate_email  # noqa: F401
 from django.http import (
+    HttpRequest,  # noqa: F401
+    HttpResponse,  # noqa: F401
+    HttpResponseRedirect,  # noqa: F401
     QueryDict,  # noqa: F401
 )
+from django.http.response import HttpResponseBase  # noqa: F401
+from django.shortcuts import render  # noqa: F401
 from django.template import RequestContext
 from django.template.backends.django import Template as DjangoLoadedTemplate
 from django.template.context_processors import csrf as csrf_
@@ -13,13 +21,14 @@ from django.template.loader import (
     render_to_string,
 )
 from django.template.utils import InvalidTemplateEngineError
+from django.utils.encoding import smart_str  # noqa: F401
 from django.utils.html import format_html as django_format_html
 from django.utils.safestring import mark_safe
+from django.utils.text import slugify  # noqa: F401
 
 DjangoTemplate = None
 JinjaTemplate = None
 
-from django.conf import settings
 
 template_types = tuple()
 
@@ -48,7 +57,7 @@ class Template:
     def __init__(self, template_string):
         self.s = template_string
 
-    def render(self, context):
+    def render(self, context):  # noqa: F811
         if DjangoTemplate is not None:
             return DjangoTemplate(self.s).render(context=context)
         else:

@@ -1,7 +1,6 @@
 import itertools
 import linecache
 import logging
-import os
 import re
 import sys
 import threading
@@ -14,7 +13,9 @@ from datetime import (
 from logging import addLevelName
 from time import monotonic
 
+from django.conf import settings
 from django.db import connections
+from django.db.backends import utils as django_db_utils
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.http import HttpResponse
 
@@ -34,9 +35,6 @@ try:
 except ImportError:
     colored = no_coloring
 
-
-from django.conf import settings
-from django.db.backends import utils as django_db_utils
 
 log = logging.getLogger('db')
 IOMMI_SQL_LOG = logging.INFO + 1
@@ -199,7 +197,7 @@ def colorize(text, fg, bold=False):
 
 
 def format_sql(text, width=60, duration=None, short_limit=120):
-    BASE_COLORS = {
+    base_colors = {
         'SELECT': 'green',
         'INSERT': 'magenta',
         'UPDATE': 'orange',
@@ -223,9 +221,9 @@ def format_sql(text, width=60, duration=None, short_limit=120):
             bold = False
             if sql_keyword_re.match(token):
                 bold = True
-                if _first and token in BASE_COLORS:
+                if _first and token in base_colors:
                     _first = False
-                    fg = BASE_COLORS[token]
+                    fg = base_colors[token]
                 if not short:
                     if token in ('AND', 'OR', 'LEFT', 'INNER', 'FROM', 'WHERE', 'ORDER', 'LIMIT'):
                         yield format_html('<span><br>&nbsp;</span>')
@@ -380,14 +378,13 @@ def format_clickable_filename(file_name, line, fn, extra=None):
     if fn is None:
         fn = '<unknown>'
 
-    return f'  File "{file_name}", line {line}, in {fn} => {extra.strip()}'
+    return f'  File "{file_name}", line {line}, in {fn} => {extra.strip()}'.rstrip()
 
 
 def sql_debug_format_stack_trace(frame):
     if frame is None:
         return None
 
-    base_path = os.path.abspath(os.path.join(settings.BASE_DIR, '..')) + "/"
     lines = []
     skip_template_code = False
 

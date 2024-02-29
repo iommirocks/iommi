@@ -494,8 +494,7 @@ def test_whitelist_dunder_weakref():
     class Foo:
         pass
 
-    # noinspection PyPep8Naming
-    Bar = declarative(str)(Foo)
+    Bar = declarative(str)(Foo)  # noqa: N806
 
     assert Bar.__dict__ is not Foo.__dict__
     # noinspection PyUnresolvedReferences

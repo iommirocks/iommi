@@ -584,9 +584,9 @@ def test_attribute_evaluation_missed_special_handling():
 def test_extra_params():
     class MyPage(Page):
         class Meta:
-            extra_params = lambda x, **_: dict(
-                y=x + 1,
-            )
+            @staticmethod
+            def extra_params(x, **_):
+                return dict(y=x + 1)
 
         content = Template('x={{params.x}} y={{params.y}}')
 
