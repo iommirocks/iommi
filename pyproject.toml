@@ -1,15 +1,24 @@
-[tool.black]
+[tool.ruff]
+exclude = [
+    "docs",
+    'docs/test_doc_styles.py',
+]
 line-length = 120
-skip-string-normalization = true
-target-version = ['py38']
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-    \.git
-    | venv
-  )/
-)
-'''
-[flake8]
-exclude = 'docs/test_doc_styles.py'
+
+[tool.ruff.lint]
+ignore = [
+    "E501",  # Line too long
+    "N801",  # Class name should use CapWords convention
+    "UP032",  # Use f-string instead of format call
+]
+select = [
+    "E",
+    "F",
+    "I",
+    "N",
+    "W",
+    "UP",
+]
+
+[tool.ruff.format]
+quote-style = "preserve"

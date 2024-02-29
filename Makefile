@@ -1,4 +1,4 @@
-.PHONY: clean-pyc clean-build docs clean lint test coverage docs dist tag release-check
+.PHONY: clean-pyc clean-build docs clean lint ruff ruff-format test coverage docs dist tag release-check
 
 help:
 	@echo "clean-build - remove build artifacts"
@@ -29,14 +29,13 @@ clean-pyc:
 clean-docs:
 	rm -f docs/tri*.rst
 
-lint:
-	tox -e lint
+lint: ruff
 
-black:
-	tox -e black
+ruff:
+	tox -e venv -- ruff .
 
-blackd:
-	tox -e black -- -m blackd
+ruff-format:
+	tox -e venv -- ruff format .
 
 test-all:
 	tox --skip-missing-interpreters
