@@ -77,9 +77,8 @@ from tests.models import (
 
 
 # This function is here to avoid declaring the query at import time, which is annoying when trying to debug unrelated tests
-# noinspection PyPep8Naming
 @pytest.fixture
-def MyTestQuery():
+def MyTestQuery():  # noqa: N802
     class MyTestQuery(Query):
         foo_name = Filter(attr='foo', freetext=True, field__include=True)
         bar_name = Filter.case_sensitive(attr='bar', freetext=True, field__include=True)
@@ -119,12 +118,12 @@ def test_include():
     assert list(ShowQuery().bind(request=req('get', foo='include')).filters.keys()) == ['foo', 'bar']
 
 
-def test_empty_string(MyTestQuery):
+def test_empty_string(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('')) == repr(Q())
 
 
-def test_unknown_field(MyTestQuery):
+def test_unknown_field(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse_query_string('unknown_filter=1')
@@ -133,7 +132,7 @@ def test_unknown_field(MyTestQuery):
     assert isinstance(e.value, QueryException)
 
 
-def test_unknown_field_wrong_case(MyTestQuery):
+def test_unknown_field_wrong_case(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse_query_string('unknown_filTER=1')
@@ -142,7 +141,7 @@ def test_unknown_field_wrong_case(MyTestQuery):
     assert isinstance(e.value, QueryException)
 
 
-def test_freetext(MyTestQuery):
+def test_freetext(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     expected = repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
     assert repr(query.parse_query_string('"asd"')) == expected
@@ -152,28 +151,28 @@ def test_freetext(MyTestQuery):
     assert repr(query2.get_q()) == expected
 
 
-def test_or(MyTestQuery):
+def test_or(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name="asd" or bar_name = 7')) == repr(
         Q(**{'foo__iexact': 'asd'}) | Q(**{'bar__exact': '7'})
     )
 
 
-def test_and(MyTestQuery):
+def test_and(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name="asd" and bar_name = 7')) == repr(
         Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'})
     )
 
 
-def test_negation(MyTestQuery):
+def test_negation(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name!:"asd" and bar_name != 7')) == repr(
         ~Q(**{'foo__icontains': 'asd'}) & ~Q(**{'bar__exact': '7'})
     )
 
 
-def test_precedence(MyTestQuery):
+def test_precedence(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name="asd" and bar_name = 7 or baz_name = 11')) == repr(
         (Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'})) | Q(**{'baz__iexact': '11'})
@@ -196,19 +195,19 @@ def test_precedence(MyTestQuery):
         (':', 'icontains'),
     ],
 )
-def test_ops(op, django_op, MyTestQuery):
+def test_ops(op, django_op, MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name%sbar' % op)) == repr(Q(**{'foo__%s' % django_op: 'bar'}))
 
 
-def test_parenthesis(MyTestQuery):
+def test_parenthesis(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name="asd" and (bar_name = 7 or baz_name = 11)')) == repr(
         Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': '7'}) | Q(**{'baz__iexact': '11'}))
     )
 
 
-def test_request_to_q_advanced(MyTestQuery):
+def test_request_to_q_advanced(MyTestQuery):  # noqa: N803
     q = MyTestQuery().bind(request=req('get'))
     query = MyTestQuery().bind(
         request=req('get', **{q.get_advanced_query_param(): 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'})
@@ -243,7 +242,7 @@ def test_boolean_filter():
     assert str(e.value) == '9 is not a valid boolean value'
 
 
-def test_request_to_q_simple(MyTestQuery):
+def test_request_to_q_simple(MyTestQuery):  # noqa: N803
     class Query2(MyTestQuery):
         bazaar = Filter.boolean(attr='quux__bar__bazaar', field__include=True)
 
@@ -462,17 +461,17 @@ def test_none_attr_with_value_to_q():
     assert q.get_q() == Q(bazonk='foo')
 
 
-def test_request_to_q_freetext(MyTestQuery):
+def test_request_to_q_freetext(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=req('get', **{FREETEXT_SEARCH_NAME: "asd"}))
     assert repr(query.get_q()) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
 
 
-def test_self_reference_with_f_object(MyTestQuery):
+def test_self_reference_with_f_object(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name=bar_name')) == repr(Q(**{'foo__iexact': F('bar')}))
 
 
-def test_null(MyTestQuery):
+def test_null(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name=null')) == repr(Q(**{'foo': None}))
 
@@ -506,7 +505,7 @@ def test_relative_date():
         assert str(e.value) == '"700q" is not a valid relative date. 700 is too big (max is 166).'
 
 
-def test_invalid_syntax(MyTestQuery):
+def test_invalid_syntax(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse_query_string('??asdadad213124av@$#$#')
@@ -576,12 +575,12 @@ def test_choice_queryset():
         query2 = Query2().bind(
             request=req(
                 'get',
-                **{'-': '-', query2.get_advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))},
+                **{'-': '-', query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo))},
             ),
         )
         with pytest.raises(QueryException) as e:
             query2.get_q()
-        assert ('Invalid operator "%s" for filter "foo"' % invalid_op) in str(e)
+        assert ('Invalid operator "{}" for filter "foo"'.format(invalid_op)) in str(e)
 
     # test a string with the contents "null"
     assert repr(query2.parse_query_string('foo="null"')) == repr(Q(foo=None))
@@ -665,7 +664,7 @@ def test_multi_choice_queryset():
         query2 = Query2().bind(
             request=req(
                 'get',
-                **{'-': '-', query2.get_advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))},
+                **{'-': '-', query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo))},
             )
         )
         with pytest.raises(QueryException) as e:
@@ -986,12 +985,12 @@ def test_all_filter_shortcuts():
         assert filter.extra.get('fancy'), name
 
 
-def test_pk(MyTestQuery):
+def test_pk(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     assert repr(query.parse_query_string('foo_name.pk=7')) == repr(Q(**{'foo__pk': 7}))
 
 
-def test_pk_error_message_1(MyTestQuery):
+def test_pk_error_message_1(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse_query_string('foo_name.pk=foo')
@@ -999,7 +998,7 @@ def test_pk_error_message_1(MyTestQuery):
     assert str(e.value) == 'Could not interpret foo as an integer'
 
 
-def test_pk_error_message_2(MyTestQuery):
+def test_pk_error_message_2(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse_query_string('foo_name.pk:7')
@@ -1019,7 +1018,7 @@ def test_error_message_when_trying_freetext_via_advanced_query_when_no_freetext_
     assert str(e.value) == 'There are no freetext filters available'
 
 
-def test_custom_query_name(MyTestQuery):
+def test_custom_query_name(MyTestQuery):  # noqa: N803
     query = MyTestQuery(filters__foo_name__query_name='bar').bind(request=None)
     assert repr(query.parse_query_string('bar=7')) == repr(Q(**{'foo__iexact': '7'}))
     assert repr(query.parse_query_string('bar.pk=7')) == repr(Q(**{'foo__pk': 7}))

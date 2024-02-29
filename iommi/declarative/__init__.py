@@ -35,7 +35,7 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
     def decorator(class_to_decorate: Type[T]) -> Type[T]:
         class DeclarativeMeta(class_to_decorate.__class__):  # type:ignore
             # noinspection PyTypeChecker,PyMethodParameters
-            def __init__(cls, name, bases, dict_):
+            def __init__(cls, name, bases, dict_):  # noqa: N805
                 members = get_members(
                     cls, member_class=member_class, is_member=is_member, sort_key=sort_key, _parameter=parameter
                 )

@@ -152,7 +152,7 @@ def to_string_surrounded_by_quote(v):
 
 
 def value_to_str_for_query(filter, v):
-    if type(v) == bool:
+    if isinstance(v, bool):
         return {True: '1', False: '0'}.get(v)
     if type(v) in (int, float):
         return str(v)

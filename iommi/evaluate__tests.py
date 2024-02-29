@@ -203,7 +203,8 @@ def test_get_signature_on_namespace_does_not_modify_its_contents():
 
 
 def test_match_empty():
-    f = lambda **_: 17
+    def f(**_):
+        return 17
     assert evaluate(f, x=1, __match_empty=False) is f
     assert evaluate(f, x=1, __match_empty=True) == 17
 

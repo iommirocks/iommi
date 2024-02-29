@@ -416,7 +416,7 @@ class B_implicit_super_args(A):
 
 
 @pytest.mark.parametrize('B', [B_with_super_classmethod, B_explicit_super_args, B_implicit_super_args])
-def test_super_shortcut_shadow(B):
+def test_super_shortcut_shadow(B):  # noqa: N803
     assert B.f([]) == [
         'This is B.f',
         'This is A.f',

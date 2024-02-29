@@ -41,7 +41,9 @@ def test_debug_tree(settings):
         foo = 'foo'
 
         class Meta:
-            endpoints__fisk__func = lambda **_: None
+            @staticmethod
+            def endpoints__fisk__func(**_):
+                return None
 
     class MyPage(Page):
         bar = 'bar'

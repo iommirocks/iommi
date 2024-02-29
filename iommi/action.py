@@ -196,7 +196,7 @@ def group_actions(actions: Dict[str, Action]):
 
     grouped_actions: List[Tuple[str, str, List[Action]]] = [
         (group_name, slugify(group_name), list(actions_in_group))
-        for group_name, actions_in_group in groupby(actions_with_group, key=lambda l: l.group)
+        for group_name, actions_in_group in groupby(actions_with_group, key=lambda x: x.group)
     ]
 
     for _, _, actions_in_group in grouped_actions:

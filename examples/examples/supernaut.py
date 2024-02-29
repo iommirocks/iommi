@@ -55,7 +55,11 @@ class AlbumTable(Table):
     class Meta:
         auto__model = Album
         page_size = 20
-        columns__name__cell__url = lambda row, **_: row.get_absolute_url()
+
+        @staticmethod
+        def columns__name__cell__url(row, **_):
+            return row.get_absolute_url()
+
         columns__name__filter__include = True
         columns__year__filter__include = True
         columns__year__filter__field__include = False
@@ -72,7 +76,11 @@ class AlbumTable(Table):
 class ArtistTable(Table):
     class Meta:
         auto__model = Artist
-        columns__name__cell__url = lambda row, **_: row.get_absolute_url()
+
+        @staticmethod
+        def columns__name__cell__url(row, **_):
+            return row.get_absolute_url()
+
         columns__name__filter__include = True
 
 

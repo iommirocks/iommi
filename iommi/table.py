@@ -1558,6 +1558,8 @@ class TableAutoConfig(AutoConfig):
 
 
 def endpoint__csv(table, **_):
+    from datetime import timezone
+
     columns = [c for c in values(table.columns) if c.extra_evaluated.get('report_name')]
     csv_safe_column_indexes = {i for i, c in enumerate(values(table.columns)) if 'csv_whitelist' in c.extra}
     assert columns, 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
@@ -1615,7 +1617,7 @@ def endpoint__csv(table, **_):
     response['Content-Disposition'] = smart_str(
         "attachment; filename*=UTF-8''{value}".format(value=quote_plus(filename))
     )
-    response['Last-Modified'] = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+    response['Last-Modified'] = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT')
     return response
 
 
@@ -1707,11 +1709,15 @@ class Table(Part, Tag):
         page_class = Page
         cells_class = Cells
         row_group_class = RowGroup
-        endpoints__tbody__func = lambda table, **_: {
-            'html': table.container.__html__(
-                render=lambda fragment, context: fragment.render_text_or_children(context=context)
-            )
-        }
+
+        @staticmethod
+        def endpoints__tbody__func(table, **_):
+            return {
+                'html': table.container.__html__(
+                    render=lambda fragment, context: fragment.render_text_or_children(context=context)
+                )
+            }
+
         endpoints__csv__func = endpoint__csv
 
         container__attrs = Namespace(

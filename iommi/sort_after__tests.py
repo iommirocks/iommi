@@ -23,7 +23,7 @@ def test_order_after_0():
     )
 
 
-def test_order_after_LAST():
+def test_order_after_LAST():  # noqa: N802
     sorts_right(
         dict(
             foo=Struct(expected_position=0),

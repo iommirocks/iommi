@@ -340,7 +340,7 @@ class Admin(Page):
                         app_name=app_name,
                         model_name=app_name,
                         name=model._meta.verbose_name_plural.capitalize(),
-                        url='%s/%s/' % (app_name, model_name),
+                        url='{}/{}/'.format(app_name, model_name),
                         format=lambda row, **_: row.name,
                         key=key,
                     )

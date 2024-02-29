@@ -113,7 +113,10 @@ def form_example_5(request):
 
 @example(gettext("Custom actions can be added to forms"))
 def form_example_6(request):
-    do_nothing = lambda **_: None
+    @staticmethod
+    def do_nothing(**_):
+        return None
+
     return Form.edit(
         auto__instance=Artist.objects.all().first(),
         actions=dict(
