@@ -9,24 +9,24 @@ from os.path import (
 from django.http import HttpResponse
 from django.template.loader import get_template
 
-from iommi.struct import Struct
-
 from iommi._web_compat import (
-    format_html,
     HttpRequest,
-    mark_safe,
     Template,
+    format_html,
+    mark_safe,
 )
 from iommi.base import items
 from iommi.member import (
     MemberBinder,
     Members,
 )
+from iommi.struct import Struct
 from iommi.traversable import (
-    declared_members,
     PathNotFoundException,
     Traversable,
+    declared_members,
 )
+
 from ._web_compat import settings
 
 
@@ -191,7 +191,7 @@ def endpoint__debug_templates_used(endpoint, request, **_):
                 </style>
             </head>
             <body>
-                <ul>       
+                <ul>
                     {}
                 </ul>
             </body>

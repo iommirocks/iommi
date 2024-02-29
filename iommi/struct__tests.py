@@ -6,8 +6,8 @@ import pytest
 from iommi.struct import (
     Frozen,
     FrozenStruct,
-    merged,
     Struct,
+    merged,
 )
 
 

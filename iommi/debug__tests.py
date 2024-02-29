@@ -1,5 +1,4 @@
 import pytest
-from iommi.struct import Struct
 
 from iommi import (
     Field,
@@ -16,6 +15,7 @@ from iommi.debug import (
     source_url_from_part,
 )
 from iommi.endpoint import find_target
+from iommi.struct import Struct
 from tests import debug_tests_stuff
 from tests.helpers import req
 

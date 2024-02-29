@@ -4,18 +4,18 @@ from typing import (
 )
 
 from iommi._web_compat import (
+    Template,
     format_html,
     render_template,
-    Template,
 )
 from iommi.attrs import (
     Attrs,
     render_attrs,
 )
 from iommi.base import (
-    capitalize,
     MISSING,
     NOT_BOUND_MESSAGE,
+    capitalize,
     values,
 )
 from iommi.declarative.dispatch import dispatch
@@ -35,9 +35,9 @@ from iommi.member import (
     refine_done_members,
 )
 from iommi.part import (
-    as_html,
     Part,
     PartType,
+    as_html,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements

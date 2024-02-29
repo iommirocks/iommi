@@ -4,8 +4,6 @@ from typing import (
     Type,
 )
 
-from iommi.struct import Struct
-
 from iommi.base import (
     items,
     keys,
@@ -20,6 +18,7 @@ from iommi.refinable import (
     RefinableMembers,
 )
 from iommi.sort_after import sort_after
+from iommi.struct import Struct
 from iommi.traversable import (
     Traversable,
 )

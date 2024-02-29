@@ -6,6 +6,7 @@ from typing import (
     Union,
 )
 
+from django.conf import settings
 from django.core.exceptions import (
     MultipleObjectsReturned,
     ObjectDoesNotExist,
@@ -21,45 +22,44 @@ from django.utils.translation import (
     gettext,
     pgettext,
 )
-from django.conf import settings
 from pyparsing import (
-    alphanums,
-    alphas,
     Char,
     Forward,
     Group,
     Keyword,
-    oneOf,
     ParseException,
     ParseResults,
     QuotedString,
-    quotedString,
     Word,
     ZeroOrMore,
+    alphanums,
+    alphas,
+    oneOf,
+    quotedString,
 )
 
 from iommi._web_compat import (
-    render_template,
     Template,
     ValidationError,
+    render_template,
 )
 from iommi.action import (
     Action,
 )
 from iommi.base import (
+    MISSING,
+    NOT_BOUND_MESSAGE,
     items,
     keys,
-    MISSING,
     model_and_rows,
-    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    getattr_path,
     Namespace,
+    getattr_path,
     setdefaults_path,
 )
 from iommi.declarative.with_meta import with_meta
@@ -69,12 +69,12 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.form import (
+    Form,
     bool_parse,
     boolean_tristate__parse,
     date_parse,
     datetime_parse,
     float_parse,
-    Form,
     int_parse,
     time_parse,
 )
@@ -83,10 +83,10 @@ from iommi.fragment import (
 )
 from iommi.from_model import (
     AutoConfig,
+    NoRegisteredSearchFieldException,
     create_members_from_model,
     get_search_fields,
     member_from_model,
-    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_member,
@@ -101,9 +101,9 @@ from iommi.refinable import (
     EvaluatedRefinable,
     Prio,
     Refinable,
-    refinable,
     RefinableMembers,
     SpecialEvaluatedRefinable,
+    refinable,
 )
 from iommi.shortcut import (
     Shortcut,

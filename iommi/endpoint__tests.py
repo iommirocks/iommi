@@ -3,24 +3,24 @@ import json
 import pytest
 from django.http import HttpResponse
 from django.test import override_settings
-from iommi.struct import Struct
 
 from iommi import (
     Field,
     Form,
-    html,
     Page,
     Part,
     Table,
+    html,
 )
 from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
-    find_target,
     InvalidEndpointPathException,
+    find_target,
     path_join,
     perform_post_dispatch,
 )
 from iommi.part import request_data
+from iommi.struct import Struct
 from iommi.traversable import (
     build_long_path,
 )

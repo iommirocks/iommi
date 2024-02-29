@@ -1,8 +1,6 @@
 import pytest
 
 from docs.models import Album
-from iommi.struct import Struct
-
 from iommi.declarative.namespace import Namespace
 from iommi.edit_table import (
     EditColumn,
@@ -12,6 +10,7 @@ from iommi.form import (
     Field,
     Form,
 )
+from iommi.struct import Struct
 from iommi.table import (
     Column,
 )

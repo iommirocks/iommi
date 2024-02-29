@@ -1,7 +1,7 @@
 from copy import copy
 from enum import (
-    auto,
     Enum,
+    auto,
 )
 from typing import (
     Any,
@@ -13,8 +13,8 @@ from iommi.base import items
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
-    getattr_path,
     Namespace,
+    getattr_path,
 )
 from iommi.evaluate import get_signature
 

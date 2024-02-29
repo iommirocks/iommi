@@ -7,10 +7,10 @@ from examples import (
 )
 from examples.views import ExamplesPage
 from iommi import (
-    html,
     Menu,
     MenuItem,
     Page,
+    html,
 )
 
 examples = []

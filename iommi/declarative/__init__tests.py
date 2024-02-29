@@ -1,13 +1,12 @@
 import pytest
-from iommi.struct import Struct
 
 from iommi.declarative import (
     declarative,
     get_members,
 )
 from iommi.declarative.util import add_args_to_init_call
-
 from iommi.declarative.with_meta import with_meta
+from iommi.struct import Struct
 
 
 class Member(Struct):

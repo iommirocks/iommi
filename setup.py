@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import os
 import re
 from io import open
@@ -58,7 +57,7 @@ class ReleaseCheck(Command):
         pass
 
     def run(self):
-        from subprocess import check_output, CalledProcessError
+        from subprocess import CalledProcessError, check_output
 
         try:
             tag = check_output(['git', 'describe', 'HEAD']).strip().decode('utf8')

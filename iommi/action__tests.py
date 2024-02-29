@@ -1,7 +1,6 @@
 from typing import Dict
 
 import pytest
-from iommi.struct import Struct
 
 from iommi import (
     Action,
@@ -24,9 +23,10 @@ from iommi.member import (
 )
 from iommi.refinable import RefinableMembers
 from iommi.shortcut import (
-    is_shortcut,
     Shortcut,
+    is_shortcut,
 )
+from iommi.struct import Struct
 from iommi.traversable import (
     Traversable,
 )

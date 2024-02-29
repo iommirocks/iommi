@@ -5,8 +5,8 @@ from iommi.base import (
     keys,
 )
 from iommi.declarative.namespace import (
-    func_from_namespace,
     Namespace,
+    func_from_namespace,
 )
 
 _matches_cache = {}

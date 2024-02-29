@@ -4,8 +4,8 @@ from datetime import (
     timedelta,
 )
 
-import time_machine
 import pytest
+import time_machine
 
 from iommi._web_compat import ValidationError
 from iommi.datetime_parsing import (

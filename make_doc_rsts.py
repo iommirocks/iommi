@@ -5,14 +5,15 @@ from textwrap import (
     dedent,
     indent,
 )
+
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
 django.setup()
 
-from tests.helpers import create_iframe  # noqa: E402
 from iommi.docs import generate_api_docs_tests  # noqa: E402
 from iommi.struct import Struct  # noqa: E402
+from tests.helpers import create_iframe  # noqa: E402
 
 generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
 

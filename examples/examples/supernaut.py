@@ -8,11 +8,11 @@ from iommi import (
     Action,
     Column,
     Form,
-    html,
     Menu,
     MenuItem,
     Page,
     Table,
+    html,
 )
 from iommi.path import register_path_decoding
 

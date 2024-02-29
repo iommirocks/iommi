@@ -12,12 +12,12 @@ from django.views.decorators.csrf import csrf_exempt
 
 from iommi import (
     Asset,
-    html,
     Page,
     Part,
+    Style,
+    html,
     render_if_needed,
     render_part,
-    Style,
 )
 from iommi._web_compat import mark_safe
 from iommi.base import get_wrapped_view, items
@@ -460,14 +460,14 @@ def style_showcase(request, style=None, **_):
             return '#'
 
     from iommi import (
+        Action,
+        Column,
+        Field,
+        Form,
         Header,
         Menu,
         MenuItem,
-        Form,
-        Field,
-        Action,
         Table,
-        Column,
     )
 
     return Page(
@@ -522,10 +522,8 @@ def style_showcase(request, style=None, **_):
 
 
 def style_editor__select(**_):
+    from iommi import Action, Field, Form
     from iommi.style import _styles
-    from iommi import Form
-    from iommi import Field
-    from iommi import Action
 
     return Form(
         title='Select style to edit',
@@ -580,9 +578,9 @@ def style_editor__edit(request, **_):
 
 def style_editor__new(**_):
     from iommi import (
-        Header,
-        Form,
         Field,
+        Form,
+        Header,
     )
 
     def new_style(form, **_):

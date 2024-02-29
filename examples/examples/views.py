@@ -18,13 +18,13 @@ import iommi.part
 import iommi.style
 import iommi.traversable
 from iommi import (
+    LAST,
     Column,
     Fragment,
     Header,
-    html,
-    LAST,
     Page,
     Table,
+    html,
 )
 from iommi._web_compat import HttpResponseRedirect
 from iommi.admin import (
@@ -46,10 +46,11 @@ from iommi.menu import (
     MenuItem,
 )
 from iommi.shortcut import (
-    is_shortcut,
     Shortcut,
+    is_shortcut,
 )
 from iommi.style import validate_styles
+
 from .models import (
     Album,
     Artist,

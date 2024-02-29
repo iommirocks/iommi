@@ -213,25 +213,24 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Action,
             Column,
             Field,
+            Filter,
             Form,
             Menu,
             MenuItem,
             Query,
             Table,
-            Filter,
         )
-        from iommi.table import Paginator
+        from iommi.action import Actions
+        from iommi.admin import Admin
+        from iommi.error import Errors
+        from iommi.form import FieldGroup
+        from iommi.fragment import Container, Header
+        from iommi.live_edit import LiveEditPage
         from iommi.menu import (
             MenuBase,
             get_debug_menu,
         )
-        from iommi.error import Errors
-        from iommi.action import Actions
-        from iommi.admin import Admin
-        from iommi.fragment import Container
-        from iommi.fragment import Header
-        from iommi.live_edit import LiveEditPage
-        from iommi.form import FieldGroup
+        from iommi.table import Paginator
 
         default_classes = [
             Action,

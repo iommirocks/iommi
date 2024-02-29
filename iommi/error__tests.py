@@ -1,11 +1,10 @@
-from iommi.struct import Struct
-
 from iommi import (
     Form,
     html,
 )
 from iommi._web_compat import Template
 from iommi.error import Errors
+from iommi.struct import Struct
 from tests.helpers import req
 
 

@@ -11,25 +11,24 @@ class IommiConfig(AppConfig):
 
     def ready(self):
         from django.contrib.auth.models import (
-            User,
             Permission,
+            User,
         )
 
         register_search_fields(model=User, search_fields=['username'])
         register_search_fields(model=Permission, search_fields=['codename'])
 
-        from iommi import register_style
-        from iommi import Style
-        from iommi.style_test_base import test
+        from iommi import Style, register_style
         from iommi.style_base import base
         from iommi.style_bootstrap import bootstrap
         from iommi.style_bootstrap5 import bootstrap5
-        from iommi.style_semantic_ui import semantic_ui
-        from iommi.style_foundation import foundation
-        from iommi.style_django_admin import django_admin
-        from iommi.style_water import water
         from iommi.style_bulma import bulma
+        from iommi.style_django_admin import django_admin
+        from iommi.style_foundation import foundation
+        from iommi.style_semantic_ui import semantic_ui
+        from iommi.style_test_base import test
         from iommi.style_uikit import uikit
+        from iommi.style_water import water
 
         register_style('blank', Style(internal=True))
         register_style('base', base)
@@ -48,6 +47,7 @@ class IommiConfig(AppConfig):
             GenericForeignKey,
             GenericRelation,
         )
+
         from iommi import register_factory
         register_factory(GenericRelation, factory=None)
         register_factory(GenericForeignKey, factory=None)

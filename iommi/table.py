@@ -5,12 +5,13 @@ from datetime import (
     time,
 )
 from enum import (
-    auto,
     Enum,
+    auto,
 )
 from functools import total_ordering
 from io import StringIO
 from itertools import groupby
+from math import ceil
 from typing import (
     Any,
     Callable,
@@ -32,6 +33,7 @@ from django.db.models import (
 from django.http import (
     FileResponse,
 )
+from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.html import (
     conditional_escape,
@@ -40,17 +42,15 @@ from django.utils.translation import (
     gettext,
     gettext_lazy,
 )
-from django.utils import timezone
-from math import ceil
 
 from iommi._web_compat import (
-    format_html,
     HttpResponse,
     HttpResponseRedirect,
+    Template,
+    format_html,
     mark_safe,
     render_template,
     smart_str,
-    Template,
 )
 from iommi.action import (
     Action,
@@ -63,23 +63,23 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.base import (
+    MISSING,
+    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     items,
     keys,
-    MISSING,
     model_and_rows,
-    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
+    Namespace,
     flatten,
     getattr_path,
-    Namespace,
     setdefaults_path,
 )
 from iommi.declarative.with_meta import with_meta
@@ -97,18 +97,18 @@ from iommi.form import (
     Form,
 )
 from iommi.fragment import (
-    build_and_bind_h_tag,
     Fragment,
     Header,
-    html,
     Tag,
+    build_and_bind_h_tag,
+    html,
 )
 from iommi.from_model import (
     AutoConfig,
+    NoRegisteredSearchFieldException,
     create_members_from_model,
     get_search_fields,
     member_from_model,
-    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_member,
@@ -125,14 +125,14 @@ from iommi.query import (
     Query,
 )
 from iommi.refinable import (
-    evaluated_refinable,
     EvaluatedRefinable,
     Prio,
     Refinable,
-    refinable,
     RefinableMembers,
     RefinableObject,
     SpecialEvaluatedRefinable,
+    evaluated_refinable,
+    refinable,
 )
 from iommi.shortcut import (
     Shortcut,
@@ -140,12 +140,13 @@ from iommi.shortcut import (
 )
 from iommi.sort_after import LAST
 from iommi.struct import (
-    merged,
     Struct,
+    merged,
 )
 from iommi.traversable import (
     Traversable,
 )
+
 from ._db_compat import base_defaults_factory
 
 LAST = LAST
@@ -212,7 +213,7 @@ def prepare_headers(table):
 
 
 @total_ordering
-class MinType(object):
+class MinType:
     def __le__(self, other):
         return True
 
@@ -1222,7 +1223,7 @@ class RowConfig(RefinableObject, Tag):
         return {k: getattr(self, k) for k in keys(self.get_declared('refinable'))}
 
 
-class ColumnHeader(object):
+class ColumnHeader:
     """
     Internal class implementing a column header. For configuration options
     read the docs for :doc:`HeaderConfig`.

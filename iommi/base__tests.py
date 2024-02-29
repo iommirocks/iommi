@@ -1,30 +1,30 @@
 import pytest
 from django.http import HttpResponse
 from django.template import RequestContext
+from django.test import override_settings
 from django.utils import translation
 from django.utils.safestring import (
-    mark_safe,
     SafeText,
+    mark_safe,
 )
 from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
-from django.test import override_settings
-from iommi.struct import Struct
 
 from iommi import (
-    Fragment,
     MISSING,
+    Fragment,
     Page,
 )
 from iommi._web_compat import Template
 from iommi.base import (
+    UnknownMissingValueException,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     get_wrapped_view,
     model_and_rows,
-    UnknownMissingValueException,
 )
+from iommi.struct import Struct
 from tests.helpers import req
 from tests.models import Foo
 

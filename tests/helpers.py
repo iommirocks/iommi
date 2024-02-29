@@ -11,9 +11,9 @@ from django.test import RequestFactory
 from django.urls import URLPattern
 
 from iommi import (
+    Table,
     middleware,
     render_if_needed,
-    Table,
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch

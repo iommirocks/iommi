@@ -4,15 +4,16 @@ from pathlib import Path
 import pytest
 from django.test import override_settings
 from django.views.decorators.csrf import csrf_exempt
+
 from iommi import (
     Page,
     register_style,
 )
 from iommi._web_compat import HttpResponse
 from iommi.live_edit import (
+    Middleware,
     dangerous_execute_code,
     live_edit_view,
-    Middleware,
     orig_reload,
     should_edit,
     style_editor__edit,
@@ -21,7 +22,6 @@ from iommi.live_edit import (
     style_showcase,
 )
 from iommi.part import render_root
-from iommi.style import unregister_style
 from tests.helpers import req
 
 

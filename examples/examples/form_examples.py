@@ -10,7 +10,6 @@ from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
-from iommi.struct import Struct
 
 from examples import (
     example_adding_decorator,
@@ -22,18 +21,19 @@ from examples.models import (
     Track,
 )
 from examples.views import (
-    all_field_sorts,
     ExamplesPage,
+    all_field_sorts,
 )
 from iommi import (
     Action,
     Field,
     Form,
     Header,
-    html,
     Page,
+    html,
 )
 from iommi.form import choice_parse
+from iommi.struct import Struct
 
 examples = []
 

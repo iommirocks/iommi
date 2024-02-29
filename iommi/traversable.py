@@ -9,8 +9,8 @@ from iommi.attrs import (
     evaluate_attrs,
 )
 from iommi.base import (
-    items,
     NOT_BOUND_MESSAGE,
+    items,
 )
 from iommi.declarative.namespace import Namespace
 from iommi.evaluate import (
@@ -25,16 +25,16 @@ from iommi.evaluate import (
     signature_from_kwargs,
 )
 from iommi.refinable import (
-    evaluated_refinable,
     EvaluatedRefinable,
-    get_special_evaluated_attributes,
     Prio,
     Refinable,
-    refinable,
     RefinableMembers,
     RefinableObject,
+    evaluated_refinable,
+    get_special_evaluated_attributes,
+    refinable,
 )
-from iommi.struct import merged, Struct
+from iommi.struct import Struct, merged
 from iommi.style import Style
 
 # Backward compatible definition

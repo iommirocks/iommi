@@ -12,8 +12,8 @@ from iommi.docs import (
 )
 from iommi.refinable import (
     Refinable,
-    refinable,
     RefinableObject,
+    refinable,
 )
 from iommi.shortcut import (
     Shortcut,
@@ -292,7 +292,7 @@ request = req('get')
 
 # language=rst
 """
-    
+
 Foo
 ===
 

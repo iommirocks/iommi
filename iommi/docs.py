@@ -13,13 +13,13 @@ from iommi import (
 from iommi.base import items
 from iommi.declarative import get_declared
 from iommi.declarative.namespace import (
-    flatten,
     Namespace,
+    flatten,
 )
 from iommi.refinable import (
     EvaluatedRefinable,
-    is_refinable_function,
     SpecialEvaluatedRefinable,
+    is_refinable_function,
 )
 from iommi.shortcut import (
     get_shortcuts_by_name,

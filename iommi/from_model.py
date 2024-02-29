@@ -1,7 +1,6 @@
 import warnings
 from typing import (
     Dict,
-    Iterator,
     List,
     Type,
 )
@@ -9,12 +8,13 @@ from typing import (
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     Field as DjangoField,
+)
+from django.db.models import (
     ManyToManyRel,
     ManyToOneRel,
-    OneToOneRel,
     Model,
+    OneToOneRel,
 )
-from iommi.struct import Struct
 
 from iommi.base import (
     MISSING,
@@ -30,6 +30,7 @@ from iommi.refinable import (
     RefinableObject,
     SpecialEvaluatedRefinable,
 )
+from iommi.struct import Struct
 
 
 def create_members_from_model(

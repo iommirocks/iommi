@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-
 from iommi.base import items
 
 try:

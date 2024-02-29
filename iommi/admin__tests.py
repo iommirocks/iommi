@@ -10,14 +10,14 @@ from django.urls import (
     include,
     path,
 )
-from iommi.struct import Struct
 
 from iommi.admin import (
     Admin,
-    collect_config,
     Messages,
+    collect_config,
 )
 from iommi.base import values
+from iommi.struct import Struct
 from tests.helpers import (
     req,
     staff_req,

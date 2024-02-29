@@ -1,26 +1,20 @@
-from django.template.utils import InvalidTemplateEngineError
-
 from django.core.exceptions import (
     ImproperlyConfigured,
-    ValidationError,
 )
-from django.core.validators import validate_email, URLValidator
-from django.http import HttpResponse
-from django.http import QueryDict  # noqa: F401
+from django.http import (
+    QueryDict,  # noqa: F401
+)
 from django.template import RequestContext
-from django.template.loader import render_to_string
-from django.template.loader import get_template  # noqa: F401
-from django.template.exceptions import TemplateDoesNotExist  # noqa: F401
-from django.utils.html import format_html as django_format_html
-from django.utils.text import slugify
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.utils.encoding import smart_str
-from django.template.context_processors import csrf as csrf_
-from django.utils.safestring import mark_safe
-from django.http import HttpRequest
-from django.http.response import HttpResponseBase
 from django.template.backends.django import Template as DjangoLoadedTemplate
+from django.template.context_processors import csrf as csrf_
+from django.template.exceptions import TemplateDoesNotExist  # noqa: F401
+from django.template.loader import (
+    get_template,  # noqa: F401
+    render_to_string,
+)
+from django.template.utils import InvalidTemplateEngineError
+from django.utils.html import format_html as django_format_html
+from django.utils.safestring import mark_safe
 
 DjangoTemplate = None
 JinjaTemplate = None

@@ -1,7 +1,7 @@
 import pytest
-from iommi.struct import merged
 
 from iommi._db_compat import field_defaults_factory
+from iommi.struct import merged
 
 
 @pytest.mark.django

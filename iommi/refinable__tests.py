@@ -10,13 +10,13 @@ from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
 from iommi.declarative.with_meta import with_meta
 from iommi.refinable import (
-    prefixes,
     Prio,
-    refinable,
     Refinable,
     RefinableMembers,
     RefinableNamespace,
     RefinableObject,
+    prefixes,
+    refinable,
 )
 
 

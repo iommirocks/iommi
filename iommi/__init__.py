@@ -44,14 +44,14 @@ from iommi.query import (
 )
 from iommi.sort_after import LAST
 from iommi.style import (
-    register_style,
     Style,
+    register_style,
 )
 from iommi.table import (
     Column,
+    Table,
     register_cell_formatter,
     register_column_factory,
-    Table,
 )
 
 setup_db_compat()

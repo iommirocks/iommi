@@ -25,6 +25,7 @@ from iommi.thread_locals import (
     set_current_request,
 )
 
+
 def no_coloring(text, color=None, on_color=None, attrs=None):
     return text
 
@@ -36,7 +37,6 @@ except ImportError:
 
 from django.conf import settings
 from django.db.backends import utils as django_db_utils
-
 
 log = logging.getLogger('db')
 IOMMI_SQL_LOG = logging.INFO + 1

@@ -3,8 +3,8 @@ import sys
 import pytest
 
 from iommi.profiling import (
-    get_dot_path,
     Middleware,
+    get_dot_path,
 )
 from tests.helpers import (
     req,
