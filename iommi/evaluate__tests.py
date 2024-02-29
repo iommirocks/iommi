@@ -1,13 +1,14 @@
 import pytest
 
 from iommi.evaluate import (
+    Namespace,
     evaluate,
     evaluate_member,
     evaluate_strict,
     get_callable_description,
     get_signature,
-    has_catch_all_kwargs, matches,
-    Namespace,
+    has_catch_all_kwargs,
+    matches,
 )
 
 

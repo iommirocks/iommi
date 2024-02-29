@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.db.models import QuerySet
 from django.utils.encoding import force_str
-from django.utils.safestring import SafeText
 from django.utils.functional import keep_lazy_text
+from django.utils.safestring import SafeText
 
 NOT_BOUND_MESSAGE = (
     'This object is not bound. You need to call `.bind(request=request)` before you can call this function.'

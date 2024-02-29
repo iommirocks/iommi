@@ -1,8 +1,9 @@
 import django
+from django.core import validators
 from django.db import models
 from django.db.models import (
-    BooleanField,
     CASCADE,
+    BooleanField,
     CharField,
     FileField,
     FloatField,
@@ -12,7 +13,6 @@ from django.db.models import (
     Model,
     OneToOneField,
 )
-from django.core import validators
 
 from iommi import register_search_fields
 

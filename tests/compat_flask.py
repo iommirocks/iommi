@@ -3,9 +3,10 @@ from iommi.base import items
 
 class Jinja2RequestFactory:
     def method(self, method, url, params, body=None, root_path=None, **headers):
-        from flask.ctx import AppContext
-        from flask import Flask
         import os
+
+        from flask import Flask
+        from flask.ctx import AppContext
         if not root_path:
             root_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'iommi/', )
         app = AppContext(Flask('iommi', root_path=root_path))

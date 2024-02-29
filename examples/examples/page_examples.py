@@ -15,9 +15,9 @@ from examples.models import (
 from examples.views import ExamplesPage
 from iommi import (
     Form,
-    html,
     Page,
     Table,
+    html,
 )
 
 examples = []

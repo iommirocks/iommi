@@ -31,9 +31,9 @@ from iommi import (
 )
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
-    smart_str,
     Template,
     ValidationError,
+    smart_str,
 )
 from iommi.attrs import render_attrs
 from iommi.base import (
@@ -43,8 +43,8 @@ from iommi.base import (
 )
 from iommi.declarative import get_members
 from iommi.declarative.namespace import (
-    getattr_path,
     Namespace,
+    getattr_path,
     setattr_path,
 )
 from iommi.endpoint import (
@@ -53,6 +53,10 @@ from iommi.endpoint import (
     perform_ajax_dispatch,
 )
 from iommi.form import (
+    FULL_FORM_FROM_REQUEST,
+    INITIALS_FROM_GET,
+    Field,
+    Form,
     bool_parse,
     boolean_tristate__parse,
     choice_parse,
@@ -64,12 +68,8 @@ from iommi.form import (
     duration_parse,
     duration_render_value,
     email_parse,
-    Field,
     find_unique_prefixes,
     float_parse,
-    Form,
-    FULL_FORM_FROM_REQUEST,
-    INITIALS_FROM_GET,
     int_parse,
     register_field_factory,
     render_template,
@@ -83,8 +83,8 @@ from iommi.page import (
     Page,
 )
 from iommi.shortcut import (
-    is_shortcut,
     Shortcut,
+    is_shortcut,
     with_defaults,
 )
 from iommi.struct import (
@@ -109,8 +109,8 @@ from tests.models import (
     FormFromModelTest,
     TBar,
     TBaz,
-    TFoo,
     TestModelValidators,
+    TFoo,
     UniqueConstraintAlternativeTest,
     UniqueConstraintTest,
 )
@@ -781,14 +781,14 @@ def test_float_field():
 
 def test_email_field():
     assert Form(fields__foo=Field.email()).bind(request=req('get', foo=' 5  ')).fields.foo._errors == {
-        u'Enter a valid email address.'
+        'Enter a valid email address.'
     }
     assert Form(fields__foo=Field.email()).bind(request=req('get', foo='foo@example.com')).is_valid()
 
 
 def test_phone_field():
     assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo=' asdasd  ')).fields.foo._errors == {
-        u'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
+        'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
     }
     assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo='+1 (212) 123 4567')).is_valid()
     assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo='+46 70 123 123')).is_valid()
@@ -1075,7 +1075,7 @@ def test_display_name_callable():
 
 @pytest.mark.django_db
 def test_help_text_from_model2():
-    from tests.models import Foo, Bar
+    from tests.models import Bar, Foo
 
     # simple integer field
     form = Form(
@@ -1286,7 +1286,7 @@ def test_fields_from_model():
 
 @pytest.mark.django_db
 def test_field_from_model_foreign_key_choices():
-    from tests.models import Foo, Bar
+    from tests.models import Bar, Foo
 
     foo = Foo.objects.create(foo=1)
     foo2 = Foo.objects.create(foo=2)
@@ -1308,7 +1308,7 @@ def test_field_from_model_foreign_key_choices():
 
 @pytest.mark.django_db
 def test_field_validate_foreign_key_does_not_exist():
-    from tests.models import Foo, FieldFromModelForeignKeyTest
+    from tests.models import FieldFromModelForeignKeyTest, Foo
 
     foo = Foo.objects.create(foo=17)
     assert Foo.objects.count() == 1
@@ -1338,7 +1338,7 @@ def test_form_default_fields_from_model():
 @pytest.mark.django
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_required():
-    from django.db.models import TextField, Model
+    from django.db.models import Model, TextField
 
     class FooModel(Model):
         a = TextField(blank=True, null=True)
@@ -1355,7 +1355,7 @@ def test_field_from_model_required():
 @pytest.mark.django
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_label():
-    from django.db.models import TextField, Model
+    from django.db.models import Model, TextField
 
     class FieldFromModelModel(Model):
         a = TextField(verbose_name='FOOO bar FOO')
@@ -1444,7 +1444,7 @@ def test_form_from_model_invalid_form():
 
     assert len(actual_errors) == 4
     assert {'Could not convert string to float: true'} in actual_errors
-    assert {u'asd is not a valid boolean value'} in actual_errors
+    assert {'asd is not a valid boolean value'} in actual_errors
     assert {"invalid literal for int() with base 10: '1.1'"} in actual_errors or {
         "invalid literal for int() with base 10: u'1.1'"
     } in actual_errors
@@ -1452,9 +1452,9 @@ def test_form_from_model_invalid_form():
 
 @pytest.mark.django
 def test_field_from_model_supports_all_types():
-    from tests.models import Foo
-
     from django.db.models import fields
+
+    from tests.models import Foo
 
     not_supported = []
     blacklist = {
@@ -1478,9 +1478,9 @@ def test_field_from_model_supports_all_types():
 
 @pytest.mark.django
 def test_field_from_model_blank_handling():
-    from tests.models import Foo
-
     from django.db.models import CharField
+
+    from tests.models import Foo
 
     subject = Field.from_model(model=Foo, model_field=CharField(null=True, blank=False)).refine_done()
     assert True is subject.parse_empty_string_as_none
@@ -1491,9 +1491,9 @@ def test_field_from_model_blank_handling():
 
 @pytest.mark.django
 def test_overriding_parse_empty_string_as_none_in_shortcut():
-    from tests.models import Foo
-
     from django.db.models import CharField
+
+    from tests.models import Foo
 
     s = Shortcut(
         call_target=Field.text,
@@ -1515,7 +1515,8 @@ def test_overriding_parse_empty_string_as_none_in_shortcut():
 @pytest.mark.django_db
 def test_field_from_model_foreign_key():
     from django.db.models import QuerySet
-    from tests.models import Foo, FieldFromModelForeignKeyTest
+
+    from tests.models import FieldFromModelForeignKeyTest, Foo
 
     Foo.objects.create(foo=2)
     Foo.objects.create(foo=3)
@@ -1533,7 +1534,8 @@ def test_field_from_model_foreign_key():
 @pytest.mark.django_db
 def test_field_from_model_many_to_many():
     from django.db.models import QuerySet
-    from tests.models import Foo, FieldFromModelManyToManyTest
+
+    from tests.models import FieldFromModelManyToManyTest, Foo
 
     Foo.objects.create(foo=2)
     b = Foo.objects.create(foo=3)
@@ -1558,7 +1560,8 @@ def test_field_from_model_many_to_many():
 @pytest.mark.django_db
 def test_field_from_model_many_to_many_editable():
     from django.db.models import QuerySet
-    from tests.models import Foo, FieldFromModelManyToManyTest
+
+    from tests.models import FieldFromModelManyToManyTest, Foo
 
     Foo.objects.create(foo=2)
 
@@ -2399,7 +2402,7 @@ def test_field_from_model_subtype():
 
 @pytest.mark.django_db
 def test_create_members_from_model_path():
-    from tests.models import Foo, Bar
+    from tests.models import Bar, Foo
 
     class BarForm(Form):
         foo_foo = Field.from_model(
@@ -2418,7 +2421,7 @@ def test_create_members_from_model_path():
 
 @pytest.mark.django_db
 def test_create_members_from_model_path_via_include():
-    from tests.models import Foo, Bar
+    from tests.models import Bar, Foo
 
     bar = Bar.objects.create(foo=Foo.objects.create(foo=7))
     form = Form(

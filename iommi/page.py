@@ -8,10 +8,6 @@ from iommi._web_compat import (
     format_html,
     template_types,
 )
-from iommi.evaluate import (
-    evaluate_as_needed,
-    find_static_items,
-)
 from iommi.base import (
     build_as_view_wrapper,
     items,
@@ -24,19 +20,23 @@ from iommi.declarative.namespace import (
     Namespace,
 )
 from iommi.declarative.with_meta import with_meta
+from iommi.evaluate import (
+    evaluate_as_needed,
+    find_static_items,
+)
 from iommi.fragment import (
-    build_and_bind_h_tag,
     Fragment,
     Header,
+    build_and_bind_h_tag,
 )
 from iommi.member import (
     bind_members,
     refine_done_members,
 )
 from iommi.part import (
-    as_html,
     Part,
     PartType,
+    as_html,
 )
 from iommi.refinable import (
     EvaluatedRefinable,

@@ -1,6 +1,6 @@
-from django.utils.translation import gettext_lazy
 from django.templatetags.static import static
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy
 
 from iommi import Fragment
 from iommi.asset import Asset

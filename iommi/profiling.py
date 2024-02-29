@@ -18,7 +18,6 @@ from iommi._web_compat import (
 )
 from iommi.debug import src_debug_url_builder
 
-
 MEDIA_PREFIXES = ['/static/']
 
 _dot_search_paths = [
@@ -106,9 +105,9 @@ class HTMLStats(pstats.Stats):
         nice_path = strip_extra_path(nice_path, '/Python.framework/Versions')
 
         if should_bold:
-            print(f'<tr class="own">', file=self.stream)
+            print('<tr class="own">', file=self.stream)
         else:
-            print(f'<tr>', file=self.stream)
+            print('<tr>', file=self.stream)
 
         def f8(x):
             return "%8.3f" % x
@@ -128,7 +127,7 @@ class HTMLStats(pstats.Stats):
             print('<td></td>', file=self.stream)
         else:
             print(f'<td class="numeric">{f8(ct/cc)}</td>', file=self.stream)
-        
+
         if line_number and path:
             print(f'<td><a href="{src_debug_url_builder(path, line_number)}">{escape(function_name)}</a></td>', file=self.stream)
         else:
@@ -136,7 +135,7 @@ class HTMLStats(pstats.Stats):
 
         print(f'<td>{nice_path}</td>', file=self.stream)
         print(f'<td class="numeric">{line_number}</td>', file=self.stream)
-        print(f'</tr>', file=self.stream)
+        print('</tr>', file=self.stream)
 
 
 class Middleware:
@@ -171,7 +170,6 @@ class Middleware:
             for prof in request._iommi_prof:
                 prof.disable()
 
-            import pstats
 
             s = StringIO()
             ps = HTMLStats(*request._iommi_prof, stream=s)
@@ -243,25 +241,25 @@ class Middleware:
                             font-family: monospace;
                             white-space: pre-line;
                         }
-                        
+
                         div, table {
                             white-space: normal;
                         }
-                        
+
                         td, th {
                             white-space: nowrap;
                             padding-right: 0.5rem;
                             color: #666;
                         }
-                        
+
                         th {
                             text-align: left;
                         }
-                        
+
                         .numeric {
                             text-align: right;
                         }
-                        
+
                         .own td {
                             font-weight: bold;
                             color: black;
@@ -273,13 +271,13 @@ class Middleware:
                                 color: #bbb;
                             }
                             td, th {
-                                color: #888; 
+                                color: #888;
                             }
 
                             .own td {
                                 color: white;
                             }
-                            
+
                             a {
                                 color: #1d5aff;
                             }
@@ -293,7 +291,7 @@ class Middleware:
                         <a href="?_iommi_prof=graph">graph</a>
                         <a href="?_iommi_prof=snake">snakeviz</a>
                     </div>
-                    
+
                     <p></p>
                 '''
 

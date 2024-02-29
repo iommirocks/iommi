@@ -11,9 +11,9 @@ from iommi import (
     Fragment,
     Menu,
     MenuItem,
-    register_style,
     Style,
     Table,
+    register_style,
 )
 from iommi._web_compat import Template
 from iommi.base import (
@@ -36,19 +36,19 @@ from iommi.page import (
     Page,
 )
 from iommi.refinable import (
-    evaluated_refinable,
     EvaluatedRefinable,
     Refinable,
     RefinableMembers,
     SpecialEvaluatedRefinable,
+    evaluated_refinable,
 )
 from iommi.shortcut import (
     superinvoking_classmethod,
     with_defaults,
 )
 from iommi.traversable import (
-    build_long_path_by_path,
     Traversable,
+    build_long_path_by_path,
 )
 from tests.helpers import (
     Basket,

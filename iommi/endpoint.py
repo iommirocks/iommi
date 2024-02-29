@@ -7,9 +7,9 @@ from iommi.refinable import (
 )
 from iommi.shortcut import with_defaults
 from iommi.traversable import (
+    Traversable,
     get_long_path_by_path,
     get_path_by_long_path,
-    Traversable,
 )
 
 DISPATCH_PATH_SEPARATOR = '/'

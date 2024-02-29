@@ -2,8 +2,8 @@ import pytest
 
 from iommi import (
     Part,
-    register_style,
     Style,
+    register_style,
 )
 from iommi.declarative.dispatch import dispatch
 from iommi.refinable import (
@@ -12,10 +12,10 @@ from iommi.refinable import (
     RefinableObject,
 )
 from iommi.shortcut import (
-    get_shortcuts_by_name,
-    is_shortcut,
     Namespace,
     Shortcut,
+    get_shortcuts_by_name,
+    is_shortcut,
     shortcut,
     superinvoking_classmethod,
     with_defaults,

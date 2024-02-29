@@ -8,13 +8,11 @@ from docs.models import (
     Artist,
     Track,
 )
-
 from iommi.path import (
+    PathDecoder,
     camel_to_snake,
     decode_path,
     decode_path_components,
-    Decoder,
-    PathDecoder,
     register_path_decoding,
 )
 from tests.helpers import req

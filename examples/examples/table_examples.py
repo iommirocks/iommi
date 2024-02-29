@@ -14,17 +14,17 @@ from examples.models import (
     TFoo,
 )
 from examples.views import (
-    all_column_sorts,
     ExamplesPage,
+    all_column_sorts,
 )
 from iommi import (
     Action,
     Column,
     EditTable,
     Field,
-    html,
     Page,
     Table,
+    html,
 )
 
 examples = []
@@ -35,7 +35,7 @@ example = example_adding_decorator(examples)
 @example(gettext('Readme example 1'))
 def table_readme_example_1(request):
     # Say I have a class...
-    class Foo(object):
+    class Foo:
         def __init__(self, i):
             self.a = i
             self.b = 'foo %s' % (i % 3)
@@ -165,7 +165,7 @@ def table_two(request):
 
 @example(gettext('post handlers on lists'))
 def table_post_handler_on_lists(request):
-    class Foo(object):
+    class Foo:
         def __init__(self, i):
             self.a = i
             self.b = 'foo %s' % (i % 3)

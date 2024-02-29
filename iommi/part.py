@@ -10,16 +10,16 @@ from typing import (
 from django.core.serializers.json import DjangoJSONEncoder
 
 from iommi._web_compat import (
-    get_template_from_string,
     HttpResponse,
     HttpResponseBase,
-    render_template,
     Template,
+    get_template_from_string,
+    render_template,
 )
 from iommi.base import (
-    items,
     MISSING,
     NOT_BOUND_MESSAGE,
+    items,
 )
 from iommi.debug import (
     get_instantiated_at_info,
@@ -48,6 +48,7 @@ from iommi.style import (
 from iommi.traversable import (
     Traversable,
 )
+
 from ._web_compat import (
     QueryDict,
     settings,
@@ -222,8 +223,8 @@ def render_root(*, part, context, **render):
 
     title = get_title(part)
 
-    from iommi.debug import iommi_debug_panel
     from iommi import Page
+    from iommi.debug import iommi_debug_panel
     from iommi.fragment import Container
 
     request = part.get_request()

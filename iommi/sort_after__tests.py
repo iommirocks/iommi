@@ -1,15 +1,15 @@
 import pytest
-from iommi.sort_after import (
-    LAST,
-    SortAfterException,
-)
-from iommi.struct import Struct
 
 from iommi.base import (
     keys,
     values,
 )
-from iommi.sort_after import sort_after
+from iommi.sort_after import (
+    LAST,
+    SortAfterException,
+    sort_after,
+)
+from iommi.struct import Struct
 
 
 def test_order_after_0():

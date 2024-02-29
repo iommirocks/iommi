@@ -1,7 +1,7 @@
 from iommi import (
     Asset,
-    html,
     Page,
+    html,
 )
 from tests.helpers import (
     prettify,

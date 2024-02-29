@@ -9,15 +9,10 @@ from urllib.parse import (
     urlparse,
 )
 
-from django.utils.html import format_html
-
-from iommi.debug import local_debug_url_builder
-from iommi.struct import Struct
-
 from iommi import Fragment
 from iommi._web_compat import (
-    settings,
     Template,
+    settings,
 )
 from iommi.attrs import Attrs
 from iommi.base import (
@@ -47,6 +42,7 @@ from iommi.refinable import (
     SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
+from iommi.struct import Struct
 
 
 class MenuBase(Part, Tag):

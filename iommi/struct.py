@@ -61,7 +61,7 @@ class Struct(dict):
         return type(self)(self)
 
 
-class Frozen(object):
+class Frozen:
     """
     Mixin to create an immutable class.
     """

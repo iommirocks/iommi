@@ -1,6 +1,5 @@
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from iommi.struct import Struct
 
 from iommi import (
     Header,
@@ -14,6 +13,7 @@ from iommi.part import (
     render_root,
     request_data,
 )
+from iommi.struct import Struct
 from iommi.style import Style
 from iommi.style_base import base
 from tests.helpers import req

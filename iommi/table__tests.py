@@ -21,15 +21,15 @@ from docs.models import (
     Track,
 )
 from iommi import (
+    LAST,
     Action,
     Fragment,
-    html,
-    LAST,
     Page,
+    html,
 )
 from iommi._web_compat import (
-    mark_safe,
     Template,
+    mark_safe,
 )
 from iommi.base import (
     items,
@@ -38,8 +38,8 @@ from iommi.base import (
 from iommi.declarative import get_members
 from iommi.declarative.namespace import getattr_path
 from iommi.endpoint import (
-    find_target,
     InvalidEndpointPathException,
+    find_target,
     perform_ajax_dispatch,
 )
 from iommi.form import (
@@ -55,24 +55,24 @@ from iommi.query import (
     Query,
 )
 from iommi.shortcut import (
-    get_shortcuts_by_name,
-    is_shortcut,
     Namespace,
     Shortcut,
+    get_shortcuts_by_name,
+    is_shortcut,
     with_defaults,
 )
 from iommi.sql_trace import (
-    set_sql_debug,
     SQL_DEBUG_LEVEL_ALL,
+    set_sql_debug,
 )
 from iommi.table import (
-    bulk_delete__post_handler,
     Column,
+    Struct,
+    Table,
+    bulk_delete__post_handler,
     datetime_formatter,
     ordered_by_on_list,
     register_cell_formatter,
-    Struct,
-    Table,
     yes_no_formatter,
 )
 from tests.helpers import (
@@ -84,6 +84,7 @@ from tests.helpers import (
     verify_table_html,
 )
 from tests.models import (
+    T2,
     AutomaticUrl,
     AutomaticUrl2,
     BooleanFromModelTestModel,
@@ -95,7 +96,6 @@ from tests.models import (
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
-    T2,
     TBar,
     TBar2,
     TBaz,
@@ -971,10 +971,10 @@ def test_bulk_edit_table():
     t.render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (foos[0].pk, 1, u''),
-        (foos[1].pk, 2, u''),
-        (foos[2].pk, 3, u''),
-        (foos[3].pk, 4, u''),
+        (foos[0].pk, 1, ''),
+        (foos[1].pk, 2, ''),
+        (foos[2].pk, 3, ''),
+        (foos[3].pk, 4, ''),
     ]
 
     # Now do the bulk update
@@ -988,10 +988,10 @@ def test_bulk_edit_table():
     t.render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (foos[0].pk, 0, u'changed'),
-        (foos[1].pk, 0, u'changed'),
-        (foos[2].pk, 3, u''),
-        (foos[3].pk, 4, u''),
+        (foos[0].pk, 0, 'changed'),
+        (foos[1].pk, 0, 'changed'),
+        (foos[2].pk, 3, ''),
+        (foos[3].pk, 4, ''),
     ]
 
     # Test that empty field means "no change", even with the form set to not parse empty as None
@@ -1005,10 +1005,10 @@ def test_bulk_edit_table():
     t.render_to_response()
     assert t.bulk.fields.b.value == ''
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (foos[0].pk, 0, u'changed'),
-        (foos[1].pk, 0, u'changed'),
-        (foos[2].pk, 3, u''),
-        (foos[3].pk, 4, u''),
+        (foos[0].pk, 0, 'changed'),
+        (foos[1].pk, 0, 'changed'),
+        (foos[2].pk, 3, ''),
+        (foos[3].pk, 4, ''),
     ]
 
     # Test edit all feature
@@ -1017,10 +1017,10 @@ def test_bulk_edit_table():
     ).render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (foos[0].pk, 11, u'changed2'),
-        (foos[1].pk, 11, u'changed2'),
-        (foos[2].pk, 11, u'changed2'),
-        (foos[3].pk, 11, u'changed2'),
+        (foos[0].pk, 11, 'changed2'),
+        (foos[1].pk, 11, 'changed2'),
+        (foos[2].pk, 11, 'changed2'),
+        (foos[3].pk, 11, 'changed2'),
     ]
 
 
@@ -1876,7 +1876,7 @@ def test_default_formatters(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column()
 
-    class SomeType(object):
+    class SomeType:
         def __str__(self):
             return 'this should not end up in the table'  # pragma: no cover
 

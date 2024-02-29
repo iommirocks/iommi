@@ -1,9 +1,9 @@
 from django.template import RequestContext
 
 from iommi._web_compat import (
+    Template,
     format_html,
     render_template,
-    Template,
 )
 from iommi.form import (
     Field,

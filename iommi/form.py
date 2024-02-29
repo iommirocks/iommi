@@ -22,6 +22,7 @@ from typing import (
     Union,
 )
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import (
@@ -38,24 +39,20 @@ from django.db.models import (
 )
 from django.http.response import HttpResponseBase
 from django.template import Context
+from django.utils import timezone
 from django.utils.functional import Promise
 from django.utils.translation import gettext
-from django.utils import timezone
-from django.conf import settings
-
-from iommi.endpoint import DISPATCH_PREFIX
-from iommi.struct import Struct
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
-    csrf,
-    format_html,
     HttpResponseRedirect,
-    render_template,
     Template,
     URLValidator,
-    validate_email,
     ValidationError,
+    csrf,
+    format_html,
+    render_template,
+    validate_email,
 )
 from iommi.action import (
     Action,
@@ -64,12 +61,12 @@ from iommi.action import (
 )
 from iommi.attrs import Attrs
 from iommi.base import (
+    MISSING,
+    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     items,
-    MISSING,
-    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.datetime_parsing import (
@@ -80,31 +77,31 @@ from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
+    Namespace,
     flatten,
     getattr_path,
-    Namespace,
     setattr_path,
     setdefaults_path,
 )
-from iommi.shortcut import Shortcut
 from iommi.declarative.with_meta import with_meta
+from iommi.endpoint import DISPATCH_PREFIX
 from iommi.error import Errors
 from iommi.evaluate import (
     evaluate,
     evaluate_strict,
 )
 from iommi.fragment import (
-    build_and_bind_h_tag,
     Fragment,
     Header,
     Tag,
+    build_and_bind_h_tag,
 )
 from iommi.from_model import (
     AutoConfig,
+    NoRegisteredSearchFieldException,
     create_members_from_model,
     get_search_fields,
     member_from_model,
-    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_member,
@@ -119,16 +116,17 @@ from iommi.part import (
     request_data,
 )
 from iommi.refinable import (
-    evaluated_refinable,
     EvaluatedRefinable,
     Prio,
     Refinable,
-    refinable,
     RefinableMembers,
     SpecialEvaluatedRefinable,
+    evaluated_refinable,
+    refinable,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import Shortcut, with_defaults
 from iommi.sort_after import sort_after
+from iommi.struct import Struct
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True

@@ -1,6 +1,5 @@
-from iommi.shortcut import Shortcut
-
 from iommi.base import MISSING
+from iommi.shortcut import Shortcut
 
 
 def setup_db_compat():
@@ -18,11 +17,6 @@ def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSI
 
 
 def setup_db_compat_django():
-    from iommi.form import register_field_factory
-    from iommi.query import register_filter_factory
-    from iommi.table import register_column_factory
-    from iommi.sort_after import LAST
-
     from django.db.models import (
         AutoField,
         BinaryField,
@@ -40,6 +34,7 @@ def setup_db_compat_django():
         GenericIPAddressField,
         ImageField,
         IntegerField,
+        JSONField,
         ManyToManyField,
         ManyToManyRel,
         ManyToOneRel,
@@ -47,8 +42,12 @@ def setup_db_compat_django():
         TimeField,
         URLField,
         UUIDField,
-        JSONField,
     )
+
+    from iommi.form import register_field_factory
+    from iommi.query import register_filter_factory
+    from iommi.sort_after import LAST
+    from iommi.table import register_column_factory
 
     def _get_choices_from_model_choices(model_field):
         return [value for value, label in model_field.choices]

@@ -8,8 +8,8 @@ from django.test import override_settings
 
 from iommi import (
     Fragment,
-    html,
     Page,
+    html,
 )
 from iommi._web_compat import (
     Template,

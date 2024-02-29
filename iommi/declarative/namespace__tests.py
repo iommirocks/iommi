@@ -1,15 +1,15 @@
 import pytest
-from iommi.struct import Struct
 
 from iommi.declarative.namespace import (
     EMPTY,
+    Namespace,
     flatten,
     func_from_namespace,
     getattr_path,
-    Namespace,
     setattr_path,
     setdefaults_path,
 )
+from iommi.struct import Struct
 
 
 def test_getattr_path_and_setattr_path():

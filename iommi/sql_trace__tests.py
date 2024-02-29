@@ -12,9 +12,9 @@ import time_machine
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import path
-from iommi.struct import Struct
 
 from iommi.sql_trace import (
+    SQL_DEBUG_LEVEL_WORST,
     colorize,
     format_clickable_filename,
     format_sql,
@@ -24,11 +24,11 @@ from iommi.sql_trace import (
     safe_unicode_literal,
     set_sql_debug,
     sql_debug_format_stack_trace,
-    SQL_DEBUG_LEVEL_WORST,
     sql_debug_log_to_request,
     sql_debug_total_time,
     sql_debug_trace_sql,
 )
+from iommi.struct import Struct
 from iommi.thread_locals import set_current_request
 from tests.helpers import req
 
@@ -201,9 +201,9 @@ def test_sql_debug_format_stack_trace():
     frame = frames[-1]
 
     expected = """
-  File "foo2.py", line 1, in f => 
-  File "foo.py", line 1, in f => 
-  File "foo/django/template/bar", line 1, in f => 
+  File "foo2.py", line 1, in f =>
+  File "foo.py", line 1, in f =>
+  File "foo/django/template/bar", line 1, in f =>
   File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)
   File "foo.py", line 1, in asd =>
   """.strip()  # noqa: W291

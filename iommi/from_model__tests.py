@@ -17,12 +17,12 @@ from iommi import (
     Form,
 )
 from iommi.from_model import (
+    NoRegisteredSearchFieldException,
+    SearchFieldsAlreadyRegisteredException,
     get_field,
     get_field_path,
     get_search_fields,
-    NoRegisteredSearchFieldException,
     register_search_fields,
-    SearchFieldsAlreadyRegisteredException,
 )
 from iommi.shortcut import with_defaults
 from tests.helpers import req
@@ -139,7 +139,8 @@ def test_exclude_not_existing_error():
 @pytest.mark.django
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_factory_error_message():
-    from django.db.models import Field as DjangoField, Model
+    from django.db.models import Field as DjangoField
+    from django.db.models import Model
 
     class CustomField(DjangoField):
         pass

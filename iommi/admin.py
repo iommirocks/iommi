@@ -25,16 +25,16 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 
 from iommi import (
+    LAST,
     Field,
     Form,
     Fragment,
-    html,
-    LAST,
     Menu,
     MenuItem,
     Page,
-    render_part,
     Table,
+    html,
+    render_part,
 )
 from iommi._web_compat import format_html
 from iommi.base import (
@@ -45,8 +45,8 @@ from iommi.base import (
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    flatten,
     Namespace,
+    flatten,
     setdefaults_path,
 )
 from iommi.declarative.with_meta import with_meta

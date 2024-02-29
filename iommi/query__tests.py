@@ -3,6 +3,8 @@ from datetime import (
     date,
     datetime,
     time,
+)
+from datetime import (
     timezone as datetime_timezone,
 )
 
@@ -13,14 +15,14 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from django.utils import timezone
 from django.test import override_settings
+from django.utils import timezone
 
 from docs.models import Album
 from iommi import (
-    from_model,
     Style,
     Table,
+    from_model,
 )
 from iommi.base import (
     items,
@@ -38,19 +40,19 @@ from iommi.from_model import (
     register_search_fields,
 )
 from iommi.query import (
-    build_query_expression,
-    choice_queryset_value_to_q,
-    Filter,
     FREETEXT_SEARCH_NAME,
     Q_OPERATOR_BY_QUERY_OPERATOR,
+    Filter,
     Query,
     QueryException,
+    build_query_expression,
+    choice_queryset_value_to_q,
     value_to_str_for_query,
 )
 from iommi.shortcut import (
+    Shortcut,
     get_shortcuts_by_name,
     is_shortcut,
-    Shortcut,
     with_defaults,
 )
 from iommi.struct import Struct

@@ -5,12 +5,12 @@ from iommi import (
     Field,
     Form,
     Fragment,
-    html,
     Menu,
     MenuItem,
     Page,
     Query,
     Table,
+    html,
 )
 from iommi.attrs import render_attrs
 from iommi.base import items
@@ -22,12 +22,12 @@ from iommi.refinable import (
 )
 from iommi.shortcut import with_defaults
 from iommi.style import (
+    InvalidStyleConfigurationException,
+    Style,
     get_global_style,
     get_style_object,
-    InvalidStyleConfigurationException,
     register_style,
     resolve_style,
-    Style,
     validate_styles,
 )
 from iommi.style_base import base
@@ -179,8 +179,7 @@ def test_style_menu_active():
 
 
 def test_apply_checkbox_style():
-    from iommi import Form
-    from iommi import Field
+    from iommi import Field, Form
 
     class MyForm(Form):
         class Meta:
@@ -778,7 +777,7 @@ def test_warning_for_config_into_the_void():
 
 
 def test_boolean_column():
-    from iommi.table import Struct, Column
+    from iommi.table import Column, Struct
     from tests.helpers import verify_table_html
 
     class TestTable(Table):

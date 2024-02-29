@@ -1,7 +1,6 @@
 import functools
 import re
 import typing
-import warnings
 from contextlib import contextmanager
 
 from django.core.exceptions import ObjectDoesNotExist

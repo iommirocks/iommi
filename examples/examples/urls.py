@@ -8,14 +8,13 @@ from django.urls import (
 
 import examples.views as views
 from examples import (
+    experimental_examples,
     form_examples,
     menu_examples,
     page_examples,
     supernaut,
     table_examples,
-    experimental_examples,
 )
-
 
 urlpatterns = (
     [

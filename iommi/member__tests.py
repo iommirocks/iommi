@@ -2,10 +2,10 @@ import pytest
 
 from iommi import (
     Fragment,
-    html,
     Page,
-    register_style,
     Style,
+    html,
+    register_style,
 )
 from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
@@ -13,8 +13,8 @@ from iommi.endpoint import (
     find_target,
 )
 from iommi.member import (
-    bind_member,
     ForbiddenNamesException,
+    bind_member,
 )
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
@@ -147,8 +147,7 @@ def test_inclusion():
 
 
 def test_unapplied_config_does_not_remember_simple():
-    from iommi import Page
-    from iommi import html
+    from iommi import Page, html
 
     class MyPage(Page):
         link = html.a('Admin')
@@ -167,8 +166,7 @@ def test_override_grandchild():
 
 
 def test_unapplied_config_does_not_remember():
-    from iommi import Page
-    from iommi import html
+    from iommi import Page, html
 
     class MyPage(Page):
         header = html.h1(children__link=html.a('Admin'))
