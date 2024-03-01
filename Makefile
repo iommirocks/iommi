@@ -72,6 +72,7 @@ tag:
 release-check:
 	python setup.py release_check
 
+.PHONY: venv
 venv:
 	tox -e venv
 
