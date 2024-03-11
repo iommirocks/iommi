@@ -192,7 +192,7 @@ def prepare_headers(table):
         if column.sortable:
             params = params_of_request(request)
             param_path = path_join(table.iommi_path, 'order')
-            order = request.GET.get(param_path, None)
+            order = request.GET.get(param_path) or table.default_sort_order
             start_sort_desc = column.sort_default_desc
             params[param_path] = name if not start_sort_desc else '-' + name
             column.is_sorting = False
@@ -2232,7 +2232,8 @@ class Table(Part, Tag):
         if request is None:
             return
 
-        order = request.GET.get(path_join(self.iommi_path, 'order'), self.default_sort_order)
+        # `or self.default_sort_order` is on purpose here, because an empty string should go to default_sort_order too
+        order = request.GET.get(path_join(self.iommi_path, 'order')) or self.default_sort_order
         if order is not None:
             descending = order.startswith('-')
             order_field = order[1:] if descending else order
