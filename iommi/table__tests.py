@@ -4288,3 +4288,41 @@ def test_tbody_endpoint():
         actual_html=new_html,
         expected_html=expected_container_content,
     )
+
+
+@pytest.mark.django_db
+def test_default_sort_order_django_table_from_model():
+    foos = [
+        TFoo.objects.create(a=4711, b="c"),
+        TFoo.objects.create(a=17, b="a"),
+        TFoo.objects.create(a=42, b="b"),
+    ]
+
+    verify_table_html(
+        table=Table(auto__rows=TFoo.objects.all(), default_sort_order="-a"),
+        # language=html
+        expected_html=f"""
+            <table class="table" >
+                <thead>
+                    <tr>
+                        <th class="descending first_column iommi_sort_header sorted subheader"> <a href="?order=a"> A </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=b"> B </a> </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-pk="{foos[0].pk}">
+                        <td class="rj"> 4711 </td>
+                         <td> c </td>
+                    </tr>
+                    <tr data-pk="{foos[2].pk}">
+                        <td class="rj"> 42 </td>
+                        <td> b </td>
+                    </tr>
+                    <tr data-pk="{foos[1].pk}">
+                        <td class="rj"> 17 </td>
+                        <td> a </td>
+                    </tr>
+                </tbody>
+            </table>
+        """,
+    )
