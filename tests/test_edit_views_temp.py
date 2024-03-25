@@ -1,4 +1,3 @@
-
 from iommi._web_compat import HttpResponse
 
 

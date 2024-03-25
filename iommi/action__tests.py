@@ -109,7 +109,6 @@ def test_all_action_shortcuts():
             extra__fancy = True
 
     class ThingWithActions(Traversable):
-
         actions: Dict[str, Action] = RefinableMembers()
 
         def on_refine_done(self):

@@ -575,7 +575,10 @@ def test_choice_queryset():
         query2 = Query2().bind(
             request=req(
                 'get',
-                **{'-': '-', query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo))},
+                **{
+                    '-': '-',
+                    query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo)),
+                },
             ),
         )
         with pytest.raises(QueryException) as e:
@@ -664,7 +667,10 @@ def test_multi_choice_queryset():
         query2 = Query2().bind(
             request=req(
                 'get',
-                **{'-': '-', query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo))},
+                **{
+                    '-': '-',
+                    query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo)),
+                },
             )
         )
         with pytest.raises(QueryException) as e:

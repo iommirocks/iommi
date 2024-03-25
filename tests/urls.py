@@ -18,5 +18,5 @@ def dummy_view(request):
 
 urlpatterns = [
     path('dummy/', dummy_view, name='dummy_view'),
-    path('admin/', include(MyAdmin.urls()))
+    path('admin/', include(MyAdmin.urls())),
 ]

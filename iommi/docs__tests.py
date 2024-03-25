@@ -122,7 +122,9 @@ def test_generate_docs_description_and_params_in_constructor(snapshot):
             """
             super(Foo, self).__init__(**kwargs)  # pragma: no cover
 
-    (source_filename, actual_filename, doc_generator), (_, _, _) = list(_generate_tests_from_class_docs(classes=[Foo, RefinableObject]))
+    (source_filename, actual_filename, doc_generator), (_, _, _) = list(
+        _generate_tests_from_class_docs(classes=[Foo, RefinableObject])
+    )
 
     actual_doc = doc_generator()
 
@@ -171,7 +173,9 @@ def test_type_annotations(snapshot):
         b: Dict = Refinable()
         c: Fragment = Refinable()
 
-    (source_filename, actual_filename, doc_generator), (_, _, _) = list(_generate_tests_from_class_docs(classes=[Foo, Fragment]))
+    (source_filename, actual_filename, doc_generator), (_, _, _) = list(
+        _generate_tests_from_class_docs(classes=[Foo, Fragment])
+    )
 
     actual_doc = doc_generator()
 
@@ -259,7 +263,9 @@ def test_generate_tests_from_class_doc():
             """
 
     f = StringIO()
-    source_filename, actual_filename, doc_generator = list(_generate_tests_from_class_doc(f=f, c=Foo, classes=[], cookbook_name_by_refinable_name={}))
+    source_filename, actual_filename, doc_generator = list(
+        _generate_tests_from_class_doc(f=f, c=Foo, classes=[], cookbook_name_by_refinable_name={})
+    )
     actual_doc = doc_generator()
 
     print(actual_doc)

@@ -163,16 +163,19 @@ def get_evaluated_attributes(result):
 class SpecialEvaluatedRefinable(Refinable):
     pass
 
+
 def special_evaluated_refinable(f):
     f = refinable(f)
     f.__iommi__special_evaluated = True
     return f
+
 
 def is_special_evaluated_refinable(x):
     return isinstance(x, SpecialEvaluatedRefinable) or getattr(x, '__iommi__special_evaluated', False)
 
 
 _get_special_evaluated_attributes_cache = {}
+
 
 def get_special_evaluated_attributes(result):
     class_ = type(result)

@@ -163,10 +163,7 @@ def member_from_model(
 
 def get_field_by_name(model: Type[Model]) -> Dict[str, DjangoField]:
     if not hasattr(model._meta, '_iommi_fields'):
-        model._meta._iommi_fields = {
-            get_field_name(field): field
-            for field in model._meta.get_fields()
-        }
+        model._meta._iommi_fields = {get_field_name(field): field for field in model._meta.get_fields()}
         if None in model._meta._iommi_fields:
             model._meta._iommi_fields.pop(None)
     return model._meta._iommi_fields
@@ -196,7 +193,9 @@ def get_field(model: Type[Model], field_name: str) -> DjangoField:
         return get_field_by_name(model)[field_name]
     except KeyError:
         valid_names = '\n    '.join(sorted(get_field_by_name(model).keys()))
-        raise FieldDoesNotExist(f"{model._meta.object_name} has no field with name '{field_name}', valid names are:\n\n    {valid_names}")
+        raise FieldDoesNotExist(
+            f"{model._meta.object_name} has no field with name '{field_name}', valid names are:\n\n    {valid_names}"
+        )
 
 
 def get_field_path(model, path):
@@ -223,10 +222,7 @@ def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
                 current_model = get_field(current_model, part).remote_field.model
             except FieldDoesNotExist:
                 return sorted(
-                    [
-                        '__'.join(prefix + [name])
-                        for name in get_field_by_name(current_model).keys()
-                    ]
+                    ['__'.join(prefix + [name]) for name in get_field_by_name(current_model).keys()]
                     + ['__'.join(prefix + ['pk'])]
                 )
             else:

@@ -3,7 +3,7 @@ flask
 gprof2dot
 parso
 pytest-django==4.5.2
-pytest==7.1.1
+pytest==8.0.2
 pytest_snapshot==0.8.0
 ruff==0.2.2
 time-machine==2.6.0

@@ -49,5 +49,6 @@ class IommiConfig(AppConfig):
         )
 
         from iommi import register_factory
+
         register_factory(GenericRelation, factory=None)
         register_factory(GenericForeignKey, factory=None)

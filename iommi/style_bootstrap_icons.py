@@ -17,8 +17,8 @@ bootstrap_icons = Style(
         edit__extra__icon='pencil-square',
         delete__extra__icon='trash',
         download__extra__icon='download',
-        boolean__cell__format=lambda value, **_: mark_safe(
-            f'<i class="bi bi-check-lg fs-3" title="{gettext("Yes")}"></i>'
-        ) if value else '',
+        boolean__cell__format=lambda value, **_: (
+            mark_safe(f'<i class="bi bi-check-lg fs-3" title="{gettext("Yes")}"></i>') if value else ''
+        ),
     ),
 )

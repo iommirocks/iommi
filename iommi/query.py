@@ -293,9 +293,10 @@ class Filter(Part):
         return dict(filter=self)
 
     def __html__(self, *, render=None):
-        assert (
-            False
-        ), "Filters aren't rendered directly. You either render the Field corresponding to the filter, or the entire Query object."
+        assert False, (
+            "Filters aren't rendered directly. You either render the Field corresponding to the filter, "
+            "or the entire Query object."
+        )
 
     @staticmethod
     @refinable

@@ -158,7 +158,6 @@ def test_field_from_model_factory_error_message():
 
 
 def test_from_model():
-
     f = Form(
         auto__model=SomeModel,
         auto__include=['foo__bar'],
@@ -227,7 +226,6 @@ def test_register_search_fields_pk_special_case():
     register_search_fields(model=User, search_fields=['username'], overwrite=True)
 
 
-
 @pytest.fixture
 def MyField():  # noqa: N802
     class MyField(Field):
@@ -242,7 +240,6 @@ def MyField():  # noqa: N802
 
 
 def test_weird_override_bug_working_case(MyField):  # noqa: N803
-
     # This works...
     form = Form(
         fields__foo__call_target=MyField.my_integer,
@@ -271,7 +268,7 @@ def test_get_field_many_to_many_reverse():
 def test_error_includes_reverse_field(MyField):  # noqa: N803
     form = Form(
         auto__model=Group,
-        auto__include=['does_not_exist']
+        auto__include=['does_not_exist'],
     )
     with pytest.raises(AssertionError) as e:
         form.bind()

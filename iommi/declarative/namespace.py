@@ -85,16 +85,12 @@ class Namespace(Struct):
 
     def __repr__(self):
         # Note: `repr` is called on any values in the namespace
-        flattened_key_value_pairs = ", ".join(
-            f'{k}={v!r}' for k, v in sorted(flatten_items(self), key=lambda x: x[0])
-        )
+        flattened_key_value_pairs = ", ".join(f'{k}={v!r}' for k, v in sorted(flatten_items(self), key=lambda x: x[0]))
         return f"{type(self).__name__}({flattened_key_value_pairs})"
 
     def __str__(self):
         # Note: `str` is called on any values in the namespace
-        flattened_key_value_pairs = ", ".join(
-            f'{k}={v}' for k, v in sorted(flatten_items(self), key=lambda x: x[0])
-        )
+        flattened_key_value_pairs = ", ".join(f'{k}={v}' for k, v in sorted(flatten_items(self), key=lambda x: x[0]))
         return "{}({})".format(type(self).__name__, flattened_key_value_pairs)
 
     def __call__(self, *args, **kwargs):

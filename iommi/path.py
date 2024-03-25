@@ -32,6 +32,7 @@ class Decoder:
 class PathDecoder:
     def __init__(self, *, decode=None, model=None, name):
         if decode is None:
+
             def decode(string, _model=model, **_):
                 return _model.objects.get(pk=string)
 

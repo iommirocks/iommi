@@ -186,10 +186,9 @@ class Admin(Page):
     def __init__(self, parts, apps, **kwargs):
         # Validate apps params
         for k in apps.keys():
-            assert (
-                k in joined_app_name_and_model
-            ), f'{k} is not a valid app/model key.\n\n' f'Valid keys:\n    ' + '\n    '.join(
-                sorted(joined_app_name_and_model)
+            assert k in joined_app_name_and_model, (
+                f'{k} is not a valid app/model key.\n\n'
+                f'Valid keys:\n    ' + '\n    '.join(sorted(joined_app_name_and_model))
             )
         super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
 

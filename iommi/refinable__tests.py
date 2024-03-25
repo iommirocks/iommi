@@ -124,7 +124,6 @@ class Basket(RefinableObject):
 
 
 def test_refine_recursive():
-
     basket = Basket(fruits__banana=Fruit(color='yellow'))
     basket = basket.refine(fruits__banana__taste='good').refine_done()
     banana = basket.fruits.banana.refine_done()

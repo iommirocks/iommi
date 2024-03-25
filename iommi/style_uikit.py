@@ -1,4 +1,3 @@
-
 from iommi.asset import Asset
 from iommi.style import Style
 from iommi.style_base import base
@@ -63,5 +62,5 @@ uikit = Style(
             attrs__class={'uk-active': True},
         ),
         container__attrs__class={'uk-pagination': True},
-    )
+    ),
 )

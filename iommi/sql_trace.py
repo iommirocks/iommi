@@ -30,6 +30,7 @@ from iommi.thread_locals import (
 def no_coloring(text, color=None, on_color=None, attrs=None):
     return text
 
+
 try:
     from termcolor import colored
 except ImportError:

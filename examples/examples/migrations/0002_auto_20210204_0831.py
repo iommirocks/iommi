@@ -8,7 +8,6 @@ from django.db import (
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('examples', '0001_initial'),
     ]

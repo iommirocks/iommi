@@ -395,6 +395,7 @@ def test_unknown_attribute():
 
 def test_partial_refine_done():
     part = html.p('my part').refine_done()
+
     verify_part_html(
         part=html.div(
             children__first_part=part,
@@ -407,7 +408,7 @@ def test_partial_refine_done():
                 another part
             </div>
         ''',
-    ),
+    )
 
 
 def test_bind_single_member():

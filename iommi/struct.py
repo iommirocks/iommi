@@ -78,25 +78,53 @@ class Frozen:
         return _hash
 
     def __setitem__(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(
+            "'{}' object attributes are read-only".format(
+                type(self).__name__,
+            )
+        )
 
     def __setattr__(self, key, value):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(
+            "'{}' object attributes are read-only".format(
+                type(self).__name__,
+            )
+        )
 
     def setdefault(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(
+            "'{}' object attributes are read-only".format(
+                type(self).__name__,
+            )
+        )
 
     def update(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(
+            "'{}' object attributes are read-only".format(
+                type(self).__name__,
+            )
+        )
 
     def clear(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(
+            "'{}' object attributes are read-only".format(
+                type(self).__name__,
+            )
+        )
 
     def __delitem__(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(
+            "'{}' object attributes are read-only".format(
+                type(self).__name__,
+            )
+        )
 
     def __delattr__(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(
+            "'{}' object attributes are read-only".format(
+                type(self).__name__,
+            )
+        )
 
     def __reduce__(self):
         return type(self), (), dict(self)

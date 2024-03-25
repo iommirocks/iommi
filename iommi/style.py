@@ -111,8 +111,10 @@ class Style:
             sub_style.name = name
 
         from iommi.debug import iommi_debug_on
+
         if iommi_debug_on():
             import inspect
+
             self._instantiated_at_frame = inspect.currentframe().f_back
 
     def resolve(self, obj, is_root=False):
