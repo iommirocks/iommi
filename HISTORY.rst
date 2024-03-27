@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-6.7.1 (2024-03-27)
+6.8.0 (2024-03-27)
 ~~~~~~~~~~~~~~~~~~
 
 * `table.Column.boolean` changed from fontawesome icon to unicode check mark
