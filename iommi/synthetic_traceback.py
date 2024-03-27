@@ -24,7 +24,7 @@ class SyntheticTraceback:
         self._frames = frames
         self._line_nums = line_nums
         self.tb_frame = frames[0]
-        self.tb_lineno = line_nums[0]
+        self.tb_lineno = line_nums[0] or 0
         self.tb_lasti = 0
 
     @property

@@ -71,6 +71,9 @@ def render_part(request, part: Part):
         return part.render_to_response()
     except Exception as e:
         filename, lineno = part._instantiated_at_info
+        if filename is None:
+            raise
+
         from iommi.synthetic_traceback import SyntheticException
 
         fake = SyntheticException(
