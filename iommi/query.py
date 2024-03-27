@@ -293,9 +293,10 @@ class Filter(Part):
         return dict(filter=self)
 
     def __html__(self, *, render=None):
-        assert (
-            False
-        ), "Filters aren't rendered directly. You either render the Field corresponding to the filter, or the entire Query object."
+        assert False, (
+            "Filters aren't rendered directly. You either render the Field corresponding to the filter, "
+            "or the entire Query object."
+        )
 
     @staticmethod
     @refinable
@@ -1000,7 +1001,7 @@ class Query(Part):
             try:
                 pk = int(value_string_or_filter_name)
             except ValueError:
-                raise QueryException(f'Could not interpret {value_string_or_filter_name} as an integer')
+                pk = value_string_or_filter_name  # pk might be non-int
 
             if filter.pk_lookup_to_q:
                 return filter.invoke_callback(filter.pk_lookup_to_q, pk=pk)
