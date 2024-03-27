@@ -1,6 +1,28 @@
 Changelog
 ---------
 
+6.7.1 (2024-03-27)
+~~~~~~~~~~~~~~~~~~
+
+* `table.Column.boolean` changed from fontawesome icon to unicode check mark
+
+* `<meta>` viewport by default
+
+* `SearchVectorField` default None factory
+
+* select2 change triggers form change, but field can be outside a form for js purpose
+
+* Move the data-endpoint and data-iommi-id html attributes to the table container. This is to avoid them being over-written by any empty_message provided resulting in no table tag being rendered
+
+* added `IommiBase.getContainer` in JS
+
+* `default_sort_order` should be indicated in the table header
+
+* Don't fail on non-integer pk values on pk lookup
+
+* Fix for rare synthetic traceback issue
+
+
 6.7.0 (2024-01-24)
 ~~~~~~~~~~~~~~~~~~
 
