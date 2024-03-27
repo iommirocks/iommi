@@ -575,7 +575,10 @@ def test_choice_queryset():
         query2 = Query2().bind(
             request=req(
                 'get',
-                **{'-': '-', query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo))},
+                **{
+                    '-': '-',
+                    query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo)),
+                },
             ),
         )
         with pytest.raises(QueryException) as e:
@@ -664,7 +667,10 @@ def test_multi_choice_queryset():
         query2 = Query2().bind(
             request=req(
                 'get',
-                **{'-': '-', query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo))},
+                **{
+                    '-': '-',
+                    query2.get_advanced_query_param(): 'foo{}{}'.format(invalid_op, str(random_valid_obj.foo)),
+                },
             )
         )
         with pytest.raises(QueryException) as e:
@@ -990,12 +996,9 @@ def test_pk(MyTestQuery):  # noqa: N803
     assert repr(query.parse_query_string('foo_name.pk=7')) == repr(Q(**{'foo__pk': 7}))
 
 
-def test_pk_error_message_1(MyTestQuery):  # noqa: N803
+def test_pk_not_int(MyTestQuery):  # noqa: N803
     query = MyTestQuery().bind(request=None)
-    with pytest.raises(QueryException) as e:
-        query.parse_query_string('foo_name.pk=foo')
-
-    assert str(e.value) == 'Could not interpret foo as an integer'
+    assert repr(query.parse_query_string('foo_name.pk=bar')) == repr(Q(**{'foo__pk': 'bar'}))
 
 
 def test_pk_error_message_2(MyTestQuery):  # noqa: N803
