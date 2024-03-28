@@ -8,8 +8,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import OperationalError
 from django.urls import (
-    include,
-    path,
     reverse,
 )
 from django.utils.timezone import now
@@ -290,7 +288,7 @@ class ExampleAdmin(Admin):
     class Meta:
         iommi_style = None
         parts__menu__sub_menu = dict(
-            home=MenuItem(url='/'),
+            home=MenuItem(url='/', after=0),
             admin=MenuItem(url=lambda **_: reverse('iommi.Admin.all_models')),
             change_password=MenuItem(url=lambda **_: reverse(Auth.change_password)),
             logout=MenuItem(url=lambda **_: reverse(Auth.logout)),
@@ -303,9 +301,3 @@ class ExampleAdmin(Admin):
                 style=StyleSelector(title='Change iommi style'),
             ),
         )
-
-
-urlpatterns = [
-    path('', IndexPage().as_view()),
-    path('iommi-admin/', include(ExampleAdmin.urls())),
-]

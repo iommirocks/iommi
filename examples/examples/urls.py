@@ -18,12 +18,13 @@ from examples import (
 
 urlpatterns = (
     [
-        path('', include(views)),
+        path('', views.IndexPage().as_view()),
         path('page/', include(page_examples)),
         path('form/', include(form_examples)),
         path('table/', include(table_examples)),
         path('menu/', include(menu_examples)),
         path('supernaut/', include(supernaut)),
+        path('iommi-admin/', include(views.ExampleAdmin.urls())),
         path('admin/', admin.site.urls),  # This is mostly to make the django_admin style available
         path('experimental/', include(experimental_examples)),
     ]
