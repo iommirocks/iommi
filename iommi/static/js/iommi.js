@@ -71,7 +71,7 @@ class IommiBase {
      * @return {(Element|null)} container element or null
      */
     getContainer(element) {
-        if(element.hasAttribute('data-iommi-id-of-table')) {
+        if (element.hasAttribute('data-iommi-id-of-table')) {
             return document.querySelector(
                 `.iommi-table-container[data-iommi-id="${element.getAttribute('data-iommi-id-of-table')}"]`
             );

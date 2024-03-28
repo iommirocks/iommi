@@ -25,6 +25,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 
 from iommi import (
+    EditTable,
     LAST,
     Field,
     Form,
@@ -120,7 +121,7 @@ def read_config(f):
 class Admin(Page):
     class Meta:
         iommi_style = 'bootstrap'
-        table_class = Table
+        table_class = EditTable
         form_class = Form
         apps = EMPTY
         parts = EMPTY
@@ -355,9 +356,9 @@ class Admin(Page):
             rows=rows,
             page_size=None,
             columns__name=dict(
-                cell__url=lambda row, **_: row.url,
+                cell__url=lambda row, **_: row.url if getattr(row, 'pk', None) != '#sentinel#' else None,
                 display_name='',
-                cell__format=lambda row, **format_kwargs: row.format(row=row, **format_kwargs),
+                cell__format=lambda row, **format_kwargs: row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else '',
             ),
         )
 
@@ -393,7 +394,7 @@ class Admin(Page):
             ),
             columns__name=dict(
                 display_name='',
-                cell__format=lambda row, **format_kwargs: row.format(row=row, **format_kwargs),
+                cell__format=lambda row, **format_kwargs: row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else '',
             ),
         )
 

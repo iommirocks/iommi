@@ -41,7 +41,7 @@ def test_edit_table_rendering():
         sortable=False,
         columns=dict(
             editable_thing=EditColumn(
-                edit=Namespace(call_target=Field),
+                field=Namespace(call_target=Field),
             ),
             readonly_thing=EditColumn(),
         ),
@@ -56,33 +56,30 @@ def test_edit_table_rendering():
         find__method='post',
         # language=html
         expected_html="""
-            <form enctype="multipart/form-data" method="post">
-                <div class="iommi-table-container" data-endpoint="/endpoints/tbody" data-iommi-id="">
-                    <div class="iommi-table-plus-paginator">
-                        <table class="table" data-add-template=\'&lt;tr data-pk="#sentinel#"&gt;&lt;td&gt;&lt;input id="id_editable_thing__#sentinel#" name="editable_thing/#sentinel#" type="text" value=""&gt;&lt;/td&gt;
+            <form action="" enctype="multipart/form-data" method="post">
+                <div class="iommi-table-plus-paginator">
+                    <table class="table" data-add-template=\'&lt;tr data-pk="#sentinel#"&gt;&lt;td&gt;&lt;input id="id_editable_thing__#sentinel#" name="editable_thing/#sentinel#" type="text" value=""&gt;&lt;/td&gt;
 &lt;td&gt;&lt;/td&gt;&lt;/tr&gt;\' data-next-virtual-pk="-1">
-                            <thead>
-                                <tr>
-                                    <th class="first_column subheader"> Editable thing </th>
-                                    <th class="first_column subheader"> Readonly thing </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr data-pk="1">
-                                    <td> <input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/> </td>
-                                    <td> bar </td>
-                                </tr>
-                                <tr data-pk="2">
-                                    <td> <input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/> </td>
-                                    <td> buzz </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                        <thead>
+                            <tr>
+                                <th class="first_column subheader"> Editable thing </th>
+                                <th class="first_column subheader"> Readonly thing </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-pk="1">
+                                <td> <input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/> </td>
+                                <td> bar </td>
+                            </tr>
+                            <tr data-pk="2">
+                                <td> <input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/> </td>
+                                <td> buzz </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div class="links">
-                    <button accesskey="s" name="-submit"> Save </button>
-                    <div style="display: none"> Csrf </div>
+                    <button accesskey="s" name="-save"> Save </button>
                     <button onclick="iommi_add_row(this); return false"> Add row </button>
                 </div>
             </form>
@@ -97,7 +94,7 @@ def test_edit_table_nested():
             sortable=False,
             columns=dict(
                 editable_thing=EditColumn(
-                    edit=Namespace(call_target=Field),
+                    field=Namespace(call_target=Field),
                 ),
                 readonly_thing=EditColumn(),
             ),
@@ -138,7 +135,7 @@ def test_edit_table_post():
     edit_table = EditTable(
         columns=dict(
             editable_thing=EditColumn(
-                edit=Namespace(
+                field=Namespace(
                     call_target=Field,
                     is_valid=lambda parsed_data, **_: (parsed_data != 'invalid', 'error-string'),
                 ),
@@ -156,7 +153,7 @@ def test_edit_table_post():
             **{
                 'editable_thing/1': 'invalid',
                 'editable_thing/2': 'fusk',
-                '-submit': '',
+                '-save': '',
             },
         )
     )
@@ -175,7 +172,7 @@ def test_edit_table_post():
             **{
                 'editable_thing/1': 'fisk',
                 'editable_thing/2': 'fusk',
-                '-submit': '',
+                '-save': '',
             },
         )
     )
@@ -197,7 +194,7 @@ def test_edit_table_related_objects():
     edit_table = EditTable(
         rows=TBaz.objects.all(),
         columns__foo=EditColumn(
-            edit=Namespace(
+            field=dict(
                 call_target=Field.many_to_many,
                 model_field=TBaz.foo.field,
             )
@@ -209,7 +206,7 @@ def test_edit_table_related_objects():
             'POST',
             **{
                 f'columns/foo/{baz.pk}': str(foo.pk),
-                '-actions/submit': '',
+                '-save': '',
             },
         )
     )
@@ -220,16 +217,16 @@ def test_edit_table_related_objects():
 
 def test_edit_table_definition():
     class MyEditTable(EditTable):
-        foo = EditColumn(edit=None)
-        bar = EditColumn(edit=Field())
-        baz = EditColumn(edit=dict(call_target=Field))
+        foo = EditColumn(field=None)
+        bar = EditColumn(field=Field())
+        baz = EditColumn(field=dict(call_target=Field))
         vanilla = Column()
 
     my_edit_table = MyEditTable(
         columns=dict(
-            bing=EditColumn(edit=None),
-            bang=EditColumn(edit=Field()),
-            bong=EditColumn(edit=dict(call_target=Field)),
+            bing=EditColumn(field=None),
+            bang=EditColumn(field=Field()),
+            bong=EditColumn(field=dict(call_target=Field)),
         )
     ).bind()
 
@@ -254,8 +251,8 @@ def test_edit_table_definition():
 def test_edit_table_from_model():
     table = EditTable(
         auto__model=TFoo,
-        columns__a__edit__include=True,
-        columns__b__edit__include=False,
+        columns__a__field__include=True,
+        columns__b__field__include=False,
     )
     assert list(table.bind().edit_form.fields) == ['a']
 
@@ -263,7 +260,7 @@ def test_edit_table_from_model():
 def test_edit_table_from_model_implicit_exclude():
     table = EditTable(
         auto__model=TFoo,
-        columns__a__edit__include=True,
+        columns__a__field__include=True,
     )
     assert list(table.bind().edit_form.fields) == ['a']
 
@@ -272,7 +269,7 @@ def test_edit_table_from_model_implicit_exclude():
 def test_edit_table_auto_rows():
     table = EditTable(
         auto__rows=TFoo.objects.all(),
-        columns__a__edit__include=True,
+        columns__a__field__include=True,
     )
     assert list(table.bind().edit_form.fields) == ['a']
 
@@ -281,7 +278,6 @@ def test_edit_table_auto_rows():
 def test_edit_table_post_create():
     foo_pk = TFoo.objects.create(a=1, b='asd').pk
     edit_table = EditTable(auto__model=TBar).refine_done()
-    assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
     # language=html
     verify_html(
         actual_html=edit_table.bind().attrs['data-add-template'],
@@ -306,7 +302,7 @@ def test_edit_table_post_create():
             **{
                 'columns/foo/-1': f'{foo_pk}',
                 'columns/c/-1': 'true',
-                '-actions/submit': '',
+                '-save': '',
             },
         )
     )
@@ -325,10 +321,10 @@ def test_edit_table_post_create_hardcoded():
     foo = TFoo.objects.create(a=1, b='asd')
     edit_table = EditTable(
         auto__model=TFoo,
-        columns__a__edit__include=True,
-        columns__b=EditColumn.hardcoded(edit__parsed_data=lambda **_: 'hardcoded'),
+        columns__a__field__include=True,
+        columns__b=EditColumn.hardcoded(field__parsed_data=lambda **_: 'hardcoded'),
     ).refine_done()
-    assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
+    assert edit_table.bind().edit_actions.save.iommi_path == 'save'
 
     edit_table = edit_table.bind(
         request=req(
@@ -342,7 +338,7 @@ def test_edit_table_post_create_hardcoded():
                 'columns/b/-2': 'hardcoded column should be ignored',
                 'columns/a/-1': '3',
                 'columns/b/-1': 'hardcoded column should be ignored',
-                '-actions/submit': '',
+                '-save': '',
             },
         )
     )
@@ -361,7 +357,6 @@ def test_edit_table_post_create_hardcoded():
 def test_edit_table_post_delete():
     tfoo = TFoo.objects.create(a=1, b='asd')
     edit_table = EditTable(auto__model=TFoo, columns__delete=EditColumn.delete()).refine_done()
-    assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
 
     response = edit_table.bind(request=req('GET')).render_to_response()
     assert f'name="pk_delete_{tfoo.pk}"' in response.content.decode()
@@ -371,7 +366,7 @@ def test_edit_table_post_delete():
             'POST',
             **{
                 f'pk_delete_{tfoo.pk}': '',
-                '-actions/submit': '',
+                '-save': '',
             },
         )
     ).render_to_response()
@@ -388,7 +383,7 @@ def test_edit_table_post_row_group(small_discography):
             row_group__include=True,
             render_column=False,
         ),
-        columns__year__edit__include=True,
+        columns__year__field__include=True,
     )
 
     bound = edit_table.bind(
@@ -397,7 +392,7 @@ def test_edit_table_post_row_group(small_discography):
             **{
                 f'columns/year/{small_discography[0].pk}': '5',
                 f'columns/year/{small_discography[1].pk}': '7',
-                '-actions/submit': '',
+                '-save': '',
             },
         )
     )

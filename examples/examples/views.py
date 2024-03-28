@@ -288,6 +288,8 @@ def all_column_sorts(request):
 
 class ExampleAdmin(Admin):
     class Meta:
+        parts__list_auth_user__columns__first_name__field__include = True
+
         iommi_style = None
         parts__menu__sub_menu = dict(
             home=MenuItem(url='/'),

@@ -246,6 +246,7 @@ def csv(request):
         ),
     )
 
+
 @example(gettext('EditTable example'))
 def edit_table(request):
     return EditTable(
@@ -253,9 +254,9 @@ def edit_table(request):
         columns=dict(
             name=dict(
                 filter__include=True,
-                edit__include=True,
+                field__include=True,
             ),
-            year__edit__include=True,
+            year__field__include=True,
         ),
     )
 

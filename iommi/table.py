@@ -2164,10 +2164,7 @@ class Table(Part, Tag):
 
         bind_member(self, name='bulk')
         if self.bulk is not None:
-            if self.bulk.actions:
-                self._bound_members.bulk = self.bulk
-            else:
-                self.bulk = None
+            self._bound_members.bulk = self.bulk
 
     # property for jinja2 compatibility
     @property
@@ -2398,6 +2395,9 @@ class Table(Part, Tag):
         assert isinstance(self.initial_rows, QuerySet), "bulk_queryset can only be used on querysets"
 
         return self.selection(prefix=prefix).filter(**self.bulk_filter).exclude(**self.bulk_exclude)
+
+    def should_render_form_tag(self):
+        return bool(self.bulk)
 
     @dispatch(
         render=render_template,
