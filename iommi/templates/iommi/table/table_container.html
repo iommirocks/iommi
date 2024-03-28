@@ -1,8 +1,11 @@
 {% if table.bulk %}
-<form{{ table.bulk.attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
+{{ table.bulk.iommi_open_tag }}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
 {% endif %}
+    {% block before_table_tag %}{% endblock %}
 
     {% include 'iommi/table/table_tag.html' %}
+
+    {% block before_bulk %}{% endblock %}
 
     {% if table.bulk %}
         {{ table.bulk_container.iommi_open_tag }}
@@ -15,6 +18,8 @@
         {{ table.bulk_container.iommi_close_tag }}
     {% endif %}
 
+    {% block after_bulk %} {% endblock %}
+
 {% if table.bulk %}
-</form>
+{{ table.bulk.iommi_close_tag }}
 {% endif %}

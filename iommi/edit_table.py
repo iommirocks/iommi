@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import (
+    Dict,
     Optional,
     Type,
 )
@@ -13,7 +14,12 @@ from django.template import (
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
-from iommi.action import Action
+from iommi._web_compat import render_template
+from iommi.action import (
+    Action,
+    Actions,
+    group_actions,
+)
 from iommi.asset import Asset
 from iommi.base import (
     MISSING,
@@ -40,10 +46,15 @@ from iommi.form import (
 from iommi.fragment import (
     Fragment,
 )
-from iommi.member import bind_member
+from iommi.member import (
+    bind_member,
+    bind_members,
+    refine_done_members,
+)
 from iommi.refinable import (
     Refinable,
     refinable,
+    RefinableMembers,
 )
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
@@ -129,11 +140,11 @@ class EditColumn(Column):
     The column class for `EditTable`.
     """
 
-    edit: Field = Refinable()
+    field: Field = Refinable()
 
     def on_refine_done(self):
         super(EditColumn, self).on_refine_done()
-        self.edit = None
+        self.field = None
 
     @classmethod
     @with_defaults(
@@ -179,12 +190,12 @@ class EditColumn(Column):
 
     @classmethod
     @dispatch(
-        edit=EMPTY,
+        field=EMPTY,
     )
     def hardcoded(cls, **kwargs):
         assert (
-            'parsed_data' in kwargs['edit']
-        ), 'Specify a hardcoded value by specifying `edit__parsed_data` as a callable'
+            'parsed_data' in kwargs['field']
+        ), 'Specify a hardcoded value by specifying `field__parsed_data` as a callable'
         return cls(**kwargs)
 
 
@@ -275,7 +286,7 @@ class EditTable(Table):
 
         table = EditTable(
             auto__model=Album,
-            columns__name__edit__include=True,
+            columns__name__field__include=True,
         )
 
         # @test
@@ -289,34 +300,28 @@ class EditTable(Table):
     create_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
     parent_form: Optional[Form] = Refinable()
+    edit_actions: Dict[str, Action] = RefinableMembers()
 
     class Meta:
         form_class = Form
         member_class = EditColumn
-        outer__tag = 'form'
-        outer__attrs__enctype = 'multipart/form-data'
-        outer__attrs__method = 'post'
         cells_class = EditCells
-        actions__submit = dict(
+        edit_actions = EMPTY
+        edit_actions__save = dict(
             call_target__attribute='primary',
             display_name=gettext_lazy('Save'),
             post_handler=edit_table__post_handler,
             template=lambda table, **_: 'iommi/blank.html' if table.parent_form is not None else None,
         )
-        actions__csrf = Action(
-            tag='div',
-            children__csrf=Fragment(
-                template=lambda **_: Template('{% csrf_token %}'),
-            ),
-            attrs__style__display='none',
-        )
-        actions__add_row = Action.button(
+        edit_actions__add_row = Action.button(
             display_name=gettext_lazy('Add row'),
             attrs__onclick='iommi_add_row(this); return false',
         )
-        actions_below = True
         edit_form = EMPTY
         create_form = EMPTY
+        container__children__text__template = 'iommi/table/edit_table_container.html'
+
+        bulk__include = True
 
         attrs = {
             'data-next-virtual-pk': '-1',
@@ -373,6 +378,10 @@ class EditTable(Table):
     def on_refine_done(self):
         super(EditTable, self).on_refine_done()
 
+        if self.bulk is None:
+            form_class = self.get_meta().form_class
+            self.bulk = form_class(_name='bulk', attrs__method='post').refine_done(parent=self)
+
         fields = Struct()
 
         for name, column in items(self.iommi_namespace.columns):
@@ -381,11 +390,11 @@ class EditTable(Table):
             if getattr(column, 'include', None) is False:
                 continue
 
-            edit_conf = column.iommi_namespace.get('edit', None)
+            edit_conf = column.iommi_namespace.get('field', None)
 
             if not edit_conf:
                 continue
-            if getattr(column.edit, 'include', None) is False:
+            if getattr(column.field, 'include', None) is False:
                 continue
 
             if isinstance(edit_conf, dict):
@@ -397,7 +406,7 @@ class EditTable(Table):
                     attr=name if column.attr is MISSING else column.attr,
                 )
             else:
-                field = column.iommi_namespace.edit
+                field = column.iommi_namespace.field
 
             fields[name] = field
 
@@ -430,17 +439,27 @@ class EditTable(Table):
             )
         )
 
+        refine_done_members(
+            self,
+            name='edit_actions',
+            members_from_namespace=self.edit_actions,
+            cls=self.get_meta().action_class,
+            members_cls=Actions,
+        )
+
         declared_fields = self.edit_form.iommi_namespace.fields
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
         self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
+        bind_members(self, name='edit_actions')
         bind_member(self, name='edit_form')
         bind_member(self, name='create_form')
 
         # If this is a nested form register it with the parent, need
         # to do this early because is_target needs self.parent_form
+        self.parent_form = None
         if self.iommi_parent() is not None:
             self.parent_form = self.iommi_parent().iommi_evaluate_parameters().get('form', None)
             if self.parent_form is not None:
@@ -504,3 +523,21 @@ class EditTable(Table):
     @refinable
     def preprocess_row_for_create(row, **_):
         return row
+
+    @property
+    def render_edit_actions(self):
+        assert self._is_bound, NOT_BOUND_MESSAGE
+        non_grouped_actions, grouped_actions = group_actions(self.edit_actions)
+        return render_template(
+            self.get_request(),
+            self.actions_template,
+            dict(
+                actions=self.iommi_bound_members().edit_actions,
+                non_grouped_actions=non_grouped_actions,
+                grouped_actions=grouped_actions,
+                table=self,
+            ),
+        )
+
+    def should_render_form_tag(self):
+        return self.parent_form is None

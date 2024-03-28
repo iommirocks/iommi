@@ -3399,7 +3399,7 @@ def test_nested_form():
     assert f.parts.inner_form.parent_form is f
     (inner_form,) = values(f.nested_forms)
     assert inner_form is f.parts.inner_form
-    assert inner_form.form_tag != 'form'
+    assert inner_form.tag != 'form'
 
 
 def test_nested_form_attr_empty_path():

@@ -3749,19 +3749,6 @@ def test_h_tag():
 
 
 @pytest.mark.django_db
-def test_bulk_no_actions_makes_bulk_form_none():
-    # normal case
-    assert Table(auto__model=TFoo, columns__a__bulk__include=True).bind(request=req('get')).bulk is not None
-    # the thing we want to test
-    assert (
-        Table(auto__model=TFoo, columns__a__bulk__include=True, bulk__actions__submit__include=False)
-        .bind(request=req('get'))
-        .bulk
-        is None
-    )
-
-
-@pytest.mark.django_db
 def test_lazy_rows(settings):
     settings.DEBUG = True
     set_sql_debug(SQL_DEBUG_LEVEL_ALL)

@@ -1577,7 +1577,7 @@ class FieldGroup(Fragment):
 
 @declarative(Part, '_fields_dict', add_init_kwargs=False)
 @with_meta
-class Form(Part):
+class Form(Part, Tag):
     # language=rst
     """
     Describe a Form. Example:
@@ -1821,7 +1821,7 @@ class Form(Part):
         return self.parent_form is not None
 
     @property
-    def form_tag(self) -> str:
+    def tag(self) -> str:
         if self.is_nested_form:
             return "div"
         else:
