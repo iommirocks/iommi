@@ -25,8 +25,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 
 from iommi import (
-    EditTable,
     LAST,
+    EditTable,
     Field,
     Form,
     Fragment,
@@ -350,7 +350,7 @@ class Admin(Page):
             Namespace(),
             table if table is not None else {},
             title=gettext('All models'),
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=Table,
             call_target__attribute='div',
             sortable=False,
             rows=rows,
