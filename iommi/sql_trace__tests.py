@@ -62,9 +62,9 @@ def test_middleware(settings, client, caplog):
 
     base_path = str(Path(__file__).parent.parent.parent) + os.path.sep
 
-    with time_machine.travel('1948, 2, 19', tick=False):
+    with time_machine.travel('1948, 2, 19', tick=True):
         client.get('/no_queries/?_iommi_sql_trace')
-        assert 'GET /no_queries/?_iommi_sql_trace -> 200  (0.000s)' in caplog.text
+        assert 'GET /no_queries/?_iommi_sql_trace -> 200  (0.003s)' in caplog.text
 
         caplog.clear()
 
