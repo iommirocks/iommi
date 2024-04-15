@@ -22,7 +22,7 @@ from iommi.declarative.namespace import (
 from iommi.refinable import RefinableObject
 from iommi.shortcut import get_shortcuts_by_name
 
-DEFAULT_STYLE = 'bootstrap'
+DEFAULT_STYLE = 'bootstrap5'
 
 
 def get_style_object(obj: Any) -> 'Style':
