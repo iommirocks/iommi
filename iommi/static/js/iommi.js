@@ -1,4 +1,3 @@
-
 class IommiBase {
     debug = false;
 
@@ -7,9 +6,9 @@ class IommiBase {
     historyStatePushedByUser = true;
 
     constructor(options) {
-        for(let k in options){
-            if(options.hasOwnProperty(k)) {
-                 this[k] = options[k];
+        for (let k in options) {
+            if (options.hasOwnProperty(k)) {
+                this[k] = options[k];
             }
         }
     }
@@ -42,7 +41,7 @@ class IommiBase {
     onPopState(event) {
         // in extra method, so it can be overridden
         if (event.state && event.state.reloadOnUserAction) {
-            if(this.historyStatePushedByUser) {
+            if (this.historyStatePushedByUser) {
                 // TODO in the future
                 //  it might be better to rewrite this with element.iommi.reload()
                 //  in await Promise.all() / Promise.allSettled() for all .iommi-table-container,
@@ -52,17 +51,6 @@ class IommiBase {
                 this.historyStatePushedByUser = true;  // reset to default
             }
         }
-    }
-
-    warnDeprecated(text) {
-        if(this.debug) {
-            console.warn(text);
-        }
-    }
-
-    updateURL(params) {
-        this.warnDeprecated('iommi.updateURL is deprecated');
-        window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
     }
 
     /**
@@ -90,9 +78,9 @@ class IommiBase {
         };
     }
 
-    async fetchJson(resource, options){
+    async fetchJson(resource, options) {
         const response = await fetch(resource, options);
-        if(response.body) {
+        if (response.body) {
             return await response.json();
         }
         return {};
@@ -103,7 +91,7 @@ class IommiBase {
     }
 
     getAbortController(element) {
-        if(element.iommi && element.iommi.abortController) {
+        if (element.iommi && element.iommi.abortController) {
             return element.iommi.abortController;
         }
         return null;
@@ -111,9 +99,9 @@ class IommiBase {
 
     resetAbortController(element) {
         const currentAbortController = this.getAbortController(element);
-        if(currentAbortController !== null) {
+        if (currentAbortController !== null) {
             currentAbortController.abort();
-        } else if(!element.iommi) {
+        } else if (!element.iommi) {
             element.iommi = {};
         }
         const newAbortController = new AbortController();
@@ -136,7 +124,7 @@ class IommiBase {
 
         // it's better to do these outside of try-catch
         const ajaxURL = form.iommi.getAjaxValidationUrl.call(form, params, `&/${errorsPath}`);
-        const ajaxOptions= {signal: this.resetAbortController(form).signal};
+        const ajaxOptions = {signal: this.resetAbortController(form).signal};
 
         try {
             const {global, fields} = await this.fetchJson(ajaxURL, ajaxOptions);
@@ -154,7 +142,7 @@ class IommiBase {
                 Object.keys(fields).forEach(key => {
                     // Mark the field as invalid
                     fieldElement = form.querySelector(`[name="${key}"]`);
-                    if(fieldElement) {
+                    if (fieldElement) {
                         fieldElement.setCustomValidity(fields[key].join(', '));
                         fieldElement.reportValidity();
                     }
@@ -192,10 +180,8 @@ class IommiBase {
         }
     }
 
-    async updateTableContainer(container, params, extra){
+    async updateTableContainer(container, params, extra) {
         const tbodyPath = container.getAttribute('data-endpoint');
-
-        this.callDeprecatedSpinner(true, container);  // deprecated, use event "iommi.loading.start" instead
 
         container.dispatchEvent(
             new CustomEvent('iommi.loading.start', {
@@ -206,7 +192,7 @@ class IommiBase {
 
         // it's better to do these outside of try-catch
         let ajaxURL;
-        if(extra.filterForm) {
+        if (extra.filterForm) {
             ajaxURL = extra.filterForm.iommi.getAjaxTbodyUrl.call(extra.filterForm, params, tbodyPath);
         } else {
             ajaxURL = this.getDefaultAjaxUrl(params, tbodyPath);
@@ -235,7 +221,7 @@ class IommiBase {
             );
         } catch (err) {
             if (!this.isAjaxAbort(err)) {
-                if(extra.filterForm) {
+                if (extra.filterForm) {
                     extra.filterForm.querySelector('.iommi_query_error').innerHTML = err;
                 }
 
@@ -253,7 +239,6 @@ class IommiBase {
                 );
             }
         } finally {
-            this.callDeprecatedSpinner(false, container);  // deprecated, use event "iommi.loading.end" instead
             container.dispatchEvent(
                 new CustomEvent('iommi.loading.end', {
                     bubbles: true,
@@ -276,18 +261,18 @@ class IommiBase {
 
         // first remove from URL params all that belongs to this filter
         const deleteParams = new Set();
-        for(const [key, value] of params) {
-            if(typeof form.elements[key] !== "undefined") {
+        for (const [key, value] of params) {
+            if (typeof form.elements[key] !== "undefined") {
                 deleteParams.add(key);
             }
         }
-        for(let key of deleteParams) {
+        for (let key of deleteParams) {
             params.delete(key);
         }
 
         // append to URL params only applied filters
-        for(const [key, value] of formData) {
-            if(value && !(value instanceof File)) {
+        for (const [key, value] of formData) {
+            if (value && !(value instanceof File)) {
                 // new URLSearchParams(formData) would throw an error for files
                 params.append(key, value);
             }
@@ -297,7 +282,7 @@ class IommiBase {
 
         // remove "page" for this table to always jump to the first page after filtering
         const paginator = container.querySelector('[data-iommi-page-parameter]');
-        if(paginator) {
+        if (paginator) {
             params.delete(paginator.getAttribute('data-iommi-page-parameter'));
         }
 
@@ -341,7 +326,6 @@ class IommiBase {
                     // populated the form on the input event so ignore it
                     return;
                 }
-                SELF.callDeprecatedSpinner(true, container);  // deprecated, also it doesn't make sense to start spinner here imo
                 // delay ajax request for free text
                 debouncedPopulate(form, e.target);
             } else {
@@ -379,15 +363,16 @@ class IommiBase {
         form.querySelector('[data-iommi-filter-button]').remove();
 
         form.iommi = {
-            getAjaxValidationUrl: function(params, endpoint) {
+            getAjaxValidationUrl: function (params, endpoint) {
                 return window.iommi.getDefaultAjaxUrl(params, endpoint);
             },
 
-            getAjaxTbodyUrl: function(params, endpoint) {
+            getAjaxTbodyUrl: function (params, endpoint) {
                 return window.iommi.getDefaultAjaxUrl(params, endpoint);
             }
         };
     }
+
     getDefaultAjaxUrl(params, endpoint) {
         return `?${params.toString()}&${endpoint}`;
     }
@@ -426,7 +411,7 @@ class IommiBase {
                     hrefSearchParams = new URLSearchParams(href);
                 }
                 SELF.historyStatePushedByUser = false;
-                window.history.pushState({reloadOnUserAction: true},'', href);
+                window.history.pushState({reloadOnUserAction: true}, '', href);
                 SELF.updateTableContainer(container, hrefSearchParams, {pageLink: this});
                 container.scrollIntoView({behavior: 'smooth'});
                 event.preventDefault();
@@ -438,22 +423,13 @@ class IommiBase {
     enhanceTableContainer(container) {
         container.iommi = {
             // so people can easily reload tables after long afk or on websocket message or just with setTimeout
-            reload: function() {
+            reload: function () {
                 let url = new URL(window.location.href);
                 return window.iommi.updateTableContainer(container, url.searchParams, {isReload: true});
             },
         };
     }
-
-    // in case someone has overridden iommi_show_spinner
-    callDeprecatedSpinner(isLoading, container) {
-        if(!iommi_show_spinner.iommiOriginal) {
-            this.warnDeprecated('iommi_show_spinner is deprecated, use events "iommi.loading.start" and "iommi.loading.end" instead');
-            iommi_show_spinner(isLoading, container);
-        }
-    }
 }
-
 
 class IommiSelect2 {
     constructor() {
@@ -469,10 +445,10 @@ class IommiSelect2 {
 
     initAll(parent, selector, extra_options) {
         const SELF = this;
-        if(!parent) {
+        if (!parent) {
             parent = document;
         }
-        if(!selector) {
+        if (!selector) {
             selector = '.select2_enhance';
         }
         $(selector, parent).each(function (_, x) {
@@ -510,8 +486,10 @@ class IommiSelect2 {
                     if (fullState === undefined) {
                         fullState = 'true';
                     }
-                    if(partialState) {
-                        return '?' + $(partialState.map(function(value) {return `[name="${value}"]`}).join(', '), form).serialize();
+                    if (partialState) {
+                        return '?' + $(partialState.map(function (value) {
+                            return `[name="${value}"]`
+                        }).join(', '), form).serialize();
                     } else if (fullState === 'true') {
                         return '?' + form.serialize();
                     } else {
@@ -529,14 +507,14 @@ class IommiSelect2 {
                 }
             }
         }
-        if(extra_options) {
+        if (extra_options) {
             $.extend(options, extra_options);
         }
         f.select2(options);
         f.on('change', function (e) {
             let element = e.target.closest('form');
             // Fire a non-jquery event so that enhanceFilterForm gets the event
-            if(element) {
+            if (element) {
                 element.dispatchEvent(new Event('change'));
             }
         });
@@ -552,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.iommi.onDOMLoad();
 });
 
-window.addEventListener('popstate', function(event) {
+window.addEventListener('popstate', function (event) {
     window.iommi.onPopState(event);
 });
 
@@ -561,51 +539,3 @@ document.addEventListener('readystatechange', () => {
         window.iommi.select2.onCompleteReadyState();
     }
 });
-
-
-// deprecated functions - for backward compatibility only
-
-function iommi_update_URL(params) {
-    window.iommi.warnDeprecated('iommi_update_URL is deprecated');
-    window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
-}
-
-function iommi_debounce(func, wait) {
-    window.iommi.warnDeprecated('iommi_debounce is deprecated, use iommi.debounce instead');
-    return window.iommi.debounce(func, wait);
-}
-
-async function iommi_validate_form(params, form) {
-    window.iommi.warnDeprecated('iommi_validate_form is deprecated, use iommi.validateForm instead');
-    return window.iommi.validateForm(params, form);
-}
-
-async function iommi_query_populate(form) {
-    window.iommi.warnDeprecated('iommi_query_populate is deprecated, use iommi.queryPopulate instead');
-    return window.iommi.queryPopulate(form);
-}
-
-function iommi_has_same_data(prevData, newData) {
-    window.iommi.warnDeprecated('iommi_has_same_data is deprecated, use iommi.hasSameData instead');
-    return window.iommi.hasSameData(prevData, newData);
-}
-
-function iommi_enhance_form(form) {
-    window.iommi.warnDeprecated('iommi_enhance_form is deprecated, use iommi.enhanceFilterForm instead');
-    return window.iommi.enhanceFilterForm(form);
-}
-
-function iommi_show_spinner(isLoading, container) {
-    window.iommi.warnDeprecated('iommi_show_spinner is deprecated, use events "iommi.loading.start" and "iommi.loading.end" instead');
-}
-iommi_show_spinner.iommiOriginal = true;
-
-function iommi_init_all_select2() {
-    window.iommi.warnDeprecated('iommi_init_all_select2 is deprecated, use iommi.select2.initAll instead');
-    return window.iommi.select2.initAll();
-}
-
-function iommi_init_select2(elem) {
-    window.iommi.warnDeprecated('iommi_init_select2 is deprecated, use iommi.select2.initOne instead');
-    return window.iommi.select2.initOne(elem);
-}
