@@ -1790,6 +1790,8 @@ class Form(Part, Tag):
 
         self._evaluate_parameters['instance'] = self.instance
         self.editable = evaluate_strict(self.editable, **self.iommi_evaluate_parameters())
+        if self.parent_form is not None and self.parent_form.editable is False:
+            self.editable = False
 
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         build_and_bind_h_tag(self)

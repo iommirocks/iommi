@@ -3810,3 +3810,19 @@ def test_duration_render_value():
     assert duration_render_value(timedelta(seconds=2.1)) == '2.10s'
     assert duration_render_value(timedelta(minutes=3, seconds=2.1)) == '3m 2.10s'
     assert duration_render_value(timedelta(hours=7, minutes=3, seconds=2.1)) == '7h 3m 2.10s'
+
+
+def test_nested_form_respects_parents_editable_false():
+    class ChildForm(Form):
+        name = Field.text()
+
+    class ParentForm(Form):
+        class Meta:
+            editable = False
+
+        child_name = ChildForm()
+
+    pf = ParentForm().bind()
+    assert not pf.editable
+
+    assert not pf.nested_forms.child_name.editable
