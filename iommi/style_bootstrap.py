@@ -137,6 +137,7 @@ bootstrap_base = Style(
                 header__attrs__title='Select all',
                 header__attrs__class={'text-center': True},
                 cell__attrs__class={'text-center': True},
+                extra__icon='fa fa-check-square-o',
             ),
             number=dict(
                 cell__attrs__class={'text-right': True},

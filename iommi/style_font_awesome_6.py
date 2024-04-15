@@ -22,5 +22,8 @@ font_awesome_6 = Style(
         boolean__cell__format=lambda value, **_: mark_safe(
             f'<i class="fa fa-check" title="{gettext("Yes")}"></i>'
         ) if value else '',
+        select=dict(
+            extra__icon='fa-regular fa-square-check',
+        ),
     ),
 )

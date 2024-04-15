@@ -20,5 +20,8 @@ bootstrap_icons = Style(
         boolean__cell__format=lambda value, **_: mark_safe(
             f'<i class="bi bi-check-lg fs-3" title="{gettext("Yes")}"></i>'
         ) if value else '',
+        select=dict(
+            extra__icon='bi bi-check2-square',
+        )
     ),
 )
