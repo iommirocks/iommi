@@ -427,7 +427,6 @@ class Admin(Page):
             table if table is not None else {},
             call_target__cls=cls.get_meta().table_class,
             columns=dict(
-                select__include=True,
                 edit=dict(
                     call_target__attribute='edit',
                     after=0,
@@ -451,9 +450,6 @@ class Admin(Page):
                 ),
             ),
             query_from_indexes=True,
-            bulk__actions__delete__include=lambda request, table, **_: (
-                cls.has_permission(request, instance=None, model=table.model, operation='delete')
-            ),
         )
 
         return cls(
