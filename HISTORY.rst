@@ -1,6 +1,23 @@
 Changelog
 ---------
 
+7.0.0 (2024-04-15)
+~~~~~~~~~~~~~~~~~~
+
+* `EditTable`s `EditColumn.edit` namespace is now called `field`. This is a breaking change. There was a namespace conflict between `Column.edit` and `EditColumn.edit`.
+
+* `EditTable` and bulk editing and filtering now compose cleanly
+
+* Changed default style to Bootstrap 5
+
+* Allow styling of `EditTable`/`EditColumn`
+
+* Nested forms respect if the parent form is non-editable
+
+* SQL trace for N+1 problems will now print the last found query+traceback instead of the first. This should increase the odds of it showing something useful.
+
+* Removed deprecated JavaScript functions
+
 6.8.0 (2024-03-27)
 ~~~~~~~~~~~~~~~~~~
 
