@@ -682,6 +682,7 @@ class Column(Part):
         ),
         extra__checkbox_name='pk',
         extra__checked=lambda **_: False,
+        extra__icon='fa fa-check-square-o',
     )
     def select(cls, **kwargs):
         # language=rst
