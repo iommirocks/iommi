@@ -2,10 +2,10 @@ from iommi import (
     Asset,
     Style,
 )
-from iommi.style_bootstrap import bootstrap
+from iommi.style_bootstrap5 import bootstrap5
 
 bootstrap_docs = Style(
-    bootstrap,
+    bootstrap5,
     root__assets__doc_style=Asset.css(attrs__href='https://docs.iommi.rocks/en/latest/_static/iframe_custom.css'),
     root__assets__iommi_js=Asset.js(attrs=dict(src='https://docs.iommi.rocks//en/latest/_static/iommi.js')),
     internal=True,
