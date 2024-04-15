@@ -392,6 +392,10 @@ class Filter(Part):
         return instance
 
     @classmethod
+    def checkboxes(cls, **kwargs):
+        return cls.multi_choice(**kwargs)
+
+    @classmethod
     @with_defaults(
         field__call_target__attribute='choice_queryset',
         query_operator_to_q_operator=lambda op: 'exact',

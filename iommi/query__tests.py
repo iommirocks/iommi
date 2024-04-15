@@ -977,6 +977,7 @@ def test_all_filter_shortcuts():
     type_specifics = Namespace(
         filters__filter_of_type_choice__choices=[],
         filters__filter_of_type_multi_choice__choices=[],
+        filters__filter_of_type_checkboxes__choices=[],
         filters__filter_of_type_choice_queryset__choices=TFoo.objects.none(),
         filters__filter_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
         filters__filter_of_type_many_to_many__model_field=TBaz.foo.field,

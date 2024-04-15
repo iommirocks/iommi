@@ -832,6 +832,10 @@ class Column(Part):
         return cls.choice(**kwargs)
 
     @classmethod
+    def checkboxes(cls, **kwargs):
+        return cls.multi_choice(**kwargs)
+
+    @classmethod
     @with_defaults(
         bulk__call_target__attribute='text',
         filter__call_target__attribute='text',

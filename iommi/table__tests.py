@@ -2922,6 +2922,7 @@ def test_all_column_shortcuts():
     type_specifics = Namespace(
         columns__column_of_type_choice__choices=[],
         columns__column_of_type_multi_choice__choices=[],
+        columns__column_of_type_checkboxes__choices=[],
         columns__column_of_type_choice_queryset__choices=TFoo.objects.none(),
         columns__column_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
         columns__column_of_type_many_to_many__model_field=TBaz.foo.field,
