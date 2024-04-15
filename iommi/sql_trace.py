@@ -454,7 +454,7 @@ def sql_debug_last_call(response):
                         format_clickable_filename(filename, lineno, str(response.iommi_part._name)), sql_trace=True
                     )
                     sql_debug('With Stack:')
-                sql_debug(logs[0]['stack'], sql_trace=True)
+                sql_debug(logs[-1]['stack'], sql_trace=True)
                 for x in logs[:query_cutoff]:
                     sql_debug_trace_sql(**x)
                 if len(logs) > query_cutoff:
