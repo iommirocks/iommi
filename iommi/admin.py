@@ -365,7 +365,7 @@ class Admin(Page):
         add_models = setdefaults_path(
             Namespace(),
             include=settings.DEBUG,
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=Table,
             sortable=False,
             rows=functools.partial(rows, included_filter=True),
             page_size=None,
