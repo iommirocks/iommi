@@ -2168,8 +2168,10 @@ class Table(Part, Tag):
             return
 
         bind_member(self, name='bulk')
-        if self.bulk is not None:
+        if self.should_render_form_tag():
             self._bound_members.bulk = self.bulk
+        else:
+            self.bulk = None
 
     # property for jinja2 compatibility
     @property
@@ -2402,7 +2404,7 @@ class Table(Part, Tag):
         return self.selection(prefix=prefix).filter(**self.bulk_filter).exclude(**self.bulk_exclude)
 
     def should_render_form_tag(self):
-        return bool(self.bulk)
+        return bool(self.bulk and self.bulk.actions)
 
     @dispatch(
         render=render_template,
