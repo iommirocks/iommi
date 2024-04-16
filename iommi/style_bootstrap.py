@@ -102,11 +102,14 @@ bootstrap_base = Style(
     FieldGroup=dict(
         tag='div',
         attrs__class={'form-row': True},
-        assets__field_group_select2_css=Asset('''
+        assets__field_group_select2_css=Asset(
+            '''
         .form-group .select2-container {
             display: block;
         }
-        ''', tag='style'),
+        ''',
+            tag='style',
+        ),
     ),
     Action=dict(
         shortcuts=dict(

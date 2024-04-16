@@ -32,6 +32,7 @@ class Decoder:
 class PathDecoder:
     def __init__(self, *, decode=None, model=None, name):
         if decode is None:
+
             def decode(string, _model=model, **_):
                 return _model.objects.get(pk=string)
 
@@ -42,7 +43,12 @@ class PathDecoder:
 
 _path_component_to_decode_data: typing.Dict[
     str,
-    typing.Tuple[typing.Optional[typing.Type[Model]], str, typing.Optional[str], typing.Union[Decoder, PathDecoder]],
+    typing.Tuple[
+        typing.Optional[typing.Type[Model]],
+        str,
+        typing.Optional[str],
+        typing.Union[Decoder, PathDecoder],
+    ],
 ] = {}
 
 

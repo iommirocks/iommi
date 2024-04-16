@@ -1260,9 +1260,7 @@ class Field(Part, Tag):
             elif 'model_field' in kwargs:
                 pass
             else:
-                assert (
-                    False
-                ), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
+                assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 
         instance = cls.choice(**kwargs)
         instance = instance.refine(
@@ -1476,12 +1474,7 @@ def is_django_promise_with_string_proxy(redirect_to):
     # django 5.0+ uses _kw and _args
     kwargs = getattr(redirect_to, '_proxy____kw', getattr(redirect_to, '_kw', None))
     args = getattr(redirect_to, '_proxy____args', getattr(redirect_to, '_args', None))
-    return (
-        isinstance(redirect_to, Promise)
-        and kwargs == {}
-        and len(args) == 1
-        and isinstance(args[0], str)
-    )
+    return isinstance(redirect_to, Promise) and kwargs == {} and len(args) == 1 and isinstance(args[0], str)
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, redirect, form):
@@ -1694,9 +1687,7 @@ class Form(Part, Tag):
         extra_member_defaults = dict()
         if self.auto:
             auto = FormAutoConfig(**self.auto).refine_done(parent=self)
-            assert (
-                not self.model
-            ), "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
+            assert not self.model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
             if auto.model is None:
                 auto.model = auto.instance.__class__
 

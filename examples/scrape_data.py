@@ -90,7 +90,10 @@ def scrape_data():
             result = json.load(f)
     else:
         print('### Scraping artist and album data')
-        scrape_artist('Django Reinhardt', '/artist/253481-Django-Reinhardt?filter_anv=0&subtype=Albums&type=Releases&limit=500')
+        scrape_artist(
+            'Django Reinhardt',
+            '/artist/253481-Django-Reinhardt?filter_anv=0&subtype=Albums&type=Releases&limit=500',
+        )
         scrape_artist(
             'Quintette Du Hot Club De France',
             '/artist/355185-Quintette-Du-Hot-Club-De-France?filter_anv=0&subtype=Albums&type=Releases&limit=500',
@@ -99,10 +102,22 @@ def scrape_data():
             'Black Sabbath',
             '/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&filter_anv=0&subtype=Albums&type=Releases&page=1&layout=sm&limit=500',
         )
-        scrape_artist('Dio', '/artist/252122-Dio-2?filter_anv=0&subtype=Albums&type=Releases&limit=500')
-        scrape_artist('Ozzy Osbourne', '/artist/59770-Ozzy-Osbourne?filter_anv=0&subtype=Albums&type=Releases&limit=500')
-        scrape_artist('Tony Iommi', '/artist/253791-Tony-Iommi?filter_anv=0&subtype=Albums&type=Releases&limit=500')
-        scrape_artist('Radiohead', '/artist/3840-Radiohead?filter_anv=0&subtype=Albums&type=Releases&limit=500')
+        scrape_artist(
+            'Dio',
+            '/artist/252122-Dio-2?filter_anv=0&subtype=Albums&type=Releases&limit=500',
+        )
+        scrape_artist(
+            'Ozzy Osbourne',
+            '/artist/59770-Ozzy-Osbourne?filter_anv=0&subtype=Albums&type=Releases&limit=500',
+        )
+        scrape_artist(
+            'Tony Iommi',
+            '/artist/253791-Tony-Iommi?filter_anv=0&subtype=Albums&type=Releases&limit=500',
+        )
+        scrape_artist(
+            'Radiohead',
+            '/artist/3840-Radiohead?filter_anv=0&subtype=Albums&type=Releases&limit=500',
+        )
 
         with open(basedir.joinpath('scraped_data.json'), 'w') as f:
             json.dump(result, f)

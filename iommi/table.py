@@ -458,9 +458,7 @@ class Column(Part):
         super(Column, self).on_refine_done()
 
     def __html__(self, *, render=None):
-        assert (
-            False
-        ), "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"  # pragma: no cover
+        assert False, "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"  # pragma: no cover
 
     @staticmethod
     @evaluated_refinable
@@ -664,10 +662,9 @@ class Column(Part):
         cell__value=lambda table, cells, row, **_: (
             row.pk
             if isinstance(table.rows, QuerySet)
-            else
             # row_index is the visible row number
             # See selection() for the code that does the lookup
-            cells.row_index
+            else cells.row_index
         ),
         cell__format=lambda column, row, value, **kwargs: format_html(
             # language=HTML
@@ -2198,9 +2195,7 @@ class Table(Part, Tag):
                 if column.cell.attrs.get('rowspan', no_value_set) is not no_value_set:
                     continue
 
-                rowspan_by_row = (
-                    {}
-                )  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
+                rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
                 prev_value = no_value_set
                 prev_row = no_value_set
                 for cells in self.cells_for_rows():

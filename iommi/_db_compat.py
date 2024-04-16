@@ -96,6 +96,7 @@ def setup_db_compat_django():
 
     try:
         from django.contrib.postgres.search import SearchVectorField
+
         register_factory(SearchVectorField, factory=None)
     except ImportError:
         pass

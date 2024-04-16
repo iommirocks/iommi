@@ -42,12 +42,8 @@ from iommi.member import (
     refine_done_members,
 )
 from iommi.shortcut import with_defaults
-from iommi.style import (
-    get_style_object,
-)
-from iommi.traversable import (
-    Traversable,
-)
+from iommi.style import get_style_object
+from iommi.traversable import Traversable
 
 from ._web_compat import (
     QueryDict,
@@ -234,9 +230,7 @@ def render_root(*, part, context, **render):
         content=content,
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=(
-            iommi_debug_panel(part)
-            if iommi_debug_on() and '_iommi_disable_debug_panel' not in request.GET
-            else ''
+            iommi_debug_panel(part) if iommi_debug_on() and '_iommi_disable_debug_panel' not in request.GET else ''
         ),
         iommi_language_code=getattr(request, 'LANGUAGE_CODE', settings.LANGUAGE_CODE),
         assets=assets,

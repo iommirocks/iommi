@@ -77,7 +77,6 @@ def test_required_parameter():
 # noinspection PyUnusedLocal
 def test_find_member_fail_on_tuple():
     with pytest.raises(TypeError) as e:
-
         # fmt: off
         class MyDeclarative(Declarative):
             foo = Member(foo='bar'),
@@ -92,7 +91,6 @@ def test_find_member_fail_on_tuple():
 # noinspection PyUnusedLocal
 def test_find_member_fail_on_tuple_with_is_member_lambda():
     with pytest.raises(TypeError) as e:
-
         # fmt: off
         @declarative(is_member=lambda obj: isinstance(obj, Member))
         class MyDeclarative:

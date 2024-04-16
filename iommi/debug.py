@@ -172,6 +172,7 @@ def endpoint__debug_tree(endpoint, **_):
 def endpoint__debug_templates_used(endpoint, request, **_):
     root = endpoint.iommi_root()
     from iommi.part import render_root
+
     render_root(part=root)
 
     def url_for_template(t):
@@ -183,23 +184,33 @@ def endpoint__debug_templates_used(endpoint, request, **_):
         return local_debug_url_builder(t, 1)
 
     links = [
-        format_html('<li><a href="{}">{}</a></li>', url_for_template(t), t)
+        format_html(
+            '<li><a href="{}">{}</a></li>',
+            url_for_template(t),
+            t,
+        )
         for t in request.iommi_used_templates
     ]
     links = format_html('{}' * len(links), *links)
-    return HttpResponse(format_html('''
-        <html>
-            <head>
-                <style>
-                </style>
-            </head>
-            <body>
-                <ul>
-                    {}
-                </ul>
-            </body>
-        </html>
-        ''', links))
+    return HttpResponse(
+        # language=HTML
+        format_html(
+            '''
+                <html>
+                    <head>
+                        <style>
+                        </style>
+                    </head>
+                    <body>
+                        <ul>
+                            {}
+                        </ul>
+                    </body>
+                </html>
+            ''',
+            links,
+        )
+    )
 
 
 def local_debug_url_builder(filename, lineno):

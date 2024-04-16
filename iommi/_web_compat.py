@@ -53,6 +53,7 @@ try:
 except ImproperlyConfigured:
     pass
 
+
 class Template:
     def __init__(self, template_string):
         self.s = template_string
@@ -64,10 +65,13 @@ class Template:
             assert JinjaTemplate is not None
             return JinjaTemplate(self.s).render(**context.flatten())
 
+
 template_types = template_types + (Template,)
+
 
 def csrf(request):
     return {} if request is None else csrf_(request)
+
 
 try:
     from django.template.loader import get_template_from_string
@@ -117,6 +121,7 @@ def render_template(request, template, context):
         return mark_safe(template.render(context=RequestContext(request, context)))
     else:
         return mark_safe(template.render(context, request))
+
 
 # except ImportError:  # pragma: no cover This flask support is a work in progress/future plan
 #     from jinja2 import Markup

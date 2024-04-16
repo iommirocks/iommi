@@ -308,16 +308,34 @@ class Menu(MenuBase):
 
 def get_debug_menu(**kwargs):
     class DebugMenu(Menu):
-        code = MenuItem(tag='li')
-        templates = MenuItem(url='?/debug_templates_used', tag='li', include=lambda request, **_: getattr(request, 'iommi_used_templates', None))
-        tree = MenuItem(url='?/debug_tree', tag='li')
-        pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
+        code = MenuItem(
+            tag='li',
+        )
+        templates = MenuItem(
+            url='?/debug_templates_used',
+            tag='li',
+            include=lambda request, **_: getattr(request, 'iommi_used_templates', None),
+        )
+        tree = MenuItem(
+            url='?/debug_tree',
+            tag='li',
+        )
+        pick = MenuItem(
+            url='#',
+            attrs__onclick='window.iommi_start_pick()',
+            tag='li',
+        )
         edit = MenuItem(
-            display_name=lambda request, **_: 'Edit vertical'
-            if request.GET.get('_iommi_live_edit') is not None and request.GET.get('_iommi_live_edit_flow') != 'row' else 'Edit',
-            url=lambda request, **_: '?_iommi_live_edit&_iommi_live_edit_flow=row'
-            if request.GET.get('_iommi_live_edit') is not None and request.GET.get('_iommi_live_edit_flow') != 'row'
-            else '?_iommi_live_edit',
+            display_name=lambda request, **_: (
+                'Edit vertical'
+                if request.GET.get('_iommi_live_edit') is not None and request.GET.get('_iommi_live_edit_flow') != 'row'
+                else 'Edit'
+            ),
+            url=lambda request, **_: (
+                '?_iommi_live_edit&_iommi_live_edit_flow=row'
+                if request.GET.get('_iommi_live_edit') is not None and request.GET.get('_iommi_live_edit_flow') != 'row'
+                else '?_iommi_live_edit'
+            ),
             tag='li',
             include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE,
         )
@@ -333,19 +351,21 @@ def get_debug_menu(**kwargs):
             include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE,
         )
         profile = MenuItem(
-            url='?_iommi_prof', tag='li', include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE
+            url='?_iommi_prof',
+            tag='li',
+            include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE,
         )
         profile_post = MenuItem(
             display_name='Profile POST',
             url='#',
             # language=js
             attrs__onclick="""
-            for (form of document.querySelectorAll('form')) {
-                var input = document.createElement("input");
-                input.setAttribute("type", "hidden");
-                input.setAttribute("name", "_iommi_prof");
-                form.appendChild(input);
-            }
+                for (form of document.querySelectorAll('form')) {
+                    var input = document.createElement("input");
+                    input.setAttribute("type", "hidden");
+                    input.setAttribute("name", "_iommi_prof");
+                    form.appendChild(input);
+                }
             """,
             tag='li',
             include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE,

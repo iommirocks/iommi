@@ -302,6 +302,7 @@ def live_edit_view_impl(
         ),
         assets__live_edit_page_custom=Asset(
             tag='style',
+            # language=css
             text='''
                 .container {
                     padding: 0 !important;
@@ -337,9 +338,7 @@ def live_edit_view_impl(
                 #error {
                     height: 10% !important;
                 }
-            '''.replace(
-                '<<flow_direction>>', flow_direction
-            ),
+            '''.replace('<<flow_direction>>', flow_direction),
         ),
         iommi_style='bootstrap',
         parts__result=html.iframe(attrs__id='result'),

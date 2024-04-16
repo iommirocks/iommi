@@ -184,9 +184,7 @@ def table_post_handler_on_lists(request):
     class FooTable(Table):
         # I can add checkboxes to each row
         s = Column.select()
-        a = (
-            Column.number()
-        )  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
+        a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
         b = Column()
         c = Column(cell__format=lambda value, **_: value[-1])  # Display the last value of the tuple
         sum_c = Column(cell__value=lambda row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo

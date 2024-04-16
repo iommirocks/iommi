@@ -34,9 +34,9 @@ def matches(caller_parameters, callee_parameters, __match_empty=False):
         else:
             result = required <= caller <= required.union(optional)
 
-    _matches_cache[
-        cache_key
-    ] = result  # pragma: no mutate (mutation changes result to None which just makes things slower)
+    _matches_cache[cache_key] = (
+        result  # pragma: no mutate (mutation changes result to None which just makes things slower)
+    )
     return result
 
 

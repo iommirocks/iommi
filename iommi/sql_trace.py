@@ -30,6 +30,7 @@ from iommi.thread_locals import (
 def no_coloring(text, color=None, on_color=None, attrs=None):
     return text
 
+
 try:
     from termcolor import colored
 except ImportError:
@@ -118,20 +119,21 @@ class Middleware:
                 if iommi_sql_debug_log is not None:
                     total_duration = float(sum(x['duration'] for x in iommi_sql_debug_log))
                     result = [
+                        # language=HTML
                         '''
-                        <style>
-                            a, span {
-                                box-sizing: border-box;
-                            }
-                            @media (prefers-color-scheme: dark) {
-                                html {
-                                    background-color: black;
-                                    color: #bbb;
+                            <style>
+                                a, span {
+                                    box-sizing: border-box;
                                 }
-                                b {
-                                    color: white;
+                                @media (prefers-color-scheme: dark) {
+                                    html {
+                                        background-color: black;
+                                        color: #bbb;
+                                    }
+                                    b {
+                                        color: white;
+                                    }
                                 }
-                            }
                             </style>
                         ''',
                         f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',

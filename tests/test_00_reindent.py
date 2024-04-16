@@ -2,7 +2,6 @@ from tests.helpers import reindent
 
 
 def test_reindent():
-
     before = """\
 _foo
 __bar
