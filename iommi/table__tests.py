@@ -1374,6 +1374,15 @@ def test_bulk_fields_empty_by_default():
 
 
 @pytest.mark.django_db
+def test_bulk_form_when_not_needed():
+    t = Table(
+        auto__model=DefaultsInForms,
+        bulk__actions__banana__include=False,
+    ).bind()
+    assert t.bulk is None
+
+
+@pytest.mark.django_db
 def test_invalid_syntax_query():
     class TestTable(Table):
         a = Column.number(sortable=False, filter__include=True)
