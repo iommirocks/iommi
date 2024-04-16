@@ -29,7 +29,6 @@ def write_rst_from_pytest():
 
         with open(source) as source_f:
             with open(target, 'w') as target_f:
-
                 rst_from_pytest(source_f, target_f, target)
 
 
@@ -84,8 +83,8 @@ def rst_from_pytest(source_f, target_f, target):
         ):  # not stripped_line! skip comments on the global level between functions
             continue
         elif state_ == 'py' and line.startswith(
-                '@'
-            ):  # not stripped_line! skip decorators on the global level between functions
+            '@'
+        ):  # not stripped_line! skip decorators on the global level between functions
             continue
         else:
             if state_ == 'only test':

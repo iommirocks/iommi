@@ -27,9 +27,7 @@ from iommi.shortcut import (
     is_shortcut,
 )
 from iommi.struct import Struct
-from iommi.traversable import (
-    Traversable,
-)
+from iommi.traversable import Traversable
 from tests.helpers import (
     prettify,
     verify_table_html,
@@ -109,7 +107,6 @@ def test_all_action_shortcuts():
             extra__fancy = True
 
     class ThingWithActions(Traversable):
-
         actions: Dict[str, Action] = RefinableMembers()
 
         def on_refine_done(self):

@@ -134,7 +134,6 @@ def foo_view(request):
 
     # Reload trigger hack
     if orig_reload is not None:  # modern django
-
         from django.utils import autoreload
 
         autoreload.trigger_reload('notused')
@@ -180,8 +179,8 @@ test_edit_style = Style(
         f.write(orig_code)
 
     from tests.edit_style_temp import test_edit_style
-    with register_style('test_edit_style', test_edit_style, allow_overwrite=True):
 
+    with register_style('test_edit_style', test_edit_style, allow_overwrite=True):
         # Broken changes are NOT written to disk
         data = json.loads(style_editor__edit(req('post', data='syntax error!', name='test_edit_style')).content)
         assert data == {'error': 'invalid syntax (<string>, line 1)'}
@@ -200,8 +199,8 @@ test_edit_style = Style(
 
         # Reload trigger hack
         if orig_reload is not None:  # modern django
-
             from django.utils import autoreload
+
             autoreload.trigger_reload('notused')
             captured = capsys.readouterr()
             assert captured.out == 'Skipped reload\n'
@@ -211,4 +210,10 @@ test_edit_style = Style(
 
 
 def test_style_editor__new():
-    style_editor__new().bind(request=req('post', module='tests.style_editor_new_tmp', **{'-submit': ''})).render_to_response()
+    style_editor__new().bind(
+        request=req(
+            'post',
+            module='tests.style_editor_new_tmp',
+            **{'-submit': ''},
+        )
+    ).render_to_response()

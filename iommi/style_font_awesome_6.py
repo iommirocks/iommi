@@ -2,8 +2,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 
 from iommi import (
-    html,
     Style,
+    html,
 )
 
 font_awesome_6 = Style(
@@ -19,9 +19,9 @@ font_awesome_6 = Style(
         edit__extra__icon='pencil-square-o',
         delete__extra__icon='trash-o',
         download__extra__icon='download',
-        boolean__cell__format=lambda value, **_: mark_safe(
-            f'<i class="fa fa-check" title="{gettext("Yes")}"></i>'
-        ) if value else '',
+        boolean__cell__format=lambda value, **_: (
+            mark_safe(f'<i class="fa fa-check" title="{gettext("Yes")}"></i>') if value else ''
+        ),
         select=dict(
             extra__icon='fa-regular fa-square-check',
         ),

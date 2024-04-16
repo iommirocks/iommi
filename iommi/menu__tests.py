@@ -183,7 +183,7 @@ def test_active_on_li():
             sub_menu=dict(
                 bar=MenuItem(active_class_on_item=True),
                 foo=MenuItem(after=0, active_class_on_item=True),
-            )
+            ),
         )
 
     menu = MyMenu().bind(request=req('GET'))

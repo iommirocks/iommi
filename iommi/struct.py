@@ -78,25 +78,25 @@ class Frozen:
         return _hash
 
     def __setitem__(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(f"'{type(self).__name__}' object attributes are read-only")
 
     def __setattr__(self, key, value):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(f"'{type(self).__name__}' object attributes are read-only")
 
     def setdefault(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(f"'{type(self).__name__}' object attributes are read-only")
 
     def update(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(f"'{type(self).__name__}' object attributes are read-only")
 
     def clear(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(f"'{type(self).__name__}' object attributes are read-only")
 
     def __delitem__(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(f"'{type(self).__name__}' object attributes are read-only")
 
     def __delattr__(self, *_, **__):
-        raise TypeError("'{}' object attributes are read-only".format(type(self).__name__, ))
+        raise TypeError(f"'{type(self).__name__}' object attributes are read-only")
 
     def __reduce__(self):
         return type(self), (), dict(self)

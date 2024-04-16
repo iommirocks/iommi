@@ -13,11 +13,15 @@ def test_validate_readme():
 
     # normalize the readmes:
     docs_readme = docs_readme.replace('https://docs.iommi.rocks/en/latest/', '').replace(':doc:', '')
-    repo_readme = repo_readme.replace('https://docs.iommi.rocks/en/latest/', '').replace('.html>`_', '>`').replace('docs/', '')
+    repo_readme = (
+        repo_readme.replace('https://docs.iommi.rocks/en/latest/', '').replace('.html>`_', '>`').replace('docs/', '')
+    )
 
     exit_code = 0
 
-    for line in unified_diff(repo_readme.split('\n')[:-6], docs_readme.split('\n')[3:], fromfile='README.rst', tofile='docs/README.rst'):
+    for line in unified_diff(
+        repo_readme.split('\n')[:-6], docs_readme.split('\n')[3:], fromfile='README.rst', tofile='docs/README.rst'
+    ):
         print(line)
         exit_code = 1
 

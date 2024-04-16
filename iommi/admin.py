@@ -187,10 +187,9 @@ class Admin(Page):
     def __init__(self, parts, apps, **kwargs):
         # Validate apps params
         for k in apps.keys():
-            assert (
-                k in joined_app_name_and_model
-            ), f'{k} is not a valid app/model key.\n\n' f'Valid keys:\n    ' + '\n    '.join(
-                sorted(joined_app_name_and_model)
+            assert k in joined_app_name_and_model, (
+                f'{k} is not a valid app/model key.\n\n'
+                f'Valid keys:\n    ' + '\n    '.join(sorted(joined_app_name_and_model))
             )
         super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
 
@@ -358,7 +357,9 @@ class Admin(Page):
             columns__name=dict(
                 cell__url=lambda row, **_: row.url if getattr(row, 'pk', None) != '#sentinel#' else None,
                 display_name='',
-                cell__format=lambda row, **format_kwargs: row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else '',
+                cell__format=lambda row, **format_kwargs: (
+                    row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
+                ),
             ),
         )
 
@@ -394,7 +395,9 @@ class Admin(Page):
             ),
             columns__name=dict(
                 display_name='',
-                cell__format=lambda row, **format_kwargs: row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else '',
+                cell__format=lambda row, **format_kwargs: (
+                    row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
+                ),
             ),
         )
 

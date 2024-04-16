@@ -5,13 +5,9 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-html_dir = Path(__file__).parent / 'docs'/ '_build' / 'html'
+html_dir = Path(__file__).parent / 'docs' / '_build' / 'html'
 
-iommi_classes = {
-    x for x in
-    [f.stem for f in html_dir.glob('*.html')]
-    if x[0].isupper()
-}
+iommi_classes = {x for x in [f.stem for f in html_dir.glob('*.html')] if x[0].isupper()}
 
 url_by_symbol = {
     'Template': 'https://docs.djangoproject.com/en/dev/ref/templates/',
@@ -32,8 +28,10 @@ url_by_symbol = {
     'html': '/pages.html#html',
 }
 
+
 def build_link(t, url):
     return BeautifulSoup(f'<span class="n"><a href="{url}">{t}</span>', 'html.parser')
+
 
 for root, dirs, files in walk(html_dir):
     for filename in files:

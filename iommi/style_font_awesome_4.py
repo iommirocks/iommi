@@ -17,8 +17,8 @@ font_awesome_4 = Style(
         edit__extra__icon='pencil-square-o',
         delete__extra__icon='trash-o',
         download__extra__icon='download',
-        boolean__cell__format=lambda value, **_: mark_safe(
-            f'<i class="fa fa-check" title="{gettext("Yes")}"></i>'
-        ) if value else '',
+        boolean__cell__format=lambda value, **_: mark_safe(f'<i class="fa fa-check" title="{gettext("Yes")}"></i>')
+        if value
+        else '',
     ),
 )

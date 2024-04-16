@@ -37,7 +37,9 @@ def should_profile(request):
     disabled = getattr(request, 'profiler_disabled', True)
     is_staff = hasattr(request, 'user') and request.user.is_staff
 
-    return ('_iommi_prof' in request.GET or '_iommi_prof' in request.POST) and ((not disabled and is_staff) or settings.DEBUG)
+    return ('_iommi_prof' in request.GET or '_iommi_prof' in request.POST) and (
+        (not disabled and is_staff) or settings.DEBUG
+    )
 
 
 def strip_extra_path(s, token):
@@ -50,20 +52,24 @@ def strip_extra_path(s, token):
 
 class HTMLStats(pstats.Stats):
     def print_title(self):
-        print('''
-            <thead>
-                <tr>
-                    <th class="numeric"><a href="?_iommi_prof=ncalls">ncalls</a></th>
-                    <th class="numeric"><a href="?_iommi_prof=tottime">tottime</a></th>
-                    <th class="numeric">percall</th>
-                    <th class="numeric"><a href="?_iommi_prof=cumtime">cumtime</a></th>
-                    <th class="numeric">percall</th>
-                    <th>function</th>
-                    <th>filename</th>
-                    <th>lineno</th>
-                </tr>
-            </thead>
-        ''', file=self.stream)
+        print(
+            # language=HTML
+            '''
+                <thead>
+                    <tr>
+                        <th class="numeric"><a href="?_iommi_prof=ncalls">ncalls</a></th>
+                        <th class="numeric"><a href="?_iommi_prof=tottime">tottime</a></th>
+                        <th class="numeric">percall</th>
+                        <th class="numeric"><a href="?_iommi_prof=cumtime">cumtime</a></th>
+                        <th class="numeric">percall</th>
+                        <th>function</th>
+                        <th>filename</th>
+                        <th>lineno</th>
+                    </tr>
+                </thead>
+            ''',
+            file=self.stream,
+        )
 
     def print_stats(self, *amount):
         for filename in self.files:
@@ -129,7 +135,10 @@ class HTMLStats(pstats.Stats):
             print(f'<td class="numeric">{f8(ct/cc)}</td>', file=self.stream)
 
         if line_number and path:
-            print(f'<td><a href="{src_debug_url_builder(path, line_number)}">{escape(function_name)}</a></td>', file=self.stream)
+            print(
+                f'<td><a href="{src_debug_url_builder(path, line_number)}">{escape(function_name)}</a></td>',
+                file=self.stream,
+            )
         else:
             print(f'<td>{escape(function_name)}</td>', file=self.stream)
 
@@ -170,7 +179,6 @@ class Middleware:
             for prof in request._iommi_prof:
                 prof.disable()
 
-
             s = StringIO()
             ps = HTMLStats(*request._iommi_prof, stream=s)
 
@@ -188,7 +196,6 @@ class Middleware:
                     with subprocess.Popen(
                         (sys.executable, gprof2dot_path, '-f', 'pstats', stats_dump.name), stdout=subprocess.PIPE
                     ) as gprof2dot:
-
                         response['Content-Type'] = 'image/svg+xml'
 
                         dot_path = get_dot_path()
