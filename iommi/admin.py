@@ -246,12 +246,14 @@ class Admin(Page):
 
         table = self.parts.get('table')
         if table is not None:
-            setdefaults_path(self.parts, **{part_name: flatten(table)})
+            if self.operation in ['list']:
+                setdefaults_path(self.parts, **{part_name: flatten(table)})
             self.parts.table = None
 
         form = self.parts.get('form')
         if form is not None:
-            setdefaults_path(self.parts, **{part_name: flatten(form)})
+            if self.operation in ['create', 'edit']:
+                setdefaults_path(self.parts, **{part_name: flatten(form)})
             self.parts.form = None
 
         def should_throw_away(k, v):

@@ -11,6 +11,7 @@ from django.urls import (
     path,
 )
 
+from iommi import Style
 from iommi.admin import (
     Admin,
     Messages,
@@ -258,3 +259,31 @@ def test_collect_config_returns_none_on_missing():
     from tests import empty_iommi_admin
 
     assert collect_config(empty_iommi_admin) is None
+
+
+@pytest.mark.django_db
+def test_style_on_table(settings):
+    settings.ROOT_URLCONF = __name__
+    style = Style(
+        Admin__parts__table__page_size=17,
+    )
+    result = (
+        Admin.list(iommi_style=style)
+        .refine_with_params(
+            app_name='tests',
+            model_name='adminunique',
+        )
+        .bind(request=staff_req('get'))
+    )
+
+    assert result.parts.list_tests_adminunique.page_size == 17
+
+    result = (
+        Admin.create(iommi_style=style)
+        .refine_with_params(
+            app_name='tests',
+            model_name='adminunique',
+        )
+        .bind(request=staff_req('get'))
+    )
+    assert result.parts.create_tests_adminunique
