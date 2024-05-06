@@ -200,7 +200,7 @@ def test_traverse_on_iommi():
     assert page.parts.a_table.query.form.fields.fusk.iommi_path == 'fusk'
     assert page.parts.a_table.columns.fusk.iommi_path == 'a_table/fusk'
     assert page._name == 'root'
-    assert set(keys(page.iommi_evaluate_parameters())) == {'traversable', 'page', 'request'}
+    assert set(keys(page.iommi_evaluate_parameters())) == {'traversable', 'page', 'request', 'user'}
 
 
 def test_evil_names_that_work():
@@ -458,6 +458,7 @@ def test_invoke_callback():
         a=1,
         b=2,
         request=None,
+        user=None,
         traversable=t,
     )
 
@@ -469,7 +470,7 @@ def test_invoke_callback_error_message_lambda():
 
     assert str(e.value) == (
         'TypeError when invoking callback lambda found at: `t.invoke_callback(lambda a: None, b=2)`.\n'
-        '(Keyword arguments: b, request, traversable)'
+        '(Keyword arguments: b, request, traversable, user)'
     )
 
 
@@ -484,7 +485,7 @@ def test_invoke_callback_error_message_function():
     assert str(e.value).startswith(
         'TypeError when invoking callback `<function test_invoke_callback_error_message_function.<locals>.broken_callback at 0x'
     )
-    assert str(e.value).endswith('`.\n(Keyword arguments: request, traversable)')
+    assert str(e.value).endswith('`.\n(Keyword arguments: request, traversable, user)')
 
 
 def test_invoke_callback_transparent_type_error():
@@ -623,3 +624,47 @@ def test_extra_params_missing_return_value():
     with pytest.raises(AssertionError) as e:
         Page(extra_params=lambda **_: None).as_view()(req('get'))
     assert str(e.value) == 'extra_params needs to return a dict with additional parameters'
+
+
+def test_request_in_evaluate_parameters():
+    my_request = req('get')
+    was_called = False
+
+    def callback(request, **_):
+        nonlocal was_called
+        was_called = True
+        assert request is my_request
+        return ''
+
+    Page(title=callback).bind(request=my_request)
+    assert was_called
+
+
+def test_user_in_evaluate_parameters():
+    my_request = req('get')
+    my_request.user = object()
+    was_called = False
+
+    def callback(user, **_):
+        nonlocal was_called
+        was_called = True
+        assert user is my_request.user
+        return ''
+
+    Page(title=callback).bind(request=my_request)
+    assert was_called
+
+
+def test_params_gets_expanded_during_evaluate():
+    my_request = req('get')
+    was_called = False
+
+    def callback(request, foo, **_):
+        nonlocal was_called
+        was_called = True
+        assert request is my_request
+        assert foo == 17
+        return ''
+
+    Page(title=callback).as_view()(my_request, foo=17)
+    assert was_called

@@ -186,7 +186,13 @@ def test_evaluate():
         auto__model=Artist,
         columns__name__cell__format=lambda **format_kwargs: kwargs.update(format_kwargs),
     )
-    str(t.bind(request=req('get')))  # trigger render
+
+    class User:
+        pass
+
+    request = req('get')
+    request.user = User()
+    str(t.bind(request=request))  # trigger render
     expected = (
         (
             # @end
@@ -195,6 +201,7 @@ def test_evaluate():
         table          Table
         column         Column
         traversable    Column
+        user           User
         value          str
         row            Artist
         cells          Cells
