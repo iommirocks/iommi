@@ -1,6 +1,21 @@
 Changelog
 ---------
 
+7.1.0 (2024-05-06)
+~~~~~~~~~~~~~~~~~~
+
+* `user` is now included in the evaluate parameters
+
+* All params from `params` are now included in evaluate parameters
+
+* Fix bulk form render when not needed
+
+* Admin: remove default bulk delete
+
+* Select all fixed
+
+* Admin all models list should be `Table`, not `EditTable`
+
 7.0.0 (2024-04-15)
 ~~~~~~~~~~~~~~~~~~
 
