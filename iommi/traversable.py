@@ -192,13 +192,20 @@ class Traversable(RefinableObject):
             'traversable': result,
         }
         if parent is None:
-            evaluate_parameters['request'] = request
+            evaluate_parameters = {
+                'request': request,
+                'user': getattr(request, 'user', None),
+                **evaluate_parameters,
+            }
+
             if hasattr(request, 'iommi_view_params'):
                 params = request.iommi_view_params
                 extra_params = result.extra_params(request=request, **params)
                 assert isinstance(extra_params, dict), 'extra_params needs to return a dict with additional parameters'
                 params.update(extra_params)
                 evaluate_parameters['params'] = params
+                evaluate_parameters = {**params, **evaluate_parameters}
+
         result._evaluate_parameters = evaluate_parameters
 
         if hasattr(result, 'include'):
