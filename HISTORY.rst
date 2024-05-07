@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+7.1.1 (2024-05-07)
+~~~~~~~~~~~~~~~~~~
+
+* Namespace separation for `evaluate_member`. If you had a param named `obj` or `key` you could get a namespace conflict and a crash.
+
 7.1.0 (2024-05-06)
 ~~~~~~~~~~~~~~~~~~
 
