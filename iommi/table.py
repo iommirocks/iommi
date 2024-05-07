@@ -2090,7 +2090,7 @@ class Table(Part, Tag):
         # needs to be done first because _bind_headers depends on it
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())
 
-        evaluate_member(self, 'model', strict=False, **self.iommi_evaluate_parameters())
+        evaluate_member(self, 'model', __strict=False, **self.iommi_evaluate_parameters())
         evaluate_member(self, 'initial_rows', **self.iommi_evaluate_parameters())
 
         if isinstance(self.initial_rows, QuerySet):
