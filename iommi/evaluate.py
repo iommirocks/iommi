@@ -79,9 +79,9 @@ def evaluate(func_or_value, *, __signature=None, __strict=False, __match_empty=T
     return func_or_value
 
 
-def evaluate_strict(func_or_value, *, __signature=None, __match_empty=True, **kwargs):
+def evaluate_strict(__func_or_value, *, __signature=None, __match_empty=True, **kwargs):
     # noinspection PyArgumentEqualDefault
-    return evaluate(func_or_value, __signature=None, __strict=True, __match_empty=__match_empty, **kwargs)
+    return evaluate(__func_or_value, __signature=None, __strict=True, __match_empty=__match_empty, **kwargs)
 
 
 def get_signature(func):
@@ -133,11 +133,11 @@ def evaluate_members(obj, **kwargs):
         evaluate_member(obj, key, **kwargs)
 
 
-def evaluate_member(obj, key, strict=True, **kwargs):
-    value = getattr(obj, key)
-    new_value = evaluate(value, __strict=strict, __signature=signature_from_kwargs(kwargs), **kwargs)
+def evaluate_member(__obj, __key, __strict=True, **kwargs):
+    value = getattr(__obj, __key)
+    new_value = evaluate(value, __strict=__strict, __signature=signature_from_kwargs(kwargs), **kwargs)
     if new_value is not value:
-        setattr(obj, key, new_value)
+        setattr(__obj, __key, new_value)
 
 
 def find_static_items(d):
