@@ -43,9 +43,6 @@ from iommi.form import (
     Field,
     Form,
 )
-from iommi.fragment import (
-    Fragment,
-)
 from iommi.member import (
     bind_member,
     bind_members,
@@ -53,8 +50,8 @@ from iommi.member import (
 )
 from iommi.refinable import (
     Refinable,
-    refinable,
     RefinableMembers,
+    refinable,
 )
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
