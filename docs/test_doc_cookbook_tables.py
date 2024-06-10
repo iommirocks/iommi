@@ -957,3 +957,31 @@ def test_custom_actions(small_discography):
 
     show_output(t)
     # @end
+
+
+def test_render_additional_rows(small_discography):
+    # language=rst
+    """
+    How do I render additional rows?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Using `rows__template` you can render the default row with `{{ cells.render }}` and then your own custom data:
+
+
+    """
+
+    t = Table(
+        auto__model=Album,
+        row__template=Template('''
+            {{ cells.render }}
+            <tr>
+                <td style="text-align: center" colspan="{{ cells|length }}">🤘🤘</td>
+            </tr>
+        '''),
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    # @end

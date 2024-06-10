@@ -1058,6 +1058,9 @@ class Cells(Traversable, Tag):
         if self.template:
             return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
 
+        return self.render()
+
+    def render(self):
         return (
             Fragment(
                 tag=self.tag,
@@ -1076,6 +1079,12 @@ class Cells(Traversable, Tag):
             if not column.render_column:
                 continue
             yield self.cell_class(cells=self, column=column).refine_done(parent=self)
+
+    def __len__(self):
+        return self.column_count()
+
+    def column_count(self):
+        return len([x for x in values(self.get_table().columns) if x.render_column])
 
     def __getitem__(self, name):
         column = self.iommi_parent().columns[name]
