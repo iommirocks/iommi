@@ -870,3 +870,35 @@ def test_fields_template(album):
 
     show_output(form)
     # @end
+
+
+def test_dependent_fields(small_discography):
+    # language=rst
+    """
+    How do I make a field that depends on the choice in another field?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    This only works for cases when the choices are fetched via ajax, but this is also the common case:
+    """
+
+    def album_choices(form, **_):
+        if form.fields.artist.value:
+            return Album.objects.filter(artist=form.fields.artist.value)
+        else:
+            return Album.objects.all()
+
+    form = Form(
+        auto__model=Track,
+        # First choose an artist
+        fields__artist=Field.choice_queryset(
+            attr=None,
+            choices=Artist.objects.all(),
+            after=0,
+        ),
+        # Then choose an album
+        fields__album__choices=album_choices,
+    )
+
+    # @test
+    form.bind(request=req('get')).render_to_response()
+    # @end
