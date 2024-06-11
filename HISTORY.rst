@@ -4,7 +4,7 @@ Changelog
 7.2.0 (2024-06-11)
 ~~~~~~~~~~~~~~~~~~
 
-* Make custom row templates more useful by allowing to call teh default rendering, and access the column count easily
+* Make custom row templates more useful by allowing to call the default rendering, and access the column count easily
 
 7.1.1 (2024-05-07)
 ~~~~~~~~~~~~~~~~~~
