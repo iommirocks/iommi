@@ -1,3 +1,32 @@
+@font-face {
+    font-family: "Clayton";
+    /*noinspection CssUnknownTarget*/
+    src: url(/_static/clayton-regular-webfont.woff) format("woff");
+}
+
+@font-face {
+    font-family: "Clayton-light";
+    /*noinspection CssUnknownTarget*/
+    src: url(/_static/clayton-light-webfont.woff) format("woff");
+}
+
+@font-face {
+    font-family: "Clayton-thin";
+    /*noinspection CssUnknownTarget*/
+    src: url(/_static/clayton-thin-webfont.woff) format("woff");
+}
+
+h1 {
+    font-size: 4.5rem;
+    font-family: "Clayton", sans-serif;
+}
+
+h2, h3, h4, h5, h6 {
+    font-family: "Clayton-thin", sans-serif;
+    font-weight: 400;
+}
+
+
 .mobile-logo {
     display: none;
 }
