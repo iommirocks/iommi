@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.2.1 (2024-06-18)
+~~~~~~~~~~~~~~~~~~
+
+* Fix field grouping in bootstrap5 style
+
+* Respect advanced search query in bulk operations
+
+
 7.2.0 (2024-06-11)
 ~~~~~~~~~~~~~~~~~~
 
