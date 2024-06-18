@@ -32,7 +32,7 @@ clean-docs:
 lint: ruff
 
 ruff:
-	tox -e venv -- ruff .
+	tox -e venv -- ruff check .
 
 ruff-format:
 	tox -e venv -- ruff format .

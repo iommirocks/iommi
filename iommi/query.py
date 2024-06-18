@@ -95,7 +95,6 @@ from iommi.member import (
 )
 from iommi.part import (
     Part,
-    request_data,
 )
 from iommi.refinable import (
     EvaluatedRefinable,
@@ -810,7 +809,7 @@ class Query(Part):
         bind_members(self, name='filters')
 
         request = self.get_request()
-        self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
+        self.query_advanced_value = request.GET.get(self.get_advanced_query_param(), '').strip() if request else ''
 
         bind_members(self, name='endpoints')
 
@@ -1053,8 +1052,8 @@ class Query(Part):
         if request is None:
             return ''
 
-        if request_data(request).get(self.get_advanced_query_param(), '').strip():
-            return request_data(request).get(self.get_advanced_query_param())
+        if self.query_advanced_value:
+            return self.query_advanced_value
         elif form.is_valid():
 
             def expr(field, is_list, value):

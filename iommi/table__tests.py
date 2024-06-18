@@ -5,6 +5,7 @@ from datetime import (
     datetime,
     time,
 )
+from urllib.parse import urlencode
 
 import pytest
 from django.db.models import (
@@ -1042,6 +1043,78 @@ def test_bulk_edit_table():
         (foos[2].pk, 11, 'changed2'),
         (foos[3].pk, 11, 'changed2'),
     ]
+
+
+@pytest.mark.django_db
+def test_bulk_edit_filtered():
+    foo1 = TFoo.objects.create(a=1, b="")
+    foo2 = TFoo.objects.create(a=2, b="")
+
+    class TestTable(Table):
+        class Meta:
+            rows = TFoo.objects.all()
+
+        a = Column(filter__include=True)
+        b = Column(bulk__include=True)
+
+    response = (
+        TestTable()
+        .bind(
+            request=req(
+                'post',
+                **{
+                    '_all_pks_': '1',
+                    'a': '1',
+                    'bulk/b': 'banana',
+                    '-bulk/submit': '',
+                },
+            ),
+        )
+        .render_to_response()
+    )
+
+    assert response.status_code == 302
+    foo1.refresh_from_db()
+    assert foo1.b == 'banana'
+
+    foo2.refresh_from_db()
+    assert foo2.b == ''
+
+
+@pytest.mark.django_db
+def test_bulk_edit_advance_filtered():
+    foo1 = TFoo.objects.create(a=1, b="")
+    foo2 = TFoo.objects.create(a=2, b="")
+
+    class TestTable(Table):
+        class Meta:
+            rows = TFoo.objects.all()
+
+        a = Column(filter__include=True)
+        b = Column(bulk__include=True)
+
+    response = (
+        TestTable()
+        .bind(
+            request=req(
+                'post',
+                url='?' + urlencode({'-query/query': 'a=1'}),
+                **{
+                    '_all_pks_': '1',
+                    'bulk/b': 'banana',
+                    '-bulk/submit': '',
+                },
+            ),
+        )
+        .render_to_response()
+    )
+
+    assert response.status_code == 302
+    foo1.refresh_from_db()
+    assert foo1.b == 'banana'
+
+    foo2.refresh_from_db()
+    assert foo2.b == ''
 
 
 @pytest.mark.django_db
