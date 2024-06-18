@@ -79,6 +79,7 @@ bootstrap5_base = Style(
         ),
         attrs__class={
             'mb-3': True,
+            'col': lambda field, **_: field.group is not None,
         },
         input__attrs__class={
             'form-control': True,
