@@ -20,7 +20,7 @@ def test_forms():
     Forms
     =====
 
-    iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on weaknesses.
+    iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on its weaknesses.
     """
 
     form = Form.create(auto__model=Album)
@@ -51,7 +51,7 @@ def test_forms():
 
 
     """
-    
+
 
 def test_declarative_forms():
     # language=rst
