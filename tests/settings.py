@@ -90,3 +90,8 @@ FORMAT_MODULE_PATH = [
 USE_L10N = False
 
 STATIC_URL = '/static/'
+
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.MD5PasswordHasher",
+]
