@@ -47,7 +47,7 @@ def test_queries():
     """
     Read the full documentation and the :doc:`cookbook` for more.
     """
-    
+
 
 def test_query_language():
     # language=rst
@@ -90,7 +90,7 @@ def test_query_language():
     parameter to specify the fields to use. Note that you can use `pk` or
     other non-string columns as search fields if you want.
     """
-    
+
 
 def test_stand_alone_example(small_discography):
     # language=rst
@@ -108,6 +108,11 @@ def test_stand_alone_example(small_discography):
 
     def albums(request):
         query = AlbumQuery().bind(request=request)
+
+        dispatch = query.perform_dispatch()
+        if dispatch is not None:
+            return dispatch
+
         return render(
             request=request,
             template_name='albums.html',
