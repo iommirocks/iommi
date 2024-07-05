@@ -11,3 +11,8 @@
 .navbar-expand-lg .navbar-nav {
     flex-direction: row !important;
 }
+
+a,
+.select2 {
+    pointer-events: none;
+}
