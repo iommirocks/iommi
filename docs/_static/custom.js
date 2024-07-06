@@ -11,7 +11,6 @@ function docReady(fn) {
 function resizeIFrameToFitContent( frame ) {
     frame.width  = frame.contentWindow.document.body.scrollWidth;
     frame.height = frame.contentWindow.document.body.scrollHeight;
-    frame.style.pointerEvents = 'none';
 }
 
 docReady(function() {

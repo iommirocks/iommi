@@ -22,6 +22,7 @@ Contents:
    forms
    pages
    tables
+   edit_tables
    queries
    path
    extra

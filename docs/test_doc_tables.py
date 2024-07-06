@@ -16,7 +16,7 @@ request = req('get')
 def fill_dummy_data(): pass
 
 
-def test_tables():
+def test_tables(really_big_discography):
     # language=rst
     """
     Tables
@@ -34,21 +34,29 @@ def test_tables():
     * automatic rowspan
     * grouping of headers
 
-    .. image:: tables_example_albums.png
-
-    The code for the example above:
+    A simple example:
     """
+
+    # @test
+    t = (
+    # @end
 
     Table(
         auto__model=Album,
         page_size=10,
     )
 
+    # @test
+    )
+
+    show_output(t.bind(request=request))
+    # @end
+
     # language=rst
     """
     Read the full documentation and the :doc:`cookbook` for more.
     """
-    
+
 
 def test_creating_tables_from_models():
     # language=rst
@@ -112,26 +120,29 @@ def test_explicit_tables(small_discography):
     You can also create tables explicitly:
     """
 
-    def albums(request):
-        class AlbumTable(Table):
-            # Shortcut for creating checkboxes to select rows
-            select = Column.select()
+    class AlbumTable(Table):
+        # Shortcut for creating checkboxes to select rows
+        select = Column.select()
 
-            name = Column()
+        name = Column()
 
-            # Show the name field from Artist. This works for plain old objects too.
-            artist_name = Column(
-                attr='artist__name',
+        # Show the name field from Artist. This works for plain old objects too.
+        artist_name = Column(
+            attr='artist__name',
 
-                # put this field into the query language
-                filter__include=True,
-            )
-            year = Column.number(
-                # Enable bulk editing for this field
-                bulk__include=True,
-            )
+            # put this field into the query language
+            filter__include=True,
+        )
+        year = Column.number(
+            # Enable bulk editing for this field
+            bulk__include=True,
+        )
 
-        return AlbumTable(rows=Album.objects.all())
+        class Meta:
+            rows = Album.objects.all()
+            title = 'Albums'
+
+    albums = AlbumTable().as_view()
 
     # language=rst
     """
@@ -156,19 +167,19 @@ def test_table_csv(small_discography):
     For example:
     """
 
-    def albums(request):
-        class AlbumTable(Table):
-            class Meta:
-                extra_evaluated__report_name = 'Albums'
-                actions__download = Action(
-                    attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
-                )
+    class AlbumTable(Table):
+        class Meta:
+            extra_evaluated__report_name = 'Albums'
+            actions__download = Action(
+                attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
+            )
+            rows = Album.objects.all()
 
-            name = Column(extra_evaluated__report_name='Name')
-            artist = Column(extra_evaluated__report_name='Artist')
-            year = Column.number(extra_evaluated__report_name='Artist')
+        name = Column(extra_evaluated__report_name='Name')
+        artist = Column(extra_evaluated__report_name='Artist')
+        year = Column.number(extra_evaluated__report_name='Artist')
 
-        return AlbumTable(rows=Album.objects.all())
+    albums = AlbumTable().as_view()
 
     # language=rst
     """
@@ -179,7 +190,7 @@ def test_table_csv(small_discography):
     # @test
     show_output(
         b"<pre>"
-        + albums(None).bind(request=req('get', **{'/csv': ''})).render_to_response().getvalue()
+        + albums(request=req('get', **{'/csv': ''})).getvalue()
         + b"</pre>"
     )
     # @end
@@ -198,33 +209,33 @@ def test_table_of_plain_python_objects():
     -----------------------------
     """
 
+    # Say I have a class...
+    class Foo(object):
+        def __init__(self, i):
+            self.a = i
+            self.b = 'foo %s' % (i % 3)
+            self.c = (i, 1, 2, 3, 4)
+
+    # I can declare a table:
+    class FooTable(Table):
+        a = Column.number()
+
+        b = Column()
+
+        # Display the last value of the tuple
+        c = Column(
+            cell__format=lambda value, **_: value[-1],
+        )
+
+        # Calculate a value not present in Foo
+        sum_c = Column(
+            cell__value=lambda row, **_: sum(row.c),
+            sortable=False,
+        )
+
     def plain_objs_view(request):
-        # Say I have a class...
-        class Foo(object):
-            def __init__(self, i):
-                self.a = i
-                self.b = 'foo %s' % (i % 3)
-                self.c = (i, 1, 2, 3, 4)
-
-        # and a list of them
+        # and now create a list of items
         foos = [Foo(i) for i in range(4)]
-
-        # I can declare a table:
-        class FooTable(Table):
-            a = Column.number()
-
-            b = Column()
-
-            # Display the last value of the tuple
-            c = Column(
-                cell__format=lambda value, **_: value[-1],
-            )
-
-            # Calculate a value not present in Foo
-            sum_c = Column(
-                cell__value=lambda row, **_: sum(row.c),
-                sortable=False,
-            )
 
         # now to get an HTML table:
         return FooTable(rows=foos)

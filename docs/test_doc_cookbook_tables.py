@@ -985,3 +985,27 @@ def test_render_additional_rows(small_discography):
 
     show_output(t)
     # @end
+
+
+def test_initial_filter_on_table(really_big_discography):
+    # language=rst
+    """
+    How do I set an initial filter to a table?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    The `Query` of a `Table` has a `Form` where you can set the initial value:
+
+
+    """
+
+    t = Table(
+        auto__model=Album,
+        columns__artist__filter__include=True,
+        query__form__fields__artist__initial=lambda **_: Artist.objects.get(name='Dio'),
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    # @end

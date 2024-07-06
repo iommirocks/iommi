@@ -141,6 +141,8 @@ def test_stand_alone_example(small_discography):
         
     You will also need to render the assets in your `<head>` tag:
     
+    
+    
     .. code-block:: html
         
         {% for asset in query.iommi_collected_assets.values %}

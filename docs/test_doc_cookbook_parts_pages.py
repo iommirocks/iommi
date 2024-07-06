@@ -2,6 +2,7 @@ from iommi import *
 from tests.helpers import (
     req,
     show_output,
+    show_output_collapsed,
 )
 
 request = req('get')
@@ -20,7 +21,7 @@ def test_parts__pages():
     -------------
 
     """
-    
+
 
 def test_how_do_i_override_part_of_a_part_page():
     # language=rst
@@ -28,7 +29,7 @@ def test_how_do_i_override_part_of_a_part_page():
     How do I override part of a part/page?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This is all just *standard* tri.declarative magic, but as you are likely new to it
+    This is all just *standard* iommi declarative magic, but as you are likely new to it
     this might take a while to get used to. Let's say you created yourself a master template
     for your site.
 
@@ -46,15 +47,26 @@ def test_how_do_i_override_part_of_a_part_page():
     """
     Which you can use like this:
 
-
     """
-    def index(request):
-        class IndexPage(BasePage):
-            body = 'body'
-        return IndexPage(parts__subtitle__children__child='Still rocking...')
+    class IndexPage(BasePage):
+        body = 'body'
+
+    index = IndexPage(parts__subtitle__children__child='Still rocking...').as_view()
 
     # @test
     show_output(index(req('get')))
+    # @end
+
+    # language=rst
+    """
+    or as a function based view:
+    """
+
+    def index(request):
+        return IndexPage(parts__subtitle__children__child='Still rocking...')
+
+    # @test
+    show_output_collapsed(index(req('get')))
     # @end
 
     # language=rst
@@ -66,19 +78,19 @@ def test_how_do_i_override_part_of_a_part_page():
 
 
     """
-    def index(request):
-        class IndexPage(BasePage):
-            title = html.img(
-                attrs=dict(
-                    src='https://docs.iommi.rocks/en/latest/_static/logo_with_outline.svg',
-                    alt='iommi logo',
-                    width='70px',
-                ),
-            )
-        return IndexPage(parts__subtitle=None)
+    class IndexPage(BasePage):
+        title = html.img(
+            attrs=dict(
+                src='https://docs.iommi.rocks/en/latest/_static/logo_with_outline.svg',
+                alt='iommi logo',
+                width='70px',
+            ),
+        )
+
+    index = IndexPage(parts__subtitle=None)
 
     # @test
-    show_output(index(req('get')))
+    show_output(index)
     # @end
 
     # language=rst
@@ -90,7 +102,7 @@ def test_how_do_i_override_part_of_a_part_page():
     by setting their value to `None`.
 
     """
-    
+
 
 def test_how_do_i_set_the_title_of_my_page():
     # language=rst
@@ -119,7 +131,7 @@ def test_how_do_i_set_the_title_of_my_page():
     """
     Which is equivalent to:
     """
-    
+
     Page(parts__title=Header('A header element in the dom'))
 
 
@@ -133,11 +145,12 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
 
 
     """
+    class MyPage(Page):
+        body = Template("""A django template was rendered on {{today}}.""")
+
+
     def index(request):
         context = {'today': date.today()}
-
-        class MyPage(Page):
-            body = Template("""A django template was rendered on {{today}}.""")
 
         return MyPage(context=context)
 
@@ -152,11 +165,11 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
     can be extended later:
     """
 
-    Page(
+    my_page = Page(
         parts__body=Template("""A django template was rendered on {{today}}."""),
-        context__today=date.today(),
-    )
+        context__today=lambda **_: date.today(),
+    ).as_view()
 
     # @test
-    show_output(index(req('get')))
+    show_output(my_page(req('get')))
     # @end
