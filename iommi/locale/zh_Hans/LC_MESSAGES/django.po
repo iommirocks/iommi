@@ -202,7 +202,7 @@ msgstr "创建"
 
 #: table.py:563
 msgid "Edit"
-msgstr "删除"
+msgstr "编辑"
 
 #: table.py:611
 msgid "Download"
