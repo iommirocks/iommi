@@ -175,12 +175,7 @@ tests/edit_views_temp.py
 docs/test_doc__api_*.py
 docs/custom/doc_includes/
 
-docs/cookbook_general.rst
-docs/cookbook_forms.rst
-docs/cookbook_parts_pages.rst
-docs/cookbook_tables.rst
-docs/cookbook_queries.rst
-docs/cookbook_porting.rst
+docs/cookbook_*.rst
 docs/equivalency.rst
 docs/forms.rst
 docs/getting_started.rst
@@ -200,6 +195,7 @@ docs/philosophy.rst
 docs/imports.rst
 docs/tutorial.rst
 docs/middleware.rst
+docs/edit_tables.rst
 
 .cache/pip
 

@@ -31,14 +31,17 @@ from iommi.base import (
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
+    getattr_path,
     Namespace,
     setdefaults_path,
 )
+from iommi.declarative.util import strip_prefix
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     path_join,
 )
 from iommi.form import (
+    find_unique_prefixes,
     FULL_FORM_FROM_REQUEST,
     Field,
     Form,
@@ -259,11 +262,21 @@ def edit_table__post_handler(table, request, **_):
 
         to_save.sort(key=lambda x: abs(x[0].pk))
         for instance, attrs_to_save in to_save:
+            if not to_save:
+                pass
             if instance.pk is not None and instance.pk < 0:
                 instance.pk = None
             if instance.pk is None:
                 attrs_to_save = None
-            instance.save(update_fields=attrs_to_save)
+
+            if attrs_to_save is None:
+                instance.save()
+            else:
+                for prefix in find_unique_prefixes(attrs_to_save):
+                    model_object = instance
+                    if prefix:  # Might be ''
+                        model_object = getattr_path(model_object, prefix)
+                    model_object.save(update_fields=[strip_prefix(x, prefix=f'{prefix}__') for x in attrs_to_save if x.startswith(prefix)])
 
     save(table.cells_for_rows(), table.edit_form)
     save(table.cells_for_rows_for_create(), table.create_form)
