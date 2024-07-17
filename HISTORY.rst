@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.2.2 (2024-07-15)
+~~~~~~~~~~~~~~~~~~
+
+* `EditTable` support for one-to-one fields
+
+* Chinese translation fix
+
+
 7.2.1 (2024-06-18)
 ~~~~~~~~~~~~~~~~~~
 
