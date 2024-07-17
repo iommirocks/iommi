@@ -8,5 +8,6 @@ Cookbook
    cookbook_parts_pages
    cookbook_forms
    cookbook_tables
+   cookbook_edit_tables
    cookbook_queries
    cookbook_porting

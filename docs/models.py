@@ -5,6 +5,8 @@ from django.db.models import (
     IntegerField,
     ManyToManyField,
     Model,
+    OneToOneField,
+    TextField,
 )
 
 
@@ -77,4 +79,16 @@ class Musician(Model):
 
     class Meta:
         ordering = ('name',)
+        app_label = 'docs'
+
+
+class Profile(Model):
+    artist = OneToOneField(Artist, on_delete=CASCADE, related_name='profiles')
+    description = TextField()
+
+    def __str__(self):
+        return self.artist.name
+
+    class Meta:
+        ordering = ('artist__name',)
         app_label = 'docs'

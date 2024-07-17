@@ -55,3 +55,10 @@ def inject_args(args, kwargs, extra_args, pos_arg_names, merge_namespaces):
             new_kwargs[k] = v
 
     return new_args, new_kwargs
+
+
+def strip_prefix(s, *, prefix, strict=False):
+    if s.startswith(prefix):
+        return s[len(prefix):]
+    assert strict is False, f"String '{s}' does not start with prefix '{prefix}'"
+    return s
