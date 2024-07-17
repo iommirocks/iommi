@@ -29,3 +29,10 @@ Credits
 * Oana Fatu <oana.fatu@trioptima.com>
 * Viktor <dpedesigns@hotmail.com>
 * Bery <info@berycz.net>
+* Sytrus Ivkus <aiueclipse@mail.com>
+* Braintelligence <Braintelligence@users.noreply.github.com>
+* David D Wang <duendwang@users.noreply.github.com>
+* MareksNo <ulmanismareks@gmail.com>
+* Milton Johansson <milton.johansson@trioptima.com>
+* astrocbxy <chrisbehrmann00@gmail.com>
+* yanhuixie <yanhuixie@gmail.com>
