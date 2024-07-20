@@ -13,6 +13,7 @@
 }
 
 a,
-.select2 {
+.select2,
+button {
     pointer-events: none;
 }
