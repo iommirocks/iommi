@@ -325,14 +325,6 @@ def query_str(query):
     'shortcut, input, expected_parse',
     [
         (Filter.date, '2014-03-07', date(2014, 3, 7)),
-        (
-            Filter.datetime,
-            '2014-03-07 11:13',
-            timezone.make_naive(
-                timezone.make_aware(datetime(2014, 3, 7, 11, 13)),
-                timezone=datetime_timezone.utc,
-            ),
-        ),
         (Filter.time, '11', time(11)),
         (Filter.time, '11:13', time(11, 13)),
         (Filter.time, '11:13:17', time(11, 13, 17)),
@@ -348,6 +340,28 @@ def test_filter_parsing_simple(shortcut, input, expected_parse):
     assert not query.form.get_errors(), query.form.get_errors()
     assert query.form.fields.bazaar.iommi_path == 'bazaar'
     assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__iexact': expected_parse}))
+
+
+@pytest.mark.parametrize(
+    'shortcut, input, expected_parse',
+    [
+        (
+            Filter.datetime,
+            '2014-03-07',
+            date(2014, 3, 7),
+        ),
+    ],
+)
+@override_settings(USE_TZ=True)
+def test_filter_parsing_datetime(shortcut, input, expected_parse):
+    class MyQuery(Query):
+        bazaar = shortcut(attr='quux__bar__bazaar')
+
+    query = MyQuery().bind(request=req('get', bazaar=input))
+    assert 'bazaar' in query.form.fields
+    assert not query.form.get_errors(), query.form.get_errors()
+    assert query.form.fields.bazaar.iommi_path == 'bazaar'
+    assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__date__iexact': expected_parse}))
 
 
 @pytest.mark.parametrize(
@@ -950,6 +964,9 @@ def test_shortcuts_map_to_form(name, shortcut):
         'multi_choice_queryset',
     ]:
         kwargs['model'] = None
+
+    if name == 'datetime':
+        name = 'date'
 
     assert shortcut(**kwargs).iommi_namespace.field.call_target.attribute == name
 

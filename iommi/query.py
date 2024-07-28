@@ -489,11 +489,13 @@ class Filter(Part):
 
     @classmethod
     @with_defaults(
-        field__call_target__attribute='datetime',
-        parse=datetime_parse,
+        field__call_target__attribute='date',
+        parse=date_parse,
         extra_evaluated__is_tz_aware=lambda **_: settings.USE_TZ,
     )
     def datetime(cls, **kwargs):
+        if isinstance(kwargs.get('attr'), str):
+            kwargs['attr'] = kwargs['attr'] + '__date'
         return cls(**kwargs)
 
     @classmethod
