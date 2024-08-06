@@ -17,6 +17,6 @@ A simple example:
 
 .. raw:: html
 
-    <div class="iframe_collapse" onclick="toggle('5e5a068a-e5a4-410f-95bb-c6984eccbbdc', this)">▼ Hide result</div>
-    <iframe id="5e5a068a-e5a4-410f-95bb-c6984eccbbdc" src="doc_includes/edit_tables/test_edit_tables.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    <div class="iframe_collapse" onclick="toggle('c9809678-da61-40d3-a804-59133208aa86', this)">▼ Hide result</div>
+    <iframe id="c9809678-da61-40d3-a804-59133208aa86" src="doc_includes/edit_tables/test_edit_tables.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
 

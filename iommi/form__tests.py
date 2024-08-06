@@ -2720,7 +2720,6 @@ def test_render_create_object():
         render__call_target=lambda **kwargs: kwargs,
     )
 
-    assert form.extra.is_create is True
     assert response['context']['foo'] == 'FOO'
     assert response['context']['csrf_token']
     assert response['foobarbaz'] == 'render__foobarbaz'

@@ -902,3 +902,57 @@ def test_dependent_fields(small_discography):
     # @test
     form.bind(request=req('get')).render_to_response()
     # @end
+
+
+def test_how_do_i_make_a_form_to_create_or_edit(artist, album):
+    # language=rst
+    """
+    .. _Field.editable:
+
+    How do I make a create or edit form?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Using the `Form.create_or_edit` shortcut, if the `instance` is `None` it will become a create form, otherwise an edit form:
+    """
+
+    form = Form.create_or_edit(
+        auto__model=Album,
+    )
+
+    # @test
+    form = form.bind(request=user_req('get'))
+    assert form.title == 'Create album'
+    show_output(form)
+    # @end
+
+    # language=rst
+    """
+    Using a lambda for a create form:
+    """
+
+    form = Form.create_or_edit(
+        auto__model=Album,
+        instance=lambda **_: None,
+    )
+
+    # @test
+    form = form.bind(request=user_req('get'))
+    assert form.title == 'Create album'
+    show_output(form)
+    # @end
+
+    # language=rst
+    """
+    Now an edit form:
+    """
+
+    form = Form.create_or_edit(
+        auto__model=Album,
+        instance=lambda **_: Album.objects.first(),
+    )
+
+    # @test
+    form = form.bind(request=user_req('get'))
+    assert form.title == 'Edit album'
+    show_output(form)
+    # @end
