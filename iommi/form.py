@@ -1,4 +1,5 @@
 import re
+import warnings
 from contextlib import contextmanager
 from datetime import (
     datetime,
@@ -214,9 +215,14 @@ def save_nested_forms(form, request, **_):
         return HttpResponseRedirect(target)
 
 
-def create_or_edit_object__post_handler(*, form, is_create, **_):
+def create_or_edit_object__post_handler(*, form, is_create=None, **_):
     if not form.is_valid():
         return
+
+    if is_create is None:
+        is_create = form.instance is None
+
+    form.extra.is_create = is_create
 
     if is_create:
         assert form.instance is None
@@ -1710,18 +1716,18 @@ class Form(Part, Tag):
             self.title = lambda form, **_: capitalize(
                 gettext('%(crud_type)s %(model_name)s')
                 % dict(
-                    crud_type=gettext(crud_type),
+                    crud_type=gettext(form.extra.crud_type),
                     model_name=(form.model or form.instance)._meta.verbose_name,
                 )
             )
             extra_action_defaults = setdefaults_path(
                 extra_action_defaults,
-                submit__display_name=gettext('Save') if crud_type == 'edit' else capitalize(gettext(crud_type)),
+                submit__display_name=lambda form, **_: gettext('Save') if form.extra.crud_type == 'edit' else capitalize(gettext(form.extra.crud_type)),
             )
 
         # Submit is special.
-        # We used to have an automatic action submit button. Now we instead if something is inj
-        # the actions submit space assume you want to define it as a primary button (unless you
+        # We used to have an automatic action submit button. Now instead if something is in
+        # the actions submit space, assume you want to define it as a primary button (unless you
         # explicitly specify differently). That way we get no button if you don't explicitly opt
         # into it, by either directly defining something inside the submit namespace or using
         # Form.edit/delete/...
@@ -1760,6 +1766,9 @@ class Form(Part, Tag):
         self._request_data = request_data(request)
 
         self.instance = evaluate_strict(self.instance, **self.iommi_evaluate_parameters())
+
+        if 'crud_type' in self.extra:
+            self.extra['crud_type'] = evaluate_strict(self.extra['crud_type'], **self.iommi_evaluate_parameters())
 
         # If this is a nested form register it with the parent, need
         # to do this early because is_target needs self.parent_form
@@ -2063,27 +2072,32 @@ class Form(Part, Tag):
         extra__redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
         extra__redirect_to=None,
         auto=EMPTY,
+        extra__crud_type=lambda form, **_: 'create' if form.instance is None else 'edit',
+        extra__new_instance=lambda form, **_: form.model(),
     )
     def crud(cls, **kwargs):
         return cls(**kwargs)
 
     @classmethod
     @with_defaults(
-        extra__is_create=True,
-        extra__new_instance=lambda form, **_: form.model(),
         actions__submit__post_handler=create_object__post_handler,
-        extra__crud_type='create',
     )
     def create(cls, **kwargs):
         return cls.crud(**kwargs)
 
     @classmethod
     @with_defaults(
-        extra__is_create=False,
         actions__submit__post_handler=edit_object__post_handler,
-        extra__crud_type='edit',
     )
     def edit(cls, **kwargs):
+        return cls.crud(**kwargs)
+
+    @classmethod
+    @with_defaults(
+        actions__submit__post_handler=create_or_edit_object__post_handler,
+        extra__is_create=None,
+    )
+    def create_or_edit(cls, **kwargs):
         return cls.crud(**kwargs)
 
     @classmethod
