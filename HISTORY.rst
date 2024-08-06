@@ -6,7 +6,7 @@ Changelog
 
 * Added `Form.create_or_edit` shortcut.
 
-* The default filter behavior qfor `Column.datetime` now filters on the data and not the exact microsecond.
+* The default filter behavior for `Column.datetime` now filters on the date and not the exact microsecond.
 
 
 7.2.2 (2024-07-15)
