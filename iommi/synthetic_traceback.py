@@ -39,7 +39,7 @@ class SyntheticTraceback:
 
         cur_ = self
         while cur_ is not None:
-            yield TracebackEntry(cur_, excinfo=None)
+            yield TracebackEntry(cur_)
             cur_ = cur_.tb_next
 
 
