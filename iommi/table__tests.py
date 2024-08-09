@@ -1481,7 +1481,7 @@ def test_freetext_searching():
     ]
 
     t = Table(
-        auto__model=T2,
+        model=T2,
         columns=dict(
             foo__filter=dict(include=True, freetext=True),
             bar__filter=dict(include=True, freetext=True),
@@ -1492,6 +1492,38 @@ def test_freetext_searching():
     t.__html__()
     assert set(t.visible_rows) == set(objects[1:-1])
     assert set(t.rows) == set(objects[1:-1])
+
+
+@pytest.mark.django_db
+def test_freetext_searching_respect_include():
+    objects = [
+        T2.objects.create(foo='q', bar='q'),
+        T2.objects.create(foo='a', bar='q'),  # <- we should find this
+        T2.objects.create(foo='q', bar='a'),
+    ]
+
+    t = Table(
+        model=T2,
+        columns=dict(
+            foo=dict(filter__freetext=True, filter__include=True),
+            bar=dict(filter__freetext=True, filter__include=lambda **_: False),
+            this_is_no_attr=dict(
+                filter__freetext=True,
+                filter__include=True,
+                include=False,
+            ),
+            this_is_also_no_attr=dict(
+                filter__freetext=True,
+                filter__include=True,
+                include=lambda **_: False,
+            ),
+        ),
+    ).bind(request=req('get', freetext_search='a'))
+
+    assert not t.query.form.get_errors()
+    t.__html__()
+    assert set(t.visible_rows) == {objects[1]}
+    assert set(t.rows) == {objects[1]}
 
 
 @pytest.mark.django_db
