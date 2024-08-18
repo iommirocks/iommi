@@ -1,5 +1,10 @@
 from iommi import *
-from tests.helpers import req
+from iommi.style import unregister_style
+from iommi.style_bootstrap import bootstrap
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -15,7 +20,7 @@ def test_style():
     accomplish both these goals we need to be able to plug in to whatever
     CSS framework you have. By default iommi uses a bootstrap style, but
     it also ships with a few other style definitions, and you can define your
-    own. Styles in iommi do more than just apply CSS classes, you can target
+    own. Styles in iommi do more than just apply CSS classes: you can target
     any configuration in iommi with style definitions. This means not just
     how things look, but also how they work.
 
@@ -52,6 +57,9 @@ def test_style():
 
     You can change which style your app uses by default by setting
     `IOMMI_DEFAULT_STYLE` to the name of your style in the Django settings.
+    
+    You can also specify style on an individual component via the `iommi_style`
+    parameter. :ref:`See below <switching_style_for_a_single_part>` for more.
 
     """
 
@@ -241,3 +249,56 @@ def test_targeting_a_shortcut_for_styling():
     The shortcut definitions are applied after the class definitions, as they
     are more specific.
     """
+
+
+def test_switching_style_for_a_single_part():
+    # language=rst
+    """
+    .. _switching_style_for_a_single_part:
+    Changing style for a single part
+    --------------------------------
+
+    You can can change the style for a single part by passing the `iommi_style`. The
+    `iommi_style` parameter can either be the name of a registered style, or a `Style`
+    instance:
+    """
+
+    # @test
+    register_style(
+        'my_style',
+        Style(
+            bootstrap,
+            Action__attrs__style__background='green'
+        )
+    )
+    # @end
+
+    page = Page(
+        # Default, will use IOMMI_DEFAULT_STYLE
+        parts__foo=Form(
+            fields__foo=Field(),
+            actions__submit=Action.primary(),
+        ),
+
+        # Using my_style
+        parts__bar=Form(
+            iommi_style='my_style',
+            fields__foo=Field(),
+            actions__submit=Action.primary(),
+        ),
+
+        # Explicit style object
+        parts__baz=Form(
+            iommi_style=Style(
+                bootstrap,  # based on the bootstrap style
+                Action__attrs__style__background='red',
+            ),
+            fields__foo=Field(),
+            actions__submit=Action.primary(),
+        ),
+    )
+
+    # @test
+    show_output(page)
+    unregister_style('my_style')
+    # @end
