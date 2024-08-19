@@ -2169,6 +2169,11 @@ class Table(Part, Tag):
             self.sorted_and_filtered_rows = self.sorted_rows
             self.rows = self.sorted_and_filtered_rows
 
+        if self.query and self.query.form and (self.query.form.get_errors() or self.query.query_error):
+            self.rows = []
+            self.sorted_and_filtered_rows = []
+            self.sorted_rows = []
+
     def _bind_bulk_form(self):
         if self.bulk is None:
             return

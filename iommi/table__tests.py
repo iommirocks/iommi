@@ -4396,3 +4396,24 @@ def test_default_sort_order_django_table_from_model():
             </table>
         """,
     )
+
+
+@pytest.mark.django_db
+def test_invalid_query_results_in_no_rows():
+    TFoo.objects.create(a=4711, b="c")
+    TFoo.objects.create(a=17, b="a")
+    TFoo.objects.create(a=42, b="b")
+
+    t = Table(
+        auto__model=TFoo,
+        columns__a__filter__include=True,
+        columns__a__filter__field__include=True,
+    )
+
+    t_b = t.bind(request=req('get', a='not a number'))
+    assert t_b.query.form.get_errors() == {'fields': {'a': {"invalid literal for int() with base 10: 'not a number'"}}}
+    assert not t_b.rows
+
+    t_b = t.bind(request=req('get', **{'-query/query': 'a="not a number"'}))
+    assert t_b.query.query_error == """Invalid value for filter "a": invalid literal for int() with base 10: 'not a number'"""
+    assert not t_b.rows

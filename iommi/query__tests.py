@@ -236,10 +236,10 @@ def test_boolean_filter():
 
     assert str(e.value) == 'Invalid operator ">" for boolean filter. The only valid operator is "=".'
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(QueryException) as e:
         Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', **{'-query': 'b=9'})).get_q()
 
-    assert str(e.value) == '9 is not a valid boolean value'
+    assert str(e.value) == 'Invalid value for filter "b": 9 is not a valid boolean value'
 
 
 def test_request_to_q_simple(MyTestQuery):  # noqa: N803

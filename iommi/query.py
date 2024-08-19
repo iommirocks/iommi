@@ -1025,6 +1025,8 @@ class Query(Part):
             result = filter.invoke_callback(filter.value_to_q, op=op, value_string_or_f=value_string_or_f)
         except ValidationError as e:
             raise QueryException(f'{e.message}')
+        except ValueError as e:
+            raise QueryException(f'Invalid value for filter "{query_name}": {e}')
         if result is None:
             raise QueryException(f'Unknown value "{value_string_or_f}" for filter "{query_name}"')
         return result
