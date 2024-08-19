@@ -152,20 +152,32 @@ def flatten(namespace):
 
 
 def flatten_items(namespace):
-    def mappings(n, visited, prefix=''):
-        for key, value in dict.items(n):
+    def mappings(
+        current,
+        visited,
+        prefix,
+    ):
+        for key, value in dict.items(current):
             path = prefix + key
             if isinstance(value, Namespace):
-                if id(value) not in visited:
-                    if value:
-                        for mapping in mappings(value, visited=[id(value)] + visited, prefix=path + '__'):  # noqa: UP028
-                            yield mapping
-                    else:
-                        yield path, Namespace()
+                subspace = value
+                if subspace:
+                    if id(subspace) not in visited:
+                        yield from mappings(
+                            subspace,
+                            visited=visited | {id(subspace)},
+                            prefix=path + '__',
+                        )
+                else:
+                    yield path, Namespace()
             else:
                 yield path, value
 
-    return mappings(namespace, visited=[])
+    return mappings(
+        namespace,
+        visited=set(),
+        prefix='',
+    )
 
 
 # The first argument has a funky name to avoid name clashes with stuff in kwargs
