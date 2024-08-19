@@ -1,6 +1,9 @@
 from iommi._web_compat import mark_safe
 from iommi.base import items
-from iommi.declarative.namespace import Namespace
+from iommi.declarative.namespace import (
+    Namespace,
+    flatten,
+)
 from iommi.evaluate import (
     evaluate_as_needed,
     evaluate_strict,
@@ -166,8 +169,8 @@ class Attrs(Namespace):
 
 
 def render_class(class_dict):
-    return ' '.join(sorted(name for name, flag in items(class_dict) if flag))
+    return ' '.join(sorted(name for name, flag in items(flatten(class_dict)) if flag))
 
 
 def render_style(class_dict):
-    return '; '.join(sorted(f'{k}: {v}' for k, v in items(class_dict) if v))
+    return '; '.join(sorted(f'{k}: {v}' for k, v in items(flatten(class_dict)) if v))

@@ -23,6 +23,14 @@ def test_render_attrs():
     assert render_attrs_test({'foo': 'bar', 'baz': 'quux'}) == ' baz="quux" foo="bar"'
 
 
+def test_class_with_dunder():
+    assert render_attrs_test({'class__banana__foo': True}) == ' class="banana__foo"'
+
+
+def test_style_with_dunder():
+    assert render_attrs_test({'style__banana__foo': 'fishy'}) == ' style="banana__foo: fishy"'
+
+
 def test_render_class():
     assert (
         render_attrs_test({'apa': True, 'bepa': '', 'cepa': None, 'class': dict(foo=False, bar=True, baz=True)})
