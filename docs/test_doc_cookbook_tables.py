@@ -1009,3 +1009,27 @@ def test_initial_filter_on_table(really_big_discography):
 
     show_output(t)
     # @end
+
+
+def test_indexed_rows(small_discography):
+    # language=rst
+    """
+    How do I show row numbers?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Use `cells.row_index` to get the index of the row in the current rendering.
+    """
+
+    t = Table(
+        auto__model=Album,
+        columns__index=Column(
+            after=0,
+            cell__value=lambda row, cells, **_: cells.row_index
+        ),
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    # @end

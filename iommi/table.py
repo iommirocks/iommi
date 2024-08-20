@@ -1028,7 +1028,9 @@ class Column(Part):
 @with_meta
 class Cells(Traversable, Tag):
     """
-    Internal class used in row rendering
+    Internal class used in row rendering.
+
+    You can access the current row via `.row` and the current row index via `.row_index`.
     """
 
     template: Union[str, Template] = EvaluatedRefinable()

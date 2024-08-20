@@ -153,6 +153,7 @@ docs/Style.rst
 docs/Asset.rst
 docs/EditColumn.rst
 docs/EditTable.rst
+docs/Cells.rst
 
 # these are created by mutation testing
 docs/XXtest*

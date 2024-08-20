@@ -8,6 +8,7 @@ API Reference
    Asset
    Attrs
    Cell
+   Cells
    Column
    ColumnHeader
    Container

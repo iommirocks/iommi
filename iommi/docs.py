@@ -81,6 +81,7 @@ def get_default_classes():
         iommi.traversable.Traversable,
         iommi.member.Members,
         iommi.table.Cell,
+        iommi.table.Cells,
         iommi.table.ColumnHeader,
         iommi.table.HeaderConfig,
         iommi.attrs.Attrs,
