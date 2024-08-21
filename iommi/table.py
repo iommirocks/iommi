@@ -1705,8 +1705,8 @@ class Table(Part, Tag):
     cells_class: Type[Cells] = Refinable()
     row_group_class: Type[RowGroup] = Refinable()
 
-    empty_message: str = Refinable()
-    invalid_form_message: str = Refinable()
+    empty_message: str = EvaluatedRefinable()
+    invalid_form_message: str = EvaluatedRefinable()
     auto = Refinable()
 
     # Columns need to be at the end to not steal the short names

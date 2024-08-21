@@ -3742,10 +3742,37 @@ def test_invalid_form_message():
 
 
 @pytest.mark.django_db
+def test_invalid_form_message_callable():
+    invalid_form_message = 'Seventh Star'
+    table = Table(
+        auto__model=TBar,
+        columns__foo__filter__include=True,
+        invalid_form_message=lambda user, **_: invalid_form_message,
+    )
+    table = table.bind(request=req('get', foo=11))  # 11 isn't in valid choices!
+    assert invalid_form_message in table.__html__()
+
+
+@pytest.mark.django_db
 def test_empty_message():
     empty_message = 'Destruction of the empty spaces was my one and only crime'
     verify_table_html(
         table=Table(empty_message=empty_message, rows=[]),
+        find__class='iommi-table-container',
+        # language=html
+        expected_html=f"""
+            <div class='iommi-table-container' data-endpoint='/endpoints/tbody' data-iommi-id=''>
+                {empty_message}
+            </div>
+        """,
+    )
+
+
+@pytest.mark.django_db
+def test_empty_message_callable():
+    empty_message = 'Destruction of the empty spaces was my one and only crime'
+    verify_table_html(
+        table=Table(empty_message=lambda user, **_: empty_message, rows=[]),
         find__class='iommi-table-container',
         # language=html
         expected_html=f"""
