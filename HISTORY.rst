@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+7.4.0 (2024-08-21)
+~~~~~~~~~~~~~~~~~~
+
+* `Table.empty_message` and `Table.invalid_form_message` now supports callables
+
+* Invalid filters should present empty search results in tables
+
+* Support css class names containing `__`
+
 7.3.0 (2024-08-06)
 ~~~~~~~~~~~~~~~~~~
 
