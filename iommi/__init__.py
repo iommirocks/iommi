@@ -157,8 +157,8 @@ if django.VERSION[:2] < (3, 2):
 
 try:
     from django.conf import settings
-except ImproperlyConfigured:
-    pass
-else:
+
     if 'iommi' not in settings.INSTALLED_APPS:
         raise Exception("You must add 'iommi' to INSTALLED_APPS")
+except ImproperlyConfigured:
+    pass
