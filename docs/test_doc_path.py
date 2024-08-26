@@ -63,14 +63,14 @@ def test_path_fbv_example():
 URLConf and iommi
 ~~~~~~~~~~~~~~~~~
 
-The url parameters, or path components, are available in iommi under the `params` namespace. A simple example is:
+The url parameters, or path components, are available in iommi under the `params` namespace and also as keyword arguments directly. A simple example is:
 """
 
 
 def test_path_url_mapping():
     class MyPage(Page):
         hello = html.div(
-            lambda params, **_: f'Hello {params.name}',
+            lambda name, **_: f'Hello {name}',
         )
 
     urlpatterns = [
@@ -130,9 +130,8 @@ def test_path_decoder(artist, album):
 
     # language=rst
     """
-    ...and you will get an `Artist` instance in `params.artist` and an `Album`
-    instance in `params.album`. The decoding will by default support
-    `album_name` and `album_pk` if you register it like this. The name lookup
+    ...and you will get an `Artist` instance as `artist` (also in `params.artist`) and an `Album`
+    instance in `album`. The name lookup
     assumes your name field is called `name` on the model. There's an advanced
     registration system for more complex lookups, but this should cover most
     usages.
