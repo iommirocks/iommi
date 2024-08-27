@@ -19,6 +19,9 @@ def fill_dummy_data(): pass
 def test_tables(really_big_discography):
     # language=rst
     """
+
+    .. _tables:
+
     Tables
     ======
 

@@ -16,13 +16,17 @@ pytestmark = pytest.mark.django_db
 def test_pages():
     # language=rst
     """
+    .. _pages:
+
     Pages
     =====
 
-    iommi pages are used to compose parts of a page into a full page.
+    iommi pages are used to compose parts of a page into a full page. A "part" can be any iommi component (like :ref:`Table <tables>`, :ref:`Form <forms>`, :doc:`Fragment`), or a plain Python string, or a Django `Template <https://docs.djangoproject.com/en/5.1/topics/templates/>`_.
+
+    The `html`_ builder function is used to create simple :doc:`Fragment`s for div, h1, span, etc.
 
     """
-    
+
 
 def test_example():
     # language=rst
@@ -103,6 +107,9 @@ def test_page(small_discography):
 
 # language=rst
 """
+
+.. _html:
+
 html
 ----
 
