@@ -8,6 +8,7 @@ from iommi._web_compat import (
 )
 from iommi.form import save_nested_forms
 from iommi.struct import Struct
+from iommi.traversable import build_long_path
 from tests.helpers import (
     req,
     show_output,
@@ -804,32 +805,73 @@ def test_form_with_m2m_key_reverse(small_discography):
     # @end
 
 
-def test_nested_forms(small_discography):
+def test_nested_forms(medium_discography):
     # language=rst
     """
     How do I nest multiple forms?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    You need to use the `save_nested_forms` post handler to have a single save button for all the nested forms and `EditTable`s:
     """
 
     class MyNestedForm(Form):
-        edit_dio = Form.edit(auto__instance=Artist.objects.get(name='Black Sabbath'))
+        edit_ozzy = Form.edit(
+            auto__model=Artist,
+            instance=lambda **_: Artist.objects.get(name='Ozzy Osbourne'),
+        )
         create_artist = Form.create(auto__model=Artist)
-        create_album = Form.create(auto__model=Album)
+        edit_albums = EditTable(
+            auto__model=Album,
+            auto__include=['name', 'year'],
+            columns__name__field__include=True,
+        )
 
         class Meta:
             actions__submit__post_handler = save_nested_forms
 
     # @test
+    ozzy_pk = Artist.objects.get(name='Ozzy Osbourne').pk
+
     form = MyNestedForm().bind(request=req('get'))
 
-    assert list(form.nested_forms.keys()) == ['edit_dio', 'create_artist', 'create_album']
+    assert list(form.nested_forms.keys()) == [
+        'edit_ozzy',
+        'create_artist',
+        # EditTable stuff
+        'bulk',
+        'edit_form',
+        'create_form',
+        'edit_albums',
+    ]
 
     show_output(form)
+
+    album1, album2, album3 = Album.objects.all()
+
+    updates = {
+        '-submit': '',
+        'name': 'Ozzy-updated',
+        'create_artist/name': 'Dio-created',
+        f'edit_albums/name/{album1.pk}': 'Name 1',
+        f'edit_albums/name/{album2.pk}': 'Name 2',
+        f'edit_albums/name/{album3.pk}': 'Name 3',
+    }
+
+    form = MyNestedForm().bind(request=req(
+        'post',
+        **updates,
+    ))
+    assert not form.get_errors()
+    form.render_to_response()
+
+    assert Artist.objects.get(pk=ozzy_pk).name == 'Ozzy-updated'
+    assert Artist.objects.get(name='Dio-created')
+    album1.refresh_from_db()
+    assert album1.name == 'Name 1'
     # @end
 
 
 def test_fields_template(album):
-    heaven_and_hell = album
     # language=rst
     """
     .. _Form.fields_template:
@@ -861,7 +903,7 @@ def test_fields_template(album):
         name = Field()
         email = Field()
         comment = Field.textarea()
-        album = Field.hardcoded(initial=heaven_and_hell)
+        album = Field.hardcoded(initial=lambda **_: Album.objects.get(name='Heaven & Hell'))
 
     # @test
     form = CommentForm().bind(request=req('get'))

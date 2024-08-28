@@ -203,6 +203,13 @@ def save_nested_forms(form, request, **_):
             if action.post_handler and action.invoke_callback(action.post_handler) is None:
                 did_fail = True
 
+        # Handle EditTables
+        for action in getattr(nested_form, 'edit_actions', {}).values():
+            if action.post_handler is None:
+                continue
+            if action.post_handler and action.invoke_callback(action.post_handler) is None:
+                did_fail = True
+
     if not did_fail:
         if 'post_save' in form.extra:
             form.invoke_callback(form.extra.post_save)
