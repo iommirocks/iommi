@@ -81,7 +81,7 @@ def test_page(small_discography):
         # Using the html builder to create a tag safely
         h1 = html.h1('Welcome!')
 
-        # If you write an html tag in here it will be
+        # If you write an HTML tag in here it will be
         # treated as unsafe and escaped by Django like normal
         body_text = 'Welcome to my iommi site...'
 
