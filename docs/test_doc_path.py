@@ -17,6 +17,7 @@ from iommi import (
 from iommi.path import (
     decode_path,
     decode_path_components,
+    PathDecoder,
     register_path_decoding,
 )
 from tests.helpers import req
@@ -206,3 +207,35 @@ def test_path_advanced_decoder(track):
 
     unregister_encoding.__exit__(None, None, None)
     # @end
+
+
+def test_path_decoders_for_access_control():
+    # language=rst
+    """
+    Path decoders for access control
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Access control on path decoder level can be very powerful if you have row-level access rules. Let's say that only staff users can edit Black Sabbath albums:
+    """
+
+    def album_pk_decoder(string, request, **_):
+        album = Album.objects.get(pk=string)
+        if album.artist.name == 'Black Sabbath' and not request.user.is_staff:
+            raise PermissionError('Only staff can edit Black Sabbath albums')
+        return album
+
+    # @test
+    unregister_encoding = (
+    # @end
+
+    register_path_decoding(album_pk=PathDecoder(decode=album_pk_decoder, name='album'))
+
+    # @test
+    )
+    unregister_encoding.__enter__()
+    # @end
+
+    # language=rst
+    """
+    The beauty of this approach is that if you do this consistently in your product, all views get decoded objects that are safe to user without further checks.
+    """
