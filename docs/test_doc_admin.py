@@ -21,6 +21,10 @@ class Admin(_Admin):
     class Meta:
         iommi_style = 'bootstrap_docs'
 
+        apps__docs_album__include = True
+        apps__docs_artist__include = True
+        apps__docs_track__include = True
+
 
 def test_admin(settings, small_discography):
     # language=rst
@@ -32,12 +36,12 @@ def test_admin(settings, small_discography):
     that is automagically created based on your models, while retaining the full
     feature set of iommi.
 
-    Index page:
+    Index page (with configuration to show `Artist`, `Album` and `Track` models):
     """
 
     # @test
     assert settings.IOMMI_DEFAULT_STYLE == 'bootstrap_docs'
-    show_output(Admin.all_models(), path='admin/')
+    show_output(Admin.all_models().as_view()(staff_req('get')), path='admin/')
     # @end
 
     # language=rst
@@ -99,7 +103,7 @@ def test_installation():
     """
     Now you have the iommi admin gui for your app!
     """
-    
+
 
 def test_customization():
     # language=rst
@@ -108,7 +112,7 @@ def test_customization():
     ~~~~~~~~~~~~~
 
     """
-    
+
 
 def test_add_a_model_to_the_admin():
     # language=rst
@@ -153,7 +157,7 @@ def test_remove_a_model_from_the_admin():
     """
     This turns off the admin of the `User` table in the `auth` app. Your global config always has priority.
     """
-    
+
 
 def test_permissions():
     # language=rst
@@ -186,7 +190,7 @@ def test_permissions():
     be supplied in edit/delete.
 
     """
-    
+
 
 def test_html_attributes(small_discography):
     # language=rst
