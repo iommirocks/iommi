@@ -329,7 +329,7 @@ class Admin(Page):
                             model_name=None,
                             url=None,
                             format=lambda row, table, **_: (
-                                html.h2(row.name, _name='invalid_name').bind(parent=table).__html__()
+                                html.h1(row.name, _name='invalid_name').bind(parent=table).__html__()
                             ),
                             key=None,
                         )
@@ -348,7 +348,7 @@ class Admin(Page):
         table = setdefaults_path(
             Namespace(),
             table if table is not None else {},
-            title=gettext('All models'),
+            title='',
             call_target__cls=Table,
             call_target__attribute='div',
             sortable=False,
