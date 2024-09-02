@@ -200,7 +200,7 @@ def test_login_to_admin(settings, client):
 
     response = client.post('/login/', data={'username': 'staff', 'password': 'password', '-submit': ''})
     assert isinstance(response, HttpResponseRedirect)
-    assert 'All models' in client.get('/').content.decode()
+    assert 'Change password' in client.get('/').content.decode()
 
     client.get('/logout/')
     assert client.get('/').status_code == 302
