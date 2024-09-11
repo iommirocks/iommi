@@ -482,6 +482,14 @@ def style_showcase(request, style=None, **_):
                     )
                 ),
             ),
+            h_tags=html.div(
+                children=dict(
+                    h1=html.h1('h1'),
+                    h2=html.h1('h2'),
+                    h3=html.h1('h3'),
+                    h4=html.h1('h4'),
+                ),
+            ),
             form=Form(
                 title='Form',
                 fields=dict(
