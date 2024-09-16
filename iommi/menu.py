@@ -29,7 +29,10 @@ from iommi.declarative.namespace import (
 from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate_strict
-from iommi.fragment import Tag
+from iommi.fragment import (
+    TransientFragment,
+    Tag,
+)
 from iommi.member import (
     bind_members,
     refine_done_members,
@@ -142,43 +145,25 @@ class MenuItem(MenuBase):
         return r
 
     def __html__(self, *, render=None):
-        a = setdefaults_path(
-            Namespace(),
-            self.a,
-            children__text=self.display_name,
-            attrs__href=self.url,
-            _name='a',
-        )
-        if self._active and not self.active_class_on_item:
-            setdefaults_path(
-                a,
-                attrs__class={self.active_class: True},
-            )
-
-        if self.url is None and a.tag == 'a':
-            a.tag = None
-
-        fragment = Namespace(
-            call_target=Fragment,
-            children__a=a,
+        a = self.a.copy()
+        a_tag = a.pop('tag', None)
+        if not self.url:
+            a_tag = None
+        return TransientFragment(
             tag=self.tag,
-            template=self.template,
+            children__a=TransientFragment(
+                **a,
+                tag=a_tag,
+                children__text=self.display_name,
+                attrs__href=self.url,
+                attrs__class={self.active_class: True} if self._active and not self.active_class_on_item else {},
+                parent=self,
+            ),
+            children=self.sub_menu,
             attrs=self.attrs,
-            _name='fragment',
-        )
-        if self._active and self.active_class_on_item:
-            setdefaults_path(
-                fragment,
-                attrs__class={self.active_class: True},
-            )
-
-        fragment = fragment().bind(parent=self)
-        # need to do this here because otherwise the sub menu will get get double bind
-        for name, item in items(self.sub_menu):
-            assert name not in fragment.children
-            fragment.children[name] = item
-
-        return fragment.__html__()
+            attrs__class={self.active_class: True} if self._active and self.active_class_on_item else {},
+            parent=self,
+        ).__html__()
 
 
 class MenuException(Exception):
@@ -219,7 +204,9 @@ class Menu(MenuBase):
     items_container = Refinable()
 
     class Meta:
-        items_container = EMPTY
+        items_container__attrs__class = EMPTY
+        items_container__attrs__style = EMPTY
+        items_container__call_target = Fragment
 
     @with_defaults(
         sort=False,
@@ -228,23 +215,23 @@ class Menu(MenuBase):
         super(Menu, self).__init__(**kwargs)
 
     def __html__(self, *, render=None):
-        fragment = Fragment(
-            _name=self._name,
+        return TransientFragment(
             tag=self.tag,
             template=self.template,
-            children__items_container=Fragment(
-                **self.items_container,
+            attrs=self.attrs,
+            children__items_container=TransientFragment(
+                template=self.items_container.template,
+                tag=self.items_container.tag,
+                attrs=self.items_container.attrs,
+                children=self.sub_menu,
+                parent=self,
             ),
-        ).bind(parent=self)
-        # need to do this here because otherwise the sub menu will get get double bind
-        items_container = fragment.children.items_container
-        for name, item in items(self.sub_menu):
-            assert name not in items_container.children
-            items_container.children[name] = item
+            parent=self,
+        ).__html__()
 
-        # If we pass attrs to the fragment in on_bind, styling can't be applied, so we do this thing instead.
-        fragment.attrs = self.attrs
-        return fragment.__html__()
+    def on_refine_done(self):
+        super(Menu, self).on_refine_done()
+        self.items_container = self.items_container().refine_done(parent=self)
 
     def on_bind(self):
         super(Menu, self).on_bind()
