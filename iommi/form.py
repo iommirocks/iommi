@@ -92,6 +92,7 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.fragment import (
+    TransientFragment,
     Fragment,
     Header,
     Tag,
@@ -1155,16 +1156,17 @@ class Field(Part, Tag):
                 self.iommi_evaluate_parameters(),
             )
 
-        f = Fragment(
-            _name=self._name,
+        f = TransientFragment(
             tag=self.tag,
+            parent=self,
             attrs=self.attrs,
-        ).bind(parent=self._parent)
-
-        f.children['label'] = self.label
-        f.children['input'] = self.input
-        f.children['help'] = self.help
-        f.children['errors'] = self.errors
+            children=dict(
+                label=self.label,
+                input=self.input,
+                help=self.help,
+                errors=self.errors,
+            ),
+        )
 
         f.children = sort_after(f.children)
 

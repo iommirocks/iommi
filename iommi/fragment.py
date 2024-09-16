@@ -67,6 +67,50 @@ _void_elements = [
 ]
 
 
+class TransientFragment:
+    @dispatch(
+        attrs__class=EMPTY,
+        attrs__style=EMPTY,
+    )
+    def __init__(self, *, parent, template=None, attrs, children, tag):
+        self._is_bound = True
+        self.template = template
+        self.attrs = attrs
+        self.children = children
+        self.tag = tag
+        self.parent = parent
+
+    @property
+    def include(self):
+        return True
+
+    def get_request(self):
+        return self.parent.get_request()
+
+    def iommi_evaluate_parameters(self):
+        return self.parent.iommi_evaluate_parameters()
+
+    def get_context(self):
+        return self.parent.get_context()
+
+    def render_text_or_children(self, context=None):
+        if context is None:
+            context = self.get_context()
+        request = self.get_request()
+        return format_html(
+            '{}' * len(self.children),
+            *[as_html(part=x, context=context, request=request) for x in values(self.children)],
+        )
+
+    def __html__(self):
+        assert self._is_bound, NOT_BOUND_MESSAGE
+        context = {**self.get_context(), **self.iommi_evaluate_parameters()}
+        return fragment__render(
+            fragment=self,
+            context=context,
+        )
+
+
 def fragment__render(fragment, context):
     if not fragment.include:
         return ''

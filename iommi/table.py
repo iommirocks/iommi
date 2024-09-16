@@ -97,6 +97,7 @@ from iommi.form import (
     Form,
 )
 from iommi.fragment import (
+    TransientFragment,
     Fragment,
     Header,
     Tag,
@@ -138,7 +139,10 @@ from iommi.shortcut import (
     Shortcut,
     with_defaults,
 )
-from iommi.sort_after import LAST
+from iommi.sort_after import (
+    LAST,
+    sort_after,
+)
 from iommi.struct import (
     Struct,
     merged,
@@ -1064,12 +1068,12 @@ class Cells(Traversable, Tag):
 
     def render(self):
         return (
-            Fragment(
+            TransientFragment(
                 tag=self.tag,
                 attrs=self.attrs,
-                children__text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self)),
+                children=dict(text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))),
+                parent=self,
             )
-            .bind(parent=self)
             .__html__()
         )
 
@@ -1114,7 +1118,7 @@ class CellConfig(RefinableObject, Tag):
     value = Refinable()
     contents = Refinable()
     format: Callable = Refinable()
-    link = Refinable()
+    link: Namespace = Refinable()
 
 
 class Cell(CellConfig):
@@ -1179,8 +1183,7 @@ class Cell(CellConfig):
             url_title = self.url_title
             # TODO: `url`, `url_title` and `link` is overly complex
             cell_contents = (
-                Fragment(tag='a', attrs__title=url_title, attrs__href=url, children__content=cell_contents, **self.link)
-                .bind(parent=self.table)
+                TransientFragment(parent=self, tag='a', attrs__title=url_title, attrs__href=url, children__content=cell_contents, **self.link)
                 .__html__()
             )
         return cell_contents
@@ -2064,6 +2067,8 @@ class Table(Part, Tag):
             )
         ).refine_done(parent=self)
 
+        self.tbody = self.tbody(_name='tbody').refine_done(parent=self)
+
         super(Table, self).on_refine_done()
 
     @classmethod
@@ -2090,8 +2095,9 @@ class Table(Part, Tag):
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         build_and_bind_h_tag(self)
 
-        self.tbody = self.tbody(_name='tbody', children__text=_Lazy_tbody(self))
         bind_member(self, name='tbody')
+        self.tbody.children.text = _Lazy_tbody(self)
+        self.tbody.children = sort_after(self.tbody.children)
 
         bind_member(self, name='container')
         bind_member(self, name='table_tag_wrapper')
