@@ -1,4 +1,5 @@
 from iommi.fragment import Fragment
+from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 
 
@@ -15,6 +16,11 @@ class Asset(Fragment):
     Because assets have names (:doc:`Everything has a name <philosophy>`), assets with the same name will overwrite
     each other, resulting in only one asset with a given name being rendered.
     """
+
+    in_body: bool = Refinable()
+
+    class Meta:
+        in_body = False
 
     @classmethod
     @with_defaults(

@@ -40,6 +40,7 @@ def test_style():
         - semantic_ui
         - water
         - uikit
+        - us_web_design_system
         - django_admin
         '''
         # @test
