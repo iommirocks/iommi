@@ -1,4 +1,5 @@
 import copy
+import functools
 from typing import (
     Any,
     Dict,
@@ -44,6 +45,35 @@ evaluated_refinable = evaluated_refinable  # pragma: no mutate this is just mark
 
 class PathNotFoundException(Exception):
     pass
+
+
+worst_offenders_candidates = set()
+
+
+def trace_worst_offenders(f):
+    @functools.wraps(f)
+    def trace_worst_offenders_inner(*args, **kwargs):
+        from iommi.thread_locals import get_current_request
+
+        request = get_current_request()
+        if request is not None:
+            under_trace = request.GET.get('_iommi_func_worst_offender')
+            if under_trace == f.__name__:
+                import sys
+                from iommi.sql_trace import sql_debug_format_stack_trace
+                from collections import defaultdict
+                if not hasattr(request, '_iommi_func_worst_offender'):
+                    request._iommi_func_worst_offender = defaultdict(int)
+
+                frame = sys._getframe().f_back.f_back
+                x = sql_debug_format_stack_trace(frame)
+                request._iommi_func_worst_offender[x] += 1
+
+        return f(*args, **kwargs)
+
+    trace_worst_offenders_inner._iommi_can_trace_worst_offenders = True
+    worst_offenders_candidates.add(f.__name__)
+    return trace_worst_offenders_inner
 
 
 class Traversable(RefinableObject):
@@ -131,6 +161,7 @@ class Traversable(RefinableObject):
         assert self._is_bound, NOT_BOUND_MESSAGE
         return build_long_path(self).replace('/', '__')
 
+    @trace_worst_offenders
     def apply_style(self, iommi_style: Style, is_root=True):
         assert iommi_style.__class__.__name__ == "Style", iommi_style.__class__.__name__
 

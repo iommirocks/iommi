@@ -17,6 +17,7 @@ from iommi._web_compat import (
     settings,
 )
 from iommi.debug import src_debug_url_builder
+from iommi.thread_locals import get_current_request
 
 MEDIA_PREFIXES = ['/static/']
 
@@ -142,6 +143,12 @@ class HTMLStats(pstats.Stats):
         else:
             print(f'<td>{escape(function_name)}</td>', file=self.stream)
 
+        from iommi import traversable
+        if function_name in traversable.worst_offenders_candidates:
+            print(f'<td><a href="?_iommi_func_worst_offender={escape(function_name)}">Worst offenders</a></td>', file=self.stream)
+        else:
+            print('<td></td>', file=self.stream)
+
         print(f'<td>{nice_path}</td>', file=self.stream)
         print(f'<td class="numeric">{line_number}</td>', file=self.stream)
         print('</tr>', file=self.stream)
@@ -168,6 +175,18 @@ class Middleware:
             request._iommi_prof = []
 
         response = self.get_response(request)
+
+        if getattr(request, '_iommi_func_worst_offender', None):
+            s = StringIO()
+            for stack, count in sorted(request._iommi_func_worst_offender.items(), key=lambda x: -x[1]):
+                if count <= 1:
+                    break
+
+                print(f'----- {count} -----', file=s)
+                print(stack, file=s)
+                print(file=s)
+
+            return HttpResponse(s.getvalue(), content_type='text/plain')
 
         if request._iommi_prof:
             if isinstance(response, StreamingHttpResponse):

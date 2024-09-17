@@ -5,7 +5,7 @@ from iommi.thread_locals import (
 )
 
 
-def test_threadlocals():
+def test_thread_locals():
     _thread_locals.__dict__.clear()
 
     assert get_current_request() is None
@@ -13,3 +13,6 @@ def test_threadlocals():
     sentinel = object()
     set_current_request(sentinel)
     assert get_current_request() == sentinel
+
+    # clean up
+    set_current_request(None)
