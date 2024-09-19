@@ -1,4 +1,4 @@
-<div aria-label="Pages"{{ paginator.attrs }}>
+{{ paginator.iommi_open_tag }}
     <{{ paginator.container.tag }}{{ paginator.container.attrs }}>
         {% if show_first %}
             <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
@@ -14,7 +14,7 @@
 
         {% for num in page_numbers %}
             <{{ paginator.active_item.tag }}{% if num == page %}{{ paginator.active_item.attrs }}{% else %}{{ paginator.item.attrs }}{% endif %}>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="Page {{ num }}"{{ paginator.link.attrs }}>{{ num }}</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="Page {{ num }}"{% if num == page %}{{ paginator.active_link.attrs }}{% else %}{{ paginator.link.attrs }}{% endif %}>{{ num }}</a>
             </{{ paginator.active_item.tag }}>
         {% endfor %}
 
@@ -30,5 +30,4 @@
             </{{ paginator.item.tag }}>
         {% endif %}
     </{{ paginator.container.tag }}>
-</div>
-
+{{ paginator.iommi_close_tag }}

@@ -1394,7 +1394,8 @@ def paginator__count(rows, **_):
 
 
 @with_meta
-class Paginator(Traversable):
+class Paginator(Traversable, Tag):
+    tag: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     container = Refinable()
@@ -1402,6 +1403,7 @@ class Paginator(Traversable):
     active_item = Refinable()
     item = Refinable()
     link = Refinable()
+    active_link = Refinable()
     adjacent_pages: int = Refinable()
     min_page_size: int = Refinable()
     number_of_pages: int = SpecialEvaluatedRefinable()
@@ -1420,6 +1422,8 @@ class Paginator(Traversable):
         item__attrs__style = EMPTY
         link__attrs__class = EMPTY
         link__attrs__style = EMPTY
+        active_link__attrs__class = EMPTY
+        active_link__attrs__style = EMPTY
 
     @with_defaults(
         adjacent_pages=6,
@@ -1438,6 +1442,10 @@ class Paginator(Traversable):
         self.context = None
         self.page_size = None
         self.rows = None
+
+        self.active_link = Namespace(self.link, self.active_link)
+        self.active_item = Namespace(self.item, self.active_item)
+
         super(Paginator, self).on_refine_done()
 
     def on_bind(self) -> None:
@@ -1460,16 +1468,19 @@ class Paginator(Traversable):
             rows=rows,
         )
 
+        # TODO: will arguments to these that don't hit tag/attrs be silently ignored?
         self.attrs = evaluate_attrs(self, **evaluate_parameters)
         self.container.attrs = evaluate_attrs(self.container, **evaluate_parameters)
         self.active_item.attrs = evaluate_attrs(self.active_item, **evaluate_parameters)
         self.item.attrs = evaluate_attrs(self.item, **evaluate_parameters)
         self.link.attrs = evaluate_attrs(self.link, **evaluate_parameters)
+        self.active_link.attrs = evaluate_attrs(self.active_link, **evaluate_parameters)
 
         self.container.tag = evaluate_strict(self.container.tag, **evaluate_parameters)
         self.active_item.tag = evaluate_strict(self.active_item.tag, **evaluate_parameters)
         self.item.tag = evaluate_strict(self.item.tag, **evaluate_parameters)
         self.link.tag = evaluate_strict(self.link.tag, **evaluate_parameters)
+        self.active_link.tag = evaluate_strict(self.active_link, **evaluate_parameters)
 
         if self.page_size is None:
             self.number_of_pages = 1

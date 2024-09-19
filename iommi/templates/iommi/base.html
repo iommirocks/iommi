@@ -4,7 +4,9 @@
     <title>{% block title %}{{ title }}{% endblock %}</title>
     {% block iommi_head_contents %}{% endblock %}
     {% for asset in assets.values %}
-      {{ asset }}
+        {% if not asset.in_body %}
+            {{ asset }}
+        {% endif %}
     {% endfor %}
     {% block iommi_head_contents_last %}{% endblock %}
 </head>
@@ -16,5 +18,11 @@
     {{ container.iommi_close_tag }}
 
     {% block iommi_bottom %}{% endblock %}
+
+    {% for asset in assets.values %}
+        {% if asset.in_body %}
+            {{ asset }}
+        {% endif %}
+    {% endfor %}
 </body>
 </html>
