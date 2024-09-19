@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+7.5.0 (2024-09-19)
+~~~~~~~~~~~~~~~~~~
+
+* Optimized fragment rendering. This can have very significant performance improvement across all iommi views.
+
+* Added style definition for US Web Design System
+
+* Fix `Action.icon` rendering and customization. It now matches the api of `Column.icon` more closely.
+
+* Nested forms save post handler should also save EditTables
+
+
 7.4.0 (2024-08-21)
 ~~~~~~~~~~~~~~~~~~
 
