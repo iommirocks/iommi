@@ -1,3 +1,4 @@
+import warnings
 from itertools import groupby
 from typing import (
     Callable,
@@ -12,12 +13,18 @@ from iommi._web_compat import (
     format_html,
     slugify,
 )
-from iommi.attrs import Attrs
+from iommi.attrs import (
+    Attrs,
+    render_attrs,
+)
 from iommi.base import (
     capitalize,
     values,
 )
-from iommi.declarative.namespace import setdefaults_path
+from iommi.declarative.namespace import (
+    EMPTY,
+    setdefaults_path,
+)
 from iommi.declarative.with_meta import with_meta
 from iommi.fragment import (
     Fragment,
@@ -27,6 +34,7 @@ from iommi.member import Members
 from iommi.part import Part
 from iommi.refinable import (
     EvaluatedRefinable,
+    Prio,
     Refinable,
     SpecialEvaluatedRefinable,
 )
@@ -44,33 +52,36 @@ class Action(Fragment):
     .. code-block:: python
 
         # @test
-        actions = [
+        actions = dict(
         # @end
 
         # Link
-        Action(attrs__href='http://example.com'),
+        example=Action(attrs__href='http://example.com'),
 
         # Link with icon
-        Action.icon('edit', attrs__href="edit/"),
+        edit=Action.icon('pencil-square', attrs__href="edit/"),
 
         # Button
-        Action.button(display_name='Button title!'),
+        button=Action.button(display_name='Button title!'),
 
         # A submit button
-        Action.submit(display_name='Do this'),
+        submit=Action.submit(display_name='Do this'),
 
         # The primary submit button on a form.
-        Action.primary(),
+        primary=Action.primary(),
 
         # @test
-        ]
+        )
 
         from iommi.refinable import Prio
         foo = Page(
-            parts={
-                f'button_{i}': html.div(action.refine(display_name='Action', prio=Prio.shortcut))
-                for i, action in enumerate(actions)
-            }
+            parts__css=html.style('''
+                a, button {
+                    display: block !important;
+                    margin-bottom: 0.5rem;
+                }
+            '''),
+            parts=actions,
         )
         show_output(foo)
         # @end
@@ -79,8 +90,8 @@ class Action(Fragment):
     with a single primary submit button are so common, iommi assumes
     that if you have an action called submit and do NOT explicitly
     specify the action that it is a primary action. This is only
-    done for the action called submit, inside the Forms actions
-    Namespace.
+    done for the action called `submit`, inside the Forms actions
+    `Namespace`.
 
     For that reason this works:
 
@@ -177,18 +188,29 @@ class Action(Fragment):
         return cls.submit(**kwargs)
 
     @classmethod
-    @with_defaults
+    @with_defaults(
+        extra__icon_attrs__class=EMPTY,
+        extra__icon_attrs__style=EMPTY,
+    )
     def icon(cls, icon, *, display_name=None, icon_classes=None, **kwargs):
-        if icon_classes is None:
-            icon_classes = []
-        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
-        if icon_classes_str:
-            icon_classes_str = ' ' + icon_classes_str
-        setdefaults_path(
-            kwargs,
-            display_name=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, display_name),
+        if icon_classes is not None:
+            assert False, 'icon_classes is removed, use the extra__icon_attrs__class namespace'
+        return cls(**kwargs).refine(
+            extra__icon=icon,
+            extra__orig_display_name=display_name,
+            display_name=default_action__display_name,
+            prio=Prio.shortcut,
         )
-        return cls(**kwargs)
+
+
+def default_action__display_name(action, **_):
+    if not action.extra.get('icon', None):
+        return action.extra.orig_display_name
+
+    attrs = action.extra.icon_attrs
+    attrs['class'][action.extra.get('icon_prefix', '') + action.extra.icon] = True
+
+    return format_html('<i{}></i> {}', render_attrs(attrs), action.extra.orig_display_name or capitalize(action._name).replace('_', ' '))
 
 
 def group_actions(actions: Dict[str, Action]):

@@ -26,4 +26,10 @@ bootstrap_icons = Style(
             extra__icon='bi bi-check2-square',
         ),
     ),
+    Action__shortcuts=dict(
+        icon__extra=dict(
+            icon_attrs__class={'bi': True},
+            icon_prefix='bi-',
+        ),
+    ),
 )
