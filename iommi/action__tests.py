@@ -21,7 +21,10 @@ from iommi.member import (
     bind_members,
     refine_done_members,
 )
-from iommi.refinable import RefinableMembers
+from iommi.refinable import (
+    Prio,
+    RefinableMembers,
+)
 from iommi.shortcut import (
     Shortcut,
     is_shortcut,
@@ -30,6 +33,7 @@ from iommi.struct import Struct
 from iommi.traversable import Traversable
 from tests.helpers import (
     prettify,
+    req,
     verify_table_html,
 )
 
@@ -151,10 +155,8 @@ def test_icon_action():
 
 
 def test_icon_action_with_icon_classes():
-    assert (
+    with pytest.raises(AssertionError):
         Action.icon('foo', display_name='dn', icon_classes=['a', 'b']).bind(request=None).__html__()
-        == '<a><i class="fa fa-foo fa-a fa-b"></i> dn</a>'
-    )
 
 
 def test_display_name_to_value_attr():
@@ -198,9 +200,9 @@ def test_actions():
                 c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
                 d=dict(display_name='Qux', attrs__href='/bar/', group='Other'),
                 e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
-                f=Action.icon('icon_bar', icon_classes=['lg'], display_name='Icon bar', attrs__href='/icon_bar/'),
+                f=Action.icon('icon_bar', extra__icon_attrs__class={'fa-lg': True}, display_name='Icon bar', attrs__href='/icon_bar/'),
                 g=Action.icon(
-                    'icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'
+                    'icon_baz', extra__icon_attrs__class__one=True, extra__icon_attrs__class__two=True, display_name='Icon baz', attrs__href='/icon_baz/'
                 ),
             )
 
@@ -224,7 +226,7 @@ def test_actions():
                 <a href="/bar/"> Bar </a>
                 <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
                 <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
-                <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
+                <a href="/icon_baz/"> <i class="fa fa-icon_baz one two" /> Icon baz </a>
             </div>
         """,
     )
@@ -235,3 +237,16 @@ def test_check_for_bad_value_usage():
         Action(tag='button', attrs__value='foo').refine_done()
 
     assert str(e.value) == 'You passed attrs__value, but you should pass display_name'
+
+
+def test___foo():
+    assert 'fa-edit' in Action.icon('edit', attrs__href="edit/", display_name='Action').bind().__html__()
+    assert 'Action' in Action.icon('edit', attrs__href="edit/", display_name='Action').bind().__html__()
+
+    from iommi import Form
+    f = Form(
+        actions__foo=Action.icon('edit'),
+    )
+    assert 'Foo' in f.bind(request=req('get')).__html__()
+
+    assert 'Action' in Action.icon('edit', attrs__href="edit/").refine(display_name='Action', prio=Prio.shortcut).bind().__html__()

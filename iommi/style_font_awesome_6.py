@@ -16,14 +16,20 @@ font_awesome_6 = Style(
             icon_attrs__class={'fa': True, 'fa-lg': True},
             icon_prefix='fa-',
         ),
-        edit__extra__icon='pencil-square-o',
-        delete__extra__icon='trash-o',
+        edit__extra__icon='pencil-square',
+        delete__extra__icon='trash',
         download__extra__icon='download',
         boolean__cell__format=lambda value, **_: (
             mark_safe(f'<i class="fa fa-check" title="{gettext("Yes")}"></i>') if value else ''
         ),
         select=dict(
             extra__icon='fa-regular fa-square-check',
+        ),
+    ),
+    Action__shortcuts=dict(
+        icon__extra=dict(
+            icon_attrs__class={'fa': True},
+            icon_prefix='fa-',
         ),
     ),
 )

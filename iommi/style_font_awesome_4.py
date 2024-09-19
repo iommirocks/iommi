@@ -21,4 +21,10 @@ font_awesome_4 = Style(
         if value
         else '',
     ),
+    Action__shortcuts=dict(
+        icon__extra=dict(
+            icon_attrs__class={'fa': True},
+            icon_prefix='fa-',
+        ),
+    ),
 )

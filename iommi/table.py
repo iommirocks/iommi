@@ -331,7 +331,7 @@ def default_icon__cell__format(column, value, **_):
         return column.display_name
 
     attrs = column.extra.icon_attrs
-    attrs['class'][column.extra.icon_prefix + column.extra.icon] = True
+    attrs['class'][column.extra.get('icon_prefix', '') + column.extra.icon] = True
 
     return format_html('<i{}></i> {}', render_attrs(attrs), column.display_name)
 
@@ -537,7 +537,7 @@ class Column(Part):
         """
         Shortcut to create font awesome-style icons.
 
-        :param extra__icon: the font awesome name of the icon
+        :param extra__icon: the name of the icon
 
         .. code-block:: python
 
