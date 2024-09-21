@@ -33,6 +33,7 @@ def test_edit_tables(really_big_discography):
     EditTable(
         auto__model=Album,
         page_size=10,
+        # Turn on the edit feature for the year column
         columns__year__field__include=True,
     )
 
