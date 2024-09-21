@@ -325,3 +325,28 @@ def test_post_handlers():
     - `None` will result in the page being rendered like normal
     - everything else iommi will attempt to json encode and return as a json response
     """
+
+
+def test_customization_of_save_behavior():
+    # language=rst
+    """
+    Customization of save behavior on `Form.create`/`edit`
+    ------------------------------------------------------
+
+    There are some useful hooks for customizing the save behavior on `Form.create` and `Form.edit`. The most common use case
+    is to set some hardcoded value for a field that is not in the form. This is best done by using `Field.hardcoded`, so
+    that should be your first option.
+
+    Saving a model in Django models SQL quite closely and iommi have hooks for all the steps in a multi-step commit.
+
+    The callbacks are executed in this order:
+
+    - `extra__new_instance`: This is called to create a new instance of the model. By default it just calls `form.model()`.
+    - `extra__pre_save_all_but_related_fields` (only called for `Form.create`)
+    - `extra__on_save_all_but_related_fields` (only called for `Form.create`)
+    - `extra__pre_save` (before `instance.save()`)
+    - `extra__on_save` (after `instance.save()`)
+
+    After a POST is completed, the `extra__redirect` callback is executed if present, otherwise `extra__redirect_to`
+    is used to determine where to redirect to.
+    """
