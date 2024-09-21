@@ -1,3 +1,4 @@
+{% load i18n %}
 <script>
     // Polyfill for closest() on IE11. Remove when we drop support for IE11.
 
@@ -30,11 +31,11 @@
             el.click();
         });
 
-        // If there are multiple pages 
+        // If there are multiple pages
         if (has_paginator) {
-            // If we haven't done so already offer to select everything 
+            // If we haven't done so already offer to select everything
             if (tbody.querySelector('.select_all_pages_q') === null) {
-                tbody.querySelector('tr').insertAdjacentHTML('beforebegin', '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">All items on this page are selected. <a onclick="iommi_table_js_select_all_pages(this)" href="#">Select all items</a></td></tr>'
+                tbody.querySelector('tr').insertAdjacentHTML('beforebegin', '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">{% trans "All items on this page are selected." %} <a onclick="iommi_table_js_select_all_pages(this)" href="#">{% trans "Select all items" %}</a></td></tr>'
                 )
             }
             else {
@@ -51,7 +52,7 @@
     function iommi_table_js_select_all_pages(base) {
         var form = base.closest('form');
         var tbody = form.querySelector('tbody');
-        tbody.querySelector('.select_all_pages_q').textContent = 'All items selected';
+        tbody.querySelector('.select_all_pages_q').textContent = '{% trans "All items selected" %}';
         form.querySelector('.all_pks').value = 1;
     }
 </script>
