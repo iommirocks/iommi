@@ -21,6 +21,10 @@ def test_getting_started():
     Getting started
     ===============
 
+    .. note::
+
+        This guide is intended for a reader that is well versed in the Django basics of the ORM,
+        urls routing, function based views, and templates.
     """
 
 
@@ -79,6 +83,8 @@ def test_2__your_first_form():
     """
     2. Your first form
     ------------------
+
+    From this point this guide is aimed at users trying iommi in an existing project. :doc:`The tutorial <tutorial>` is a more in-depth guide to building a full application with iommi from scratch.
 
     Pick a model from your app, and let's build a create form for it! I'm using `Album` here, but you should replace it with some your model. Add this to your `urls.py`:
 
