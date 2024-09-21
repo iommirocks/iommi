@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy
+
 from iommi import html
 from iommi.style import (
     Style,
@@ -82,7 +84,7 @@ semantic_ui_base = Style(
     Column=dict(
         shortcuts=dict(
             select=dict(
-                header__attrs__title='Select all',
+                header__attrs__title=gettext_lazy('Select all'),
             ),
             number=dict(
                 cell__attrs__class={

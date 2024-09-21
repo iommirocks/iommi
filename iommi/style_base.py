@@ -124,7 +124,7 @@ base = Style(
     Column=dict(
         shortcuts=dict(
             select=dict(
-                header__attrs__title='Select all',
+                header__attrs__title=gettext_lazy('Select all'),
             ),
         ),
         header__attrs__class__iommi_sort_header=lambda header, **_: header.url is not None,

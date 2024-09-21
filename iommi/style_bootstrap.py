@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy
+
 from iommi.asset import Asset
 from iommi.style import (
     Style,
@@ -137,7 +139,7 @@ bootstrap_base = Style(
         header__attrs__class={'text-nowrap': True},
         shortcuts=dict(
             select=dict(
-                header__attrs__title='Select all',
+                header__attrs__title=gettext_lazy('Select all'),
                 header__attrs__class={'text-center': True},
                 cell__attrs__class={'text-center': True},
                 extra__icon='fa fa-check-square-o',

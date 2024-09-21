@@ -1,4 +1,5 @@
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy
 
 from iommi import Fragment
 from iommi.asset import Asset
@@ -122,7 +123,7 @@ bulma_base = Style(
     Column=dict(
         shortcuts=dict(
             select=dict(
-                header__attrs__title='Select all',
+                header__attrs__title=gettext_lazy('Select all'),
             ),
             number=dict(
                 cell__attrs__class={
