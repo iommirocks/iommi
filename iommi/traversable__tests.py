@@ -46,6 +46,7 @@ from iommi.shortcut import (
     superinvoking_classmethod,
     with_defaults,
 )
+from iommi.struct import Struct
 from iommi.traversable import (
     Traversable,
     build_long_path_by_path,
@@ -201,7 +202,7 @@ def test_traverse_on_iommi():
     assert page.parts.a_table.query.form.fields.fusk.iommi_path == 'fusk'
     assert page.parts.a_table.columns.fusk.iommi_path == 'a_table/fusk'
     assert page._name == 'root'
-    assert set(keys(page.iommi_evaluate_parameters())) == {'traversable', 'page', 'request', 'user'}
+    assert set(keys(page.iommi_evaluate_parameters())) == {'traversable', 'page', 'params', 'request', 'user'}
 
 
 def test_evil_names_that_work():
@@ -458,6 +459,7 @@ def test_invoke_callback():
     assert t.invoke_callback(callback, b=2) == dict(
         a=1,
         b=2,
+        params=Struct(),
         request=None,
         user=None,
         traversable=t,
@@ -471,7 +473,7 @@ def test_invoke_callback_error_message_lambda():
 
     assert str(e.value) == (
         'TypeError when invoking callback lambda found at: `t.invoke_callback(lambda a: None, b=2)`.\n'
-        '(Keyword arguments: b, request, traversable, user)'
+        '(Keyword arguments: b, params, request, traversable, user)'
     )
 
 
@@ -483,10 +485,11 @@ def test_invoke_callback_error_message_function():
     with pytest.raises(TypeError) as e:
         t.invoke_callback(broken_callback)
 
-    assert str(e.value).startswith(
+    actual = str(e.value)
+    assert actual.startswith(
         'TypeError when invoking callback `<function test_invoke_callback_error_message_function.<locals>.broken_callback at 0x'
     )
-    assert str(e.value).endswith('`.\n(Keyword arguments: request, traversable, user)')
+    assert actual.endswith('`.\n(Keyword arguments: params, request, traversable, user)')
 
 
 def test_invoke_callback_transparent_type_error():
