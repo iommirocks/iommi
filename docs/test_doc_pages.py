@@ -2,6 +2,7 @@ from docs.models import *
 from iommi import *
 from tests.helpers import (
     req,
+    show_output,
     show_output_collapsed,
 )
 
@@ -67,8 +68,8 @@ def test_page(small_discography):
     Page
     ----
 
-    The `Page` class is used to compose pages. If you have installed the iommi
-    middleware you can also return them directly from your views. They accept
+    The `Page` class is used to compose pages. Use `.as_view()` to create a view from a `Page`.
+    If you have installed the iommi middleware you can also return them directly from your views. They accept
     `str`, `Part` and Django `Template` types:
     """
 
@@ -104,6 +105,42 @@ def test_page(small_discography):
     show_output_collapsed(MyPage(context__foo='foo!'))
     # @end
 
+
+def test_extra_params():
+    # language=rst
+    """
+    Add more parameters to a `Page`
+    -------------------------------
+
+    """
+
+    class MyPage(Page):
+        class Meta:
+            @staticmethod
+            def extra_params(**_):
+                return dict(
+                    extra_param='foo',
+                )
+
+        text = html.div(lambda extra_param, **_: extra_param + 'bar')
+
+    # @test
+    show_output(MyPage(context__foo='foo!'))
+    # @end
+
+    # language=rst
+    """
+    Or the functional syntax for the same thing:
+    """
+
+    my_page = Page(
+        extra_params=lambda **_: dict(extra_param='foo'),
+        parts__text=html.div(lambda extra_param, **_: extra_param + 'bar'),
+    )
+
+    # @test
+    show_output_collapsed(my_page)
+    # @end
 
 # language=rst
 """

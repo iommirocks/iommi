@@ -200,6 +200,7 @@ def test_evaluate():
         request        WSGIRequest
         table          Table
         column         Column
+        params         Struct
         traversable    Column
         user           User
         value          str
