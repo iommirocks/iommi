@@ -82,10 +82,12 @@ def setup_db_compat_django():
 
     def char_field_column_factory(model_field, **_):
         if model_field.choices:
+            formatter = _build_display_name_formatter(model_field)
             return Shortcut(
                 call_target__attribute='choice',
                 choices=_get_choices_from_model_choices(model_field),
-                filter__field__choice_display_name_formatter=_build_display_name_formatter(model_field),
+                filter__field__choice_display_name_formatter=formatter,
+                cell__format=lambda value, **_: formatter(value),
             )
 
         return Shortcut(call_target__attribute='text')
