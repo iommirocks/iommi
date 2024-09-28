@@ -3925,11 +3925,13 @@ def test_auto_model_for_text_choices():
 def test_auto_model_for_text_choices_with_choices_class():
     from tests.models import ChoicesClassModel
 
+    ChoicesClassModel.objects.create(color='purple_thing-thing')
+
     class TestTable(Table):
         class Meta:
             auto__model = ChoicesClassModel
 
-    verify_table_html(table=TestTable(rows=[]), find__name='tbody', expected_html="<tbody></tbody>")
+    verify_table_html(table=TestTable(), find__name='td', expected_html="<td>Purple</td>")
 
 
 @pytest.mark.django_db
