@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+7.5.1 (2024-09-28)
+~~~~~~~~~~~~~~~~~~
+
+* Tables: format `TextField.choices` according to the display name from the model
+
+* `extra_params` was not evaluated if path decoding was not performed
+
+* Enable translations for `js_select_all.html`: "Select all" etc.
+
+* Drop support for IE11
+
 7.5.0 (2024-09-19)
 ~~~~~~~~~~~~~~~~~~
 
