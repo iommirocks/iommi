@@ -145,9 +145,33 @@ def find_static_items(d):
         object.__setattr__(d, '_static_items', {k for k, v in items(d) if not callable(v)})
 
 
+def find_static_items_recursively(d):
+    if d and isinstance(d, Namespace):
+        find_static_items(d)
+        for k, v in items(d):
+            if isinstance(v, Namespace):
+                find_static_items_recursively(v)
+
+
 def evaluate_as_needed(d, kwargs, ignore=()):
     static_items = getattr(d, '_static_items', [])
     return {k: d[k] if k in static_items else evaluate_strict(v, **kwargs) for k, v in items(d) if k not in ignore}
+
+
+def evaluate_as_needed_recursively(d, kwargs, ignore=()):
+    static_items = getattr(d, '_static_items', [])
+
+    def value(k, v):
+        if k in static_items:
+            return d[k]
+        if isinstance(v, Namespace):
+            return evaluate_as_needed_recursively(v, kwargs, ignore)
+        return evaluate_strict(v, **kwargs)
+
+    return Namespace({
+        k: value(k, v)
+        for k, v in items(d) if k not in ignore
+    })
 
 
 def has_catch_all_kwargs(callback):

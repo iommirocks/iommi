@@ -19,6 +19,7 @@ from iommi.evaluate import (
     evaluate_members,
     evaluate_strict,
     find_static_items,
+    find_static_items_recursively,
     get_callable_description,
     get_signature,
     is_callable,
@@ -184,9 +185,7 @@ class Traversable(RefinableObject):
 
         attrs = getattr(self, 'attrs', None)
         if attrs:
-            find_static_items(attrs)
-            find_static_items(attrs.get('style', None))
-            find_static_items(attrs.get('class', None))
+            find_static_items_recursively(attrs)
 
         extra_evaluated = getattr(self, 'extra_evaluated', None)
         if extra_evaluated:
