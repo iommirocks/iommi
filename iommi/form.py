@@ -928,13 +928,11 @@ class Field(Part, Tag):
 
         bind_member(self, name='label')
         if self.label is not None:
-            assert not self.label.children
-            self.label.children = dict(
-                text=evaluate_strict(
-                    self.display_name,
-                    **self.iommi_evaluate_parameters(),
-                )
+            self.label.children.text = evaluate_strict(
+                self.display_name,
+                **self.iommi_evaluate_parameters(),
             )
+
         if self.display_name is None:
             self.label = None
 
