@@ -230,6 +230,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         from iommi.form import FieldGroup
         from iommi.fragment import Container, Header
         from iommi.live_edit import LiveEditPage
+        from iommi.table import HeaderConfig
         from iommi.menu import (
             MenuBase,
             get_debug_menu,
@@ -250,6 +251,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Filter,
             Form,
             Header,
+            HeaderConfig,
             LiveEditPage,
             Menu,
             MenuBase,

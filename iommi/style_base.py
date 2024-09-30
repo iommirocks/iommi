@@ -129,6 +129,9 @@ base = Style(
         ),
         header__attrs__class__iommi_sort_header=lambda header, **_: header.url is not None,
     ),
+    HeaderConfig=dict(
+        tag='thead',
+    ),
     Paginator=dict(
         show_always=False,
         template='iommi/table/paginator.html',
