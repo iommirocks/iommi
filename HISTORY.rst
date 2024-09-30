@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.5.2 (2024-09-30)
+~~~~~~~~~~~~~~~~~~
+
+* `attrs__class`/`attrs__style` didn't evaluate lambdas for class names that contained `__`
+
+* Enable inserting child parts into `Field.label`
+
+
 7.5.1 (2024-09-28)
 ~~~~~~~~~~~~~~~~~~
 
@@ -11,6 +19,7 @@ Changelog
 * Enable translations for `js_select_all.html`: "Select all" etc.
 
 * Drop support for IE11
+
 
 7.5.0 (2024-09-19)
 ~~~~~~~~~~~~~~~~~~
@@ -32,6 +41,7 @@ Changelog
 * Invalid filters should present empty search results in tables
 
 * Support css class names containing `__`
+
 
 7.3.0 (2024-08-06)
 ~~~~~~~~~~~~~~~~~~
@@ -62,10 +72,12 @@ Changelog
 
 * Make custom row templates more useful by allowing to call the default rendering, and access the column count easily
 
+
 7.1.1 (2024-05-07)
 ~~~~~~~~~~~~~~~~~~
 
 * Namespace separation for `evaluate_member`. If you had a param named `obj` or `key` you could get a namespace conflict and a crash.
+
 
 7.1.0 (2024-05-06)
 ~~~~~~~~~~~~~~~~~~
@@ -81,6 +93,7 @@ Changelog
 * Select all fixed
 
 * Admin all models list should be `Table`, not `EditTable`
+
 
 7.0.0 (2024-04-15)
 ~~~~~~~~~~~~~~~~~~
@@ -98,6 +111,7 @@ Changelog
 * SQL trace for N+1 problems will now print the last found query+traceback instead of the first. This should increase the odds of it showing something useful.
 
 * Removed deprecated JavaScript functions
+
 
 6.8.0 (2024-03-27)
 ~~~~~~~~~~~~~~~~~~
