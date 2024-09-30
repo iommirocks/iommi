@@ -24,7 +24,13 @@ def test_render_attrs():
 
 
 def test_class_with_dunder():
-    assert render_attrs_test({'class__banana__foo': True}) == ' class="banana__foo"'
+    assert render_attrs_test(
+        {
+            'class__banana__foo': True,
+            'class__banana__bar': lambda **_: True,
+            'class__banana__baz': lambda **_: False,
+        }
+    ) == ' class="banana__bar banana__foo"'
 
 
 def test_style_with_dunder():

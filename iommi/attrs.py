@@ -1,11 +1,11 @@
 from iommi._web_compat import mark_safe
 from iommi.base import items
 from iommi.declarative.namespace import (
-    Namespace,
     flatten,
+    Namespace,
 )
 from iommi.evaluate import (
-    evaluate_as_needed,
+    evaluate_as_needed_recursively,
     evaluate_strict,
 )
 
@@ -44,10 +44,10 @@ or
         _parent=obj,
         **{
             **{
-                'class': evaluate_as_needed(classes, kwargs),
-                'style': evaluate_as_needed(styles, kwargs),
+                'class': evaluate_as_needed_recursively(classes, kwargs),
+                'style': evaluate_as_needed_recursively(styles, kwargs),
             },
-            **evaluate_as_needed(attrs, kwargs, ignore=('class', 'style')),
+            **evaluate_as_needed_recursively(attrs, kwargs, ignore=('class', 'style')),
         },
     )
 

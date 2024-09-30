@@ -1,6 +1,9 @@
 import pytest
 
 from iommi.evaluate import (
+    evaluate_as_needed_recursively,
+    find_static_items,
+    find_static_items_recursively,
     Namespace,
     evaluate,
     evaluate_member,
@@ -221,3 +224,36 @@ def test_evaluate_member():
 
     evaluate_member(foo, 'foo', x=3)
     assert foo.foo == 3
+
+
+def test_find_static_items():
+    namespace = Namespace(
+        foo=2,
+        bar=lambda: 3,
+    )
+    find_static_items(namespace)
+    assert namespace._static_items == {'foo'}
+
+
+def test_find_static_items_recursively():
+    namespace = Namespace(
+        static=2,
+        dynamic=lambda: 3,
+        foo__static=4,
+        foo__dynamic=lambda: 5,
+    )
+    find_static_items_recursively(namespace)
+    assert namespace._static_items == {'static'}
+    assert namespace.foo._static_items == {'static'}
+
+
+def test_evaluate_as_needed_recursively():
+    namespace = Namespace(
+        foo=lambda a: a,
+        bar__baz=lambda a: a,
+        bar__quux__foobar=lambda a: a,
+    )
+    evaluated = evaluate_as_needed_recursively(namespace, dict(a=7))
+    assert evaluated['foo'] == 7
+    assert evaluated['bar']['baz'] == 7
+    assert evaluated['bar']['quux']['foobar'] == 7
