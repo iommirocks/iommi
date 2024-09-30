@@ -722,7 +722,7 @@ class Field(Part, Tag):
 
         :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/cookbook_forms.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
         :param initial: Initial value of the field
-        :param attr: The attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Defaults to same as name
+        :param attr: The attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Setting this to `None` will mean no attribute is read or written by `apply()`. Defaults to same as `name`.
         :param attrs: A dict containing any custom html attributes to be sent to the `input__template`.
         :param display_name: The text in the HTML label tag. Default: `capitalize(name).replace('_', ' ')`
         :param template: Django template filename or `Template` instance for the entire row. Normally you shouldn't need to override on this level. Prefer overriding `input__template`, `label__template` or `error__template` as needed.
