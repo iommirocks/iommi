@@ -1208,15 +1208,46 @@ class TemplateConfig(RefinableObject):
     template: str = Refinable()
 
 
-class HeaderConfig(Traversable):
+class HeaderConfig(Traversable, Tag):
+    tag: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
-    url = EvaluatedRefinable()
 
     def __html__(self):
-        return render_template(self.get_request(), self.template, self.iommi_parent().iommi_evaluate_parameters())
+        if self.template:
+            return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
+
+        return self.render()
+
+    def render(self):
+        children = {}
+        header_levels = self.iommi_parent().header_levels
+        assert len(header_levels) in (1, 2)
+
+        def header_list_to_transient_fragment(header_list):
+            return TransientFragment(
+                tag='tr',
+                attrs={},
+                children={f'header_{i}': v for i, v in enumerate(header_list)},
+                parent=self,
+            )
+
+        if len(header_levels) > 1:
+            children['superheader'] = header_list_to_transient_fragment(header_levels[0])
+
+        children['subheader'] = header_list_to_transient_fragment(header_levels[-1])
+
+        return (
+            TransientFragment(
+                tag=self.tag,
+                attrs=self.attrs,
+                children=children,
+                parent=self,
+            )
+            .__html__()
+        )
 
     def __str__(self):
         return self.__html__()
@@ -1271,6 +1302,9 @@ class ColumnHeader:
         self.attrs = attrs
         self._name = 'header'
         self.attrs = evaluate_attrs(self, table=table, column=column, header=self)
+
+    def __html__(self):
+        return self.rendered
 
     @property
     def rendered(self):
@@ -1806,7 +1840,7 @@ class Table(Part, Tag):
         row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
         row__template=None,
         cell__tag='td',
-        header__template='iommi/table/table_header_rows.html',
+        header=EMPTY,
         h_tag__call_target=Header,
         actions_template='iommi/form/actions.html',
         actions_below=False,

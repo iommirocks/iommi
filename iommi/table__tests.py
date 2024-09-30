@@ -1835,28 +1835,6 @@ def test_cell_template_string(NoSortTable):  # noqa: N803
     )
 
 
-def test_no_header_template(NoSortTable):  # noqa: N803
-    class TestTable(NoSortTable):
-        class Meta:
-            header__template = None
-
-        foo = Column()
-
-    rows = [Struct(foo="bar")]
-
-    verify_table_html(
-        table=TestTable(rows=rows),
-        # language=html
-        expected_html="""
-            <table class="table" >
-                <tbody>
-                    <tr> <td> bar </td> </tr>
-                </tbody>
-            </table>
-        """,
-    )
-
-
 def test_row_template(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         foo = Column()
@@ -2828,7 +2806,7 @@ def test_data_iommi_path():
         # language=html
         expected_html="""
             <table class="table"  data-iommi-path="" data-iommi-type="FooTable">
-                <thead>
+                <thead data-iommi-path="header" data-iommi-type="HeaderConfig">
                     <tr>
                         <th class="superheader" colspan="1" data-iommi-type="ColumnHeader"> foo </th>
                     </tr>
