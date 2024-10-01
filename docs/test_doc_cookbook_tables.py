@@ -420,7 +420,7 @@ def test_how_do_i_customize_the_rendering_of_a_header():
 
     - You can modify the html attributes via `header__attrs`. See the question on attrs_
 
-    - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `iommi/table/table_header_rows.html`.
+    - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
     """
 
