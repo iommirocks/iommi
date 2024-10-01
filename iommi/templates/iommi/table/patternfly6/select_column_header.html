@@ -1,0 +1,6 @@
+<th {{ header.attrs }}>
+    <label class="pf-v6-c-check pf-m-standalone">
+        <input class="pf-v6-c-check__input" type="checkbox" aria-label="Select all rows"
+            onclick="iommi_table_js_select_all(this, {% if header.table.parts.page.is_paginated %}true{% else %}false{% endif %})" />
+    </label>
+</th>
