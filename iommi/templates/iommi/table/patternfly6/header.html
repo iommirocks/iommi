@@ -1,0 +1,17 @@
+<th {{ header.attrs }}>
+    {% if header.column.sortable %}
+    <a href="{{ header.url }}">
+        <button class="pf-v6-c-table__button">
+            <span class="pf-v6-c-table__button-content">
+                <span class="pf-v6-c-table__text">{{ header.display_name }}</span>
+                <span class="pf-v6-c-table__sort-indicator">
+                    <i
+                        class="fas {% if header.column.is_sorting %}{% if header.column.sort_direction == 'ascending' %}fa-long-arrow-alt-up{% else %}fa-long-arrow-alt-down{% endif %}{% else %}fa-arrows-alt-v{% endif %}"></i>
+                </span>
+            </span>
+        </button>
+    </a>
+    {% else %}
+    {{ header.display_name }}
+    {% endif %}
+</th>

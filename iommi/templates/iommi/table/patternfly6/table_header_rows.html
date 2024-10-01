@@ -1,0 +1,9 @@
+<thead class="pf-v6-c-table__thead">
+    {% for headers in table.header_levels %}
+        <tr class="pf-v6-c-table__tr">
+            {% for header in headers %}
+                {{ header.rendered }}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</thead>

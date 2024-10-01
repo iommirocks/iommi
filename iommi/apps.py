@@ -27,6 +27,7 @@ class IommiConfig(AppConfig):
         from iommi.style_daisyui import daisyui
         from iommi.style_django_admin import django_admin
         from iommi.style_foundation import foundation
+        from iommi.style_patternfly6 import patternfly6
         from iommi.style_semantic_ui import semantic_ui
         from iommi.style_test_base import test
         from iommi.style_uikit import uikit
@@ -49,6 +50,7 @@ class IommiConfig(AppConfig):
         register_style('bootstrap_docs', bootstrap_docs)
         register_style('vanilla_css', vanilla_css)
         register_style('daisyui', daisyui)
+        register_style('patternfly6', patternfly6)
 
         from django.contrib.contenttypes.fields import (
             GenericForeignKey,
