@@ -197,6 +197,7 @@ docs/imports.rst
 docs/tutorial.rst
 docs/middleware.rst
 docs/edit_tables.rst
+docs/access_control.rst
 
 .cache/pip
 
