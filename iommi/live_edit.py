@@ -484,10 +484,10 @@ def style_showcase(request, style=None, **_):
             ),
             h_tags=html.div(
                 children=dict(
-                    h1=html.h1('h1'),
-                    h2=html.h2('h2'),
-                    h3=html.h3('h3'),
-                    h4=html.h4('h4'),
+                    h1=Header(tag='h1', children__text='h1'),
+                    h2=Header(tag='h2', children__text='h2'),
+                    h3=Header(tag='h3', children__text='h3'),
+                    h4=Header(tag='h4', children__text='h4'),
                 ),
             ),
             form=Form(
