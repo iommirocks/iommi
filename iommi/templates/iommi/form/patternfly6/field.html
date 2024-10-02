@@ -10,7 +10,7 @@
 {% endif %}
 <div class="pf-v6-c-form__group-control">
     <span
-        class="pf-v6-c-form-control{% if field.required %} pf-m-required{% endif %}{% if field.errors %} pf-m-error{% endif %}">
+        class="{% if field.required %} pf-m-required{% endif %}{% if field.errors %} pf-m-error{% endif %}">
         {{ field.input }}
         <!-- TODO: Same as above, might be addable in python -->
         {% if field.errors %}
