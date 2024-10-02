@@ -2,13 +2,17 @@ from iommi.asset import Asset
 from iommi.style import Style
 from iommi.style_base import base
 
+
 patternfly6 = Style(
     base,
     root__assets=dict(
         css=Asset.css(
             # TODO: Final version etc…
-            attrs__href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.0.0-prerelease.13/patternfly.min.css",
+            attrs__href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.0.0-prerelease.15/patternfly.min.css",
         ),
+        css_addons=Asset.css(
+            attrs__href='https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.0.0-prerelease.13/patternfly-addons.css',
+        )
     ),
     sub_styles__horizontal=dict(
         # TODO, used by the query for nice display
@@ -26,9 +30,14 @@ patternfly6 = Style(
     Form=dict(
         attrs__class={
             "pf-v6-c-form": True,
+            "pf-m-horizontal": True,
         }
     ),
     Field=dict(
+        shortcuts=dict(
+            attrs__class={'pf-v6-c-form-control': False},
+            boolean__input__attrs__class={'pf-v6-c-check__input': True},
+        ),
         template="iommi/form/patternfly6/field.html",
         attrs__class={
             "pf-v6-c-form__group": True,
@@ -91,4 +100,8 @@ patternfly6 = Style(
             },
         ),
     ),
+    Container=dict(
+        tag='div',
+        attrs__class={'pf-v6-u-p-lg': True},
+    )
 )
