@@ -41,6 +41,7 @@ def test_style():
         - water
         - uikit
         - us_web_design_system
+        - vanilla_css
         - django_admin
         '''
         # @test

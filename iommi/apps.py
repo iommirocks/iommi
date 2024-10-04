@@ -30,6 +30,7 @@ class IommiConfig(AppConfig):
         from iommi.style_uikit import uikit
         from iommi.style_water import water
         from iommi.style_us_web_design_system import us_web_design_system
+        from iommi.style_vanilla_css import vanilla_css
 
         register_style('blank', Style(internal=True))
         register_style('base', base)
@@ -44,6 +45,7 @@ class IommiConfig(AppConfig):
         register_style('uikit', uikit)
         register_style('us_web_design_system', us_web_design_system)
         register_style('bootstrap_docs', bootstrap_docs)
+        register_style('vanilla_css', vanilla_css)
 
         from django.contrib.contenttypes.fields import (
             GenericForeignKey,
