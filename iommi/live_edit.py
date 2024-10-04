@@ -497,6 +497,7 @@ def style_showcase(request, style=None, **_):
                     boolean=Field.boolean(),
                     boolean_selected=Field.boolean(initial=True),
                     radio=Field.radio(choices=['a', 'b', 'c'], initial='b'),
+                    integer=Field.integer(initial=123),
                 ),
                 actions__submit__post_handler=lambda **_: None,
                 actions__secondary=Action.button(),
