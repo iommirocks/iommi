@@ -16,7 +16,6 @@ Contents:
 
    getting_started
    tutorial
-   production_use
    equivalency
    cookbook
    forms
@@ -30,6 +29,7 @@ Contents:
    admin
    styles
    registrations
+   production_use
    api
    philosophy
    architecture
