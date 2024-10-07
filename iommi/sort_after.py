@@ -41,7 +41,7 @@ def sort_after(d):
             yield from place(y)
 
     def traverse():
-        count = 0
+        count = 0  # pragma: no mutate
         while unmoved or to_be_moved_by_index:
             while to_be_moved_by_index:
                 next_to_be_moved_by_index = to_be_moved_by_index[0]

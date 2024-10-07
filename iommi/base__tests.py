@@ -64,6 +64,7 @@ def test_capitalize_safetext():
 
 
 def test_capitalize_lazy():
+    translation.activate('en')
     capitalized = capitalize(gettext_lazy('edit'))
     assert str(capitalized) == 'Edit'
     translation.activate('sv')

@@ -551,9 +551,9 @@ def duration_parse(string_value, **_):
     kwargs = {}
 
     for part in string_value.split(' '):
-        m = re.match(r'(?P<number>\d+\.?\d*?)(?P<suffix>[smhd])', part)
+        m = re.match(r'(?P<number>\d+\.?\d*?)(?P<suffix>[a-zA-Z])', part)
         if not m:
-            raise ValidationError(f'Invalid duration pattern {part}')
+            raise ValidationError(f'Invalid duration pattern "{part}". Durations are a number followed by a time unit, like d for days')
         suffix = m.groupdict()['suffix']
         number = m.groupdict()['number']
         if suffix not in suffix_to_kwarg:
@@ -598,13 +598,6 @@ def boolean_tristate__parse(string_value, **_):
     if not string_value:
         return None
     return bool_parse(string_value)
-
-
-def render_fragment(fragment):
-    if fragment is None:
-        return ''
-
-    return str(fragment)
 
 
 @with_meta

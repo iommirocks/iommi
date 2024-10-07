@@ -23,6 +23,7 @@ from django.http.response import HttpResponseBase
 from django.test import override_settings
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from docs.models import Track
 from iommi import (
@@ -71,6 +72,7 @@ from iommi.form import (
     find_unique_prefixes,
     float_parse,
     int_parse,
+    is_django_promise_with_string_proxy,
     register_field_factory,
     render_template,
     time_parse,
@@ -3287,6 +3289,13 @@ def test_time_parse():
     with time_machine.travel('2012-03-07 12:13:14', tick=False):
         assert time_parse('now') == time(12, 13, 14)
 
+    assert time_parse('04:05:06') == time(4, 5, 6)
+    assert time_parse('04:05') == time(4, 5)
+    assert time_parse('04') == time(4)
+    with pytest.raises(ValidationError) as e:
+        time_parse('asd')
+    assert str(e.value.args[0]) == 'Time data "asd" does not match any of the formats "now" or "%H:%M:%S", "%H:%M", "%H"'
+
 
 @pytest.mark.parametrize(
     'attributes, result',
@@ -3794,12 +3803,23 @@ def test_model_validators():
 
 def test_duration_parse():
     assert duration_parse('3s') == timedelta(seconds=3)
+    assert duration_parse('3d') == timedelta(days=3)
     assert duration_parse('3.00s') == timedelta(seconds=3)
     assert duration_parse('7m') == timedelta(minutes=7)
     assert duration_parse('11h') == timedelta(hours=11)
     assert duration_parse('2.1s') == timedelta(seconds=2.1)
     assert duration_parse('3m 2.1s') == timedelta(minutes=3, seconds=2.1)
     assert duration_parse('7h 3m 2.1s') == timedelta(hours=7, minutes=3, seconds=2.1)
+
+    with pytest.raises(ValidationError) as e:
+        duration_parse('3q')
+
+    assert str(e.value.args[0]) == 'Invalid suffix q. Valid suffixes: s, m, h, d'
+
+    with pytest.raises(ValidationError) as e:
+        duration_parse('asd')
+
+    assert str(e.value.args[0]) == 'Invalid duration pattern "asd". Durations are a number followed by a time unit, like d for days'
 
 
 def test_duration_render_value():
@@ -3809,6 +3829,7 @@ def test_duration_render_value():
     assert duration_render_value(timedelta(seconds=2.1)) == '2.10s'
     assert duration_render_value(timedelta(minutes=3, seconds=2.1)) == '3m 2.10s'
     assert duration_render_value(timedelta(hours=7, minutes=3, seconds=2.1)) == '7h 3m 2.10s'
+    assert duration_render_value(None) == ''
 
 
 def test_nested_form_respects_parents_editable_false():
@@ -3825,3 +3846,8 @@ def test_nested_form_respects_parents_editable_false():
     assert not pf.editable
 
     assert not pf.nested_forms.child_name.editable
+
+
+def test_is_django_promise_with_string_proxy():
+    assert not is_django_promise_with_string_proxy('')
+    assert is_django_promise_with_string_proxy(gettext_lazy('yes'))

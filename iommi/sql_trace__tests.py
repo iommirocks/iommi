@@ -60,8 +60,6 @@ def test_middleware(settings, client, caplog):
     settings.SQL_DEBUG_WORST_SUSPICIOUS_CUTOFF = 0
     settings.SQL_DEBUG_WORST_QUERY_CUTOFF = 1
 
-    base_path = str(Path(__file__).parent.parent.parent) + os.path.sep
-
     with time_machine.travel('1948, 2, 19', tick=True):
         client.get('/no_queries/?_iommi_sql_trace')
         assert 'GET /no_queries/?_iommi_sql_trace -> 200' in caplog.text
@@ -81,9 +79,8 @@ def test_middleware(settings, client, caplog):
 
         assert '------ 4 times: -------' in caplog.text
         assert select_statement in caplog.text
-        assert 'File "iommi/sql_trace__tests.py", line ' in caplog.text.replace('iommi/iommi/', 'iommi/').replace(
-            './', ''
-        ).replace(base_path, '')
+        assert 'File "' in caplog.text
+        assert 'iommi/sql_trace__tests.py", line ' in caplog.text
         assert re.findall(r'GET /\?_iommi_sql_trace -> 200  \(0\.\d\d\ds\) \(sql time: 0\.\d\d\ds\)', caplog.text)
         assert '... and 3 more unique statements' in caplog.text
 

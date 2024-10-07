@@ -10,6 +10,7 @@
       <w>colspans</w>
       <w>endblock</w>
       <w>endfor</w>
+      <w>endtrans</w>
       <w>foos</w>
       <w>grundmann</w>
       <w>initializable</w>
