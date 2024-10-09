@@ -14,7 +14,11 @@ from iommi import (
 )
 from iommi.attrs import Attrs
 from iommi.evaluate import evaluate_strict
-from iommi.fragment import fragment__render
+from iommi.fragment import (
+    fragment__render,
+    TransientFragment,
+)
+from iommi.struct import Struct
 from tests.helpers import (
     req,
     verify_part_html,
@@ -363,3 +367,14 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
     verify_part_html(part=part, expected_html='<p> This is static Not so static </p>')
 
     assert next(counter) == 1
+
+
+def test_transient_fragment():
+    assert TransientFragment(
+        tag='div',
+        attrs__class__foo=True,
+        attrs__bar='baz',
+        attrs__style__display='block',
+        parent=Struct(get_context=lambda: {}, iommi_evaluate_parameters=lambda: {}, get_request=lambda: None),
+        children={},
+    ).__html__() == '<div bar="baz" class="foo" style="display: block"></div>'
