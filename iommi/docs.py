@@ -236,12 +236,17 @@ request = req('get')
 
     section(0, c.__name__, indent=0)
 
-    class_doc = docstring_param_dict(c)
-    constructor_doc = {}
+    class_text = ''
+    constructor_text = ''
+    params = {}
     for x in reversed(c.__mro__):
         foo = docstring_param_dict(x.__init__)
-        constructor_doc['text'] = foo.pop('text')
-        constructor_doc['params'] = merged(foo.pop('params'), constructor_doc.get('params', {}))
+        constructor_text = foo.pop('text')
+        params = merged(foo.pop('params'), params)
+
+        foo = docstring_param_dict(x)
+        class_text = foo.pop('text')
+        params = merged(foo.pop('params'), params)
         assert not foo
 
     if c.__base__ in classes:
@@ -256,18 +261,18 @@ request = req('get')
     w(1, '# language=rst')
     w(1, '"""')
 
-    _print_rst_or_python(class_doc['text'], w)
+    _print_rst_or_python(class_text, w)
 
     w(1, '"""')
     w(0, '')
     w(1, '# language=rst')
     w(1, '"""')
 
-    if constructor_doc['text']:
-        if class_doc['text']:
+    if constructor_text:
+        if constructor_text:
             w(0, '')
 
-        f.write(constructor_doc['text'])
+        f.write(constructor_text)
         w(0, '')
 
     w(0, '')
@@ -308,8 +313,8 @@ request = req('get')
             if docstring:
                 _print_rst_or_python(docstring, w, indent=1)
                 w(0, '')
-            elif constructor_doc['params'].get(refinable):
-                w(1, constructor_doc['params'][refinable])
+            elif params.get(refinable):
+                w(1, params[refinable])
                 w(0, '')
             type_hint = type_hints.get(refinable)
             if type_hint:
