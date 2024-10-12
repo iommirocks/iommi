@@ -304,4 +304,9 @@ class AutoConfig(RefinableObject):
 
     @dispatch
     def __init__(self, **kwargs):
+        """
+        :param model: A Django model class
+        :param include: A list of attribute names to include, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`
+        :param exclude: A list of attribute names to exclude, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`
+        """
         super(AutoConfig, self).__init__(**kwargs)

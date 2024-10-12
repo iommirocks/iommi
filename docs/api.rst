@@ -18,6 +18,7 @@ API Reference
    Field
    Filter
    Form
+   FormAutoConfig
    Fragment
    Header
    HeaderConfig
@@ -27,6 +28,8 @@ API Reference
    Page
    Part
    Query
+   QueryAutoConfig
    Style
    Table
+   TableAutoConfig
    Traversable

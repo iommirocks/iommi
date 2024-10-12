@@ -1655,7 +1655,7 @@ class Form(Part, Tag):
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
-    auto: Namespace = Refinable()
+    auto: FormAutoConfig = Refinable()
     fields: Namespace = RefinableMembers()
     instance: Any = Refinable()
     field_group: Namespace = Refinable()

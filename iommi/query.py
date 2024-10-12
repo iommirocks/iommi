@@ -642,7 +642,7 @@ class Query(Part):
         )
     """
 
-    auto: Namespace = Refinable()
+    auto: QueryAutoConfig = Refinable()
     form: Namespace = Refinable()
     advanced: Namespace = Refinable()
     model: Type[Model] = SpecialEvaluatedRefinable()
@@ -683,6 +683,7 @@ class Query(Part):
                 rows=auto.rows,
                 include=auto.include,
                 exclude=auto.exclude,
+                default_included=auto.default_included,
             )
 
             assert self.model is None, (
@@ -1116,7 +1117,7 @@ class Query(Part):
 
     @classmethod
     @dispatch()
-    def _from_model(cls, *, rows=None, model=None, include=None, exclude=None):
+    def _from_model(cls, *, rows=None, model=None, include=None, exclude=None, default_included=False):
         assert rows is None or isinstance(rows, QuerySet), (
             'auto__rows needs to be a QuerySet for filter generation to work. '
             'If it needs to be a lambda, provide a model with auto__model for filter generation, '
@@ -1125,5 +1126,5 @@ class Query(Part):
 
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "auto__model or auto__rows must be specified"
-        filters = cls.filters_from_model(model=model, include=include, exclude=exclude)
+        filters = cls.filters_from_model(model=model, include=include, exclude=exclude, default_included=default_included)
         return model, rows, filters

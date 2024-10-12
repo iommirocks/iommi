@@ -1617,6 +1617,12 @@ class Paginator(Traversable, Tag):
 class TableAutoConfig(AutoConfig):
     rows = Refinable()
 
+    def __init__(self, **kwargs):
+        """
+        :param rows: A `QuerySet` object. If this field is specified, the `model` attribute will be automatically derived from this `QuerySet`. This cannot be a callable, in that case set `model` and use `rows=lambda...` instead of `auto__rows`.
+        """
+        super().__init__(**kwargs)
+
 
 def endpoint__csv(table, **_):
     from datetime import timezone
@@ -1755,7 +1761,7 @@ class Table(Part, Tag):
 
     empty_message: str = EvaluatedRefinable()
     invalid_form_message: str = EvaluatedRefinable()
-    auto = Refinable()
+    auto: TableAutoConfig = Refinable()
 
     # Columns need to be at the end to not steal the short names
     columns: Dict[str, Column] = RefinableMembers()
@@ -1891,6 +1897,7 @@ class Table(Part, Tag):
                 rows=auto.rows,
                 include=auto.include,
                 exclude=auto.exclude,
+                default_included=auto.default_included,
             )
 
             assert 'select' not in columns_from_auto
@@ -2418,7 +2425,7 @@ class Table(Part, Tag):
 
     @classmethod
     @dispatch()
-    def _from_model(cls, *, rows=None, model=None, include=None, exclude=None):
+    def _from_model(cls, *, rows=None, model=None, include=None, exclude=None, default_included=True):
         assert rows is None or isinstance(rows, QuerySet), (
             'auto__rows needs to be a QuerySet for column generation to work. '
             'If it needs to be a lambda, provide a model with auto__model for column generation, '
@@ -2427,7 +2434,7 @@ class Table(Part, Tag):
 
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "auto__model or auto__rows must be specified"
-        columns = cls.columns_from_model(model=model, include=include, exclude=exclude)
+        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, default_included=default_included)
         return model, rows, columns
 
     def _selection_identifiers(self, prefix):

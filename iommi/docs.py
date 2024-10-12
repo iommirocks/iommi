@@ -25,6 +25,7 @@ from iommi.shortcut import (
     get_shortcuts_by_name,
     is_shortcut,
 )
+from iommi.struct import merged
 
 
 def read_cookbook_links():
@@ -87,6 +88,9 @@ def get_default_classes():
         iommi.attrs.Attrs,
         iommi.table.ColumnHeader,
         iommi.fragment.Container,
+        iommi.table.TableAutoConfig,
+        iommi.form.FormAutoConfig,
+        iommi.query.QueryAutoConfig,
     ]
 
 
@@ -102,12 +106,6 @@ def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this
 
     doc_by_filename = _generate_tests_from_class_docs(classes=classes)  # pragma: no mutate
     for source_filename, filename, doc_generator in doc_by_filename:  # pragma: no mutate
-        try:
-            if stat(source_filename).st_mtime <= stat(directory / filename).st_mtime:
-                continue
-        except FileNotFoundError:
-            pass
-
         doc = doc_generator()
         with open(directory / filename, 'w') as f2:  # pragma: no mutate
             f2.write(doc)  # pragma: no mutate
@@ -183,7 +181,6 @@ def _generate_tests_from_class_docs(classes):
         from io import StringIO
 
         f = StringIO()
-
         yield _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_name)
 
 
@@ -240,7 +237,12 @@ request = req('get')
     section(0, c.__name__, indent=0)
 
     class_doc = docstring_param_dict(c)
-    constructor_doc = docstring_param_dict(c.__init__)
+    constructor_doc = {}
+    for x in reversed(c.__mro__):
+        foo = docstring_param_dict(x.__init__)
+        constructor_doc['text'] = foo.pop('text')
+        constructor_doc['params'] = merged(foo.pop('params'), constructor_doc.get('params', {}))
+        assert not foo
 
     if c.__base__ in classes:
         w(0, f'Base class: :doc:`{c.__base__.__name__}`')

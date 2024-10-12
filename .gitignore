@@ -154,6 +154,9 @@ docs/Asset.rst
 docs/EditColumn.rst
 docs/EditTable.rst
 docs/Cells.rst
+docs/FormAutoConfig.rst
+docs/QueryAutoConfig.rst
+docs/TableAutoConfig.rst
 
 # these are created by mutation testing
 docs/XXtest*
