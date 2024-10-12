@@ -312,6 +312,7 @@ def test_base():
 
     # language=rst
     """
+
 Initialize self.  See help(type(self)) for accurate signature.
 
 Methods
