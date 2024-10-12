@@ -44,6 +44,7 @@ def test_parse_relative_date_error_condition_no_match():
 
 def test_parse_relative_datetime():
     assert parse_relative_datetime('now') == datetime.now()
+    assert parse_relative_datetime('today') == datetime.now()
 
 
 def test_parse_relative_date_relative():
@@ -141,3 +142,7 @@ def test_parse_relative_date_month_overflow():
 
 def test_parse_relative_date_leap_year_overflow():
     assert parse_relative_date('1 year', start_date=date(2020, 2, 29)) == date(2021, 2, 28)
+
+
+def test_parse_relative_datetime_leap_year_overflow():
+    assert parse_relative_datetime('1 year', start_date=date(2020, 2, 29)) == datetime(2021, 2, 28, 1, 11, 13, 17)

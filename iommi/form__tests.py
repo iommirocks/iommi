@@ -25,9 +25,14 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 
-from docs.models import Track
+from docs.models import (
+    Album,
+    Artist,
+    Track,
+)
 from iommi import (
     Action,
+    EditTable,
     html,
 )
 from iommi._db_compat import field_defaults_factory
@@ -75,6 +80,7 @@ from iommi.form import (
     is_django_promise_with_string_proxy,
     register_field_factory,
     render_template,
+    save_nested_forms,
     time_parse,
     url_parse,
 )
@@ -3851,3 +3857,23 @@ def test_nested_form_respects_parents_editable_false():
 def test_is_django_promise_with_string_proxy():
     assert not is_django_promise_with_string_proxy('')
     assert is_django_promise_with_string_proxy(gettext_lazy('yes'))
+
+
+@pytest.mark.django_db
+def test_save_nested_forms():
+    black_sabbath = Artist.objects.create(name='Black Sabbath')
+    Album.objects.create(name='Heaven & Hell', artist=black_sabbath, year=1980)
+
+    form = Form(
+        fields=dict(
+            create_form=Form.create(auto__model=Artist),
+            edit_form=Form.edit(auto__instance=black_sabbath),
+            edit_table=EditTable(auto__model=Album),
+        ),
+        actions__save=Action.primary(
+            post_handler=save_nested_forms,
+        ),
+    )
+
+    form = form.bind(request=req('POST', {'-': ''}))
+    assert not form.get_errors()
