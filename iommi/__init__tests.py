@@ -1,11 +1,20 @@
+import traceback
 from unittest.mock import patch
 
 import pytest
 from django.db import connections, transaction
 from django.http import HttpResponse
 
-from iommi import iommi_render
-from iommi.fragment import Fragment
+from iommi import (
+    iommi_render,
+    Page,
+    Part,
+    render_part,
+)
+from iommi.fragment import (
+    Fragment,
+    html,
+)
 from tests.helpers import (
     call_view_through_middleware,
     req,
@@ -82,3 +91,19 @@ def test_no_atomic_block_on_decorated_view():
 
     assert isinstance(response, HttpResponse)
     assert 'The content' in response.content.decode()
+
+
+def test_render_part():
+    assert render_part(request=req('get'), part=Page()).status_code == 200
+
+    class CrashyPage(Page):
+        def render_to_response(self, **kwargs):
+            raise FileNotFoundError()
+
+    try:
+        render_part(request=req('get'), part=CrashyPage())
+        assert False
+    except FileNotFoundError:
+        t = traceback.format_exc()
+
+    assert '<iommi declaration>' in str(t)
