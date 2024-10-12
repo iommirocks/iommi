@@ -1566,6 +1566,12 @@ class FormAutoConfig(AutoConfig):
     instance = Refinable()
     type = Refinable()  # one of 'create', 'edit', 'delete'
 
+    def __init__(self, **kwargs):
+        """
+        :param instance: An instance of a Django model. If this field is specified, the `model` attribute will be automatically derived. This cannot be a callable, in that case set `model` and use `instance=lambda...` instead of `auto__instance`.
+        """
+        super().__init__(**kwargs)
+
 
 class FieldGroup(Fragment):
     group = Refinable()

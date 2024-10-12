@@ -1619,7 +1619,7 @@ class TableAutoConfig(AutoConfig):
 
     def __init__(self, **kwargs):
         """
-        :param rows: A `QuerySet` object. If this field is specified, the `model` attribute will be automatically derived from this `QuerySet`. This cannot be a callable, in that case set `model` and use `rows=lambda...` instead of `auto__rows`.
+        :param rows: A `QuerySet` object. If this field is specified, the `model` attribute will be automatically derived. This cannot be a callable, in that case set `model` and use `rows=lambda...` instead of `auto__rows`.
         """
         super().__init__(**kwargs)
 
