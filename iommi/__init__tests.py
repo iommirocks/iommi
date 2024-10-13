@@ -1,19 +1,21 @@
+import re
 import traceback
 from unittest.mock import patch
 
 import pytest
-from django.db import connections, transaction
+from django.db import (
+    connections,
+    transaction,
+)
 from django.http import HttpResponse
 
 from iommi import (
     iommi_render,
     Page,
-    Part,
     render_part,
 )
 from iommi.fragment import (
     Fragment,
-    html,
 )
 from tests.helpers import (
     call_view_through_middleware,
@@ -22,14 +24,19 @@ from tests.helpers import (
 
 
 def test_render_decorator():
+    the_request = req('get')
+
     @iommi_render
     def my_view(request, *args, **kwargs):
+        """docstring"""
+        assert request is the_request
         assert args == ('foo',)
         assert kwargs == {'bar': 'baz'}
         return Fragment('The content')
 
-    result = my_view(req('get'), 'foo', bar='baz')
+    result = my_view(the_request, 'foo', bar='baz')
 
+    assert my_view.__doc__ == 'docstring'
     assert isinstance(result, HttpResponse)
     assert 'The content' in result.content.decode()
 
@@ -100,10 +107,15 @@ def test_render_part():
         def render_to_response(self, **kwargs):
             raise FileNotFoundError()
 
+    part = CrashyPage()
+    filename, line_no = part._instantiated_at_info
+    assert filename == __file__
+    assert line_no not in (0, None)
+
     try:
-        render_part(request=req('get'), part=CrashyPage())
+        render_part(request=req('get'), part=part)
         assert False
     except FileNotFoundError:
         t = traceback.format_exc()
 
-    assert '<iommi declaration>' in str(t)
+    assert f'{filename}", line {line_no}, in <iommi declaration>\n' in str(t)
