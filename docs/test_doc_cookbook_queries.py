@@ -51,7 +51,7 @@ def test_how_do_i_override_what_operator_is_used_for_a_query():
     """
 
 
-def test_how_do_i_control_what_q_is_produced():
+def test_how_do_i_control_what_q_is_produced(really_big_discography):
     # language=rst
     """
     .. _Filter.value_to_q:
@@ -81,5 +81,13 @@ def test_how_do_i_control_what_q_is_produced():
 
     # @test
     show_output(AlbumTable(), path='/?eighties=1')
+    # @end
+
+    # language=rst
+    """
+    Without the filter selected:
+    """
+
+    # @test
     show_output_collapsed(AlbumTable(), path='/?eighties=0')
     # @end
