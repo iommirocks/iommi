@@ -17,3 +17,8 @@ a,
 button {
     pointer-events: none;
 }
+
+
+readthedocs-flyout {
+    display: none;
+}
