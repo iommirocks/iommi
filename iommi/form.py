@@ -62,6 +62,7 @@ from iommi.action import (
 )
 from iommi.attrs import Attrs
 from iommi.base import (
+    keys,
     MISSING,
     NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
@@ -2111,7 +2112,7 @@ class Form(Part, Tag):
         editable=False,
         fields__iommi_default_text=dict(
             call_target=Fragment,
-            include=lambda form, **_: list(form.iommi_namespace.fields.keys()) == ['iommi_default_text'],
+            include=lambda form, **_: list(keys(form.iommi_namespace.fields)) == ['iommi_default_text'],
             after=0,
             tag='p',
             children__text=lambda instance, **_: (
