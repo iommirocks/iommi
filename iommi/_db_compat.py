@@ -56,7 +56,7 @@ def setup_db_compat_django():
         label_by_value = dict(model_field.choices)
 
         def choice_display_name_formatter(choice, **_):
-            return label_by_value[choice]
+            return label_by_value.get(choice, choice)
 
         return choice_display_name_formatter
 
