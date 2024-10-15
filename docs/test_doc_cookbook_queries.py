@@ -80,7 +80,7 @@ def test_how_do_i_control_what_q_is_produced(really_big_discography):
                 return Q()
 
     # @test
-    show_output(AlbumTable(), path='/?eighties=1')
+    show_output(AlbumTable(), url='/?eighties=1')
     # @end
 
     # language=rst
@@ -89,5 +89,5 @@ def test_how_do_i_control_what_q_is_produced(really_big_discography):
     """
 
     # @test
-    show_output_collapsed(AlbumTable(), path='/?eighties=0')
+    show_output_collapsed(AlbumTable(), url='/?eighties=0')
     # @end

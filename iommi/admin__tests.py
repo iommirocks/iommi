@@ -202,7 +202,7 @@ def test_login_to_admin(settings, client):
     assert isinstance(response, HttpResponseRedirect)
     assert 'Change password' in client.get('/').content.decode()
 
-    client.get('/logout/')
+    client.post('/logout/', data={'-submit': ''})
     assert client.get('/').status_code == 302
 
 

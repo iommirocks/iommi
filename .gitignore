@@ -157,6 +157,7 @@ docs/Cells.rst
 docs/FormAutoConfig.rst
 docs/QueryAutoConfig.rst
 docs/TableAutoConfig.rst
+docs/views.rst
 
 # these are created by mutation testing
 docs/XXtest*

@@ -5,37 +5,29 @@ from urllib.parse import urlencode
 from django.apps import apps as django_apps
 from django.conf import settings
 from django.contrib import (
-    auth,
     messages,
 )
-from django.contrib.auth.hashers import check_password
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.db.models import Model
 from django.http import (
     Http404,
     HttpResponseRedirect,
 )
-from django.shortcuts import resolve_url
 from django.urls import (
     path,
     reverse,
 )
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 
 from iommi import (
-    LAST,
     EditTable,
-    Field,
     Form,
     Fragment,
+    html,
+    LAST,
     Menu,
     MenuItem,
     Page,
     Table,
-    html,
-    render_part,
 )
 from iommi._web_compat import format_html
 from iommi.base import (
@@ -46,14 +38,20 @@ from iommi.base import (
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    Namespace,
     flatten,
+    Namespace,
     setdefaults_path,
 )
 from iommi.declarative.with_meta import with_meta
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
+from iommi.views import (
+    auth_views,
+    change_password,
+    login,
+    logout,
+)
 
 app_verbose_name_by_label = {
     config.label: config.verbose_name.replace('_', ' ') for config in values(django_apps.app_configs)
@@ -144,11 +142,11 @@ class Admin(Page):
                 display_name=gettext('iommi administration'),
             ),
             change_password=MenuItem(
-                url=lambda admin, **_: reverse(Auth.change_password, current_app=admin.app_name),
+                url=lambda admin, **_: reverse(change_password, current_app=admin.app_name),
                 display_name=gettext('Change password'),
             ),
             logout=MenuItem(
-                url=lambda admin, **_: reverse(Auth.logout, current_app=admin.app_name),
+                url=lambda admin, **_: reverse(logout, current_app=admin.app_name),
                 display_name=gettext('Logout'),
             ),
         ),
@@ -216,7 +214,7 @@ class Admin(Page):
 
             if not getattr(request, 'user', None) or not request.user.is_authenticated:
                 return HttpResponseRedirect(
-                    f'{reverse(Auth.login, current_app=app_name)}?{urlencode(dict(next=request.path))}'
+                    f'{reverse(login, current_app=app_name)}?{urlencode(dict(next=request.path))}'
                 )
 
             final_page = self.refine_with_params(
@@ -536,113 +534,6 @@ class Admin(Page):
                 path('<app_name>/<model_name>/create/', cls.create().as_view(), name='iommi.Admin.create'),
                 path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit().as_view(), name='iommi.Admin.edit'),
                 path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete().as_view(), name='iommi.Admin.delete'),
-            ]
-            + Auth.urls().urlpatterns
-        )
-
-
-class Auth:
-    @classmethod
-    def login(cls, request):
-        return render_part(request, LoginPage())
-
-    @classmethod
-    def logout(cls, request):
-        auth.logout(request)
-        return HttpResponseRedirect(resolve_url(settings.LOGOUT_REDIRECT_URL or '/'))
-
-    @classmethod
-    def change_password(cls, request):
-        return render_part(request, ChangePasswordPage())
-
-    @classmethod
-    def urls(cls):
-        return Struct(
-            urlpatterns=[
-                path('login/', cls.login),
-                path('logout/', cls.logout),
-                path('change_password/', cls.change_password),
+                path('', auth_views()),
             ]
         )
-
-
-class LoginForm(Form):
-    username = Field(display_name=gettext('Username'))
-    password = Field.password(display_name=gettext('Password'))
-
-    class Meta:
-        title = gettext('Login')
-
-        @staticmethod
-        def actions__submit__post_handler(form, **_):
-            if form.is_valid():
-                user = auth.authenticate(
-                    username=form.fields.username.value,
-                    password=form.fields.password.value,
-                )
-
-                if user is not None:
-                    request = form.get_request()
-                    auth.login(request, user)
-                    return HttpResponseRedirect(request.GET.get('next', '/'))
-
-                form.add_error(gettext('Unknown username or password'))
-
-
-class LoginPage(Page):
-    form = LoginForm()
-    set_focus = html.script(
-        mark_safe(
-            'document.getElementById("id_username").focus();',
-        )
-    )
-
-
-def current_password__is_valid(form, parsed_data, **_):
-    return (
-        (True, None)
-        if check_password(parsed_data, form.get_request().user.password)
-        else (False, gettext('Incorrect password'))
-    )
-
-
-def new_password__is_valid(form, parsed_data, **_):
-    try:
-        validate_password(parsed_data, form.get_request().user)
-        return True, None
-    except ValidationError as e:
-        return False, ','.join(e)
-
-
-def confirm_password__is_valid(form, parsed_data, **_):
-    return (
-        (True, None)
-        if parsed_data == form.fields.new_password.value
-        else (False, gettext('New passwords does not match'))
-    )
-
-
-class ChangePasswordForm(Form):
-    class Meta:
-        title = gettext('Change password')
-
-        @staticmethod
-        def actions__submit__post_handler(form, request, **_):
-            if form.is_valid():
-                user = request.user
-                user.set_password(form.fields.new_password.value)
-                user.save()
-                return HttpResponseRedirect('..')
-
-    current_password = Field.password(is_valid=current_password__is_valid, display_name=gettext('Current password'))
-    new_password = Field.password(is_valid=new_password__is_valid, display_name=gettext('New password'))
-    confirm_password = Field.password(is_valid=confirm_password__is_valid, display_name=gettext('Confirm password'))
-
-
-class ChangePasswordPage(Page):
-    form = ChangePasswordForm()
-    set_focus = html.script(
-        mark_safe(
-            'document.getElementById("id_current_password").focus();',
-        )
-    )

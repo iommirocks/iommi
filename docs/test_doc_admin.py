@@ -41,7 +41,7 @@ def test_admin(settings, small_discography):
 
     # @test
     assert settings.IOMMI_DEFAULT_STYLE == 'bootstrap_docs'
-    show_output(Admin.all_models().as_view()(staff_req('get')), path='admin/')
+    show_output(Admin.all_models().as_view()(staff_req('get')), url='admin/')
     # @end
 
     # language=rst

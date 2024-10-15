@@ -25,6 +25,7 @@ Contents:
    queries
    path
    extra
+   views
    dev_tools
    admin
    styles
