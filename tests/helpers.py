@@ -218,7 +218,7 @@ def _show_path_from_name(name):
 _show_output_used = set()
 
 
-def show_output(part, path='/', data=None):
+def show_output(part, url='/', data=None):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(
         Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''),
@@ -235,13 +235,16 @@ def show_output(part, path='/', data=None):
     makedirs(file_path.parent, exist_ok=True)
 
     if isinstance(part, URLPattern):
-        part = part.callback(req('get', path=path))
+        if url.startswith('/'):
+            url = url[1:]
+        match = part.resolve(url)
+        part = part.callback(req('get', url=url), **(match.kwargs if match else {}))
 
     with open(file_path, 'wb') as f:
         if isinstance(part, bytes):
             content = part
         else:
-            content = render_if_needed(req('get', url=path), part).content
+            content = render_if_needed(req('get', url=url), part).content
         f.write(content)
         return content
 
