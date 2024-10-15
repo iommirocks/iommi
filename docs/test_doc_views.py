@@ -66,9 +66,9 @@ def test_crud_view(big_discography):
 
     album = Album.objects.get(name='Heaven & Hell')
 
-    show_output(url_patterns[0], url=f'/{str(url_patterns[0].pattern).replace('<pk>', str(album.pk))}')
-    show_output(url_patterns[1], url=f'/{str(url_patterns[1].pattern).replace('<pk>', str(album.pk))}')
-    show_output(url_patterns[2], url=f'/{str(url_patterns[2].pattern).replace('<pk>', str(album.pk))}')
-    show_output(url_patterns[3], url=f'/{str(url_patterns[3].pattern).replace('<pk>', str(album.pk))}')
-    show_output(url_patterns[4], url=f'/{str(url_patterns[4].pattern).replace('<pk>', str(album.pk))}')
+    show_output(url_patterns[0], url=f"/{str(url_patterns[0].pattern).replace('<pk>', str(album.pk))}")
+    show_output(url_patterns[1], url=f"/{str(url_patterns[1].pattern).replace('<pk>', str(album.pk))}")
+    show_output(url_patterns[2], url=f"/{str(url_patterns[2].pattern).replace('<pk>', str(album.pk))}")
+    show_output(url_patterns[3], url=f"/{str(url_patterns[3].pattern).replace('<pk>', str(album.pk))}")
+    show_output(url_patterns[4], url=f"/{str(url_patterns[4].pattern).replace('<pk>', str(album.pk))}")
     # @end
