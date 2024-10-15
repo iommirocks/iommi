@@ -93,6 +93,8 @@ def test_creating_a_custom_style():
     - attrs (especially `attrs__class`)
     - template (try to avoid this as it can make upgrading iommi versions more brittle)
 
+    Add a call to `validate_styles()` in your test suite to get errors for style rules that aren't valid.
+
 
     """
 
