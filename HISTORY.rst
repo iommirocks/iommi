@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+7.6.0 (2024-10-15)
+~~~~~~~~~~~~~~~~~~
+
+* New `crud_views()` function added
+
+* New `login`, `logout`, and `create_password` views added. You can install them all with `auth_views()`
+
+* Fixed a crash in `Form.delete()`
+
+* Don't crash on label mapping missing
+
+* Added "Vanilla CSS" CSS framework
+
+* Make it possible to target the `<thead>` of a table with configuration
+
+
 7.5.2 (2024-09-30)
 ~~~~~~~~~~~~~~~~~~
 
