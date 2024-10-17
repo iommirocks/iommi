@@ -27,7 +27,6 @@ from iommi import (
 from iommi._web_compat import HttpResponseRedirect
 from iommi.admin import (
     Admin,
-    Auth,
 )
 from iommi.base import (
     items,
@@ -48,6 +47,10 @@ from iommi.shortcut import (
     is_shortcut,
 )
 from iommi.style import validate_styles
+from iommi.views import (
+    change_password,
+    logout,
+)
 
 from .models import (
     Album,
@@ -292,8 +295,8 @@ class ExampleAdmin(Admin):
         parts__menu__sub_menu = dict(
             home=MenuItem(url='/', after=0),
             admin=MenuItem(url=lambda **_: reverse('iommi.Admin.all_models')),
-            change_password=MenuItem(url=lambda **_: reverse(Auth.change_password)),
-            logout=MenuItem(url=lambda **_: reverse(Auth.logout)),
+            change_password=MenuItem(url=lambda **_: reverse(change_password)),
+            logout=MenuItem(url=lambda **_: reverse(logout)),
         )
 
         parts__footer = Fragment(
