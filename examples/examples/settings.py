@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'iommi',
-    'examples',
+    'examples.apps.ExampleConfig',
 ]
 
 try:
