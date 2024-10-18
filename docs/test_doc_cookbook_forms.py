@@ -903,7 +903,7 @@ def test_fields_template(album):
         name = Field()
         email = Field()
         comment = Field.textarea()
-        album = Field.hardcoded(initial=lambda **_: Album.objects.get(name='Heaven & Hell'))
+        album = Field.hardcoded(parsed_data=lambda **_: Album.objects.get(name='Heaven & Hell'))
 
     # @test
     form = CommentForm().bind(request=req('get'))

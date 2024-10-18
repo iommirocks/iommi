@@ -1464,6 +1464,9 @@ class Field(Part, Tag):
         template='iommi/blank.html',
     )
     def hardcoded(cls, **kwargs):
+        assert (
+            'parsed_data' in kwargs
+        ), 'Specify a hardcoded value by passing `parsed_data`'
         return cls(**kwargs)
 
     @classmethod

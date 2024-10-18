@@ -2640,6 +2640,7 @@ def test_all_field_shortcuts():
         fields__field_of_type_many_to_many_reverse__model_field=TFoo.tbar_set.field,
         fields__field_of_type_many_to_many_reverse__model=TFoo,
         fields__field_of_type_info__value='dummy information',
+        fields__field_of_type_hardcoded__parsed_data='dummy information',
     )
 
     form = MyFancyForm(**config, **type_specifics).bind(request=req('get'))
