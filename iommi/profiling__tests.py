@@ -1,6 +1,7 @@
 import sys
 
 import pytest
+from django.http import HttpResponseBase
 
 from iommi.profiling import (
     Middleware,
@@ -13,7 +14,7 @@ from tests.helpers import (
 )
 
 
-class Sentinel:
+class Sentinel(HttpResponseBase):
     pass
 
 

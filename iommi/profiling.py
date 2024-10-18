@@ -9,7 +9,10 @@ from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from django.http import StreamingHttpResponse
+from django.http import (
+    HttpResponseBase,
+    StreamingHttpResponse,
+)
 from django.utils.html import escape
 
 from iommi._web_compat import (
@@ -167,14 +170,17 @@ class Middleware:
                 request.profiler_disabled = True
                 break
 
-        if should_profile(request):
-            prof = cProfile.Profile()
-            prof.enable()
-            request._iommi_prof = [prof]
-        else:
-            request._iommi_prof = []
+        if not should_profile(request):
+            return self.get_response(request)
+
+        prof = cProfile.Profile()
+        prof.enable()
+        request._iommi_prof = [prof]
 
         response = self.get_response(request)
+
+        if not isinstance(response, HttpResponseBase):
+            assert False, f'Got a response of type {type(response)}, expected an HttpResponse object. Middlewares are in the wrong order.'
 
         if getattr(request, '_iommi_func_worst_offender', None):
             s = StringIO()
