@@ -1,3 +1,4 @@
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
 from iommi.asset import Asset
@@ -32,8 +33,8 @@ bootstrap5_base = Style(
     root__assets=dict(
         css=Asset.css(
             attrs=dict(
-                href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
-                integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3",
+                href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+                integrity="sha256-PI8n5gCcz9cQqQXm3PEtDuPG8qx9oFsFctPg0S5zb8g=",
                 crossorigin="anonymous",
             ),
         ),
@@ -46,10 +47,20 @@ bootstrap5_base = Style(
         ),
         js=Asset.js(
             attrs=dict(
-                src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js",
-                integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13",
+                src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
+                integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=",
                 crossorigin="anonymous",
             )
+        ),
+        auto_darkmode=Asset.js(
+            children__source=mark_safe('''            
+                function updateTheme() {
+                    document.querySelector("html").setAttribute("data-bs-theme",
+                    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                }
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme)
+                updateTheme()             
+            ''')
         ),
     ),
     Container=dict(
@@ -177,8 +188,7 @@ bootstrap5_base = Style(
     DebugMenu=dict(
         attrs__class={
             'bg-primary': False,
-            'navbar': False,
-            'navbar-dark': False,
+            'bg-secondary': True,
         },
         items_container__attrs__class={
             'pl-0': True,
