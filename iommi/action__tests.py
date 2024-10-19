@@ -5,11 +5,13 @@ import pytest
 from iommi import (
     Action,
     Column,
+    Style,
     Table,
 )
 from iommi._web_compat import Template
 from iommi.action import (
     Actions,
+    default_action__icon__display_name,
     group_actions,
 )
 from iommi.base import (
@@ -172,20 +174,38 @@ def test_lambda_tag():
 def test_action_groups():
     non_grouped, grouped = group_actions(
         dict(
-            a=Action().refine_done(),
-            b=Action().refine_done(),
-            c=Action(group='a').refine_done(),
-            d=Action(group='a').refine_done(),
-            e=Action(group='a').refine_done(),
-            f=Action(group='b').refine_done(),
-            g=Action(group='b').refine_done(),
+            a=Action(_name='a').refine_done(),
+            b=Action(_name='b').refine_done(),
+            c=Action(_name='c', group='a').refine_done(),
+            d=Action(_name='d', group='a').refine_done(),
+            e=Action(_name='e', group='a').refine_done(),
+            f=Action(_name='f', group='b').refine_done(),
+            g=Action(_name='g', group='b').refine_done(),
         )
     )
 
-    assert len(non_grouped) == 2
-    assert len(grouped) == 2
-    assert len(grouped[0][2]) == 3
-    assert len(grouped[1][2]) == 2
+    assert [x._name for x in non_grouped] == ['a', 'b']
+
+    actual = [
+        (a, b, [x._name for x in c])
+        for a, b, c in grouped
+    ]
+
+    expected = [
+        ('a', 'a', ['c', 'd', 'e']),
+        ('b', 'b', ['f', 'g']),
+    ]
+
+    assert actual == expected
+
+    grouped_items_flattened = [
+        *grouped[0][-1],
+        *grouped[1][-1],
+    ]
+
+    for x in grouped_items_flattened:
+        assert x.attrs.role == 'menuitem'
+        assert x.attrs['class'].get('dropdown-item', False)
 
 
 def test_actions():
@@ -239,7 +259,7 @@ def test_check_for_bad_value_usage():
     assert str(e.value) == 'You passed attrs__value, but you should pass display_name'
 
 
-def test___foo():
+def test_action_icon_customization():
     assert 'fa-edit' in Action.icon('edit', attrs__href="edit/", display_name='Action').bind().__html__()
     assert 'Action' in Action.icon('edit', attrs__href="edit/", display_name='Action').bind().__html__()
 
@@ -250,3 +270,10 @@ def test___foo():
     assert 'Foo' in f.bind(request=req('get')).__html__()
 
     assert 'Action' in Action.icon('edit', attrs__href="edit/").refine(display_name='Action', prio=Prio.shortcut).bind().__html__()
+
+
+def test_default_action__icon__display_name():
+    assert default_action__icon__display_name(action=Action.icon(icon='', display_name='foo').bind()) == 'foo'
+    assert default_action__icon__display_name(action=Action.icon(icon='icon', display_name='foo').bind()) == '<i class="fa fa-icon"></i> foo'
+    assert default_action__icon__display_name(action=Action.icon(icon='foo', _name='foo_bar').bind()) == '<i class="fa fa-foo"></i> Foo bar'
+    assert default_action__icon__display_name(action=Action.icon(iommi_style=Style(), icon='foo', _name='foo_bar').bind()) == '<i class="foo"></i> Foo bar'

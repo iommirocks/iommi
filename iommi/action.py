@@ -198,12 +198,12 @@ class Action(Fragment):
         return cls(**kwargs).refine(
             extra__icon=icon,
             extra__orig_display_name=display_name,
-            display_name=default_action__display_name,
+            display_name=default_action__icon__display_name,
             prio=Prio.shortcut,
         )
 
 
-def default_action__display_name(action, **_):
+def default_action__icon__display_name(action, **_):
     if not action.extra.get('icon', None):
         return action.extra.orig_display_name
 
