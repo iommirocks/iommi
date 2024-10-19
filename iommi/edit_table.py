@@ -205,6 +205,15 @@ class EditColumn(Column):
         ), 'Specify a hardcoded value by passing `field__parsed_data`'
         return cls(**kwargs)
 
+    @classmethod
+    @with_defaults(
+        filter__call_target__attribute='integer',
+        bulk__call_target__attribute='integer',
+        field__call_target__attribute='integer',
+    )
+    def integer(cls, **kwargs):
+        return cls.number(**kwargs)
+
 
 def edit_table__post_handler(table, request, **_):
     # 1. Validate all the fields
