@@ -1,7 +1,7 @@
 import sys
 
 import pytest
-from django.http import HttpResponseBase
+from django.http.response import HttpResponseBase
 
 from iommi.profiling import (
     Middleware,
