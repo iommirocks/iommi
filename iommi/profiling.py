@@ -9,7 +9,7 @@ from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from django.http import (
+from django.http.response import (
     HttpResponseBase,
     StreamingHttpResponse,
 )
@@ -20,7 +20,7 @@ from iommi._web_compat import (
     settings,
 )
 from iommi.debug import src_debug_url_builder
-from iommi.thread_locals import get_current_request
+
 
 MEDIA_PREFIXES = ['/static/']
 
