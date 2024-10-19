@@ -73,7 +73,7 @@ class EditCell(Cell):
     def render_cell_contents(self):
         field = self.cells.get_field(self.column)
 
-        if field:
+        if field and field.editable:
             orig_attr = field.attr
             if self.cells.is_create_template:
                 field.attr = None
@@ -191,11 +191,18 @@ class EditColumn(Column):
     @classmethod
     @dispatch(
         field=EMPTY,
+        field__editable=False,
     )
     def hardcoded(cls, **kwargs):
+        """
+        Pass `field__parsed_data` for the hardcoded value.
+
+        Use `cell__format=lambda **_: ...` to render the hardcoded value in the create row.
+
+        """
         assert (
             'parsed_data' in kwargs['field']
-        ), 'Specify a hardcoded value by specifying `field__parsed_data` as a callable'
+        ), 'Specify a hardcoded value by passing `field__parsed_data`'
         return cls(**kwargs)
 
 
@@ -233,10 +240,6 @@ def edit_table__post_handler(table, request, **_):
 
     if table.edit_errors or table.create_errors:
         return None
-
-    if isinstance(table.initial_rows, QuerySet):
-        prefix = path_join(table.iommi_path, 'pk_delete_')
-        table.bulk_queryset(prefix=prefix).delete()
 
     def save(cells_iterator, form):
         to_save = []
@@ -284,7 +287,18 @@ def edit_table__post_handler(table, request, **_):
     if 'post_save' in table.extra:
         table.invoke_callback(table.extra.post_save)
 
+    if isinstance(table.initial_rows, QuerySet):
+        prefix = path_join(table.iommi_path, 'pk_delete_')
+        table.bulk_queryset(prefix=prefix).delete()
+
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+
+class EditTableTemplateForm(Form):
+    def is_target(self):
+        if self.instance is None:
+            return False
+        super().is_target()
 
 
 class EditTable(Table):
@@ -311,9 +325,10 @@ class EditTable(Table):
     form_class: Type[Form] = Refinable()
     parent_form: Optional[Form] = Refinable()
     edit_actions: Dict[str, Action] = RefinableMembers()
+    attr = None  # Compatibility with save_nested_forms
 
     class Meta:
-        form_class = Form
+        form_class = EditTableTemplateForm
         member_class = EditColumn
         cells_class = EditCells
         edit_actions = EMPTY
@@ -390,7 +405,7 @@ class EditTable(Table):
 
         if self.bulk is None:
             form_class = self.get_meta().form_class
-            self.bulk = form_class(_name='bulk', attrs__method='post').refine_done(parent=self)
+            self.bulk = form_class(_name='bulk', attr=None, attrs__method='post').refine_done(parent=self)
 
         fields = Struct()
 
@@ -430,6 +445,7 @@ class EditTable(Table):
             **setdefaults_path(
                 Namespace(),
                 self.create_form,
+                attr=None,
                 fields=fields,
                 _name='create_form',
                 auto=auto,
@@ -443,6 +459,7 @@ class EditTable(Table):
             **setdefaults_path(
                 Namespace(),
                 self.edit_form,
+                attr=None,
                 fields=fields,
                 _name='edit_form',
                 auto=auto,

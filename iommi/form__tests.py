@@ -3427,9 +3427,14 @@ def test_nested_form_attr_empty_path():
 
     instance = Struct(outer_field='a', inner_field='b')
 
+    # Read initials from `instance`
     f = OuterForm(instance=instance).bind(request=req('get'))
+    assert f.fields.outer_field.value == 'a'
+    assert f.nested_forms['inner_form'].fields.inner_field.value == 'b'
 
     applied_instance = Struct()
+
+    # Apply the read initials to a new object
     f.apply(applied_instance)
     assert instance == applied_instance
 
