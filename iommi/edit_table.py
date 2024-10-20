@@ -332,12 +332,14 @@ class EditTable(Table):
     edit_form: Form = Refinable()
     create_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
+    field_class: Type[Field] = Refinable()
     parent_form: Optional[Form] = Refinable()
     edit_actions: Dict[str, Action] = RefinableMembers()
     attr = None  # Compatibility with save_nested_forms
 
     class Meta:
         form_class = EditTableTemplateForm
+        field_class = Field
         member_class = EditColumn
         cells_class = EditCells
         edit_actions = EMPTY
@@ -432,9 +434,11 @@ class EditTable(Table):
                 continue
 
             if isinstance(edit_conf, dict):
+                field_class = self.get_meta().field_class
                 field = setdefaults_path(
                     Namespace(),
                     edit_conf,
+                    call_target__cls=field_class,
                     model=self.model,
                     model_field_name=column.model_field_name,
                     attr=name if column.attr is MISSING else column.attr,
@@ -442,6 +446,8 @@ class EditTable(Table):
             else:
                 field = column.iommi_namespace.field
 
+            if isinstance(field, Namespace):
+                field = field()
             fields[name] = field
 
         auto = Namespace(self.auto)
