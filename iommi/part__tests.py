@@ -76,3 +76,4 @@ def test_context_processor_is_called_on_render_root():
 
 def test_get_title_of_header():
     assert get_title(Header(children__foo='foo', children__bar='qwe').bind(request=req('get'))) == 'foo'
+    assert get_title(Page(title='foo').bind(request=req('get'))) == 'foo'
