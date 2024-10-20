@@ -219,6 +219,7 @@ def save_nested_forms(form, request, **_):
         request.method = 'GET'
 
         redirect_to = form.extra.get('redirect_to', lambda **_: request.POST.get('next', '.'))
+        assert redirect_to, f'You must specify extra__redirect_to for {form.iommi_dunder_path}'
         target = form.invoke_callback(redirect_to)
         assert isinstance(target, str), 'redirect_to must return a str'
         return HttpResponseRedirect(target)
@@ -665,6 +666,7 @@ class Field(Part, Tag):
         attrs__class = EMPTY
         attrs__style = EMPTY
         errors = EMPTY
+        parsed_data = MISSING
 
     @with_defaults(
         tag='div',
@@ -873,13 +875,20 @@ class Field(Part, Tag):
         self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
         self.editable = evaluate_strict(self.editable, **self.iommi_evaluate_parameters())
         self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
+        self.parsed_data = evaluate_strict(self.parsed_data, **self.iommi_evaluate_parameters())
         self._read_initial()
 
         if not self.editable:
-            self.value = self.initial
+            if self.parsed_data is MISSING:
+                self.value = self.initial
+                self.parsed_data = None
+            else:
+                self.value = self.parsed_data
         else:
             self._read_raw_data()
 
+            if self.parsed_data is MISSING:
+                self.parsed_data = None
             self.parsed_data = evaluate_strict(self.parsed_data, **self.iommi_evaluate_parameters())
             self._parse()
 
@@ -887,7 +896,10 @@ class Field(Part, Tag):
 
         if not self.editable:
             self.input = self.non_editable_input
-        bind_member(self, name='input')
+
+        # This check is for the rebind case of a form being used in EditTable
+        if not self.input._is_bound:
+            bind_member(self, name='input')
 
         if self.is_boolean:
             if 'checked' not in self.input.attrs and self.value:
@@ -1488,9 +1500,11 @@ def is_django_promise_with_string_proxy(redirect_to):
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, redirect, form):
+    redirect_to = evaluate_strict(redirect_to, **form.iommi_evaluate_parameters())
+
     assert (
         redirect_to is None or isinstance(redirect_to, str) or is_django_promise_with_string_proxy(redirect_to)
-    ), 'redirect_to must be a str'
+    ), 'redirect_to must be a str or return a str'
     if redirect_to is None:
         if is_create:
             redirect_to = "../"
@@ -1788,7 +1802,7 @@ class Form(Part, Tag):
         else:
             assert self.attr is MISSING, "Set Form.attr only if the form is nested in another form."
 
-        if self.instance is None and self.parent_form is not None and self.parent_form.instance is not None:
+        if self.instance is None and self.parent_form is not None and self.parent_form.instance is not None and self.attr is not None:
             self.instance = self.invoke_callback(
                 self.read_nested_form_from_instance,
                 form=self,
@@ -2014,6 +2028,8 @@ class Form(Part, Tag):
         for field in values(self.fields):
             self.apply_field(instance=instance, field=field)
         for nested_form in values(self.nested_forms):
+            if nested_form.attr is None:
+                continue
             nested_form.write_nested_form_to_instance(form=nested_form, instance=instance)
 
         return instance

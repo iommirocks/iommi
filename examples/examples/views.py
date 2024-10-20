@@ -16,6 +16,7 @@ import iommi.part
 import iommi.style
 import iommi.traversable
 from iommi import (
+    EditColumn,
     LAST,
     Column,
     Fragment,
@@ -306,3 +307,53 @@ class ExampleAdmin(Admin):
                 style=StyleSelector(title='Change iommi style'),
             ),
         )
+
+
+
+from iommi import EditTable
+album_edit_table = EditTable(
+    auto__model=Album,
+    rows=lambda form, **_: form.instance.albums.all(),
+    after=LAST,
+    columns__name__field__include=True,
+    columns__year__field__include=True,
+    columns__artist=EditColumn.hardcoded(field__parsed_data=lambda form, **_: form.instance),
+).refine_done()
+
+
+def foo(request):
+    from iommi.form import save_nested_forms
+
+    from iommi import Action
+    return Form(
+        fields={
+            f'artist_{artist.pk}': Form.edit(
+                auto__instance=artist,
+                title=artist.name,
+                fields__albums=album_edit_table,
+                actions__save=Action.primary(
+                    post_handler=save_nested_forms,
+                ),
+                extra__redirect_to=lambda **_: 'redirect_to dummy',
+            )
+            for artist in Artist.objects.all()
+        },
+        actions__save=Action.primary(
+            post_handler=save_nested_forms,
+        ),
+    )
+
+
+def bar(request):
+    from iommi import EditTable
+    artist = Artist.objects.get(name='Black Sabbath')
+    return EditTable(
+        # auto__rows=artist.albums.all(),
+        auto__rows=Album.objects.all(),
+        after=LAST,
+        columns__delete=EditColumn.delete(),
+        columns__name__field__include=True,
+        columns__year__field__include=True,
+        # columns__artist__field__include=True,
+        columns__artist=EditColumn.hardcoded(field__parsed_data=artist, cell__format=lambda **_: str(artist)),
+    )
