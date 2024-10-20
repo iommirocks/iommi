@@ -10,14 +10,17 @@ from iommi.declarative.namespace import (
 )
 
 _matches_cache = {}
+_use_cache = True
 
 
 def matches(caller_parameters, callee_parameters, __match_empty=False):
     cache_key = ';'.join((caller_parameters, callee_parameters, str(int(__match_empty))))  # pragma: no mutate
     # (mutation changes this to cached_value = None, which just slows down the code)
-    cached_value = _matches_cache.get(cache_key, None)  # pragma: no mutate
-    if cached_value is not None:
-        return cached_value
+    global _use_cache
+    if _use_cache:
+        cached_value = _matches_cache.get(cache_key, None)  # pragma: no mutate
+        if cached_value is not None:
+            return cached_value
 
     caller = set(caller_parameters.split(',')) if caller_parameters else set()
 

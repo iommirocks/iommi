@@ -15,6 +15,14 @@ from iommi.evaluate import (
 )
 
 
+@pytest.fixture(autouse=True)
+def disable_match_cache():
+    from iommi import evaluate
+    evaluate._use_cache = False
+    yield
+    evaluate._use_cache = True
+
+
 def test_no_evaluate_kwargs_mismatch():
     # noinspection PyUnusedLocal
     def f(x):
