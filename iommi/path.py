@@ -17,18 +17,6 @@ from iommi.struct import Struct
 _camel_to_snake_regex = re.compile(r'(?<!^)(?=[A-Z])')
 
 
-class Decoder:
-    def __init__(self, *lookups, decode=None):
-        self.lookups = lookups
-        self._decode = decode
-
-    def decode(self, *, lookup, string, model, **kwargs):
-        if self._decode is None:
-            return model.objects.get(**{lookup: string})
-        else:
-            return self._decode(lookup=lookup, string=string, model=model, **kwargs)
-
-
 class PathDecoder:
     def __init__(self, *, decode=None, model=None, name):
         if decode is None:
@@ -47,12 +35,10 @@ _path_component_to_decode_data: typing.Dict[
         typing.Optional[typing.Type[Model]],
         str,
         typing.Optional[str],
-        typing.Union[Decoder, PathDecoder],
+        PathDecoder,
     ],
 ] = {}
 
-
-_default_decoder = Decoder('pk', 'name')
 
 
 def camel_to_snake(s):
@@ -117,26 +103,14 @@ def decode_path_components(request, **kwargs):
             model, key, lookup, decoder = decode_data
 
             try:
-                if isinstance(decoder, Decoder):
-                    # deprecated path
-                    obj = decoder.decode(
-                        lookup=lookup,
-                        string=v,
-                        request=request,
-                        model=model,
-                        snake_name=key,
-                        decoded_kwargs=decoded_kwargs,
-                        kwargs=kwargs,
-                    )
-                else:
-                    obj = decoder.decode(
-                        key=key,
-                        string=v,
-                        request=request,
-                        decoded_kwargs=decoded_kwargs,
-                        kwargs=kwargs,
-                    )
-                    key = decoder.name
+                obj = decoder.decode(
+                    key=key,
+                    string=v,
+                    request=request,
+                    decoded_kwargs=decoded_kwargs,
+                    kwargs=kwargs,
+                )
+                key = decoder.name
             except ObjectDoesNotExist:
                 raise Http404()
 
