@@ -2216,6 +2216,7 @@ def test_url_parse():
 
 def test_email_parse():
     assert email_parse(string_value='someone@example.com') == 'someone@example.com'
+    assert email_parse(string_value='sOmEone@exaMple.Com') == 'someone@example.com'
 
     with pytest.raises(ValidationError) as e:
         email_parse(string_value='asdasd')

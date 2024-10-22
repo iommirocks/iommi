@@ -525,6 +525,7 @@ def file_write_to_instance(field, instance, value, **kwargs):
 def email_parse(string_value, field=None, **_):
     if string_value == '' and field is not None and not field.required:
         return string_value
+    string_value = string_value.lower()
     return validate_email(string_value) or string_value
 
 
