@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.7.0 (2024-10-22)
+~~~~~~~~~~~~~~~~~~
+
+* Upgrade bootstrap to 5.3.3 and enable automatic dark mode
+
+* Profiler middleware can now detect some incorrect middleware ordering
+
+* `Field.email` should force lowercase
+
+
 7.6.0 (2024-10-15)
 ~~~~~~~~~~~~~~~~~~
 
