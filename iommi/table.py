@@ -1779,7 +1779,8 @@ class Table(Part, Tag):
             return {
                 'html': table.container.__html__(
                     render=lambda fragment, context: fragment.render_text_or_children(context=context)
-                )
+                ),
+                'actions': table.outer.children.actions.__html__(),
             }
 
         endpoints__csv__func = endpoint__csv
