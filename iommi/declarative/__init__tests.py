@@ -534,11 +534,12 @@ def test_get_members_base():
     class C:
         x = A(sort_by=99)
         z = B()
+        a = A(sort_by=5)
 
     class D(C):
         y = A(sort_by=1)
         w = A(sort_by=0)
 
     actual = get_members(D, member_class=A, sort_key=lambda item: item.sort_by)
-    assert actual == dict(x=D.x, y=D.y, w=D.w)
-    assert list(actual.keys()) == ['x', 'w', 'y']
+    assert actual == dict(a=D.a, x=D.x, y=D.y, w=D.w)
+    assert list(actual.keys()) == ['a', 'x', 'w', 'y']
