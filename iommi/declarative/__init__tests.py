@@ -88,6 +88,13 @@ def test_find_member_fail_on_tuple():
     )
 
 
+def test_find_member_allow_2_tuples_and_larger():
+    # fmt: off
+    class MyDeclarative(Declarative):
+        foo = (Member(foo='bar'), 2)
+    # fmt: on
+
+
 # noinspection PyUnusedLocal
 def test_find_member_fail_on_tuple_with_is_member_lambda():
     with pytest.raises(TypeError) as e:
@@ -514,3 +521,24 @@ def test_get_members_error_message():
         get_members(None)
 
     assert str(e.value) == "get_members either needs a member_class parameter or an is_member check function (or both)"
+
+
+def test_get_members_base():
+    class A:
+        def __init__(self, sort_by):
+            self.sort_by = sort_by
+
+    class B:
+        pass
+
+    class C:
+        x = A(sort_by=99)
+        z = B()
+
+    class D(C):
+        y = A(sort_by=1)
+        w = A(sort_by=0)
+
+    actual = get_members(D, member_class=A, sort_key=lambda item: item.sort_by)
+    assert actual == dict(x=D.x, y=D.y, w=D.w)
+    assert list(actual.keys()) == ['x', 'w', 'y']
