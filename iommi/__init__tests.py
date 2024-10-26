@@ -11,11 +11,13 @@ from django.http import HttpResponse
 
 from iommi import (
     iommi_render,
+    middleware,
     Page,
     render_part,
 )
 from iommi.fragment import (
     Fragment,
+    html,
 )
 from tests.helpers import (
     call_view_through_middleware,
@@ -119,3 +121,21 @@ def test_render_part():
         t = traceback.format_exc()
 
     assert f'{filename}", line {line_no}, in <iommi declaration>\n' in str(t)
+
+
+def test_middleware_fall_through_non_iommi_objects():
+    response = object()
+    m = middleware(get_response=lambda request: response)
+    r = m(req('get'))
+    assert r is response
+
+
+def test_middleware_iommi_object():
+    response = Page(
+        parts__div=html.div('hello world'),
+        iommi_style='base',
+    )
+    m = middleware(get_response=lambda request: response)
+    r = m(req('get'))
+    assert r is not response
+    assert '<div>hello world</div>' in r.content.decode()
