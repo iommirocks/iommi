@@ -1,3 +1,5 @@
+from django.urls import path
+
 from docs.models import *
 from iommi import *
 from tests.helpers import (
@@ -62,17 +64,15 @@ def test_declarative_forms():
     -----------------
 
     You can create forms declaratively, similar to Django forms. There are some important differences between iommi forms and Django forms in this mode, maybe the most important being that in iommi you can pass a callable as a parameter to late evaluate what the value of something is. This is used to restrict a field for staff users in this example:
-
-
-
     """
     class UserForm(Form):
         first_name = Field.text()
         username = Field.text(
             is_valid=lambda parsed_data, **_: (
                 parsed_data.startswith('demo_'),
-                'needs to start with demo_')
-           )
+                'needs to start with demo_'
+            )
+        )
         is_staff = Field.boolean(
             # show only for staff
             include=lambda request, **_: request.user.is_staff,
@@ -80,6 +80,8 @@ def test_declarative_forms():
         )
 
         class Meta:
+            instance = lambda params, **_: User.objects.get(pk=params.user_pk)
+
             @staticmethod
             def actions__submit__post_handler(form, **_):
                 if not form.is_valid():
@@ -89,22 +91,28 @@ def test_declarative_forms():
                 user.save()
                 return HttpResponseRedirect('..')
 
-    def edit_user_view(request, username):
-        user = User.objects.get(username=username)
-        return UserForm(instance=user)
+    # language=rst
+    """
+    Install like this:
+    """
+
+    urlpatterns = [
+        # Note `UserForm()`, not `UserForm`!
+        path('users/<user_pk>/edit/', UserForm().as_view()),
+    ]
 
     # @test
 
-    user = User.objects.create(username='foo')
+    user = User.objects.create(username='username here', first_name='First name here')
+    view = urlpatterns[0].callback
 
-    show_output(edit_user_view(req('get'), user.username))
+    show_output(view(req('get'), user_pk=user.pk))
 
     post_request = req('post', first_name='foo', username='demo_', is_staff='1', **{'-submit': ''})
     post_request.user = user
 
-    f = edit_user_view(post_request, user.username).bind(request=post_request)
-    f.render_to_response()
-    assert not f.get_errors()
+    r = view(post_request, user_pk=user.pk)
+    assert isinstance(r, HttpResponseRedirect)
     # @end
 
     # language=rst
@@ -228,32 +236,41 @@ def test_fully_automatic_forms():
 
 
     """
-    def edit_user_view(request, username):
-        return Form.edit(
-            auto__instance=User.objects.get(username=username),
-            fields__username__is_valid=
-                lambda parsed_data, **_: (
-                    parsed_data.startswith('demo_'),
-                    'needs to start with demo_'
-                ),
-            fields__is_staff__label__template='tweak_label_tag.html',
-            # show only for staff
-            fields__is_staff__include=lambda request, **_: request.user.is_staff,
-        )
+    edit_user_form = Form.edit(
+        auto__model=User,
+        instance=lambda username, **_: User.objects.get(username=username),
+        fields__username__is_valid=
+            lambda parsed_data, **_: (
+                parsed_data.startswith('demo_'),
+                'needs to start with demo_'
+            ),
+        fields__is_staff__label__template='tweak_label_tag.html',
+        # show only for staff
+        fields__is_staff__include=lambda request, **_: request.user.is_staff,
+    )
+
+    # language=rst
+    """
+    Install like this:
+    """
+
+    urlpatterns = [
+        path('users/<user_pk>/edit/', edit_user_form.as_view()),
+    ]
 
     # @test
-    edit_user_view(user_req('get'), user.username)
+    edit_user_view = urlpatterns[0].callback
+
+    edit_user_view(user_req('get'), username=user.username)
     post_request = req('post', first_name='foo', last_name='example', username='demo_foo', email='foo@example.com', is_staff='1', date_joined='2020-01-01 12:02:10', password='asd', **{'-submit': ''})
     post_request.user = user
-    f = edit_user_view(post_request, user.username).bind(request=post_request)
-    f.render_to_response()
-    assert not f.get_errors()
+    f = edit_user_view(post_request, username=user.username)
+    assert isinstance(f, HttpResponseRedirect)
     # @end
 
     # language=rst
     """
     In this case the default behavior for the post handler for `Form.edit` is a save function like the one we had to define ourselves in the previous example.
-
 
     """
 
