@@ -27,12 +27,6 @@ def test_forms():
     iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on its weaknesses.
     """
 
-    form = Form.create(auto__model=Album)
-
-    # @test
-    show_output(form)
-    # @end
-
     # language=rst
     """
     Major features compared to Django forms:
@@ -51,10 +45,75 @@ def test_forms():
     The full list of shortcuts can be found in the
     `API documentation for Field <api.html#iommi.Field>`_.
 
-    iommi also comes with full `edit`, `create` and `delete` views. See below for an example of `Form.edit`.
+    iommi also comes with full `edit`, `create` and `delete` views. See below for more.
 
 
     """
+
+
+def test_fully_automatic_forms():
+    # @test
+    user = User.objects.create(username='foo')
+    # @end
+
+    # language=rst
+    """
+    Fully automatic forms
+    ---------------------
+
+    Generating forms from Django models automatically is the most powerful and common use for iommi forms:
+    
+    """
+
+    form = Form.create(auto__model=Album)
+
+    # @test
+    show_output(form)
+    # @end
+
+    # language=rst
+    """
+    Forms in iommi scale with higher complexity:
+    """
+
+    edit_user_form = Form.edit(
+        auto__model=User,
+        instance=lambda user_pk, **_: User.objects.get(pk=user_pk),
+        fields__username__is_valid=
+            lambda parsed_data, **_: (
+                parsed_data.startswith('demo_'),
+                'needs to start with demo_'
+            ),
+        fields__is_staff__label__template='tweak_label_tag.html',
+        # show only for staff
+        fields__is_staff__include=lambda request, **_: request.user.is_staff,
+    )
+
+    # language=rst
+    """
+    Install like this:
+    """
+
+    urlpatterns = [
+        path('users/<user_pk>/edit/', edit_user_form.as_view()),
+    ]
+
+    # @test
+    edit_user_view = urlpatterns[0].callback
+
+    show_output(edit_user_view(user_req('get'), user_pk=user.pk))
+    post_request = req('post', first_name='foo', last_name='example', username='demo_foo', email='foo@example.com', is_staff='1', date_joined='2020-01-01 12:02:10', password='asd', **{'-submit': ''})
+    post_request.user = user
+    f = edit_user_view(post_request, user_pk=user.pk)
+    assert isinstance(f, HttpResponseRedirect)
+    # @end
+
+    # language=rst
+    """
+    In this case the default behavior for the post handler for `Form.edit` is a save function like the one we had to define ourselves in the previous example.
+
+    """
+
 
 
 def test_declarative_forms():
@@ -176,103 +235,6 @@ def test_programmatic_forms():
     # @end
 
 
-def test_fully_automatic_forms():
-    # language=rst
-    """
-    Fully automatic forms
-    ---------------------
-
-    You can also generate forms from Django models automatically (but still
-    customize the behavior!). The above example is equivalent to:
-
-    """
-    # @test
-
-    def edit_user_save_post_handler(form, **_):
-        if not form.is_valid():
-            return  # pragma: no cover
-
-        form.apply(form.instance)
-        form.instance.save()
-        return HttpResponseRedirect('..')
-
-    # @end
-
-    def edit_user_view(request, username):
-        return Form(
-            auto__instance=User.objects.get(username=username),
-            # the field 'first_name' is generated automatically and
-            # we are fine with the defaults
-            fields__username__is_valid=
-                lambda parsed_data, **_: (
-                    parsed_data.startswith('demo_'),
-                    'needs to start with demo_'
-                ),
-            fields__is_staff__label__template='tweak_label_tag.html',
-            # show only for staff
-            fields__is_staff__include=lambda request, **_: request.user.is_staff,
-            actions__submit__post_handler=edit_user_save_post_handler,
-        )
-
-    # @test
-
-    user = User.objects.create(username='foo')
-    edit_user_view(user_req('get'), user.username)
-    post_request = req('post', first_name='foo', last_name='example', username='demo_foo', email='foo@example.com', is_staff='1', date_joined='2020-01-01 12:02:10', password='asd', **{'-submit': ''})
-    post_request.user = user
-    f = edit_user_view(post_request, user.username).bind(request=post_request)
-    f.render_to_response()
-    assert not f.get_errors()
-    user.refresh_from_db()
-    assert user.username == 'demo_foo'
-    # restore the username for the next test below
-    user.username = 'foo'
-    user.save()
-    # @end
-
-    # language=rst
-    """
-    or even better: use `Form.edit`:
-
-
-    """
-    edit_user_form = Form.edit(
-        auto__model=User,
-        instance=lambda username, **_: User.objects.get(username=username),
-        fields__username__is_valid=
-            lambda parsed_data, **_: (
-                parsed_data.startswith('demo_'),
-                'needs to start with demo_'
-            ),
-        fields__is_staff__label__template='tweak_label_tag.html',
-        # show only for staff
-        fields__is_staff__include=lambda request, **_: request.user.is_staff,
-    )
-
-    # language=rst
-    """
-    Install like this:
-    """
-
-    urlpatterns = [
-        path('users/<user_pk>/edit/', edit_user_form.as_view()),
-    ]
-
-    # @test
-    edit_user_view = urlpatterns[0].callback
-
-    edit_user_view(user_req('get'), username=user.username)
-    post_request = req('post', first_name='foo', last_name='example', username='demo_foo', email='foo@example.com', is_staff='1', date_joined='2020-01-01 12:02:10', password='asd', **{'-submit': ''})
-    post_request.user = user
-    f = edit_user_view(post_request, username=user.username)
-    assert isinstance(f, HttpResponseRedirect)
-    # @end
-
-    # language=rst
-    """
-    In this case the default behavior for the post handler for `Form.edit` is a save function like the one we had to define ourselves in the previous example.
-
-    """
 
 
 def test_post_handlers():
