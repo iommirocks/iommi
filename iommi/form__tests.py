@@ -2244,27 +2244,6 @@ def test_render_template_template_object():
     )
 
 
-def test_action_render():
-    action = Action(display_name='Title', template='test_action_render.html').bind(request=req('get'))
-    assert action.__html__().strip() == 'tag=a display_name=Title'
-
-
-def test_action_submit_render():
-    action = Action.submit(display_name='Title').bind(request=req('get'))
-    assert action.__html__().strip() == '<button accesskey="s" name="-">Title</button>'
-
-
-def test_action_repr():
-    assert repr(Action(_name='name', template='test_link_render.html')) == '<iommi.action.Action name>'
-
-
-def test_action_shortcut_icon():
-    assert (
-        Action.icon('foo', display_name='title').bind(request=None).__html__()
-        == '<a><i class="fa fa-foo"></i> title</a>'
-    )
-
-
 def test_include_prevents_read_from_instance():
     class MyForm(Form):
         foo = Field(include=False)

@@ -115,7 +115,6 @@ def test_fully_automatic_forms():
     """
 
 
-
 def test_declarative_forms():
     # language=rst
     """
@@ -220,7 +219,6 @@ def test_programmatic_forms():
         )
 
     # @test
-
     user = User.objects.create(username='foo')
     response = edit_user_view(user_req('get'), user.username).bind(request=user_req('get'))
 
@@ -231,10 +229,7 @@ def test_programmatic_forms():
     f = edit_user_view(post_request, user.username).bind(request=post_request)
     f.render_to_response()
     assert not f.get_errors()
-
     # @end
-
-
 
 
 def test_post_handlers():

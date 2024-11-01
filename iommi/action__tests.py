@@ -277,3 +277,24 @@ def test_default_action__icon__display_name():
     assert default_action__icon__display_name(action=Action.icon(icon='icon', display_name='foo').bind()) == '<i class="fa fa-icon"></i> foo'
     assert default_action__icon__display_name(action=Action.icon(icon='foo', _name='foo_bar').bind()) == '<i class="fa fa-foo"></i> Foo bar'
     assert default_action__icon__display_name(action=Action.icon(iommi_style=Style(), icon='foo', _name='foo_bar').bind()) == '<i class="foo"></i> Foo bar'
+
+
+def test_action_render():
+    action = Action(display_name='Title', template='test_action_render.html').bind(request=req('get'))
+    assert action.__html__().strip() == 'tag=a display_name=Title'
+
+
+def test_action_submit_render():
+    action = Action.submit(display_name='Title').bind(request=req('get'))
+    assert action.__html__().strip() == '<button accesskey="s" name="-">Title</button>'
+
+
+def test_action_repr():
+    assert repr(Action(_name='name', template='test_link_render.html')) == '<iommi.action.Action name>'
+
+
+def test_action_shortcut_icon():
+    assert (
+        Action.icon('foo', display_name='title').bind(request=None).__html__()
+        == '<a><i class="fa fa-foo"></i> title</a>'
+    )
