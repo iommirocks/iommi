@@ -99,9 +99,9 @@ def test_setup_data():
     Example data
     ------------
     
-    The example data is quite long, if you want it to get the same examples as in this tutorial, run `this code`_.
+    If you want it to get the same examples as in this tutorial, run `this code`_.
 
-    .. _this code: ../big_discography.py
+    .. _this code: https://raw.githubusercontent.com/iommirocks/iommi/master/docs/custom/big_discography.py
     """
 
 
@@ -145,7 +145,7 @@ def test_class_meta():
     """
     class Meta
     ==========
-    
+
     The `class Meta` concept in iommi is slightly different from how it's used in Django. In iommi any argument to the constructor of a class can be put into `Meta`. In fact, ONLY valid arguments to the constructor can be set in `Meta`. In our example above we set `title` and `rows`. We can also instead set them via `Meta`:
     """
 
@@ -339,7 +339,7 @@ def test_table_customization():
 
     cell__format
     ============
-    
+
     In iommi you can customize the rendering on many different levels, depending
     on what the situation requires. The last layer of customization is
     `format` which is used to convert the value of a cell to a string that
@@ -407,7 +407,7 @@ def test_table_customization():
     becomes:
     
     """
-    
+
     albums = Table(
         auto__model=Album,
         columns__name__cell__url=lambda row, **_: row.get_absolute_url(),
@@ -424,7 +424,7 @@ def test_table_customization():
     
     Tables also have built in filtering. To enable a filter make sure `include` is `True` for the `filter` of a column.    
     """
-    
+
     albums = Table(
         auto__model=Album,
         columns__name__filter__include=True,
@@ -436,7 +436,7 @@ def test_table_customization():
     # @test
     show_output(albums)
     # @end
-    
+
     # language=rst
     """    
     `columns__year__filter__field__include=False` means we turn off the `Field` in
@@ -461,7 +461,7 @@ def test__foo():
     """
     Actions
     =======
-    
+
     An `Action` in iommi is a link or a button. We use them for submit buttons of
     forms and for links that you can add to a part. A common use case is to add
     links to a table. In our example app we want to add a create button for staff.
@@ -473,7 +473,7 @@ def test__foo():
     albums = Table(
         auto__model=Album,
         actions__create_album=Action(
-            attrs__href='/albums/create/', 
+            attrs__href='/albums/create/',
             include=lambda request, **_: request.user.is_staff,
         ),
         columns__edit=Column.edit(
@@ -590,7 +590,7 @@ def test__foo():
             parts__menu__sub_menu__change_password__attrs__style__margin = '0 1rem'
             # @end
 
-    
+
     urlpatterns = [
         path('iommi-admin/', include(MyAdmin.urls())),
     ]
