@@ -133,11 +133,21 @@ class Middleware:
                                     b {
                                         color: white;
                                     }
+                                    a {
+                                        color: #5375ff;
+                                    }
                                 }
                             </style>
                         ''',
-                        f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
                     ]
+
+                    for debug_level in SQL_DEBUG_LEVELS:
+                        if debug_level == SQL_DEBUG_LEVEL_OFF:
+                            continue
+                        result.append(f'<a href="?_iommi_sql_trace={debug_level}">{debug_level}</a> ')
+
+
+                    result.append(f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>')
 
                     if total_duration:
                         color = '#4f4fff'
