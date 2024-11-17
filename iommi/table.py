@@ -2057,6 +2057,7 @@ class Table(Part, Tag):
                         Namespace(),
                         bulk_args,
                         _name='bulk',
+                        attr=None,
                         model=self.model,
                         actions__submit=dict(
                             post_handler=bulk__post_handler,
@@ -2083,6 +2084,7 @@ class Table(Part, Tag):
             add_hidden_all_pks_field(declared_bulk_fields)
             self.bulk = form_class(
                 _name='bulk',
+                attr=None,
                 # We don't want form's default submit button unless somebody
                 # explicitly added it again.
                 actions__submit=bulk_args['actions'].get('submit', None),

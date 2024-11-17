@@ -27,6 +27,8 @@ urlpatterns = (
         path('iommi-admin/', include(views.ExampleAdmin.urls())),
         path('admin/', admin.site.urls),  # This is mostly to make the django_admin style available
         path('experimental/', include(experimental_examples)),
+        path('foo/', views.foo),
+        path('bar/', views.bar),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
