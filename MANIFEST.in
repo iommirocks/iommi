@@ -3,7 +3,6 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
-include requirements.txt
 exclude tests/*.*
 recursive-include iommi *.*
 recursive-exclude iommi *__tests.py
