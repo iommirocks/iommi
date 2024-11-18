@@ -1,5 +1,3 @@
-__version__ = '7.8.0'
-
 from functools import wraps
 
 import django
@@ -153,7 +151,6 @@ __all__ = [
 
 if django.VERSION[:2] < (3, 2):
     default_app_config = 'iommi.apps.IommiConfig'
-
 
 try:
     from django.conf import settings
