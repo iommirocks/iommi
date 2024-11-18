@@ -1,1 +1,1 @@
--rtest_requirements.txt
+-r test_requirements.txt

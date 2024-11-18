@@ -1,3 +1,48 @@
+[project]
+name = 'iommi'
+version = '7.14.3'
+description = 'iommi is a high level framework built on django'
+authors = [
+    { name = "Anders Hovmöller", email = "boxed@killingar.net" },
+    { name = "Johan Lübcke", email = "johan@lubcke.se" },
+]
+readme = "README.rst"
+requires-python = ">=3.9"
+keywords = ["iommi"]
+license = { text = "BSD" }
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+]
+dependencies = [
+    "pyparsing",
+    "Django >= 3.2",
+]
+
+[dependency-groups]
+dev = [
+    "beautifulsoup4>=4.12.3",
+    "django-fastdev>=1.13.0",
+    "flask",
+    "gprof2dot",
+    "parso",
+    "pytest-django>=4.8.0",
+    "pytest>=8.1.1",
+    "pytest_snapshot>=0.9.0",
+    "ruff>=0.3.7",
+    "time-machine>=2.14.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/iommirocks/iommi"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [tool.ruff]
 exclude = [
     "docs",
@@ -7,12 +52,11 @@ line-length = 120
 
 [tool.ruff.lint]
 ignore = [
-    "E501",  # Line too long
-    "N801",  # Class name should use CapWords convention
-    "UP032",  # Use f-string instead of format call
-    "UP008",  # Use `super()` instead of `super(__class__, self)`
-    "N818",  # Exception name `UnknownMissingValueException` should be named with an Error suffix
-
+    "E501", # Line too long
+    "N801", # Class name should use CapWords convention
+    "UP032", # Use f-string instead of format call
+    "UP008", # Use `super()` instead of `super(__class__, self)`
+    "N818", # Exception name `UnknownMissingValueException` should be named with an Error suffix
 ]
 select = [
     "E",
@@ -25,3 +69,49 @@ select = [
 
 [tool.ruff.format]
 quote-style = "preserve"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    ''
+]
+testpaths = [
+    'tests',
+    'iommi',
+    'docs',
+]
+# --strict: warnings become errors.
+# -r fEsxXw: show extra test summary info for everything.
+addopts = """
+        --strict
+        -r fEsxXw
+        --no-migrations
+        --junitxml=testreport.xml
+    """
+DJANGO_SETTINGS_MODULE = "tests.settings"
+python_files = [
+    'test_*.py',
+    'helpers.py',
+    '*__tests.py',
+]
+markers = [
+    'django_db',
+    'django',
+    'flask',
+]
+filterwarnings = [
+    "error",
+    "ignore:Using or importing the ABCs from.*:DeprecationWarning",
+    "ignore:the imp module is deprecated in favour of importlib.*:DeprecationWarning",
+    "ignore:.*Django now detects this configuration automatically.*",
+    "ignore::UserWarning",
+    "ignore:The USE_L10N setting is deprecated.*",
+    "ignore:parameter codeset is deprecated.*",
+    "ignore:'cgi' is deprecated and slated for removal in Python 3.13.*",
+    "ignore:Passing unrecognized arguments to super",
+    "ignore:.*Reloading models is not advised as it can lead to inconsistencies, most notably with related models.*",
+    "ignore:.*FASTDEV_STRICT_IF.*",
+    "ignore:.*The frontend.OptionParser class will be replaced by a subclass of argparse.ArgumentParser.*",
+    "ignore:.*The frontend.Option class will be removed in Docutils 0.21 or later.*",
+]
+# Silence warning about pytest 6.0
+junit_family = "xunit1"
