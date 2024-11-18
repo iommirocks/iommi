@@ -1,5 +1,3 @@
-__version__ = '7.23.0'
-
 from functools import wraps
 
 import django
