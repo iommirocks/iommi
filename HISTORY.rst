@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.7.1 (2024-11-20)
+~~~~~~~~~~~~~~~~~~
+
+* Added back `extra__is_create`
+
+* SQL trace: links to switch SQL trace output mode easily
+
+
 7.7.0 (2024-10-22)
 ~~~~~~~~~~~~~~~~~~
 
