@@ -2089,6 +2089,7 @@ class Form(Part, Tag):
     @classmethod
     @with_defaults(
         actions__submit__post_handler=create_object__post_handler,
+        extra__is_create=True,
     )
     def create(cls, **kwargs):
         return cls.crud(**kwargs)
@@ -2096,6 +2097,7 @@ class Form(Part, Tag):
     @classmethod
     @with_defaults(
         actions__submit__post_handler=edit_object__post_handler,
+        extra__is_create=False,
     )
     def edit(cls, **kwargs):
         return cls.crud(**kwargs)

@@ -3858,3 +3858,11 @@ def test_save_nested_forms():
 
     form = form.bind(request=req('POST', {'-': ''}))
     assert not form.get_errors()
+
+
+def test_extra_is_create():
+    foo = Form.create(auto__model=Foo).bind()
+    assert foo.extra.is_create is True
+
+    foo = Form.edit(auto__model=Foo).bind()
+    assert foo.extra.is_create is False
