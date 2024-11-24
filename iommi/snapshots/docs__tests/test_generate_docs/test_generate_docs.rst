@@ -45,21 +45,31 @@ Refinable members
 -----------------
 
 
-* `description`
-    Default: `lambda foo, bar: 'qwe'`
+`description`
+^^^^^^^^^^^^^
 
-* `empty_string_default`
-    Default: `""`
+Default: `lambda foo, bar: 'qwe'`
 
-* `name`
-    description of the name field
+`empty_string_default`
+^^^^^^^^^^^^^^^^^^^^^^
 
-    Default: `foo-name`
+Default: `""`
 
-* `refinable_func`
+`name`
+^^^^^^
 
-* `some_other_thing`
-    Default: `iommi.docs__tests.some_callable`
+description of the name field
+
+Default: `foo-name`
+
+`refinable_func`
+^^^^^^^^^^^^^^^^
+
+
+`some_other_thing`
+^^^^^^^^^^^^^^^^^^
+
+Default: `iommi.docs__tests.some_callable`
 
 Shortcuts
 ---------

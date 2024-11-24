@@ -47,6 +47,8 @@ Refinable members
 -----------------
 
 
-* `name`
+`name`
+^^^^^^
+
 
     """

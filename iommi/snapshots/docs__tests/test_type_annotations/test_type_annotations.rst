@@ -43,16 +43,22 @@ Refinable members
 -----------------
 
 
-* `a`
-    Type: `int`
+`a`
+^^^
+
+Type: `int`
 
 
-* `b`
-    Type: `Dict`
+`b`
+^^^
+
+Type: `Dict`
 
 
-* `c`
-    Type: :doc:`Fragment`
+`c`
+^^^
+
+Type: :doc:`Fragment`
 
 
     """

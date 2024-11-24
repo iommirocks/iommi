@@ -43,7 +43,9 @@ Refinable members
 -----------------
 
 
-* `name`
-    Default: `lambda X: X, # noqa: N803`
+`name`
+^^^^^^
+
+Default: `lambda X: X, # noqa: N803`
 
     """
