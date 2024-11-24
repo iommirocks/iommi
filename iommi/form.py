@@ -1461,14 +1461,11 @@ class Field(Part, Tag):
         return cls.many_to_many(model_field=model_field, **kwargs)
 
     @classmethod
-    @with_defaults(
-        template='iommi/blank.html',
-    )
     def hardcoded(cls, **kwargs):
         assert (
             'parsed_data' in kwargs
         ), 'Specify a hardcoded value by passing `parsed_data`'
-        return cls(**kwargs)
+        return cls(template='iommi/blank.html', **kwargs)
 
     @classmethod
     @with_defaults(

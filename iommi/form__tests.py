@@ -34,6 +34,7 @@ from iommi import (
     Action,
     EditTable,
     html,
+    Style,
 )
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
@@ -3858,6 +3859,36 @@ def test_save_nested_forms():
 
     form = form.bind(request=req('POST', {'-': ''}))
     assert not form.get_errors()
+
+
+def test_hardcoded():
+    form = Form(
+        fields__foo=Field.hardcoded(parsed_data='banana'),
+    )
+
+    assert form.bind(request=req('POST', **{
+        '-': '',
+        'foo': 'orange',
+    })).fields.foo.value == 'banana'
+
+    verify_html(
+        actual_html=form.bind(request=req('get', url='/')).render_fields,
+        expected_html='',
+    )
+
+
+def test_hardcoded_with_styling():
+    form = Form(
+        fields__foo=Field.hardcoded(parsed_data='banana'),
+        iommi_style=Style(
+            Field__template=Template('Banana')
+        )
+    )
+
+    verify_html(
+        actual_html=form.bind(request=req('get', url='/')).render_fields,
+        expected_html='',
+    )
 
 
 def test_extra_is_create():

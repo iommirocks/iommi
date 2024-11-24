@@ -206,6 +206,7 @@ def all_field_sorts(request):
                 fields__email__initial='example@example.com',
                 fields__phone_number__initial='+1 555 555',
                 actions__submit__include=False,
+                fields__hardcoded__parsed_data='',
             ),
         )
     )
@@ -306,3 +307,4 @@ class ExampleAdmin(Admin):
                 style=StyleSelector(title='Change iommi style'),
             ),
         )
+
