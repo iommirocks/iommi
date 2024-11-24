@@ -1079,3 +1079,41 @@ def test_nested_foreign_keys(big_discography):
 
     show_output(t)
     # @end
+
+
+def test_dont_render_header(small_discography):
+    # language=rst
+    """
+    How do I stop rendering the header?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Use `header__template=None` to not render the header, or
+    `header__include=False` to remove the processing of the header totally. The
+    difference being that you might want the header object to access
+    programmatically for some reason, so then it's appropriate to use the
+    `template=None` method.
+    """
+
+    t = Table(
+        auto__model=Album,
+        header__include=False,
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    assert '<thead>' not in t.__html__() and 'None' not in t.__html__()
+    # @end
+
+    t = Table(
+        auto__model=Album,
+        header__template=None,
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    assert '<thead>' not in t.__html__() and 'None' not in t.__html__()
+    # @end
