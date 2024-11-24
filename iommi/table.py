@@ -1473,7 +1473,7 @@ class Paginator(Traversable, Tag):
         min_page_size=1,
         page=1,
         count=paginator__count,
-        number_of_pages=lambda paginator, rows, **_: ceil(
+        number_of_pages=lambda paginator, **_: ceil(
             max(1, (paginator.count - (paginator.min_page_size - 1))) / paginator.page_size
         ),
         slice=lambda top, bottom, rows, **_: rows[bottom:top],
