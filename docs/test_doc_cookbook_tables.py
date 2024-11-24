@@ -1033,3 +1033,87 @@ def test_indexed_rows(small_discography):
 
     show_output(t)
     # @end
+
+
+def test_nested_foreign_keys(big_discography):
+    # language=rst
+    """
+    How do I show nested foreign key relationships?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Say you have a list of tracks and you want to show the album and then from that album, you also want to show the artist:
+    """
+
+    t = Table(
+        auto__model=Track,
+        auto__include=[
+            'name',
+            'album',
+            'album__artist',  # <--
+        ]
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    # @end
+
+    # language=rst
+    """
+    The column created is named `album_artist` (as `__` is reserved for traversing a namespace), so that's the name you need to reference is you need to add more configuration to that column:
+    """
+
+    t = Table(
+        auto__model=Track,
+        auto__include=[
+            'name',
+            'album',
+            'album__artist',
+        ],
+        columns__album_artist__cell__attrs__style__background='blue',
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    # @end
+
+
+def test_dont_render_header(small_discography):
+    # language=rst
+    """
+    How do I stop rendering the header?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Use `header__template=None` to not render the header, or
+    `header__include=False` to remove the processing of the header totally. The
+    difference being that you might want the header object to access
+    programmatically for some reason, so then it's appropriate to use the
+    `template=None` method.
+    """
+
+    t = Table(
+        auto__model=Album,
+        header__include=False,
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    assert '<thead>' not in t.__html__() and 'None' not in t.__html__()
+    # @end
+
+    t = Table(
+        auto__model=Album,
+        header__template=None,
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    show_output(t)
+    assert '<thead>' not in t.__html__() and 'None' not in t.__html__()
+    # @end

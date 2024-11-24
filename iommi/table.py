@@ -1208,15 +1208,23 @@ class TemplateConfig(RefinableObject):
     template: str = Refinable()
 
 
+@with_meta
 class HeaderConfig(Traversable, Tag):
     tag: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
+    include: bool = SpecialEvaluatedRefinable()
+
+    class Meta:
+        include = True
+        template = MISSING
 
     def __html__(self):
-        if self.template:
+        if self.template is None:
+            return ''
+        if self.template is not MISSING:
             return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
 
         return self.render()
@@ -2152,6 +2160,8 @@ class Table(Part, Tag):
         bind_member(self, name='table_tag_wrapper')
         bind_member(self, name='outer')
         bind_member(self, name='header')
+        if self.header is None:
+            self.header = ''
 
         # needs to be done first because _bind_headers depends on it
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())

@@ -3890,3 +3890,10 @@ def test_hardcoded_with_styling():
         expected_html='',
     )
 
+
+def test_extra_is_create():
+    foo = Form.create(auto__model=Foo).bind()
+    assert foo.extra.is_create is True
+
+    foo = Form.edit(auto__model=Foo).bind()
+    assert foo.extra.is_create is False

@@ -1,9 +1,13 @@
-from tests.helpers import req
+from iommi import Page
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
 
-def test_dev_tools():
+def test_dev_tools(settings):
     # language=rst
     """
     Dev tools
@@ -12,8 +16,15 @@ def test_dev_tools():
     iommi ships with several integrated tools to increase your development speed. They
     are shown on iommi pages when `settings.DEBUG` is `True`. Some are always
     active and some are optional and needs to be added to your project.
+
+    On iommi pages you get a debug panel to quickly access the debug tools:
     """
-    
+
+    # @test
+    settings.IOMMI_DEBUG = True
+    show_output(Page())
+    # @end
+
 
 def test_code_():
     # language=rst
@@ -31,7 +42,7 @@ def test_code_():
 
     For VSCode: `IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: 'vscode://file/%s:' % (filename,)+ ('' if lineno is None else "%d" % (lineno,))`
     """
-    
+
 
 def test_tree():
     # language=rst
@@ -43,7 +54,7 @@ def test_tree():
     iommi paths, types (with links to documentation), and the included state
     of all the nodes in the tree.
     """
-    
+
 
 def test_pick():
     # language=rst
@@ -56,7 +67,7 @@ def test_pick():
     part with the type shown (with a link to the documentation). You will also
     get the paths and types of all the parent components up the tree.
     """
-    
+
 
 def test_edit():
     # language=rst
@@ -77,7 +88,17 @@ def test_edit():
 
     This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true.
     """
-    
+
+
+def test_edit_style():
+    # language=rst
+    """
+    Edit style
+    ----------
+
+    A special version of the live edit feature, but specific for editing a `Style`. This is most useful for implementing support for a new CSS framework.
+    """
+
 
 def test_profile():
     # language=rst
@@ -100,7 +121,17 @@ def test_profile():
         if you want to use this in production. Only staff users are allowed to
         profile in production, but all users can profile in debug mode.
     """
-    
+
+
+def test_profile_post():
+    # language=rst
+    """
+    Profile POST
+    -------
+
+    If you want to profile the `POST` of a form, click this button first and then click the normal submit button on the form.
+    """
+
 
 def test_sql_trace():
     # language=rst
