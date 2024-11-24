@@ -307,14 +307,14 @@ request = req('get')
                 )
 
             w(0, '')
-            w(0, '* `' + refinable + '`' + evaluated_marker)
+            section(2, '`' + refinable + '`' + evaluated_marker)
 
             docstring = getattr(getattr(c, refinable, None), '__doc__')
             if docstring:
-                _print_rst_or_python(docstring, w, indent=1)
+                _print_rst_or_python(docstring, w, indent=0)
                 w(0, '')
             elif params.get(refinable):
-                w(1, params[refinable])
+                w(0, params[refinable])
                 w(0, '')
             type_hint = type_hints.get(refinable)
             if type_hint:
@@ -325,18 +325,18 @@ request = req('get')
                     name = type_hint.__name__
 
                 if type_hint in classes:
-                    w(1, f'Type: :doc:`{name}`')
+                    w(0, f'Type: :doc:`{name}`')
                 else:
-                    w(1, f'Type: `{name}`')
+                    w(0, f'Type: `{name}`')
                 w(0, '')
 
             if refinable in defaults:
-                w(1, f'Default: `{default_description(defaults.pop(refinable))}`')
+                w(0, f'Default: `{default_description(defaults.pop(refinable))}`')
 
             ref_name = f'{c.__name__}.{refinable}'
             if ref_name in cookbook_name_by_refinable_name:
                 w(0, '')
-                w(1, f'Cookbook: :ref:`{ref_name.lower()}`')
+                w(0, f'Cookbook: :ref:`{ref_name.lower()}`')
                 w(0, '')
 
         w(0, '')

@@ -127,7 +127,7 @@ def test_profile_post():
     # language=rst
     """
     Profile POST
-    -------
+    ------------
 
     If you want to profile the `POST` of a form, click this button first and then click the normal submit button on the form.
     """
