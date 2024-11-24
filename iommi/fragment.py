@@ -14,6 +14,7 @@ from iommi.attrs import (
 )
 from iommi.base import (
     MISSING,
+    Missing,
     NOT_BOUND_MESSAGE,
     capitalize,
     values,
@@ -201,7 +202,7 @@ class Fragment(Part, Tag):
 
     attrs: Attrs = SpecialEvaluatedRefinable()
     tag = EvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     children = RefinableMembers()
 
     class Meta:

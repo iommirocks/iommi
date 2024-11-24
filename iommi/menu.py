@@ -18,6 +18,7 @@ from iommi.attrs import Attrs
 from iommi.base import (
     capitalize,
     items,
+    Missing,
     values,
 )
 from iommi.declarative import declarative
@@ -53,7 +54,7 @@ class MenuBase(Part, Tag):
     sort: bool = EvaluatedRefinable()  # only applies for submenu items
     sub_menu: Dict = RefinableMembers()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
 
     class Meta:
         sub_menu = EMPTY

@@ -48,6 +48,7 @@ from iommi.action import (
 )
 from iommi.base import (
     MISSING,
+    Missing,
     NOT_BOUND_MESSAGE,
     items,
     keys,
@@ -650,7 +651,7 @@ class Query(Part):
     advanced: Namespace = Refinable()
     model: Type[Model] = SpecialEvaluatedRefinable()
     rows = Refinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     form_container: Fragment = EvaluatedRefinable()
 
     member_class = Refinable()

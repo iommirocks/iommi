@@ -64,6 +64,7 @@ from iommi.attrs import (
 )
 from iommi.base import (
     MISSING,
+    Missing,
     NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
@@ -1037,7 +1038,7 @@ class Cells(Traversable, Tag):
     You can access the current row via `.row` and the current row index via `.row_index`.
     """
 
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     tag: str = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
@@ -1114,7 +1115,7 @@ class CellConfig(RefinableObject, Tag):
     url_title: str = Refinable()
     attrs: Attrs = Refinable()
     tag: str = Refinable()
-    template: Union[str, Template] = Refinable()
+    template: Union[str, Template, Missing, None] = Refinable()
     value = Refinable()
     contents = Refinable()
     format: Callable = Refinable()
@@ -1212,7 +1213,7 @@ class TemplateConfig(RefinableObject):
 class HeaderConfig(Traversable, Tag):
     tag: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
     include: bool = SpecialEvaluatedRefinable()
@@ -1263,14 +1264,14 @@ class HeaderConfig(Traversable, Tag):
 
 class HeaderColumnConfig(Traversable):
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     url = EvaluatedRefinable()
 
 
 class RowConfig(RefinableObject, Tag):
     attrs: Attrs = SpecialEvaluatedRefinable()
     tag = Refinable()
-    template: Union[str, Template] = Refinable()
+    template: Union[str, Template, Missing, None] = Refinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
 
@@ -1439,7 +1440,7 @@ def paginator__count(rows, **_):
 class Paginator(Traversable, Tag):
     tag: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     container = Refinable()
     page: int = SpecialEvaluatedRefinable()
     active_item = Refinable()
@@ -1733,7 +1734,7 @@ class Table(Part, Tag):
     query_from_indexes: bool = Refinable()
     default_sort_order = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     tag: str = EvaluatedRefinable()
     h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
     title: str = SpecialEvaluatedRefinable()
@@ -1749,7 +1750,7 @@ class Table(Part, Tag):
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
-    actions_template: Union[str, Template] = EvaluatedRefinable()
+    actions_template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     actions_below: bool = EvaluatedRefinable()
     tbody: Fragment = EvaluatedRefinable()
     container: Fragment = EvaluatedRefinable()
@@ -1960,7 +1961,7 @@ class Table(Part, Tag):
         refine_done_members(self, name='parts', members_from_namespace=self.parts, cls=Fragment)
 
         query_args = self.query
-        bulk_args = self.bulk
+        bulk_args: Namespace = self.bulk
 
         self.query: Query = None
         self.bulk: Form = None

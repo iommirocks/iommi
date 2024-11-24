@@ -64,6 +64,7 @@ from iommi.attrs import Attrs
 from iommi.base import (
     keys,
     MISSING,
+    Missing,
     NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
@@ -631,7 +632,7 @@ class Field(Part, Tag):
     parsed_data: Any = SpecialEvaluatedRefinable()
 
     initial: Any = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
 
     attrs: Attrs = SpecialEvaluatedRefinable()
     required: bool = EvaluatedRefinable()
@@ -1649,14 +1650,14 @@ class Form(Part, Tag):
     """
 
     actions: Namespace = RefinableMembers()
-    actions_template: Union[str, Template] = EvaluatedRefinable()
+    actions_template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
     attr: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     editable: bool = Refinable()
     h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
     title: Fragment = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: Union[str, Template, Missing, None] = EvaluatedRefinable()
     errors: Errors = Refinable()
 
     model: Type[Model] = SpecialEvaluatedRefinable()
@@ -1667,7 +1668,7 @@ class Form(Part, Tag):
     fields: Namespace = RefinableMembers()
     instance: Any = Refinable()
     field_group: Namespace = Refinable()
-    fields_template: Union[str, Template] = EvaluatedRefinable()
+    fields_template: Union[str, Template, Missing, None] = EvaluatedRefinable()
 
     class Meta:
         member_class = Field
