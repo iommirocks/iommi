@@ -2453,6 +2453,8 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
 def test_datetime_parse():
     assert datetime_parse('2001-02-03 12') == datetime(2001, 2, 3, 12)
 
+    assert datetime_parse('2001-02-03T12:45') == datetime(2001, 2, 3, 12, 45)
+
     with time_machine.travel('2001-02-03 12:13:14', tick=False):
         assert datetime_parse('now') == datetime(2001, 2, 3, 12, 13, 14)
 
@@ -3347,7 +3349,7 @@ def test_date_parse():
 
     assert (
         str(e.value.args[0])
-        == 'Time data "2020-01-60" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
+        == 'Time data "2020-01-60" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
     )
 
     with pytest.raises(ValidationError) as e:
@@ -3355,7 +3357,7 @@ def test_date_parse():
 
     assert (
         str(e.value.args[0])
-        == 'Time data "2020-01-031" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
+        == 'Time data "2020-01-031" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
     )
 
     assert date_parse('2020-01-02') == date(2020, 1, 2)

@@ -402,6 +402,9 @@ datetime_iso_formats = [
     '%Y-%m-%d %H:%M:%S',
     '%Y-%m-%d %H:%M',
     '%Y-%m-%d %H',
+    '%Y-%m-%dT%H:%M:%S',
+    '%Y-%m-%dT%H:%M',
+    '%Y-%m-%dT%H',
 ]
 
 
