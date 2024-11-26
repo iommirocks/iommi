@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.7.2 (2024-11-26)
+~~~~~~~~~~~~~~~~~~
+
+* Add support for "T" separator in `datetime_iso_formats`
+
+* Fix `Field.hardcoded` to be hidden even when Field has template styling
+
+* Table: header__template=None and header__include should both stop the header from rendering
+
+
 7.7.1 (2024-11-20)
 ~~~~~~~~~~~~~~~~~~
 
