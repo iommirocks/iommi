@@ -2453,6 +2453,8 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
 def test_datetime_parse():
     assert datetime_parse('2001-02-03 12') == datetime(2001, 2, 3, 12)
 
+    assert datetime_parse('2001-02-03T12:45') == datetime(2001, 2, 3, 12, 45)
+
     with time_machine.travel('2001-02-03 12:13:14', tick=False):
         assert datetime_parse('now') == datetime(2001, 2, 3, 12, 13, 14)
 
