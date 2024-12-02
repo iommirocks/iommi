@@ -91,6 +91,7 @@ from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
+    reify_conf,
 )
 from iommi.part import (
     Part,
@@ -327,7 +328,13 @@ class Filter(Part):
             return r
 
     @classmethod
-    def from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
+    @dispatch
+    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
+        return reify_conf(cls._from_model(model=model, model_field_name=model_field_name, model_field=model_field, **kwargs))
+
+    @classmethod
+    @dispatch
+    def _from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,

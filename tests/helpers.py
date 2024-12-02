@@ -18,6 +18,7 @@ from iommi import (
     middleware,
     render_if_needed,
 )
+from iommi.base import keys
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
@@ -188,6 +189,7 @@ def do_post(form, do_post_key_validation=True, **user_data):
             assert key in default_data or virtual_key_for_edit_table_insert, f'{key} is not a valid key. Valid keys are: {user_data.keys()}'
 
     post_data = {**default_data, **user_data}
+    assert any(k.startswith('-') for k in keys(post_data)), 'Must be at least one post target. Maybe you forgot .create()/.edit()?'
     return form.bind(request=req('post', **post_data))
 
 

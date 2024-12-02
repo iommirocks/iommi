@@ -24,7 +24,10 @@ from iommi.declarative.namespace import (
     Namespace,
     setdefaults_path,
 )
-from iommi.evaluate import evaluate
+from iommi.evaluate import (
+    evaluate,
+    evaluate_strict,
+)
 from iommi.refinable import (
     Refinable,
     RefinableObject,
@@ -52,27 +55,23 @@ def create_members_from_model(
         if exclude is not None and model_field_name in exclude:
             continue
         name = model_field_name.replace('__', '_')
-        definition = Namespace(
+        conf = Namespace(
             _name=name,
-            call_target__cls=member_class,
-            call_target__attribute='from_model',
             model_field_name=model_field_name,
             model=model,
         )
         if default_included is False:
             setdefaults_path(
-                definition,
+                conf,
                 include=False,
             )
         if include is not None and name in include:
             setdefaults_path(
-                definition,
+                conf,
                 include=True,
             )
 
-        member = definition()
-        if member is not None:
-            members[name] = member
+        members[name] = member_class._from_model(**conf)
 
     return members
 
@@ -107,7 +106,7 @@ def member_from_model(
                 model_field_name=field_path_rest,
                 **kwargs,
             )
-            result = result.refine(attr=model_field_name)
+            result.attr = model_field_name
             return result
     else:
         if model is None:
@@ -144,7 +143,17 @@ def member_from_model(
         return None
 
     # Not strict evaluate on purpose
-    factory = evaluate(factory, __match_empty=False, model_field=model_field, model_field_name=model_field_name)
+    if isinstance(factory, dict):
+        conf_or_instance = factory
+    else:
+        conf_or_instance = evaluate_strict(factory, model_field=model_field, model_field_name=model_field_name)
+
+    if isinstance(conf_or_instance, cls):
+        return conf_or_instance
+
+    assert isinstance(conf_or_instance, dict), f'Factories must return a configuration dict or an instance of {cls.__name__}. Got {type(conf_or_instance).__name__}: "{conf_or_instance}"'
+    conf = conf_or_instance
+    del conf_or_instance
 
     setdefaults_path(
         kwargs,
@@ -153,16 +162,16 @@ def member_from_model(
     )
 
     defaults = defaults_factory(model_field)
-    if isinstance(factory, Namespace):
-        factory = setdefaults_path(
-            Namespace(),
-            factory,
-            defaults,
-        )
-    else:
-        kwargs.update(**defaults)
 
-    return factory(model_field=model_field, model_field_name=model_field_name, model=model, **kwargs)
+    return setdefaults_path(
+        Namespace(),
+        kwargs,
+        conf,
+        defaults,
+        model_field=model_field,
+        model_field_name=model_field_name,
+        model=model,
+    )
 
 
 def get_field_by_name(model: Type[Model]) -> Dict[str, DjangoField]:

@@ -69,7 +69,7 @@ def test_get_shortcuts_by_name():
             pass
 
         @classmethod
-        @with_defaults()
+        @with_defaults
         def c(cls):
             pass
 

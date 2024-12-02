@@ -111,6 +111,7 @@ from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
+    reify_conf,
 )
 from iommi.page import (
     Page,
@@ -1162,7 +1163,13 @@ class Field(Part, Tag):
             return groups
 
     @classmethod
+    @dispatch
     def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
+        return reify_conf(cls._from_model(model=model, model_field_name=model_field_name, model_field=model_field, **kwargs))
+
+    @classmethod
+    @dispatch
+    def _from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,
@@ -1499,6 +1506,7 @@ class Field(Part, Tag):
         return cls.many_to_many(model_field=model_field, **kwargs)
 
     @classmethod
+    @with_defaults
     def hardcoded(cls, **kwargs):
         assert (
             'parsed_data' in kwargs
@@ -1764,13 +1772,19 @@ class Form(Part, Tag):
         extra_action_defaults = Namespace()
         crud_type = self.extra.get('crud_type')
         if 'title' not in self.iommi_namespace and crud_type is not None:
-            self.title = lambda form, **_: capitalize(
-                gettext_lazy('%(crud_type)s %(model_name)s')
-                % dict(
-                    crud_type=gettext_lazy(form.extra.crud_type),
-                    model_name=(form.model or form.instance)._meta.verbose_name,
+            def default_title(form, **_):
+                model = (form.model or form.instance)
+                if model is None:
+                    return capitalize(gettext_lazy(form.extra.crud_type))
+
+                return capitalize(
+                    gettext_lazy('%(crud_type)s %(model_name)s')
+                    % dict(
+                        crud_type=gettext_lazy(form.extra.crud_type),
+                        model_name=model._meta.verbose_name,
+                    )
                 )
-            )
+            self.title = default_title
             extra_action_defaults = setdefaults_path(
                 extra_action_defaults,
                 submit__display_name=lambda form, **_: gettext_lazy('Save') if form.extra.crud_type == 'edit' else capitalize(gettext_lazy(form.extra.crud_type)),
