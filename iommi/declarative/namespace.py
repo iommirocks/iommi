@@ -105,6 +105,7 @@ class Namespace(Struct):
 
         if isinstance(call_target, Namespace):
             if 'call_target' in call_target:
+                # TODO: HOLY CRAP DELETE
                 # Override of the default
                 call_target.pop('attribute', None)
                 call_target.pop('cls', None)
