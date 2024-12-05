@@ -97,10 +97,10 @@ from iommi.form import (
     Form,
 )
 from iommi.fragment import (
-    TransientFragment,
     Fragment,
     Header,
     Tag,
+    TransientFragment,
     build_and_bind_h_tag,
     html,
 )
@@ -1076,15 +1076,12 @@ class Cells(Traversable, Tag):
         return self.render()
 
     def render(self):
-        return (
-            TransientFragment(
-                tag=self.tag,
-                attrs=self.attrs,
-                children=dict(text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))),
-                parent=self,
-            )
-            .__html__()
-        )
+        return TransientFragment(
+            tag=self.tag,
+            attrs=self.attrs,
+            children=dict(text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))),
+            parent=self,
+        ).__html__()
 
     def __str__(self):
         return self.__html__()
@@ -1191,10 +1188,14 @@ class Cell(CellConfig):
         if url:
             url_title = self.url_title
             # TODO: `url`, `url_title` and `link` is overly complex
-            cell_contents = (
-                TransientFragment(parent=self, tag='a', attrs__title=url_title, attrs__href=url, children__content=cell_contents, **self.link)
-                .__html__()
-            )
+            cell_contents = TransientFragment(
+                parent=self,
+                tag='a',
+                attrs__title=url_title,
+                attrs__href=url,
+                children__content=cell_contents,
+                **self.link,
+            ).__html__()
         return cell_contents
 
     def render_formatted(self):
@@ -1256,15 +1257,12 @@ class HeaderConfig(Traversable, Tag):
 
         children['subheader'] = header_list_to_transient_fragment(header_levels[-1])
 
-        return (
-            TransientFragment(
-                tag=self.tag,
-                attrs=self.attrs,
-                children=children,
-                parent=self,
-            )
-            .__html__()
-        )
+        return TransientFragment(
+            tag=self.tag,
+            attrs=self.attrs,
+            children=children,
+            parent=self,
+        ).__html__()
 
     def __str__(self):
         return self.__html__()
@@ -1635,6 +1633,7 @@ class TableAutoConfig(AutoConfig):
     """
     :param rows: A `QuerySet` object. If this field is specified, the `model` attribute will be automatically derived. This cannot be a callable, in that case set `model` and use `rows=lambda...` instead of `auto__rows`.
     """
+
     rows = Refinable()
 
 
@@ -2246,9 +2245,11 @@ class Table(Part, Tag):
             self.rows = self.sorted_and_filtered_rows
 
         if self.query and self.query.form and (self.query.form.get_errors() or self.query.query_error):
-            self.rows = []
-            self.sorted_and_filtered_rows = []
-            self.sorted_rows = []
+            if isinstance(self.initial_rows, QuerySet):
+                empty_result = self.initial_rows.none()
+            else:
+                empty_result = []
+            self.rows = self.sorted_and_filtered_rows = self.sorted_rows = empty_result
 
     def _bind_bulk_form(self):
         if self.bulk is None:
@@ -2450,7 +2451,9 @@ class Table(Part, Tag):
 
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "auto__model or auto__rows must be specified"
-        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, default_included=default_included)
+        columns = cls.columns_from_model(
+            model=model, include=include, exclude=exclude, default_included=default_included
+        )
         return model, rows, columns
 
     def _selection_identifiers(self, prefix):
@@ -2504,10 +2507,6 @@ class Table(Part, Tag):
         assert self.get_visible_rows() is not None
 
         context = self.iommi_evaluate_parameters().copy()
-
-        if self.query and self.query.form and not self.query.form.is_valid():
-            self.visible_rows = []
-            self.paginator.count = 0
 
         return render(request=request, template=template or self.template, context=context)
 
