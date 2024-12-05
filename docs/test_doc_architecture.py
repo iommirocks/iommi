@@ -207,6 +207,7 @@ def test_evaluate():
         row            Artist
         cells          Cells
         bound_cell     Cell
+        root           Table
         """
             # @test
         )

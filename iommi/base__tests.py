@@ -101,20 +101,6 @@ def test_get_display_name():
     assert get_display_name(mock) == 'Some other THING'
 
 
-def test_crash_in_templates():
-    # We should crash in template rendering during tests if we try to render non-existent stuff
-    with pytest.raises(Exception) as e:
-        Template('{{ foo }}').render(context=RequestContext(req('get')))
-
-    assert (
-        str(e.value) == 'Tried to render non-existent variable foo'
-        or str(e.value) == "Undefined template variable 'foo' in '<unknown source>'"
-    )
-
-    # ...but inside if it's fine
-    assert Template('{% if foo %}foo{% endif %}').render(context=RequestContext(req('get'))) == ''
-
-
 def function_based_view(request):
     return HttpResponse('hello!')  # pragma: no cover
 

@@ -270,7 +270,7 @@ class Traversable(RefinableObject):
         pass
 
     def own_evaluate_parameters(self):
-        return {}
+        return dict(root=self.iommi_root())
 
     def iommi_evaluate_parameters(self):
         return self._evaluate_parameters
@@ -287,7 +287,7 @@ class Traversable(RefinableObject):
             ):
                 raise TypeError(
                     f'TypeError when invoking callback {get_callable_description(callback)}.\n'
-                    f'(Keyword arguments: {", ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))})'
+                    f'Keyword arguments:\n    {"\n    ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))}'
                 ) from e
             raise
 
