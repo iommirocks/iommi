@@ -270,7 +270,7 @@ class Traversable(RefinableObject):
         pass
 
     def own_evaluate_parameters(self):
-        return {}
+        return dict(root=self.iommi_root())
 
     def iommi_evaluate_parameters(self):
         return self._evaluate_parameters

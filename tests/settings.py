@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'iommi',
     'tests',
     'docs',
+    'django_fastdev',
 ]
 
 

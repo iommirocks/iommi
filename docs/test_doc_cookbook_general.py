@@ -1,4 +1,15 @@
-from tests.helpers import req
+from django.template import Template
+
+from docs.models import Album
+from iommi import (
+    Form,
+    html,
+    Page,
+)
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -75,3 +86,25 @@ def test_how_do_i_find_the_path_to_a_parameter():
     """
     # @test
     assert True  # Until I come up with a nice way to test this
+    # @end
+
+
+def test_access_other_component(album):
+    # language=rst
+    """
+    How do I access a sibling component?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Let's say we have a `Page` with a form and a custom template, and we want
+    to access the form, we can do that via the `root` object:
+    """
+
+    class MyPage(Page):
+        edit_album = Form.edit(auto__model=Album, instance=album)
+        view_album = Template('''
+            {{ root.parts.edit_album.fields.name.value }}
+        ''')
+
+    # @test
+    show_output(MyPage())
+    # @end
