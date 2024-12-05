@@ -13,14 +13,6 @@ TEMPLATE_DIRS = [
 TEMPLATE_DEBUG = True
 
 
-class HighlightBrokenVariable:
-    def __contains__(self, item):
-        return True
-
-    def __mod__(self, other):
-        assert False, f'Tried to render non-existent variable {other}'
-
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -28,7 +20,6 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'debug': TEMPLATE_DEBUG,
-            'string_if_invalid': HighlightBrokenVariable(),
             'context_processors': [
                 'tests.context_processors.context_processor_is_called',
             ],

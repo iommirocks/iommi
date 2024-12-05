@@ -1,5 +1,4 @@
 sphinx
 furo
 Django
-django-fastdev
 -r../test_requirements.txt

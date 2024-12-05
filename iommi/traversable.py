@@ -287,7 +287,7 @@ class Traversable(RefinableObject):
             ):
                 raise TypeError(
                     f'TypeError when invoking callback {get_callable_description(callback)}.\n'
-                    f'(Keyword arguments: {", ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))})'
+                    f'Keyword arguments:\n    {"\n    ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))}'
                 ) from e
             raise
 

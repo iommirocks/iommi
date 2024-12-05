@@ -7,4 +7,5 @@ pytest==8.1.1
 pytest_snapshot==0.9.0
 ruff==0.3.7
 time-machine==2.14.1
+django-fastdev
 -rrequirements.txt

@@ -1,4 +1,5 @@
 import itertools
+from textwrap import dedent
 from typing import Dict
 from unittest import mock
 
@@ -471,10 +472,16 @@ def test_invoke_callback_error_message_lambda():
     with pytest.raises(TypeError) as e:
         t.invoke_callback(lambda a: None, b=2)
 
-    assert str(e.value) == (
-        'TypeError when invoking callback lambda found at: `t.invoke_callback(lambda a: None, b=2)`.\n'
-        '(Keyword arguments: b, params, request, traversable, user)'
-    )
+    assert str(e.value) == dedent('''
+        TypeError when invoking callback lambda found at: `t.invoke_callback(lambda a: None, b=2)`.
+        Keyword arguments:
+            b
+            params
+            request
+            root
+            traversable
+            user
+    ''').strip()
 
 
 def test_invoke_callback_error_message_function():
@@ -489,7 +496,7 @@ def test_invoke_callback_error_message_function():
     assert actual.startswith(
         'TypeError when invoking callback `<function test_invoke_callback_error_message_function.<locals>.broken_callback at 0x'
     )
-    assert actual.endswith('`.\n(Keyword arguments: params, request, traversable, user)')
+    assert actual.endswith('`.\nKeyword arguments:\n    params\n    request\n    root\n    traversable\n    user')
 
 
 def test_invoke_callback_transparent_type_error():

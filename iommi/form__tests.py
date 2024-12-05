@@ -1120,10 +1120,11 @@ def test_multi_choice_queryset():
 
     assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
     assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo._errors == {
-        'User matching query does not exist.'
+        f"User matching query does not exist.\n\nQuery kwargs:\n\n    pk: '{user2.pk}'",
     }
     assert MyForm().bind(request=req('get', foo=[smart_str(user2.pk), smart_str(user3.pk)])).fields.foo._errors == {
-        'User matching query does not exist.'
+        f"User matching query does not exist.\n\nQuery kwargs:\n\n    pk: '{user2.pk}'",
+        f"User matching query does not exist.\n\nQuery kwargs:\n\n    pk: '{user3.pk}'",
     }
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
@@ -1167,7 +1168,7 @@ def test_choice_queryset():
 
     assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
     assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo._errors == {
-        'User matching query does not exist.'
+        f"User matching query does not exist.\n\nQuery kwargs:\n\n    pk: '{user2.pk}'"
     }
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
@@ -3638,7 +3639,7 @@ def test_choice_queryset_with_thousands_separator_setting(settings):
 
     assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
     assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo._errors == {
-        'User matching query does not exist.'
+        f"User matching query does not exist.\n\nQuery kwargs:\n\n    pk: '{user2.pk}'"
     }
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
