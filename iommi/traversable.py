@@ -285,9 +285,10 @@ class Traversable(RefinableObject):
                 get_signature(callback),
                 __match_empty=True,
             ):
+                keyword_arguments_string = "\n    ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))
                 raise TypeError(
                     f'TypeError when invoking callback {get_callable_description(callback)}.\n'
-                    f'Keyword arguments:\n    {"\n    ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))}'
+                    f'Keyword arguments:\n    {keyword_arguments_string}'
                 ) from e
             raise
 
