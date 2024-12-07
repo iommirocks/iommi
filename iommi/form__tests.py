@@ -3448,12 +3448,14 @@ def test_initial_is_set_to_default_of_model():
 
 
 def test_shoot_config_into_auto_dunder_field():
-    Form(
+    form = Form(
         auto__model=FieldFromModelOneToOneTest,
         # attr `foo_one_to_one__foo` creates a field named `foo_one_to_one_foo`. Note that the `__` is collapsed to one `_`!
         auto__include=['foo_one_to_one__foo'],
         fields__foo_one_to_one_foo__display_name='bar',
     ).bind(request=req('get'))
+    assert set(keys(form.fields)) == {'foo_one_to_one_foo'}
+    assert form.fields.foo_one_to_one_foo.display_name == 'foo'
 
 
 @pytest.mark.django_db
@@ -3900,3 +3902,29 @@ def test_extra_is_create():
 
     foo = Form.edit(auto__model=Foo).bind()
     assert foo.extra.is_create is False
+
+
+def test_call_target__attribute():
+    class FooForm(Form):
+        class Meta:
+            auto__model = Foo
+            auto__include = ['foo']
+            fields__foo__call_target__attribute = 'hardcoded'  # this raises exception
+            # fields__foo__input__call_target__attribute = 'radio'  # this doesn't work, stays as select2
+            fields__foo__parsed_data = 123
+
+    form = FooForm().bind(request=req('post', foo='456'))
+    assert form.fields.foo.value == 123
+
+
+def test_shoot_config_into_related_field():
+    class FooForm(Form):
+        class Meta:
+            auto__model = Bar
+            auto__include = ['foo__foo']
+            fields__foo_foo__call_target__attribute = 'hardcoded'  # this raises exception
+            fields__foo_foo__parsed_data = 123
+
+    form = FooForm().bind(request=req('post', foo='456'))
+    assert form.fields.foo_foo.iommi_shortcut_stack == ['hardcoded']
+    assert form.fields.foo_foo.value == 123
