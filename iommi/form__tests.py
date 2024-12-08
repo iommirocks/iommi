@@ -3900,3 +3900,25 @@ def test_extra_is_create():
 
     foo = Form.edit(auto__model=Foo).bind()
     assert foo.extra.is_create is False
+
+
+def test_strings_in_form_programmatic():
+    assert 'supernaut' in Form(fields__foo='supernaut').bind(request=req('get')).__html__()
+
+
+def test_strings_in_form_declarative():
+    class MyForm(Form):
+        foo = 'supernaut'
+
+    assert 'supernaut' in MyForm().bind(request=req('get')).__html__()
+
+
+def test_template_in_form_programmatic():
+    assert 'supernaut' in Form(fields__foo=Template('supernaut')).bind(request=req('get')).__html__()
+
+
+def test_template_in_form_declarative():
+    class MyForm(Form):
+        foo = Template('supernaut')
+
+    assert 'supernaut' in MyForm().bind(request=req('get')).__html__()

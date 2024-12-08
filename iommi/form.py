@@ -48,6 +48,7 @@ from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
     HttpResponseRedirect,
     Template,
+    template_types,
     URLValidator,
     ValidationError,
     csrf,
@@ -130,6 +131,7 @@ from iommi.refinable import (
 from iommi.shortcut import Shortcut, with_defaults
 from iommi.sort_after import sort_after
 from iommi.struct import Struct
+from iommi.traversable import Traversable
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -1582,7 +1584,13 @@ class FieldGroup(Fragment):
         return dict(group=self.group, **super().own_evaluate_parameters())
 
 
-@declarative(Part, '_fields_dict', add_init_kwargs=False)
+@declarative(
+    member_class=Part,
+    parameter='_fields_dict',
+    add_init_kwargs=False,
+    is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
+
+)
 @with_meta
 class Form(Part, Tag):
     # language=rst
@@ -1752,11 +1760,24 @@ class Form(Part, Tag):
             cls=self.get_meta().action_class,
             members_cls=Actions,
         )
+
+        # First we have to up sample parts that aren't Part into Fragment
+        def as_fragment_if_needed(k, v):
+            if v is None:
+                return None
+            if not isinstance(v, (dict, Traversable)):
+                return Fragment(children__text=v, _name=k)
+            else:
+                return v
+
+        _fields_dict = {k: as_fragment_if_needed(k, v) for k, v in items(self.get_declared('_fields_dict'))}
+        self.fields = Namespace({k: as_fragment_if_needed(k, v) for k, v in items(self.fields)})
+
         refine_done_members(
             self,
             name='fields',
             members_from_namespace=self.fields,
-            members_from_declared=self.get_declared('_fields_dict'),
+            members_from_declared=_fields_dict,
             members_from_auto=fields_from_auto,
             cls=self.get_meta().member_class,
             extra_member_defaults=extra_member_defaults,
