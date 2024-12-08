@@ -4423,7 +4423,10 @@ def test_invalid_query_results_in_no_rows():
     assert not t_b.rows
 
     t_b = t.bind(request=req('get', **{'-query/query': 'a="not a number"'}))
-    assert t_b.query.query_error == """Invalid value for filter "a": invalid literal for int() with base 10: 'not a number'"""
+    assert (
+        t_b.query.query_error
+        == """Invalid value for filter "a": invalid literal for int() with base 10: 'not a number'"""
+    )
     assert not t_b.rows
 
 
@@ -4443,3 +4446,25 @@ def test_data_retrieval_method(really_big_discography, django_assert_num_queries
 
     with django_assert_num_queries(3):
         ArtistsTable().refine(columns__albums__data_retrieval_method='prefetch').bind(request=req('get')).__html__()
+
+
+@pytest.mark.django_db
+def test_annotate_on_broken_filters():
+    t = Table(
+        auto__model=TFoo,
+        preprocess_rows=lambda rows, **_: rows.annotate(foo=F('a')),
+    ).bind(
+        request=req(
+            'get',
+            **{'-query/query': 'banana'},
+        )
+    )
+    verify_table_html(
+        table=t,
+        find__name='tbody',
+        # language=html
+        expected_html="""
+            <tbody>
+            </tbody>
+        """,
+    )
