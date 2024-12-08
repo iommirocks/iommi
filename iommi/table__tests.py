@@ -22,15 +22,15 @@ from docs.models import (
     Track,
 )
 from iommi import (
-    LAST,
     Action,
     Fragment,
-    Page,
     html,
+    LAST,
+    Page,
 )
 from iommi._web_compat import (
-    Template,
     mark_safe,
+    Template,
 )
 from iommi.base import (
     items,
@@ -39,8 +39,8 @@ from iommi.base import (
 from iommi.declarative import get_members
 from iommi.declarative.namespace import getattr_path
 from iommi.endpoint import (
-    InvalidEndpointPathException,
     find_target,
+    InvalidEndpointPathException,
     perform_ajax_dispatch,
 )
 from iommi.form import (
@@ -56,24 +56,25 @@ from iommi.query import (
     Query,
 )
 from iommi.shortcut import (
-    Namespace,
-    Shortcut,
     get_shortcuts_by_name,
     is_shortcut,
+    Namespace,
+    Shortcut,
     with_defaults,
 )
 from iommi.sql_trace import (
-    SQL_DEBUG_LEVEL_ALL,
     set_sql_debug,
+    SQL_DEBUG_LEVEL_ALL,
 )
 from iommi.table import (
-    Column,
-    Struct,
-    Table,
     bulk_delete__post_handler,
+    Column,
+    DataRetrievalMethods,
     datetime_formatter,
     ordered_by_on_list,
     register_cell_formatter,
+    Struct,
+    Table,
     yes_no_formatter,
 )
 from tests.helpers import (
@@ -85,7 +86,6 @@ from tests.helpers import (
     verify_table_html,
 )
 from tests.models import (
-    T2,
     AutomaticUrl,
     AutomaticUrl2,
     BooleanFromModelTestModel,
@@ -97,6 +97,7 @@ from tests.models import (
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
+    T2,
     TBar,
     TBar2,
     TBaz,
@@ -4424,3 +4425,21 @@ def test_invalid_query_results_in_no_rows():
     t_b = t.bind(request=req('get', **{'-query/query': 'a="not a number"'}))
     assert t_b.query.query_error == """Invalid value for filter "a": invalid literal for int() with base 10: 'not a number'"""
     assert not t_b.rows
+
+
+@pytest.mark.django_db
+def test_data_retrieval_method(really_big_discography, django_assert_num_queries):
+    class ArtistsTable(Table):
+        albums = Column(cell__format=lambda row, **_: ', '.join([str(x) for x in row.albums.all()]))
+
+        class Meta:
+            rows = Artist.objects.all()
+
+    with django_assert_num_queries(9):
+        ArtistsTable().bind(request=req('get')).__html__()
+
+    with django_assert_num_queries(3):
+        ArtistsTable().refine(columns__albums__data_retrieval_method=DataRetrievalMethods.prefetch).bind(request=req('get')).__html__()
+
+    with django_assert_num_queries(3):
+        ArtistsTable().refine(columns__albums__data_retrieval_method='prefetch').bind(request=req('get')).__html__()

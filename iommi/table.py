@@ -323,6 +323,15 @@ class DataRetrievalMethods(Enum):
     prefetch = auto()
     select = auto()
 
+    def __eq__(self, other):
+        if self.__class__ == other.__class__:
+            return self is other
+        if isinstance(other, str):
+            return self.name == other
+        if other is None or other is MISSING:
+            return False
+        assert False, f'Invalid data retrieval method {other!r}'
+
 
 def default_icon__cell__format(column, value, **_):
     if not value:

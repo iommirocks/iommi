@@ -146,7 +146,6 @@ class Middleware:
                             continue
                         result.append(f'<a href="?_iommi_sql_trace={debug_level}">{debug_level}</a> ')
 
-
                     result.append(f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>')
 
                     if total_duration:
@@ -509,6 +508,13 @@ class CursorDebugWrapper(django_db_utils.CursorWrapper):
                 rowcount=self.cursor.rowcount,
                 using=self.db.alias,
                 **kwargs,
+            )
+
+            self.db.queries_log.append(
+                {
+                    "sql": kwargs['sql'],
+                    "time": "%.3f" % duration,
+                }
             )
 
     def execute(self, sql, params=None):
