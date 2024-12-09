@@ -42,6 +42,9 @@
     requires = ["setuptools", "wheel"]
     build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+    packages = ["iommi"]
+
 [tool.ruff]
     exclude = [
         "docs",

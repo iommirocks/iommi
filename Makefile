@@ -47,7 +47,7 @@ test-all:
 
 .PHONY: test
 test:
-	python -m pytest
+	venv/bin/pytest
 
 coverage:
 	tox -e coverage
