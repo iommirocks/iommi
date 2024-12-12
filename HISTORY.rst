@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+7.8.0 (2024-12-12)
+~~~~~~~~~~~~~~~~~~
+
+* Allow throwing `str` and `Template` into `Form.fields`
+
+* Add `root` object into evaluate parameters to easier be able to access sibling components
+
+* Allow `Table` `DataRetrievalMethods` to be specified as a string
+
+* Fix empty QuerySet on invalid Query. To not make e.g. .annotate in postprocess_rows trip up.
+
+* Required as a lambda on a `Field` was broken
+
+* `Query`: on errors on ajax reload, show the errors
+
+
 7.7.2 (2024-11-26)
 ~~~~~~~~~~~~~~~~~~
 
