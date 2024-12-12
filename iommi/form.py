@@ -924,6 +924,8 @@ class Field(Part, Tag):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
+        self.required = evaluate_strict(self.required, **self.iommi_evaluate_parameters())
+
         self.bind_from_instance()
 
         bind_member(self, name='label')
@@ -998,6 +1000,8 @@ class Field(Part, Tag):
         else:
             if self.parsed_data is not None:
                 value = self._validate_parsed_data(self.parsed_data)
+
+        assert not callable(self.required)
 
         if not self._errors:
             if (

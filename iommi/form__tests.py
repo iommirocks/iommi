@@ -3922,3 +3922,11 @@ def test_template_in_form_declarative():
         foo = Template('supernaut')
 
     assert 'supernaut' in MyForm().bind(request=req('get')).__html__()
+
+
+def test_required_truthy_bug():
+    form = Form.create(auto__model=Album, fields__genres__required=lambda **_: False).bind(request=req('post', **{'-submit': ''}))
+
+    assert form.actions.submit.iommi_name() == 'submit'
+    assert 'genres' not in form.get_errors()['fields']
+    assert form.get_errors()['fields']['name'] == {'This field is required'}
