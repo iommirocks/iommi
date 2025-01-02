@@ -82,6 +82,7 @@ def uses_from_cookbooks():
 
                     backrefs[strip_prefix(x, prefix='uses ')].add((target_node.attributes['ids'][0], title_node.astext()))
 
+    assert backrefs
     return backrefs
 
 
