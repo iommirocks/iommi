@@ -47,10 +47,12 @@ def test_how_do_i_customize_the_rendering_of_a_table():
 def test_how_do_you_turn_off_pagination(small_discography):
     # language=rst
     """
-    .. _Table.page_size:
+    .. _turn-off-pagination:
 
     How do you turn off pagination?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.page_size
 
     Specify `page_size=None`:
     """
@@ -63,7 +65,6 @@ def test_how_do_you_turn_off_pagination(small_discography):
     # @test
     show_output(table)
     # @end
-
 
     # language=rst
     """
@@ -84,10 +85,15 @@ def test_how_do_you_turn_off_pagination(small_discography):
 def test_how_do_i_customize_the_rendering_of_a_cell():
     # language=rst
     """
-    .. _Table.cell:
+    .. _customize-table-cell-render:
 
     How do I customize the rendering of a cell?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Attrs
+    .. uses Cell.attrs
+    .. uses Cell.template
+    .. uses Cell.url
 
     You can customize the :doc:`Cell` rendering in several ways:
 
@@ -104,8 +110,12 @@ def test_how_do_i_customize_the_rendering_of_a_cell():
 def test_how_do_i_make_a_link_in_a_cell(album):
     # language=rst
     """
+    .. _cell-link:
+
     How do I make a link in a cell?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Cell.url
 
     This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
 
@@ -125,10 +135,13 @@ def test_how_do_i_make_a_link_in_a_cell(album):
 def test_how_do_i_create_a_column_based_on_computed_data_():
     # language=rst
     """
-    .. _How do I create a column based on computed data?:
+    .. _column-computed-data:
 
     How do I create a column based on computed data (i.e. a column not based on an attribute of the row)?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Cell.value
+    .. uses Cell.format
 
     Let's say we have a model like this:
 
@@ -194,10 +207,13 @@ def test_how_do_i_get_iommi_tables_to_understand_my_django_modelfield_subclasses
 def test_how_do_i_reorder_columns():
     # language=rst
     """
-    .. _Column.after:
+
+    .. _reorder-columns:
 
     How do I reorder columns?
     ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Column.after
 
     By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
 
@@ -252,10 +268,12 @@ def test_how_do_i_reorder_columns():
 def test_how_do_i_enable_searching_filter_on_columns():
     # language=rst
     """
-    .. _Column.filter:
+    .. _filter-column:
 
     How do I enable searching/filter on columns?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Column.filter
 
     Pass the value `filter__include=True` to the column, to enable searching
     in the advanced query language.
@@ -288,10 +306,11 @@ def test_how_do_i_enable_searching_filter_on_columns():
 def test_how_do_i_make_a_freetext_search_field():
     # language=rst
     """
-    .. _Filter.freetext:
+    .. _freetext-column:
 
     How do I make a freetext search field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Filter.freetext
 
     If you want to filter based on a freetext query on one or more columns we've got a nice little feature for this:
 
@@ -324,16 +343,14 @@ def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specificat
 
     # language=rst
     """
-    .. _Table.attrs:
-
-    .. _Form.attrs:
-
-    .. _Field.attrs:
-
     .. _attrs:
 
     How do I customize HTML attributes, CSS classes or CSS style specifications?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.attrs
+    .. uses Form.attrs
+    .. uses Field.attrs
 
     The `attrs` namespace has special handling to make it easy to customize. There are three main cases:
 
@@ -390,10 +407,15 @@ def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specificat
 def test_how_do_i_customize_the_rendering_of_a_row():
     # language=rst
     """
-    .. _Table.row:
+
+    .. _customize-rendering-row:
 
     How do I customize the rendering of a row?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.row
+    .. uses RowConfig.attrs
+    .. uses RowConfig.template
 
     You can customize the row rendering in two ways:
 
@@ -404,17 +426,17 @@ def test_how_do_i_customize_the_rendering_of_a_row():
     In templates you can access the raw row via `row`. This would typically be one of your model objects. You can also access the cells of the table via `cells`. A naive template for a row would be `<tr>{% for cell in cells %}<td>{{ cell }}{% endfor %}</tr>`. You can access specific cells by their column names like `{{ cells.artist }}`.
 
     To customize the cell, see `How do I customize the rendering of a cell?`_
-
     """
 
 
 def test_how_do_i_customize_the_rendering_of_a_header():
     # language=rst
     """
-    .. _Column.header:
+    .. _customize-header:
 
     How do I customize the rendering of a header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.header
 
     You can customize headers in two ways:
 
@@ -428,10 +450,13 @@ def test_how_do_i_customize_the_rendering_of_a_header():
 def test_how_do_i_turn_off_the_header():
     # language=rst
     """
-    .. _Table.header:
+
+    .. _turn-off-header:
 
     How do I turn off the header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.header
 
     Set `header__template` to `None`.
 
@@ -445,23 +470,22 @@ def test_how_do_i_add_fields_to_a_table_that_is_generated_from_a_model():
     How do I add fields to a table that is generated from a model?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    See the question `How do I create a column based on computed data?`_
-
+    See the question `column-computed-data`_
     """
 
 
 def test_how_do_i_specify_which_columns_to_show():
     # language=rst
     """
-    .. _Column.include:
+    .. _show-columns:
 
     How do I specify which columns to show?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.include
 
-    Just pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
-
-
+    Pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
     """
+
     Table(
         auto__model=Album,
         columns__name__include=
@@ -480,10 +504,12 @@ def test_how_do_i_specify_which_columns_to_show():
 def test_how_do_i_access_table_data_programmatically_(capsys, small_discography):
     # language=rst
     """
-    .. _Table.cells_for_rows:
+    .. _programmatic-table-data-access:
 
     How do I access table data programmatically (like for example to dump to json)?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.cells_for_rows
 
     Here's a simple example that prints a table to stdout:
 
@@ -506,10 +532,12 @@ def test_how_do_i_access_table_data_programmatically_(capsys, small_discography)
 def test_how_do_i_access_foreign_key_related_data_in_a_column():
     # language=rst
     """
-    .. _Column.attr:
+    .. _fk-related-data-access:
 
     How do I access foreign key related data in a column?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.attr
+    .. uses Table.auto
 
     Let's say we have two models:
 
@@ -569,15 +597,18 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
     iommi will do automatic `select_related` and/or `prefetch_related` as appropriate in many cases too, so you mostly don't need to worry about that.
     """
 
+
 def test_how_do_i_turn_off_sorting(small_discography):
     # language=rst
     """
-    .. _Table.sortable:
 
-    .. _Column.sortable:
+    .. _table-sorting:
 
     How do I turn off sorting? (on a column or table wide)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.sortable
+    .. uses Column.sortable
 
     To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
     """
@@ -609,10 +640,11 @@ def test_how_do_i_turn_off_sorting(small_discography):
 def test_how_do_i_specify_the_title_of_a_header(small_discography):
     # language=rst
     """
-    .. _Column.display_name:
+    .. _header-title:
 
     How do I specify the title of a header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.display_name
 
     The `display_name` property of a column is displayed in the header.
 
@@ -631,10 +663,11 @@ def test_how_do_i_specify_the_title_of_a_header(small_discography):
 def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instead_of_ascending():
     # language=rst
     """
-    .. _Column.sort_default_desc:
+    .. _default-sort-order:
 
     How do I set the default sort order of a column to be descending instead of ascending?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.sort_default_desc
 
     """
 
@@ -647,13 +680,13 @@ def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instea
 def test_how_do_i_group_columns():
     # language=rst
     """
-    .. _Column.group:
+    .. _group-columns:
 
     How do I group columns?
     ~~~~~~~~~~~~~~~~~~~~~~~
-
-
+    .. uses Column.group
     """
+
     table = Table(
         auto__model=Album,
         columns__name__group='foo',
@@ -674,10 +707,11 @@ def test_how_do_i_group_columns():
 def test_how_do_i_group_rows(medium_discography):
     # language=rst
     """
-    .. _Column.row_group:
+    .. _group-rows:
 
     How do I group rows?
     ~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.row_group
 
     Use `row_group`. By default this will output a `<th>` tag. You can configure it like any other fragment if you want to change that to a `<td>`. Note that the order of the columns in the table is used for grouping. This is why in the example below the `year` column is moved to index zero: we want to group on year first.
     """
@@ -712,10 +746,11 @@ def test_how_do_i_group_rows(medium_discography):
 def test_how_do_i_get_rowspan_on_a_table(small_discography, artist):
     # language=rst
     """
-    .. _Column.auto_rowspan:
+    .. _rowspan:
 
     How do I get rowspan on a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.auto_rowspan
 
     You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
     """
@@ -735,10 +770,11 @@ def test_how_do_i_get_rowspan_on_a_table(small_discography, artist):
 def test_how_do_i_enable_bulk_editing(small_discography):
     # language=rst
     """
-    .. _Column.bulk:
+    .. _bulk-edit:
 
     How do I enable bulk editing?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.bulk
 
     Editing multiple items at a time is easy in iommi with the built in bulk
     editing. Enable it for a columns by passing `bulk__include=True`:
@@ -768,10 +804,12 @@ def test_how_do_i_enable_bulk_editing(small_discography):
 def test_how_do_i_enable_bulk_delete(small_discography):
     # language=rst
     """
-    .. _Table.bulk:
+
+    .. _bulk-delete:
 
     How do I enable bulk delete?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.bulk
     """
 
     table = Table(
@@ -796,8 +834,12 @@ def test_how_do_i_enable_bulk_delete(small_discography):
 def test_how_do_i_make_a_custom_bulk_action(album):
     # language=rst
     """
+
+    .. _custom-bulk-action:
+
     How do I make a custom bulk action?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.bulk
 
     You need to first show the select column by passing
     `columns__select__include=True`, then define a submit `Action` with a post
@@ -827,8 +869,12 @@ def test_how_do_i_make_a_custom_bulk_action(album):
 def test_what_is_the_difference_between_attr_and__name():
     # language=rst
     """
+    .. _attr-name-diff:
+
     What is the difference between `attr` and `_name`?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.attr
+    .. uses Column.name
 
     `attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: `attr='foo__bar'` is functionally equivalent to `cell__value=lambda row, **_: row.foo.bar`. Set `attr` to `None` to not read any attribute from the row.
 
@@ -839,8 +885,11 @@ def test_what_is_the_difference_between_attr_and__name():
 def test_table_with_foreign_key_reverse(small_discography):
     # language=rst
     """
+    .. _reverse-fk:
+
     How do I show a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.include
 
     By default reverse foreign key relationships are hidden. To turn it on, pass `include=True` to the column:
     """
@@ -864,8 +913,11 @@ def test_table_with_foreign_key_reverse(small_discography):
 def test_table_with_m2m_key_reverse(small_discography):
     # language=rst
     """
+    .. _reverse-m2m:
+
     How do I show a reverse many-to-many relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.include
 
     By default reverse many-to-many relationships are hidden. To turn it on, pass `include=True` to the column:
     """
@@ -895,8 +947,12 @@ def test_table_with_m2m_key_reverse(small_discography):
 def test_insert_arbitrary_html(big_discography):
     # language=rst
     """
+    .. _arbitrary-html:
+
     How do I insert arbitrary html into a Table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.container
+    .. uses Table.outer
 
     Sometimes you want to insert some extra html, css, or `Part` into a
     `Table`. You can do this with the `container` or `outer` namespaces.
@@ -924,11 +980,15 @@ def test_insert_arbitrary_html(big_discography):
 def test_custom_actions(small_discography):
     # language=rst
     """
+    .. _custom-actions:
+
     How do I add custom actions/links to a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.actions
+    .. uses Cell.url
+    .. uses Column.link
 
     For the entire table:
-
     """
 
     t = Table(
@@ -962,8 +1022,12 @@ def test_custom_actions(small_discography):
 def test_render_additional_rows(small_discography):
     # language=rst
     """
+    .. _additional-rows:
+
     How do I render additional rows?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.rows
+    .. uses RowConfig.template
 
     Using `rows__template` you can render the default row with `{{ cells.render }}` and then your own custom data:
 
@@ -990,8 +1054,12 @@ def test_render_additional_rows(small_discography):
 def test_initial_filter_on_table(really_big_discography):
     # language=rst
     """
+    .. _initial-filter:
+
     How do I set an initial filter to a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.query
+    .. uses Query.form
 
     The `Query` of a `Table` has a `Form` where you can set the initial value:
 
@@ -1014,8 +1082,11 @@ def test_initial_filter_on_table(really_big_discography):
 def test_indexed_rows(small_discography):
     # language=rst
     """
+    .. _row-numbers:
     How do I show row numbers?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Cells.row_index
+    .. uses Cell.value
 
     Use `cells.row_index` to get the index of the row in the current rendering.
     """
@@ -1038,8 +1109,11 @@ def test_indexed_rows(small_discography):
 def test_nested_foreign_keys(big_discography):
     # language=rst
     """
+    .. _nested-fk:
+
     How do I show nested foreign key relationships?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.auto
 
     Say you have a list of tracks and you want to show the album and then from that album, you also want to show the artist:
     """
@@ -1084,8 +1158,11 @@ def test_nested_foreign_keys(big_discography):
 def test_dont_render_header(small_discography):
     # language=rst
     """
+    .. _stop-header-render:
     How do I stop rendering the header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.header
+    .. uses HeaderConfig.include
 
     Use `header__template=None` to not render the header, or
     `header__include=False` to remove the processing of the header totally. The

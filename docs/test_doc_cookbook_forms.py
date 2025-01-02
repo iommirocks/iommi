@@ -8,7 +8,6 @@ from iommi._web_compat import (
 )
 from iommi.form import save_nested_forms
 from iommi.struct import Struct
-from iommi.traversable import build_long_path
 from tests.helpers import (
     req,
     show_output,
@@ -36,16 +35,16 @@ def test_forms():
 def test_how_do_i_supply_a_custom_parser_for_a_field():
     # language=rst
     """
-    .. _Field.parse:
 
+    .. _supply-custom-parser-field:
 
     How do I supply a custom parser for a field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.parse
 
     Pass a callable to the `parse` member of the field:
-
-
     """
+
     form = Form(
         auto__model=Track,
         fields__index__parse=lambda field, string_value, **_: int(string_value[:-3]),
@@ -61,10 +60,13 @@ def test_how_do_i_supply_a_custom_parser_for_a_field():
 def test_how_do_i_make_a_field_non_editable(artist):
     # language=rst
     """
-    .. _Field.editable:
+
+    .. _field-non-editable:
 
     How do I make a field non-editable?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.editable
+    .. uses Field.parsed_data
 
     There are two cases: A) non-editable and you want to show the value to the
     user, or B) non-editable but do not show it ("hardcoded").
@@ -137,10 +139,11 @@ def test_how_do_i_make_a_field_non_editable(artist):
 def test_how_do_i_make_an_entire_form_non_editable(album):
     # language=rst
     """
-    .. _Form.editable:
+    .. _form-non-editable:
 
     How do I make an entire form non-editable?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Form.editable
 
     This is a very common case so there's a special syntax for this: pass a `bool` to the form:
     """
@@ -161,10 +164,13 @@ def test_how_do_i_make_an_entire_form_non_editable(album):
 def test_how_do_i_supply_a_custom_validator():
     # language=rst
     """
-    .. _Field.is_valid:
+
+    .. _custom-validator:
 
     How do I supply a custom validator?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.is_valid
 
     Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Return a tuple `(is_valid, 'error message if not valid')`.
     """
@@ -209,8 +215,11 @@ def test_how_do_i_supply_a_custom_validator():
 def test_how_do_i_validate_multiple_fields_together():
     # language=rst
     """
+    .. _validate-multiple-fields-together:
+
     How do I validate multiple fields together?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.is_valid
 
     Refine the `post_validation` hook on the `form`. It is run after all the individual fields validation
     has run. But note that it is run even if the individual fields validation was not successful.
@@ -231,8 +240,14 @@ def test_how_do_i_exclude_a_field():
 def test_how_do_i_say_which_fields_to_include_when_creating_a_form_from_a_model():
     # language=rst
     """
+
+    .. _include-exclude-fields:
+
     How do I say which fields to include when creating a form from a model?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Form.auto
+    .. uses Field.include
 
     `Form()` has four methods to select which fields are included in the final form:
 
@@ -247,10 +262,12 @@ def test_how_do_i_say_which_fields_to_include_when_creating_a_form_from_a_model(
 def test_how_do_i_supply_a_custom_initial_value():
     # language=rst
     """
-    .. _Field.initial:
+
+    .. _field-initial-value:
 
     How do I supply a custom initial value?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.initial
 
     Pass a value or callable to the `initial` member:
     """
@@ -278,12 +295,14 @@ def test_how_do_i_supply_a_custom_initial_value():
 def test_how_do_i_set_if_a_field_is_required():
     # language=rst
     """
-    .. _Field.required:
+
+    .. _field-required:
 
     How do I set if a field is required?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Normally this will be handled automatically by looking at the model definition, but sometimes you want a form to be more strict than the model. Pass a `bool` or a callable to the `required` member:
+    .. uses Field.required
 
+    Normally this will be handled automatically by looking at the model definition, but sometimes you want a form to be more strict than the model. Pass a `bool` or a callable to the `required` member:
 
     """
     form = Form.create(
@@ -358,10 +377,12 @@ def test_how_do_i_set_if_a_field_is_required():
 def test_how_do_i_change_the_order_of_the_fields():
     # language=rst
     """
-    .. _Field.after:
+
+    .. _field-order:
 
     How do I change the order of the fields?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.after
 
     You can change the order in your model definitions as this is what iommi uses. If that's not practical you can use the `after` member. It's either the name of a field or an index. There is a special value `LAST` to put a field last.
 
@@ -393,13 +414,15 @@ def test_how_do_i_change_the_order_of_the_fields():
 def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use():
     # language=rst
     """
-    .. _Field.search_fields:
+
+    .. _field-search-fields:
 
     How do I specify which model fields the search of a choice_queryset use?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.search_fields
 
     `Form.choice_queryset` uses the registered search fields for filtering and ordering.
-    See :doc:`registrations` for how to register one. If present it will default
+    See `Registrations <registrations>`_ for how to register one. If present it will default
     to a model field `name`.
 
 
@@ -426,6 +449,7 @@ def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use
 def test_how_do_i_insert_a_css_class_or_html_attribute():
     # language=rst
     """
+
     How do I insert a CSS class or HTML attribute?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -436,10 +460,12 @@ def test_how_do_i_insert_a_css_class_or_html_attribute():
 def test_how_do_i_override_rendering_of_an_entire_field():
     # language=rst
     """
-    .. _Field.template:
+
+    .. _field-template:
 
     How do I override rendering of an entire field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.template
 
     Pass a template name:
     """
@@ -471,11 +497,12 @@ def test_how_do_i_override_rendering_of_an_entire_field():
 def test_how_do_i_override_rendering_of_the_input_field():
     # language=rst
     """
-    .. _Field.input:
+    .. _field-input-template:
 
     How do I override rendering of the input field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    .. uses Field.input
+    .. uses Fragment.template
 
     Pass a template name or a `Template` object to the `input` namespace:
     """
@@ -488,10 +515,6 @@ def test_how_do_i_override_rendering_of_the_input_field():
     # @test
     show_output(form)
     # @end
-
-    # language=rst
-    """
-    """
 
     form = Form(
         auto__model=Album,
@@ -506,8 +529,12 @@ def test_how_do_i_override_rendering_of_the_input_field():
 def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
     # language=rst
     """
+
+    .. _project-wide-field-rendering:
+
     How do I change how fields are rendered everywhere in my project?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Style
 
     Define a custom style and override the appropriate fields. For
     example here is how you could change `Field.date` to use a text
@@ -540,8 +567,12 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
 def test_how_do_I_change_redirect_target(artist):
     # language=rst
     """
+    .. _form-redirect:
+
     How do I change where the form redirects to after completion?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Form.extra
 
     iommi by default redirects to `..` after edit/create/delete. You can
     override this via two methods:
@@ -591,8 +622,13 @@ def test_how_do_I_change_redirect_target(artist):
 def test_how_do_I_make_a_fields_choices_depend_on_another_field():
     # language=rst
     """
+    .. _dependent-fields:
+
     How do I make a fields choices depend on another field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.choices
+    .. uses Form.fields
 
     The contents of the form is sent with any AJAX requests, so we can
     access the value of the other fields to do the filtering:
@@ -625,8 +661,13 @@ def test_how_do_I_make_a_fields_choices_depend_on_another_field():
 def test_form_with_foreign_key_reverse(small_discography, artist):
     # language=rst
     """
+
+    .. _reverse-fk:
+
     How do I enable a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Form.auto
 
     By default reverse foreign key relationships are hidden. To turn it on, pass `include=True` to the field. Note that these are read only, because the semantics of hijacking another models foreign keys would be quite weird.
     """
@@ -650,8 +691,14 @@ def test_form_with_foreign_key_reverse(small_discography, artist):
 def test_non_rendered(artist):
     # language=rst
     """
+    .. _non-rendered-field:
+
     How do I set an initial value on a field that is not in the form?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.non_rendered
+    .. uses Field.editable
+    .. uses Field.initial
 
     You do have to include the field, but you can make it not rendered by using
     the `non_rendered` shortcut and setting `initial`.
@@ -756,8 +803,12 @@ def test_non_rendered(artist):
 def test_grouped_fields():
     # language=rst
     """
+    .. _group-fields:
+
     How do I group fields?
     ~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.group
 
     Use the `group` field:
     """
@@ -774,19 +825,23 @@ def test_grouped_fields():
 
 
 def test_form_with_m2m_key_reverse(small_discography):
+    # language=rst
+    """
+    .. _field-reverse-m2m:
+
+    How do I show a reverse many-to-many relationship?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.include
+
+    By default reverse many-to-many relationships are hidden. To turn it on, pass `include=True` to the field:
+    """
+
     # @test
     heavy_metal = Genre.objects.create(name='Heavy Metal')
     for album in Album.objects.all():
         album.genres.add(heavy_metal)
     # @end
-
-    # language=rst
-    """
-    How do I show a reverse many-to-many relationship?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    By default reverse many-to-many relationships are hidden. To turn it on, pass `include=True` to the field:
-    """
 
     form = Form(
         auto__model=Genre,
@@ -808,8 +863,15 @@ def test_form_with_m2m_key_reverse(small_discography):
 def test_nested_forms(medium_discography):
     # language=rst
     """
+
+    .. _nested-forms:
+
     How do I nest multiple forms?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Form.fields
+    .. uses save_nested_forms
+    .. uses Action.post_handler
 
     You need to use the `save_nested_forms` post handler to have a single save button for all the nested forms and `EditTable`s:
     """
@@ -874,10 +936,12 @@ def test_nested_forms(medium_discography):
 def test_fields_template(album):
     # language=rst
     """
-    .. _Form.fields_template:
+
+    .. _fields-templates:
 
     How do I use templates for fields?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Form.fields_template
 
     Sometimes field groups just aren't enough and you may want to use a template to make your forms pretty:
     """
@@ -917,8 +981,13 @@ def test_fields_template(album):
 def test_dependent_fields(small_discography):
     # language=rst
     """
+
+    .. _dependent-fields2:
+
     How do I make a field that depends on the choice in another field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.choices
 
     This only works for cases when the choices are fetched via ajax, but this is also the common case:
     """
@@ -949,12 +1018,17 @@ def test_dependent_fields(small_discography):
 def test_how_do_i_make_a_form_to_create_or_edit(artist, album):
     # language=rst
     """
-    .. _Field.editable:
+
+    .. _create-or-edit-forms:
 
     How do I make a create or edit form?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.editable
+    .. uses Form.create_or_edit
 
-    Using the `Form.create_or_edit` shortcut, if the `instance` is `None` it will become a create form, otherwise an edit form:
+    If you don't know until runtime if you want `Form.create` or `Form.edit`,
+    you can use the `Form.create_or_edit` shortcut. Ff the `instance` is `None`
+    it will become a create form, otherwise an edit form:
     """
 
     form = Form.create_or_edit(

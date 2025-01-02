@@ -1,4 +1,4 @@
 sphinx
 furo
 Django
--r../test_requirements.txt
+docutils

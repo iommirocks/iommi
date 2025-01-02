@@ -264,7 +264,7 @@ def test_generate_tests_from_class_doc():
 
     f = StringIO()
     source_filename, actual_filename, doc_generator = list(
-        _generate_tests_from_class_doc(f=f, c=Foo, classes=[], cookbook_name_by_refinable_name={})
+        _generate_tests_from_class_doc(f=f, c=Foo, classes=[], uses_by_field={})
     )
     actual_doc = doc_generator()
 

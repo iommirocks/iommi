@@ -1,7 +1,7 @@
 import inspect
 import re
+from collections import defaultdict
 from glob import glob
-from os import stat
 from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
@@ -28,31 +28,61 @@ from iommi.shortcut import (
 from iommi.struct import merged
 
 
-def read_cookbook_links():
-    result = []
+def uses_from_cookbooks():
+    import docutils.parsers.rst
+    import docutils.utils
+    import docutils.frontend
+    from docutils.nodes import comment, title, target, section
+    from iommi.declarative.util import strip_prefix
+
+    parser = docutils.parsers.rst.Parser()
+    components = (docutils.parsers.rst.Parser,)
+    settings = docutils.frontend.OptionParser(components=components).get_default_values()
+
+    backrefs = defaultdict(set)
+
     for filename in glob(str(Path(__file__).parent.parent / 'docs' / 'cookbook_*.rst')):
         with open(filename) as f:
-            result.append((parse_cookbook_links(f.readlines()), Path(filename).stem))
-    return result
+            content = f.read()
 
+        document = docutils.utils.new_document(filename, settings=settings)
+        parser.parse(content, document)
 
-def parse_cookbook_links(lines):
-    link_marker = '.. _'
-    anchors = [line.strip()[len(link_marker) :].rstrip(':') for line in lines if line.startswith(link_marker)]
+        assert len(document.children) == 1, 'Expected a document with only ONE level 1 header'
 
-    # TODO: validate that we only have anchors once
+        target_node = None
 
-    return {x for x in anchors if not x.endswith('?')}
+        (d,) = document.children
 
+        for node in d.children:
+            if isinstance(node, target):
+                target_node = node
+                continue
+            if not node.attributes['ids']:
+                continue
+            if not node.children:
+                continue
+            if not isinstance(node, section):
+                continue
+            title_node = node.children[0]
+            assert isinstance(title_node, title)
 
-def validate_cookbook_links(cookbook_links):
-    class_by_name = {x.__name__: x for x in get_default_classes()}
+            for c in node.children:
+                x = c.astext()
 
-    for link, name in cookbook_links:
-        if '.' in link:
-            class_name, _, refinable_name = link.partition('.')
-            assert class_name in class_by_name, f'{class_name} was not found in default_classes'
-            getattr(class_by_name[class_name], refinable_name)
+                if isinstance(c, target):
+                    target_node = c
+
+                elif isinstance(c, comment) and x.startswith('uses '):
+                    if x.endswith(':'):
+                        print(f'WARNING: bad `uses`: {x}')
+                    if not target_node:
+                        print(f'WARNING: no target for {title_node.astext()}. It must be ABOVE the title.')
+                        continue
+
+                    backrefs[strip_prefix(x, prefix='uses ')].add((target_node.attributes['ids'][0], title_node.astext()))
+
+    return backrefs
 
 
 def get_default_classes():
@@ -163,36 +193,25 @@ def get_namespace(c):
     )
 
 
-def get_cookbook_name_by_refinable_name():
-    cookbook_links = read_cookbook_links()
-    validate_cookbook_links(cookbook_links)
-    # TODO: validate that all cookbook links are actually linked somewhere. For example ".. _Column.cells_for_rows" isn't right now.
-    cookbook_name_by_refinable_name = {}
-    for links, name in cookbook_links:
-        for link in links:
-            cookbook_name_by_refinable_name[link] = name
-    return cookbook_name_by_refinable_name
-
-
 def _generate_tests_from_class_docs(classes):
-    cookbook_name_by_refinable_name = get_cookbook_name_by_refinable_name()
+    uses_by_field = uses_from_cookbooks()
 
     for c in classes:
         from io import StringIO
 
         f = StringIO()
-        yield _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_name)
+        yield _generate_tests_from_class_doc(f, c, classes, uses_by_field)
 
 
-def _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_name):
+def _generate_tests_from_class_doc(f, c, classes, uses_by_field):
     return (
         inspect.getfile(c),
         'test_doc__api_%s.py' % c.__name__,
-        lambda: _generate_tests_from_class_doc_inner(f, c, classes, cookbook_name_by_refinable_name),
+        lambda: _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field),
     )
 
 
-def _generate_tests_from_class_doc_inner(f, c, classes, cookbook_name_by_refinable_name):
+def _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field):
     def w(levels, s):
         f.write(indent(levels, s))
         f.write('\n')
@@ -287,7 +306,7 @@ request = req('get')
             v = get_docs_callable_description(v)
 
             if 'lambda' in v:
-                v = v[v.find('lambda') :]
+                v = v[v.find('lambda'):]
                 v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
         if isinstance(v, Part):
             v = v.bind()
@@ -333,11 +352,13 @@ request = req('get')
             if refinable in defaults:
                 w(0, f'Default: `{default_description(defaults.pop(refinable))}`')
 
-            ref_name = f'{c.__name__}.{refinable}'
-            if ref_name in cookbook_name_by_refinable_name:
+            cookbook_usages = uses_by_field.get(f'{c.__name__}.{refinable}', [])
+            if cookbook_usages:
                 w(0, '')
-                w(0, f'Cookbook: :ref:`{ref_name.lower()}`')
-                w(0, '')
+                w(0, f'Cookbook:')
+                for id_, title in cookbook_usages:
+                    w(1, f':ref:`{id_}`')
+                    w(0, '')
 
         w(0, '')
 
@@ -385,6 +406,14 @@ request = req('get')
                     w(0, f'* `{k}`')
                     w(1, f'* `{v}`')
                 w(0, '')
+
+            cookbook_usages = uses_by_field.get(f'{c.__name__}.{name}', [])
+            if cookbook_usages:
+                w(0, '')
+                w(0, f'Cookbook:')
+                for id_, title in cookbook_usages:
+                    w(1, f':ref:`{id_}`')
+                    w(0, '')
 
     for k, v in get_methods_by_type_by_name(c).items():
         methods = v

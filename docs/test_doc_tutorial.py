@@ -8,7 +8,7 @@ Tutorial
     This tutorial is intended for a reader that is well versed in the Django basics of the ORM,
     urls routing, function based views, and templates.
 
-    It is also expected that you have already installed iommi in your project. Read section 1 of :doc:`Getting started <getting_started>`.
+    It is also expected that you have already installed iommi in your project. Read section 1 of `Getting started <getting_started>`_.
 
 
 This tutorial will build a discography app. Let's start with the models:
