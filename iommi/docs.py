@@ -2,8 +2,12 @@ import inspect
 import re
 from collections import defaultdict
 from glob import glob
+from os.path import join
 from pathlib import Path
-from textwrap import dedent
+from textwrap import (
+    dedent,
+    indent,
+)
 from typing import get_type_hints
 
 from iommi import (
@@ -13,19 +17,21 @@ from iommi import (
 from iommi.base import items
 from iommi.declarative import get_declared
 from iommi.declarative.namespace import (
-    Namespace,
     flatten,
+    Namespace,
 )
 from iommi.refinable import (
     EvaluatedRefinable,
-    SpecialEvaluatedRefinable,
     is_refinable_function,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import (
     get_shortcuts_by_name,
     is_shortcut,
 )
 from iommi.struct import merged
+from iommi.struct import Struct  # noqa: E402
+from tests.helpers import create_iframe  # noqa: E402
 
 
 def uses_from_cookbooks():
@@ -181,7 +187,7 @@ def docstring_param_dict(obj):
     )
 
 
-def indent(levels, s):
+def indent_levels(levels, s):
     return (' ' * levels * 4) + s
 
 
@@ -214,7 +220,7 @@ def _generate_tests_from_class_doc(f, c, classes, uses_by_field):
 
 def _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field):
     def w(levels, s):
-        f.write(indent(levels, s))
+        f.write(indent_levels(levels, s))
         f.write('\n')
 
     def section(level, title, indent=0):
@@ -464,3 +470,103 @@ def _print_rst_or_python(doc, w, indent=0):
         w(1, '# language=rst')
         w(1, '"""')
     w(0, '')
+
+
+def write_rst_from_pytest():
+    for source in (Path(__file__).parent.parent / 'docs/').glob('test_*.py'):
+        target = source.parent / f'{source.stem.replace("test_doc__api_", "").replace("test_doc_", "")}.rst'
+
+        with open(source) as source_f:
+            with open(target, 'w') as target_f:
+                rst_from_pytest(source_f, target_f, target)
+
+
+def rst_from_pytest(source_f, target_f, target):
+    blocks = []
+    stack = []
+    state_ = None
+
+    def push(new_state, **kwargs):
+        nonlocal state_
+        nonlocal i
+        assert state_ != 'only test', ('exited @test without @end', source_f.name, i)
+        stack.append(new_state)
+        blocks.append(Struct(state=new_state, lines=[], metadata=kwargs))
+        state_ = new_state
+
+    def pop():
+        nonlocal state_
+        stack.pop()
+        state_ = stack[-1]
+        blocks.append(Struct(state=state_, lines=[], metadata={}))
+
+    def add_line(line):
+        blocks[-1].lines.append(line)
+
+    push('import')
+
+    func_name = None
+    func_count = 0
+
+    for i, line in enumerate(source_f.readlines(), start=1):
+        stripped_line = line.strip()
+        if state_ in ('import', 'py') and line.startswith('def test_'):  # not stripped_line!
+            func_name = line[len('def ') :].partition('(')[0]
+            push('py', func_name=func_name, func_count=0)
+            func_count = 0
+        elif stripped_line.startswith("# language=rst"):
+            push('starting rst')
+        elif stripped_line in ('"""', "'''"):
+            if state_ == 'starting rst':
+                # add_line('')
+                pop()
+                push('rst')
+            elif state_ == 'rst':
+                pop()
+        elif stripped_line.startswith('# @test'):
+            push('only test')
+        elif stripped_line.startswith('# @end'):
+            pop()
+        elif state_ == 'py' and line.startswith(
+            '#'
+        ):  # not stripped_line! skip comments on the global level between functions
+            continue
+        elif state_ == 'py' and line.startswith(
+            '@'
+        ):  # not stripped_line! skip decorators on the global level between functions
+            continue
+        else:
+            if state_ == 'only test':
+                if stripped_line.startswith('show_output(') or stripped_line.startswith('show_output_collapsed('):
+                    name = join(target.stem, func_name)
+                    if func_count:
+                        name += str(func_count)
+                    func_count += 1
+
+                    blocks.append(
+                        Struct(
+                            state='raw',
+                            lines=[create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed'))],
+                            metadata={},
+                        )
+                    )
+            else:
+                add_line(line)
+
+    for b in blocks:
+        b.text = dedent(''.join(b.lines)).strip()
+        del b['lines']
+
+    blocks = [x for x in blocks if x.text]
+
+    for b in blocks:
+        if b.state == 'rst':
+            target_f.write(b.text)
+        elif b.state == 'py':
+            target_f.write('.. code-block:: python\n\n')
+            target_f.write(indent(b.text, '    '))
+        elif b.state == 'raw':
+            target_f.write('.. raw:: html\n\n')
+            target_f.write(indent(b.text, '    '))
+
+        target_f.write('\n\n')

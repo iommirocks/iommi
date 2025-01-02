@@ -9,6 +9,7 @@ from iommi.docs import (
     _generate_tests_from_class_doc,
     _generate_tests_from_class_docs,
     get_default_classes,
+    rst_from_pytest,
 )
 from iommi.refinable import (
     Refinable,
@@ -239,8 +240,6 @@ def test_2():
     )
     f.seek(0)
     target_f = StringIO()
-
-    from make_doc_rsts import rst_from_pytest
 
     rst_from_pytest(source_f=f, target_f=target_f, target=None)
 

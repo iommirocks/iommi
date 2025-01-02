@@ -27,7 +27,41 @@ clean-pyc:
 	find . -name "__pycache__" -type d -delete
 
 clean-docs:
-	rm -f docs/tri*.rst
+	rm -rf docs/_build
+	rm -f docs/iommi.rst
+	rm -f docs/lib.iommi.rst
+	rm -f docs/lib.rst
+	rm -f docs/Table.rst
+	rm -f docs/Column.rst
+	rm -f docs/Query.rst
+	rm -f docs/Filter.rst
+	rm -f docs/Form.rst
+	rm -f docs/Field.rst
+	rm -f docs/Action.rst
+	rm -f docs/Link.rst
+	rm -f docs/Endpoint.rst
+	rm -f docs/Members.rst
+	rm -f docs/Menu.rst
+	rm -f docs/MenuItem.rst
+	rm -f docs/Part.rst
+	rm -f docs/Page.rst
+	rm -f docs/Traversable.rst
+	rm -f docs/Fragment.rst
+	rm -f docs/Attrs.rst
+	rm -f docs/Cell.rst
+	rm -f docs/ColumnHeader.rst
+	rm -f docs/Header.rst
+	rm -f docs/HeaderConfig.rst
+	rm -f docs/Container.rst
+	rm -f docs/Style.rst
+	rm -f docs/Asset.rst
+	rm -f docs/EditColumn.rst
+	rm -f docs/EditTable.rst
+	rm -f docs/Cells.rst
+	rm -f docs/FormAutoConfig.rst
+	rm -f docs/QueryAutoConfig.rst
+	rm -f docs/TableAutoConfig.rst
+	rm -f docs/views.rst
 
 lint: ruff
 
@@ -46,7 +80,7 @@ test:
 coverage:
 	tox -e coverage
 
-docs:
+docs: clean-docs
 	rm -f docs/test_doc__*
 	tox -e docs
 

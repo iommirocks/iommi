@@ -249,7 +249,7 @@ def show_output(part, url='/', data=None):
         return content
 
 
-# This synonym exists to have a different name for make_doc_rsts.py
+# This synonym exists to have a different name for write_rst_from_pytest()
 show_output_collapsed = show_output
 
 
