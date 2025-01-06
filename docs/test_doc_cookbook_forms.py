@@ -26,6 +26,8 @@ pytestmark = pytest.mark.django_db
 def test_forms():
     # language=rst
     """
+    .. _cookbook-forms:
+
     Forms
     -----
 

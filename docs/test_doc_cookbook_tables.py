@@ -21,6 +21,8 @@ pytestmark = pytest.mark.django_db
 def test_tables():
     # language=rst
     """
+    .. _cookbook-tables:
+
     Tables
     ------
 

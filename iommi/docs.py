@@ -54,11 +54,13 @@ def uses_from_cookbooks():
         document = docutils.utils.new_document(filename, settings=settings)
         parser.parse(content, document)
 
-        assert len(document.children) == 1, 'Expected a document with only ONE level 1 header'
+        targets = [x for x in document.children if isinstance(x, target)]
+        nodes = [x for x in document.children if not isinstance(x, target)]
 
-        target_node = None
+        target_node = None if not targets else targets[0]
 
-        (d,) = document.children
+        assert len(nodes) == 1, 'Expected a document with only ONE level 1 header'
+        (d,) = nodes
 
         for node in d.children:
             if isinstance(node, target):
