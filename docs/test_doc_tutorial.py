@@ -86,11 +86,12 @@ def create_discography_dump():
             for track in album.tracks.all():
                 yield f"Track.objects.create(album=y, name={track.name!r}, index={track.index})"
 
+
 def test_setup_data():
     # @test
     with open(Path(__file__).parent / 'custom' / 'big_discography.py', 'w') as f:
-        for l in create_discography_dump():
-            f.write(l)
+        for line in create_discography_dump():
+            f.write(line)
             f.write('\n')
     # @end
 
@@ -99,7 +100,7 @@ def test_setup_data():
     Example data
     ------------
     
-    If you want it to get the same examples as in this tutorial, run `this code`_.
+    If you want it to get the same example data as in this tutorial, run `this code`_.
 
     .. _this code: https://raw.githubusercontent.com/iommirocks/iommi/master/docs/custom/big_discography.py
     """
@@ -242,7 +243,6 @@ def test_pages():
     show_output_collapsed(urlpatterns[2])
     # @end
 
-
     # language=rst
     """
     and an index page with three tables, a header and some text:
@@ -356,7 +356,6 @@ def test_table_customization():
     show_output(albums)
     # @end
 
-
     # language=rst
     """    
     `columns__artist__cell__format` should be read as something similar to
@@ -393,7 +392,6 @@ def test_table_customization():
     # @test
     show_output(albums)
     # @end
-
 
     # language=rst
     """
@@ -529,7 +527,6 @@ def test__foo():
     show_output(albums)
     # @end
 
-
     # language=rst
     """
     
@@ -565,7 +562,6 @@ def test__foo():
     show_output(albums)
     # @end
 
-
     # language=rst
     """
     
@@ -586,10 +582,9 @@ def test__foo():
         class Meta:
             pass
             # @test
-            parts__menu__items_container__attrs__style={'flex-direction': 'row'}
+            parts__menu__items_container__attrs__style = {'flex-direction': 'row'}
             parts__menu__sub_menu__change_password__attrs__style__margin = '0 1rem'
             # @end
-
 
     urlpatterns = [
         path('iommi-admin/', include(MyAdmin.urls())),
@@ -616,6 +611,7 @@ def test__foo():
         
     """
 
+
 def test_forms():
     # language=rst
     """
@@ -631,6 +627,10 @@ def test_forms():
 
     class NameForm(forms.Form):
         your_name = forms.CharField(label='Your name')
+
+    # @test
+    NameForm()
+    # @end
 
     # language=rst
     """ 
@@ -653,11 +653,9 @@ def test_forms():
     class NameForm(Form):
         your_name = Field.text()
 
-
     # @test
     show_output(NameForm())
     # @end
-
 
     # language=rst
     """
@@ -713,7 +711,6 @@ def test_forms():
     show_output(form)
     # @end
 
-
     # language=rst
     """
     There are many many more customizations options available, you can find more
@@ -736,7 +733,6 @@ def test_forms():
     show_output(urlpatterns[0])
     # @end
 
-
     # language=rst
     """ 
     There are three built in forms/views like this: `create`, `edit`, and `delete`.
@@ -745,6 +741,7 @@ def test_forms():
     a confirmation page because you can see what you are about to delete.
 
     """
+
 
 # language=rst
 """    
