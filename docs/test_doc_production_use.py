@@ -68,9 +68,35 @@ def test_production_use():
             action_class = Action
 
 
+    class EditColumn(iommi.EditColumn):
+        pass
+
+
+    class EditTable(iommi.EditTable):
+        class Meta:
+            member_class = EditColumn
+            form_class = Form
+            query_class = Query
+            page_class = Page
+            action_class = Action
+
+
     class Menu(iommi.Menu):
         pass
 
 
     class MenuItem(iommi.MenuItem):
         pass
+
+    # language=rst
+    """
+    Admin
+    ~~~~~
+    
+    If you are using the iommi admin you will want to tell it to use your custom classes too:
+    """
+
+    class Admin(iommi.Admin):
+        class Meta:
+            table_class = EditTable
+            form_class = Form
