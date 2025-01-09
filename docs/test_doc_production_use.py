@@ -95,8 +95,9 @@ def test_production_use():
     
     If you are using the iommi admin you will want to tell it to use your custom classes too:
     """
+    import iommi.admin
 
-    class Admin(iommi.Admin):
+    class Admin(iommi.admin.Admin):
         class Meta:
             table_class = EditTable
             form_class = Form
