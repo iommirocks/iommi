@@ -32,6 +32,10 @@ class Foo(Model):
     def __repr__(self):
         return f'Foo pk: {self.pk}'  # pragma: no cover
 
+    @property
+    def qux(self):
+        return self.quxes.first()
+
 
 class Bar(Model):
     foo = ForeignKey(Foo, related_name='bars', on_delete=CASCADE, help_text='bar_help_text')
@@ -39,6 +43,12 @@ class Bar(Model):
 
 class FieldFromModelForeignKeyTest(Model):
     foo_fk = ForeignKey(Foo, on_delete=CASCADE)
+
+
+class Qux(Model):
+    foo = ForeignKey(Foo, related_name='quxes', related_query_name='qux', on_delete=CASCADE)
+    lang = models.CharField(max_length=7)
+    name = CharField(max_length=255, blank=True)
 
 
 class FieldFromModelOneToOneTest(Model):

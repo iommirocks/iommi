@@ -94,6 +94,7 @@ from tests.models import (
     DefaultsInForms,
     FieldFromModelOneToOneTest,
     Foo,
+    Qux,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
@@ -3706,6 +3707,35 @@ def test_auto_model_dunder_path_1to1_reverse():
         ],
     ).bind(request=req('get'))
     assert "fieldfrommodelonetoonetest_f_char" in keys(table.columns)
+
+
+@pytest.mark.django_db
+def test_custom_related_query_name():
+    foo = Foo.objects.create(foo=1)
+    Qux.objects.create(foo=foo, lang='en', name='first english item')
+    Qux.objects.create(foo=foo, lang='cs', name='první česká položka')
+    foo2 = Foo.objects.create(foo=1)
+    Qux.objects.create(foo=foo2, lang='en', name='second english item')
+    Qux.objects.create(foo=foo2, lang='cs', name='druhá česká položka')
+
+    table = Table(
+        auto__model=Foo,
+        auto__include=['qux__name'],
+        rows=Foo.objects.prefetch_related('quxes').filter(qux__lang='en'),
+        columns__qux_name__filter__include=True,
+        columns__qux_name__filter__freetext=True,
+    )
+
+    bound_table1 = table.bind(request=req('get', freetext_search='first'))
+    assert 'qux_name' in keys(bound_table1.columns)
+    assert len(bound_table1.get_visible_rows()) == 1
+    bound_table1.__html__()
+
+    bound_table2 = table.bind(request=req('get', order='-qux_name'))
+    assert 'qux_name' in keys(bound_table2.columns)
+    assert len(bound_table2.get_visible_rows()) == 2
+    assert bound_table2.get_visible_rows().first().qux.name == 'second english item'
+    bound_table2.__html__()
 
 
 @pytest.mark.django_db
