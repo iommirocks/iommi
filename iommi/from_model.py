@@ -169,10 +169,12 @@ def get_field_name(field: DjangoField) -> str:
     if isinstance(field, ManyToManyRel):
         return field.related_name
     elif isinstance(field, ManyToOneRel):
-        if field.related_name:
-            return field.related_name
-        elif field.related_name == '+':
+        if field.related_name == '+':
             return None
+        elif field.related_query_name:
+            return field.related_query_name
+        elif field.related_name:
+            return field.related_name
         elif isinstance(field, OneToOneRel):
             return field.name
         else:
