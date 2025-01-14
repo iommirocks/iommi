@@ -306,48 +306,50 @@ class Admin(Page):
         operation='all_models',
     )
     def all_models(cls, table=None, **kwargs):
-        def rows(admin, request, included_filter=False, **_):
+        def rows_raw(admin, request, included_filter=False, **_):
             for app_name, models in items(django_apps.all_models):
-                has_yielded_header = False
-
                 for model_name, model in sorted(items(models), key=lambda x: x[1]._meta.verbose_name_plural):
                     key = f'{app_name}_{model_name}'
-                    included = admin.apps.get(key, {}).get('include', False)
+                    conf = admin.apps.get(key, {})
+                    included = conf.get('include', False)
                     if included == included_filter:
                         continue
 
                     if not cls.has_permission(request, instance=None, model=model, operation='view'):
                         continue
 
-                    if not has_yielded_header:
-                        yield Struct(
-                            name=app_verbose_name_by_label[app_name],
-                            verbose_app_name=app_verbose_name_by_label[app_name],
-                            app_name=None,
-                            model_name=None,
-                            url=None,
-                            format=lambda row, table, **_: (
-                                html.h1(row.name, _name='invalid_name').bind(parent=table).__html__()
-                            ),
-                            key=None,
-                        )
-                        has_yielded_header = True
+                    group = conf.get('group', app_verbose_name_by_label[app_name])
 
                     yield Struct(
-                        verbose_app_name=app_verbose_name_by_label[app_name],
+                        name=conf.get('name', model._meta.verbose_name_plural.capitalize()),
+                        group=group,
                         app_name=app_name,
-                        model_name=app_name,
-                        name=model._meta.verbose_name_plural.capitalize(),
+                        model_name=model_name,
                         url='{}/{}/'.format(app_name, model_name),
                         format=lambda row, **_: row.name,
                         key=key,
                     )
 
+        def rows(admin, request, included_filter=False, **_):
+            last_group = None
+            for row in sorted(rows_raw(admin=admin, request=request, included_filter=included_filter), key=lambda row: (row.group, row.name)):
+                if last_group != row.group:
+                    yield Struct(
+                        name=row.group,
+                        url=None,
+                        format=lambda row, table, **_: (
+                            html.h1(row.name, _name='invalid_name').bind(parent=table).__html__()
+                        ),
+                        key=None,
+                    )
+                    last_group = row.group
+                yield row
+
         table = setdefaults_path(
             Namespace(),
             table if table is not None else {},
             title='',
-            call_target__cls=Table,
+            call_target__cls=cls.get_meta().table_class,
             call_target__attribute='div',
             sortable=False,
             rows=rows,
@@ -364,10 +366,11 @@ class Admin(Page):
         add_models = setdefaults_path(
             Namespace(),
             include=settings.DEBUG,
-            call_target__cls=Table,
+            call_target__cls=cls.get_meta().table_class,
             sortable=False,
-            rows=functools.partial(rows, included_filter=True),
+            rows=functools.partial(rows_raw, included_filter=True),
             page_size=None,
+            columns__app_name=cls.get_meta().table_class.get_meta().member_class(auto_rowspan=True),
             columns__conf=(
                 cls.get_meta()
                 .table_class.get_meta()

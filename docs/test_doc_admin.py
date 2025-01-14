@@ -221,3 +221,21 @@ def test_html_attributes(small_discography):
     `parts__all_models__columns__model_name__cell` and `data-iommi-type` is
     :doc:`Cell`. In the docs for `Cell` you can find that cells have `attrs`.
     """
+
+
+def test_change_grouping(small_discography):
+    # language=rst
+    """
+    Change grouping of models
+    -------------------------
+
+    By default iommi groups models in the admin by the app they belong to. You can override this with the `group` argument:
+    """
+
+    class MyAdmin(Admin):
+        class Meta:
+            apps__docs_album__group = 'The endless search for where you are'
+
+    # @test
+    show_output(MyAdmin.all_models().as_view()(staff_req('get')))
+    # @end
