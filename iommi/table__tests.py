@@ -4468,3 +4468,34 @@ def test_annotate_on_broken_filters():
             </tbody>
         """,
     )
+
+
+def test_auto_rowspan_and_render_twice_generator(NoSortTable):  # noqa: N803
+    class TestTable(NoSortTable):
+        foo = Column(auto_rowspan=True)
+
+    rows = [
+        Struct(foo=1),
+        Struct(foo=1),
+        Struct(foo=2),
+        Struct(foo=2),
+    ]
+
+    # language=html
+    expected_html = """
+        <table class="table" >
+            <thead>
+                <tr> <th class="first_column subheader"> Foo </th> </tr>
+            </thead>
+            <tbody>
+                <tr> <td rowspan="2"> 1 </td> </tr>
+                <tr> <td style="display: none"> 1 </td> </tr>
+                <tr> <td rowspan="2"> 2 </td> </tr>
+                <tr> <td style="display: none"> 2 </td> </tr>
+            </tbody>
+        </table>"""
+
+    t = TestTable(rows=(x for x in rows))
+    t = t.bind(request=req('get'))
+    verify_table_html(table=t, expected_html=expected_html)
+    verify_table_html(table=t, expected_html=expected_html)
