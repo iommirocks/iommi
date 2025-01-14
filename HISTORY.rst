@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.9.0 (2025-01-14)
+~~~~~~~~~~~~~~~~~~
+
+* Add support for `related_query_name`
+
+* `auto_rowspan` on a generator gives an empty table
+
+* Admin: configurable grouping of models
+
+
 7.8.0 (2024-12-12)
 ~~~~~~~~~~~~~~~~~~
 
