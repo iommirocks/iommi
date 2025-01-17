@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+7.9.1 (2025-01-17)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed crash when specifying `Field.parsed_data` callback and the field was not editable
+
+* Improved error messages for evaluation
+
 7.9.0 (2025-01-14)
 ~~~~~~~~~~~~~~~~~~
 
