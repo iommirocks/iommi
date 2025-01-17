@@ -883,6 +883,7 @@ class Field(Part, Tag):
 
         if not self.editable:
             self.value = self.initial
+            self.parsed_data = MISSING
         else:
             self._read_raw_data()
 

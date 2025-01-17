@@ -3930,3 +3930,13 @@ def test_required_truthy_bug():
     assert form.actions.submit.iommi_name() == 'submit'
     assert 'genres' not in form.get_errors()['fields']
     assert form.get_errors()['fields']['name'] == {'This field is required'}
+
+
+def test_parsed_data_does_not_crash_on_non_editable():
+    Form.create(
+        auto__model=Album,
+        fields__name=dict(
+            editable=False,
+            parsed_data=lambda **_: 1,
+        )
+    ).bind(request=req('POST', **{'-submit': ''}))
