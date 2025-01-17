@@ -493,10 +493,8 @@ def test_invoke_callback_error_message_function():
         t.invoke_callback(broken_callback)
 
     actual = str(e.value)
-    assert actual.startswith(
-        'TypeError when invoking callback `<function test_invoke_callback_error_message_function.<locals>.broken_callback at 0x'
-    )
-    assert actual.endswith('`.\nKeyword arguments:\n    params\n    request\n    root\n    traversable\n    user')
+    expected = 'TypeError when invoking callback iommi.traversable__tests.broken_callback.\nKeyword arguments:\n    params\n    request\n    root\n    traversable\n    user'
+    assert actual == expected
 
 
 def test_invoke_callback_transparent_type_error():

@@ -51,7 +51,9 @@ def get_callable_description(c):
             return 'lambda found at: `{}`'.format(inspect.getsource(c).strip())
         except OSError:  # pragma: no cover
             pass
-    return f'`{c}`'
+    if isinstance(c, Namespace):
+        return f'`{c}`'
+    return f'{c.__module__}.{c.__name__}'
 
 
 def is_callable(v):
@@ -71,14 +73,17 @@ def evaluate(func_or_value, *, __signature=None, __strict=False, __match_empty=T
             return func_or_value(**kwargs)
 
         if __strict:
+            arguments = '\n        '.join(keys(kwargs))
+            parameters = '\n        '.join(inspect.getfullargspec(func_or_value)[0])
             assert isinstance(func_or_value, Namespace) and 'call_target' not in func_or_value, (
-                "Evaluating {} didn't resolve it into a value but strict mode was active, "
-                "the signature doesn't match the given parameters. "
-                "We had these arguments: {}".format(
-                    get_callable_description(func_or_value),
-                    ', '.join(keys(kwargs)),
-                )
-            )
+f'''Evaluating {get_callable_description(func_or_value)} didn't resolve it into a value but strict mode was active. The signature doesn't match the given parameters.
+
+    Possible inputs:
+        {arguments}
+
+    Function inputs:
+        {parameters}
+''')
     return func_or_value
 
 
