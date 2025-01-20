@@ -286,6 +286,11 @@ if django.VERSION[:2] >= (3, 0):
         color = models.CharField(choices=ColorChoices.choices, max_length=255)
 
 
+class IntChoicesModel(models.Model):
+    CHOICES = [(301, '301 Moved Permanently'), (302, '302 Found'), (303, '303 See Other')]
+    status = models.PositiveSmallIntegerField(choices=CHOICES)
+
+
 class CamelCaseFieldModel(models.Model):
     camelCaseField = models.BooleanField()  # noqa: N815
 

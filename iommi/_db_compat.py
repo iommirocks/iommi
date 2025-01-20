@@ -60,41 +60,54 @@ def setup_db_compat_django():
 
         return choice_display_name_formatter
 
-    def char_field_field_factory(model_field, **_):
-        if model_field.choices:
-            return Shortcut(
-                call_target__attribute='choice',
-                choices=_get_choices_from_model_choices(model_field),
-                choice_display_name_formatter=_build_display_name_formatter(model_field),
-            )
+    def model_choice_support_field_factory(shortcut_name='text'):
+        def fn(model_field, **_):
+            if model_field.choices:
+                return Shortcut(
+                    call_target__attribute='choice',
+                    choices=_get_choices_from_model_choices(model_field),
+                    choice_display_name_formatter=_build_display_name_formatter(model_field),
+                )
 
-        return Shortcut(call_target__attribute='text')
+            return Shortcut(call_target__attribute=shortcut_name)
 
-    def char_field_filter_factory(model_field, **_):
-        if model_field.choices:
-            return Shortcut(
-                call_target__attribute='choice',
-                choices=_get_choices_from_model_choices(model_field),
-                field__choice_display_name_formatter=_build_display_name_formatter(model_field),
-            )
+        return fn
 
-        return Shortcut(call_target__attribute='text')
+    def model_choice_support_filter_factory(shortcut_name='text'):
+        def fn(model_field, **_):
+            if model_field.choices:
+                return Shortcut(
+                    call_target__attribute='choice',
+                    choices=_get_choices_from_model_choices(model_field),
+                    field__choice_display_name_formatter=_build_display_name_formatter(model_field),
+                )
 
-    def char_field_column_factory(model_field, **_):
-        if model_field.choices:
-            formatter = _build_display_name_formatter(model_field)
-            return Shortcut(
-                call_target__attribute='choice',
-                choices=_get_choices_from_model_choices(model_field),
-                filter__field__choice_display_name_formatter=formatter,
-                cell__format=lambda value, **_: formatter(value),
-            )
+            return Shortcut(call_target__attribute=shortcut_name)
 
-        return Shortcut(call_target__attribute='text')
+        return fn
 
-    register_field_factory(CharField, factory=char_field_field_factory)
-    register_filter_factory(CharField, factory=char_field_filter_factory)
-    register_column_factory(CharField, factory=char_field_column_factory)
+    def model_choice_support_column_factory(shortcut_name='text'):
+        def fn(model_field, **_):
+            if model_field.choices:
+                formatter = _build_display_name_formatter(model_field)
+                return Shortcut(
+                    call_target__attribute='choice',
+                    choices=_get_choices_from_model_choices(model_field),
+                    filter__field__choice_display_name_formatter=formatter,
+                    cell__format=lambda value, **_: formatter(value),
+                )
+
+            return Shortcut(call_target__attribute=shortcut_name)
+
+        return fn
+
+    register_field_factory(CharField, factory=model_choice_support_field_factory())
+    register_filter_factory(CharField, factory=model_choice_support_filter_factory())
+    register_column_factory(CharField, factory=model_choice_support_column_factory())
+
+    register_field_factory(IntegerField, factory=model_choice_support_field_factory(shortcut_name='integer'))
+    register_filter_factory(IntegerField, factory=model_choice_support_filter_factory(shortcut_name='integer'))
+    register_column_factory(IntegerField, factory=model_choice_support_column_factory(shortcut_name='integer'))
 
     try:
         from django.contrib.postgres.search import SearchVectorField
@@ -109,7 +122,6 @@ def setup_db_compat_django():
     register_factory(DateField, shortcut_name='date')
     register_factory(DateTimeField, shortcut_name='datetime')
     register_factory(FloatField, shortcut_name='float')
-    register_factory(IntegerField, shortcut_name='integer')
     register_factory(FileField, shortcut_name='file')
     register_factory(AutoField, shortcut_name='integer', include=False)
     register_factory(

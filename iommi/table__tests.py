@@ -90,6 +90,7 @@ from tests.models import (
     AutomaticUrl2,
     BooleanFromModelTestModel,
     ChoicesModel,
+    IntChoicesModel,
     CSVExportTestModel,
     DefaultsInForms,
     FieldFromModelOneToOneTest,
@@ -4012,6 +4013,37 @@ def test_text_choices():
         (None, '', '---', False, 0),
         ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
         ('orange', 'orange', 'Orange', True, 2),
+    ]
+
+
+@pytest.mark.django_db
+def test_int_choices():
+    from tests.models import IntChoicesModel
+
+    IntChoicesModel(status=303).save()
+    IntChoicesModel(status=301).save()
+    IntChoicesModel(status=302).save()
+
+    table = Table(
+        auto__rows=IntChoicesModel.objects.all(),
+        columns__status__filter__include=True,
+    )
+    table = table.bind(request=req('get', status='302'))
+
+    assert table.get_visible_rows().get().status == 302
+
+    form = table.query.form
+    field = form.fields.status
+    assert field.choices == [301, 302, 303]
+
+    choice, label = list(IntChoicesModel.CHOICES)[0]
+    assert field.invoke_callback(field.choice_id_formatter, choice=choice) == str(choice)
+    assert field.invoke_callback(field.choice_display_name_formatter, choice=choice) == label
+    assert field.choice_tuples == [
+        (None, '', '---', False, 0),
+        (301, '301', '301 Moved Permanently', False, 1),
+        (302, '302', '302 Found', True, 2),
+        (303, '303', '303 See Other', False, 3),
     ]
 
 
