@@ -122,7 +122,6 @@ def setup_db_compat_django():
     register_factory(DateField, shortcut_name='date')
     register_factory(DateTimeField, shortcut_name='datetime')
     register_factory(FloatField, shortcut_name='float')
-    # register_factory(IntegerField, shortcut_name='integer')
     register_factory(FileField, shortcut_name='file')
     register_factory(AutoField, shortcut_name='integer', include=False)
     register_factory(
