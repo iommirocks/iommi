@@ -60,7 +60,7 @@ def setup_db_compat_django():
 
         return choice_display_name_formatter
 
-    def char_field_field_factory(shortcut_name='text'):
+    def choice_support_field_factory(shortcut_name='text'):
         def fn(model_field, **_):
             if model_field.choices:
                 return Shortcut(
@@ -73,7 +73,7 @@ def setup_db_compat_django():
 
         return fn
 
-    def char_field_filter_factory(shortcut_name='text'):
+    def choice_support_filter_factory(shortcut_name='text'):
         def fn(model_field, **_):
             if model_field.choices:
                 return Shortcut(
@@ -86,7 +86,7 @@ def setup_db_compat_django():
 
         return fn
 
-    def char_field_column_factory(shortcut_name='text'):
+    def choice_support_column_factory(shortcut_name='text'):
         def fn(model_field, **_):
             if model_field.choices:
                 formatter = _build_display_name_formatter(model_field)
@@ -101,13 +101,13 @@ def setup_db_compat_django():
 
         return fn
 
-    register_field_factory(CharField, factory=char_field_field_factory())
-    register_filter_factory(CharField, factory=char_field_filter_factory())
-    register_column_factory(CharField, factory=char_field_column_factory())
+    register_field_factory(CharField, factory=choice_support_field_factory())
+    register_filter_factory(CharField, factory=choice_support_filter_factory())
+    register_column_factory(CharField, factory=choice_support_column_factory())
 
-    register_field_factory(IntegerField, factory=char_field_field_factory('integer'))
-    register_filter_factory(IntegerField, factory=char_field_filter_factory('integer'))
-    register_column_factory(IntegerField, factory=char_field_column_factory('integer'))
+    register_field_factory(IntegerField, factory=choice_support_field_factory(shortcut_name='integer'))
+    register_filter_factory(IntegerField, factory=choice_support_filter_factory(shortcut_name='integer'))
+    register_column_factory(IntegerField, factory=choice_support_column_factory(shortcut_name='integer'))
 
     try:
         from django.contrib.postgres.search import SearchVectorField
