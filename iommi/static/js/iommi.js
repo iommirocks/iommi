@@ -127,17 +127,15 @@ class IommiBase {
         const ajaxOptions = {signal: this.resetAbortController(form).signal};
 
         try {
-            const {global, fields} = await this.fetchJson(ajaxURL, ajaxOptions);
+            const {globalErrors, fields} = await this.fetchJson(ajaxURL, ajaxOptions);
 
-            const globalErrors = form.parentNode.querySelector('.iommi_query_error');
-            if (global) {
-                globalErrors.querySelectorAll('span').innerHTML = global.join(', ');
-                globalErrors.classList.remove('hidden');
+            const globalErrorsWrapper = form.parentNode.querySelector('.iommi_query_error');
+            if (globalErrors) {
+                globalErrorsWrapper.innerHTML = globalErrors.join(', ');
+                globalErrorsWrapper.classList.remove('hidden');
             } else {
-                globalErrors.classList.add('hidden');
+                globalErrorsWrapper.classList.add('hidden');
             }
-
-            globalErrors.innerText = global;
 
             if (fields) {
                 let fieldElement;
