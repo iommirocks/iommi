@@ -55,6 +55,55 @@ iommi_js_init = Fragment(
     include=lambda **_: iommi_debug_on(),
 )
 
+query_css = Fragment(
+    mark_safe(
+        """\
+<style type="text/css">
+    .iommi_filter .iommi_query_error {
+        color: red;
+    }
+    .iommi_filter .iommi_query_error.hidden {
+        display: none;
+    }
+</style>
+"""
+    )
+)
+
+query_advanced_css = Fragment(
+    mark_safe(
+        """\
+<style type="text/css">
+    .iommi_filter .iommi_query_available_fields,
+    .iommi_filter .iommi_query_available_query_commands {
+        display: inline-block;
+        vertical-align: top;
+        margin-right: 10px;
+        max-width: 45%;
+    }
+    .iommi_filter .iommi_query_available_fields {
+        padding-right: 20px;
+    }
+    .iommi_filter .iommi_query_available_fields ul,
+    .iommi_filter .iommi_query_available_query_commands ul {
+
+    }
+    .iommi_filter .iommi_query_toggle_help,
+    .iommi_filter .iommi_query_help {
+        margin-left: 3px;
+    }
+    .iommi_filter .iommi_query_toggle_help {
+        cursor: pointer;
+        width: 100px;
+    }
+    .iommi_filter .iommi_query_toggle_simple_mode {
+        float: right;
+    }
+</style>
+"""
+    )
+)
+
 base = Style(
     internal=True,
     base_template='iommi/base.html',
@@ -148,6 +197,8 @@ base = Style(
     Query=dict(
         template='iommi/query/form.html',
         advanced__template='iommi/query/advanced.html',
+        assets__query_css=query_css,
+        advanced__assets__query_advanced_css=query_advanced_css,
         form__attrs__class__iommi_filter=True,
     ),
     Actions=dict(
