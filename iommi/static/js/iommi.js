@@ -127,7 +127,7 @@ class IommiBase {
         const ajaxOptions = {signal: this.resetAbortController(form).signal};
 
         try {
-            const {globalErrors, fields} = await this.fetchJson(ajaxURL, ajaxOptions);
+            const {global: globalErrors, fields} = await this.fetchJson(ajaxURL, ajaxOptions);
 
             const globalErrorsWrapper = form.parentNode.querySelector('.iommi_query_error');
             if (globalErrors) {
