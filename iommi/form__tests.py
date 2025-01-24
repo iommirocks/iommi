@@ -683,6 +683,22 @@ def test_non_editable():
     )
 
 
+def test_non_editable_textarea():
+    verify_part_html(
+        part=Form(
+            fields__foo=Field.textarea(editable=False),
+        ),
+        find__name='div',
+        # language=html
+        expected_html="""
+            <div>
+                <label for="id_foo">Foo</label>
+                <textarea id="id_foo" name="foo" disabled=""></textarea>
+            </div>
+        """,
+    )
+
+
 def test_non_editable_other_tag():
     verify_part_html(
         part=Form(

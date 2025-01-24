@@ -120,6 +120,9 @@ base = Style(
                 template='iommi/form/heading.html',
             ),
         ),
+        non_editable_input=dict(
+            attrs__disabled=lambda fragment, **_: True if fragment.tag in ('input', 'textarea') else None,
+        ),
     ),
     Column=dict(
         shortcuts=dict(
