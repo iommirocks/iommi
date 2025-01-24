@@ -74,6 +74,10 @@ h2 {
     margin-left: -0.3rem;
 }
 
+.sidebar-logo {
+    max-width: 70%;
+}
+
 @media (prefers-color-scheme: dark) {
     .highlight {
         background: #202020;
