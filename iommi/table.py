@@ -1780,7 +1780,7 @@ class Table(Part, Tag):
     columns: Dict[str, Column] = RefinableMembers()
 
     class Meta:
-        assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
+        query__advanced__assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
         assets__table_js_select_all__template = "iommi/table/js_select_all.html"
         member_class = Column
         form_class = Form
