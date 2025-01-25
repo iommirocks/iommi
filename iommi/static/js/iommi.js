@@ -200,10 +200,8 @@ class IommiBase {
         const ajaxOptions = {signal: this.resetAbortController(container).signal};
 
         try {
-            const {html} = await this.fetchJson(ajaxURL, ajaxOptions);
+            const {html, actions} = await this.fetchJson(ajaxURL, ajaxOptions);
 
-            // We have to remove each child before setting innerHTML since disconnectedCallback
-            // is not fired on the children using IE11
             let child = container.firstElementChild;
             while (child) {
                 container.removeChild(child);
@@ -212,6 +210,10 @@ class IommiBase {
 
             const element = document.createRange().createContextualFragment(html);
             container.appendChild(element);
+
+            let actions_container = container.parentElement.querySelector('.iommi-actions');
+            const actions_element = document.createRange().createContextualFragment(actions);
+            actions_container.replaceWith(actions_element);
 
             container.dispatchEvent(
                 new CustomEvent('iommi.element.populated', {
