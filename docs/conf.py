@@ -94,7 +94,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'iommi'
-copyright = u'2023, Anders Hovmöller & Johan Lübcke'
+copyright = u'2025, Anders Hovmöller & Johan Lübcke'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
