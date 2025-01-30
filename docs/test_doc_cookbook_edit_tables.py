@@ -21,7 +21,7 @@ def test_tables():
     """
 
 
-def test_how_do_you_edit_one_to_one_in_a_table(artist):
+def test_how_do_you_edit_one_to_one_in_a_table(black_sabbath):
     # language=rst
     """
     How do you edit one-to-one fields in an edit table?
@@ -30,7 +30,7 @@ def test_how_do_you_edit_one_to_one_in_a_table(artist):
     Include them in `auto__include`. Say you have a profile model for an artist:
     """
 
-    profile = Profile.objects.create(artist=artist)
+    profile = Profile.objects.create(artist=black_sabbath)
 
     # language=rst
     """
@@ -60,5 +60,5 @@ def test_how_do_you_edit_one_to_one_in_a_table(artist):
     response = bound.render_to_response()
     assert not edit_table.get_errors()
     assert response.status_code == 302, response.content.decode()
-    assert Artist.objects.get(pk=artist.pk).name == 'new name'
+    assert Artist.objects.get(pk=black_sabbath.pk).name == 'new name'
     # @end

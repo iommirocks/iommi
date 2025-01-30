@@ -745,7 +745,7 @@ def test_how_do_i_group_rows(medium_discography):
     # @end
 
 
-def test_how_do_i_get_rowspan_on_a_table(small_discography, artist):
+def test_how_do_i_get_rowspan_on_a_table(small_discography, black_sabbath):
     # language=rst
     """
     .. _rowspan:
@@ -764,7 +764,7 @@ def test_how_do_i_get_rowspan_on_a_table(small_discography, artist):
     )
 
     # @test
-    Album.objects.create(name='Live at Last', year=1980, artist=artist)
+    Album.objects.create(name='Live at Last', year=1980, artist=black_sabbath)
     show_output(table)
     # @end
 

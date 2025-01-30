@@ -56,13 +56,18 @@ def reset_sequences(request, django_db_blocker):
 
 
 @pytest.fixture
-def artist(transactional_db):
+def black_sabbath(transactional_db):
     return Artist.objects.create(name='Black Sabbath')
 
 
 @pytest.fixture
-def album(artist):
-    return Album.objects.create(name='Heaven & Hell', artist=artist, year=1980)
+def ozzy(transactional_db):
+    return Artist.objects.create(name='Ozzy Osbourne')
+
+
+@pytest.fixture
+def album(black_sabbath):
+    return Album.objects.create(name='Heaven & Hell', artist=black_sabbath, year=1980)
 
 
 @pytest.fixture
@@ -71,25 +76,24 @@ def track(album):
 
 
 @pytest.fixture
-def small_discography(artist):
+def small_discography(black_sabbath):
     return [
-        Album.objects.get_or_create(name='Heaven & Hell', artist=artist, year=1980)[0],
-        Album.objects.get_or_create(name='Mob Rules', artist=artist, year=1981)[0],
+        Album.objects.get_or_create(name='Heaven & Hell', artist=black_sabbath, year=1980)[0],
+        Album.objects.get_or_create(name='Mob Rules', artist=black_sabbath, year=1981)[0],
     ]
 
 
 @pytest.fixture
-def medium_discography(artist):
-    ozzy, _ = Artist.objects.get_or_create(name='Ozzy Osbourne')
+def medium_discography(black_sabbath, ozzy):
     return [
-        Album.objects.get_or_create(name='Heaven & Hell', artist=artist, year=1980)[0],
+        Album.objects.get_or_create(name='Heaven & Hell', artist=black_sabbath, year=1980)[0],
         Album.objects.get_or_create(name='Blizzard of Ozz', artist=ozzy, year=1980)[0],
-        Album.objects.get_or_create(name='Mob Rules', artist=artist, year=1981)[0],
+        Album.objects.get_or_create(name='Mob Rules', artist=black_sabbath, year=1981)[0],
     ]
 
 
-def create_tracks(album_name, tracks):
-    album = Album.objects.get(name=album_name)
+def create_tracks(artist, album_name, tracks):
+    album = Album.objects.get(artist=artist, name=album_name)
     Track.objects.bulk_create(
         [
             Track(
@@ -103,8 +107,9 @@ def create_tracks(album_name, tracks):
 
 
 @pytest.fixture
-def big_discography(medium_discography):
+def big_discography(black_sabbath, ozzy, medium_discography):
     create_tracks(
+        black_sabbath,
         'Heaven & Hell',
         [
             'Neon Knights',
@@ -119,6 +124,7 @@ def big_discography(medium_discography):
     )
 
     create_tracks(
+        ozzy,
         'Blizzard of Ozz',
         [
             'I Don\'t Know',
@@ -134,6 +140,7 @@ def big_discography(medium_discography):
     )
 
     create_tracks(
+        black_sabbath,
         'Mob Rules',
         [
             'Turn Up the Night',

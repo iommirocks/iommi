@@ -101,7 +101,7 @@ Register your models:
 """
 
 
-def test_path_decoder(artist, album):
+def test_path_decoder(black_sabbath, album):
     # @test
     unregister_decoding = (
     # @end
@@ -149,7 +149,7 @@ def test_path_decoder(artist, album):
         return artist, album
 
     # @test
-    assert my_view(request, artist_pk=artist.pk, album_pk=album.pk) == (artist, album)
+    assert my_view(request, artist_pk=black_sabbath.pk, album_pk=album.pk) == (black_sabbath, album)
     # @end
 
     # language=rst

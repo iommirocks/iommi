@@ -59,7 +59,7 @@ def test_how_do_i_supply_a_custom_parser_for_a_field():
     # @end
 
 
-def test_how_do_i_make_a_field_non_editable(artist):
+def test_how_do_i_make_a_field_non_editable(black_sabbath):
     # language=rst
     """
 
@@ -132,7 +132,7 @@ def test_how_do_i_make_a_field_non_editable(artist):
 
     # @test
     r = user_req('get')
-    r.iommi_view_params = Struct(artist=artist)
+    r.iommi_view_params = Struct(artist=black_sabbath)
     form = form.bind(request=r)
     show_output(form)
     # @end
@@ -566,7 +566,7 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
     # @end
 
 
-def test_how_do_I_change_redirect_target(artist):
+def test_how_do_I_change_redirect_target(black_sabbath):
     # language=rst
     """
     .. _form-redirect:
@@ -592,7 +592,7 @@ def test_how_do_I_change_redirect_target(artist):
 
     # @test
     response = form.bind(
-        request=req('POST', name='Heaven & Hell', artist=artist.pk, year=1980, **{'-submit': ''})
+        request=req('POST', name='Heaven & Hell', artist=black_sabbath.pk, year=1980, **{'-submit': ''})
     ).render_to_response()
     assert response.status_code == 302, response.content.decode()
 
@@ -614,7 +614,7 @@ def test_how_do_I_change_redirect_target(artist):
 
     # @test
     response = form.bind(
-        request=req('POST', name='Heaven & Hell!', artist=artist.pk, year=1980, **{'-submit': ''})
+        request=req('POST', name='Heaven & Hell!', artist=black_sabbath.pk, year=1980, **{'-submit': ''})
     ).render_to_response()
     assert response.status_code == 302
     assert response['Location'] == '.'
@@ -660,7 +660,7 @@ def test_how_do_I_make_a_fields_choices_depend_on_another_field():
     # @end
 
 
-def test_form_with_foreign_key_reverse(small_discography, artist):
+def test_form_with_foreign_key_reverse(small_discography, black_sabbath):
     # language=rst
     """
 
@@ -675,7 +675,7 @@ def test_form_with_foreign_key_reverse(small_discography, artist):
     """
 
     f = Form(
-        auto__instance=artist,
+        auto__instance=black_sabbath,
         fields__albums__include=True,
     )
 
@@ -690,7 +690,7 @@ def test_form_with_foreign_key_reverse(small_discography, artist):
     # @end
 
 
-def test_non_rendered(artist):
+def test_non_rendered(black_sabbath):
     # language=rst
     """
     .. _non-rendered-field:
@@ -706,7 +706,7 @@ def test_non_rendered(artist):
     the `non_rendered` shortcut and setting `initial`.
     """
     # @test
-    black_sabbath = artist
+    black_sabbath = black_sabbath
     # @end
 
     f = Form.create(
@@ -1017,7 +1017,7 @@ def test_dependent_fields(small_discography):
     # @end
 
 
-def test_how_do_i_make_a_form_to_create_or_edit(artist, album):
+def test_how_do_i_make_a_form_to_create_or_edit(black_sabbath, album):
     # language=rst
     """
 

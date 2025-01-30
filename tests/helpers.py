@@ -218,7 +218,7 @@ def _show_path_from_name(name):
 _show_output_used = set()
 
 
-def show_output(part, url='/', data=None):
+def show_output(part, url='/'):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(
         Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''),
