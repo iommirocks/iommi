@@ -2411,12 +2411,12 @@ def test_ordering():
     # ordering from GET parameter
     t = Table(auto__model=TFoo)
     t = t.bind(request=req('get', order='a'))
-    assert list(t.sorted_rows.query.order_by) == ['a']
+    assert list(t.sorted_rows.query.order_by) == ['a', 'pk']
 
     # default ordering
     t = Table(auto__model=TFoo, default_sort_order='b')
     t = t.bind(request=req('get', order='b'))
-    assert list(t.sorted_rows.query.order_by) == ['b']
+    assert list(t.sorted_rows.query.order_by) == ['b', 'pk']
 
 
 @pytest.mark.django_db
