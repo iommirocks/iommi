@@ -2347,12 +2347,17 @@ class Table(Part, Tag):
         rows: Union[QuerySet, list],
         sort_key: str,
         descending: bool,
+        table,
         **_,
     ):
         if isinstance(rows, list):
             return ordered_by_on_list(rows, sort_key, descending)
         else:
             sort_keys = [sort_key] if not isinstance(sort_key, list) else sort_key
+            if table.model._meta.ordering:
+                sort_keys.extend(table.model._meta.ordering)
+            if sort_keys[-1] != 'pk':
+                sort_keys.append('pk')  # Add pk to always guarantee stable order for pagination.
             sort_keys = [('-' + x if descending else x) for x in sort_keys]
             return rows.order_by(*sort_keys)
 
