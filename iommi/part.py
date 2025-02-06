@@ -71,6 +71,7 @@ class Part(Traversable):
     extra: Dict[str, Any] = Refinable()
     # not EvaluatedRefinable because this is an evaluated container so is special
     extra_evaluated: Dict[str, Any] = Refinable()
+    assets: Namespace = RefinableMembers()
     endpoints: Namespace = RefinableMembers()
     # Only the assets used by this part
     assets: Namespace = RefinableMembers()

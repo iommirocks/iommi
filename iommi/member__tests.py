@@ -98,8 +98,6 @@ def test_bind_via_unapplied_config():
         match=(
             r'Fruit object has no refinable attribute\(s\): "color"\.\n'
             r'Available attributes:\n'
-            r'    assets\n'
-            r'    endpoints\n'
             r'    extra_params\n'
             r'    iommi_style\n'
             r'    taste\n'
