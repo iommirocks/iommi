@@ -141,7 +141,7 @@ def test_dispatch_return_part():
 
 
 def test_invalid_endpoint_path(settings):
-    p = Page().bind(request=req('get', **{'/foo': ''}))
+    p = Page(endpoints__foo__func=lambda **_: None).bind(request=req('get', **{'/bar': ''}))
     assert p.render_to_response().content == b'{"error": "Invalid endpoint path"}'
 
     settings.DEBUG = True
@@ -151,15 +151,13 @@ def test_invalid_endpoint_path(settings):
     assert (
         str(e.value)
         == """
-Given path /foo not found.
+Given path /bar not found.
     Short alternatives:
         ''
-        debug_tree
-        debug_templates_used
+        foo
     Long alternatives:
         ''
-        endpoints/debug_tree
-        endpoints/debug_templates_used
+        endpoints/foo
 """.strip()
     )
 

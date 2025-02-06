@@ -11,9 +11,9 @@ from iommi.attrs import (
     evaluate_attrs,
 )
 from iommi.base import (
-    keys,
     NOT_BOUND_MESSAGE,
     items,
+    keys,
 )
 from iommi.declarative.namespace import Namespace
 from iommi.evaluate import (
@@ -63,8 +63,10 @@ def trace_worst_offenders(f):
             under_trace = request.GET.get('_iommi_func_worst_offender')
             if under_trace == f.__name__:
                 import sys
-                from iommi.sql_trace import sql_debug_format_stack_trace
                 from collections import defaultdict
+
+                from iommi.sql_trace import sql_debug_format_stack_trace
+
                 if not hasattr(request, '_iommi_func_worst_offender'):
                     request._iommi_func_worst_offender = defaultdict(int)
 
@@ -93,8 +95,6 @@ class Traversable(RefinableObject):
     context = None
 
     iommi_style: str = Refinable()
-    assets = RefinableMembers()
-    endpoints = RefinableMembers()
 
     @staticmethod
     @refinable

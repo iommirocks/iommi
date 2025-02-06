@@ -10,16 +10,8 @@ test = Style(
     font_awesome_4,
     select2_enhanced_forms,
     internal=True,
-    root__assets=dict(
-        jquery=None,
-        select2_js=None,
-        select2_css=None,
-        icons=None,
-        iommi_js=None,
-        iommi_js_init=None,
-        iommi_scroll_js=None,
-        meta=None,
-    ),
+    root__assets=None,
+    root__endpoints=None,
     Field=dict(
         shortcuts=dict(),
     ),

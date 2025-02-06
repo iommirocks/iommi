@@ -839,3 +839,15 @@ def test_boolean_column():
             </table>
         """,
     )
+
+
+def test_assets_on_root_should_fail_on_traversable():
+    t = Traversable(
+        iommi_style=Style(
+            root__assets__banana=Asset.css(attrs__href='http://foo.bar/baz'),
+        )
+    )
+    with pytest.raises(TypeError) as e:
+        t.refine_done()
+
+    assert 'Traversable object has no refinable attribute(s): "assets"' in str(e)

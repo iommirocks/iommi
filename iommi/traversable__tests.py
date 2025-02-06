@@ -133,8 +133,6 @@ def test_traverse_on_iommi():
         'config': 'parts/some_form/fields/fisk/endpoints/config',
         'csv': 'parts/a_table/endpoints/csv',
         'container': 'parts/a_table/container',
-        'debug_tree': 'endpoints/debug_tree',
-        'debug_templates_used': 'endpoints/debug_templates_used',
         'errors': 'parts/a_table/query/endpoints/errors',
         'fisk': 'parts/some_form/fields/fisk',
         'fisk/config': 'parts/some_other_form/fields/fisk/endpoints/config',
@@ -473,7 +471,9 @@ def test_invoke_callback_error_message_lambda():
     with pytest.raises(TypeError) as e:
         t.invoke_callback(lambda a: None, b=2)
 
-    assert str(e.value) == dedent('''
+    assert (
+        str(e.value)
+        == dedent('''
         TypeError when invoking callback lambda found at: `t.invoke_callback(lambda a: None, b=2)`.
         Keyword arguments:
             b
@@ -483,6 +483,7 @@ def test_invoke_callback_error_message_lambda():
             traversable
             user
     ''').strip()
+    )
 
 
 def test_invoke_callback_error_message_function():

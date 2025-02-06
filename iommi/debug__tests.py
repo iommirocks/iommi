@@ -20,7 +20,9 @@ from tests import debug_tests_stuff
 from tests.helpers import req
 
 
-def test_debug_tree_on_debug_false():
+def test_debug_tree_on_debug_false(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'base'
+
     class NestedPage(Page):
         foo = 'foo'
 
@@ -35,6 +37,7 @@ def test_debug_tree_on_debug_false():
 
 
 def test_debug_tree(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'base'
     settings.DEBUG = True
 
     class NestedPage(Page):
@@ -49,7 +52,7 @@ def test_debug_tree(settings):
         bar = 'bar'
         nested = NestedPage()
 
-    root = MyPage().bind(request=req('get', **{'/debug_tree': '7'}))
+    root = MyPage(assets=None).bind(request=req('get', **{'/debug_tree': '7'}))
     target = find_target(path='/debug_tree', root=root)
     result = target.func(value='', **target.iommi_evaluate_parameters())
 
@@ -75,9 +78,12 @@ parts__nested__parts__foo__children__text, None, str, False"""
 
 
 def test_debug_tree_crash_on_non_editable(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'base'
     settings.DEBUG = True
-
-    root = Form(fields__foo=Field.info(value='bar')).bind(request=req('get', **{'/debug_tree': '7'}))
+    root = Form(
+        assets=None,
+        fields__foo=Field.info(value='bar'),
+    ).bind(request=req('get', **{'/debug_tree': '7'}))
     target = find_target(path='/debug_tree', root=root)
     result = target.func(value='', **target.iommi_evaluate_parameters())
 
