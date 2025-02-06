@@ -12,6 +12,8 @@ request = req('get')
 def test_style():
     # language=rst
     """
+    .. _style:
+
     Style
     =====
 

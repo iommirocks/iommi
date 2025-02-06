@@ -90,10 +90,12 @@ from tests.models import (
     AutomaticUrl2,
     BooleanFromModelTestModel,
     ChoicesModel,
+    IntChoicesModel,
     CSVExportTestModel,
     DefaultsInForms,
     FieldFromModelOneToOneTest,
     Foo,
+    Qux,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
@@ -2409,12 +2411,12 @@ def test_ordering():
     # ordering from GET parameter
     t = Table(auto__model=TFoo)
     t = t.bind(request=req('get', order='a'))
-    assert list(t.sorted_rows.query.order_by) == ['a']
+    assert list(t.sorted_rows.query.order_by) == ['a', 'pk']
 
     # default ordering
     t = Table(auto__model=TFoo, default_sort_order='b')
     t = t.bind(request=req('get', order='b'))
-    assert list(t.sorted_rows.query.order_by) == ['b']
+    assert list(t.sorted_rows.query.order_by) == ['b', 'pk']
 
 
 @pytest.mark.django_db
@@ -3709,6 +3711,35 @@ def test_auto_model_dunder_path_1to1_reverse():
 
 
 @pytest.mark.django_db
+def test_custom_related_query_name():
+    foo = Foo.objects.create(foo=1)
+    Qux.objects.create(foo=foo, lang='en', name='first english item')
+    Qux.objects.create(foo=foo, lang='cs', name='první česká položka')
+    foo2 = Foo.objects.create(foo=1)
+    Qux.objects.create(foo=foo2, lang='en', name='second english item')
+    Qux.objects.create(foo=foo2, lang='cs', name='druhá česká položka')
+
+    table = Table(
+        auto__model=Foo,
+        auto__include=['qux__name'],
+        rows=Foo.objects.prefetch_related('quxes').filter(qux__lang='en'),
+        columns__qux_name__filter__include=True,
+        columns__qux_name__filter__freetext=True,
+    )
+
+    bound_table1 = table.bind(request=req('get', freetext_search='first'))
+    assert 'qux_name' in keys(bound_table1.columns)
+    assert len(bound_table1.get_visible_rows()) == 1
+    bound_table1.__html__()
+
+    bound_table2 = table.bind(request=req('get', order='-qux_name'))
+    assert 'qux_name' in keys(bound_table2.columns)
+    assert len(bound_table2.get_visible_rows()) == 2
+    assert bound_table2.get_visible_rows().first().qux.name == 'second english item'
+    bound_table2.__html__()
+
+
+@pytest.mark.django_db
 def test_invalid_form_message():
     invalid_form_message = 'Seventh Star'
     table = Table(
@@ -3982,6 +4013,37 @@ def test_text_choices():
         (None, '', '---', False, 0),
         ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
         ('orange', 'orange', 'Orange', True, 2),
+    ]
+
+
+@pytest.mark.django_db
+def test_int_choices():
+    from tests.models import IntChoicesModel
+
+    IntChoicesModel(status=303).save()
+    IntChoicesModel(status=301).save()
+    IntChoicesModel(status=302).save()
+
+    table = Table(
+        auto__rows=IntChoicesModel.objects.all(),
+        columns__status__filter__include=True,
+    )
+    table = table.bind(request=req('get', status='302'))
+
+    assert table.get_visible_rows().get().status == 302
+
+    form = table.query.form
+    field = form.fields.status
+    assert field.choices == [301, 302, 303]
+
+    choice, label = list(IntChoicesModel.CHOICES)[0]
+    assert field.invoke_callback(field.choice_id_formatter, choice=choice) == str(choice)
+    assert field.invoke_callback(field.choice_display_name_formatter, choice=choice) == label
+    assert field.choice_tuples == [
+        (None, '', '---', False, 0),
+        (301, '301', '301 Moved Permanently', False, 1),
+        (302, '302', '302 Found', True, 2),
+        (303, '303', '303 See Other', False, 3),
     ]
 
 
@@ -4468,3 +4530,34 @@ def test_annotate_on_broken_filters():
             </tbody>
         """,
     )
+
+
+def test_auto_rowspan_and_render_twice_generator(NoSortTable):  # noqa: N803
+    class TestTable(NoSortTable):
+        foo = Column(auto_rowspan=True)
+
+    rows = [
+        Struct(foo=1),
+        Struct(foo=1),
+        Struct(foo=2),
+        Struct(foo=2),
+    ]
+
+    # language=html
+    expected_html = """
+        <table class="table" >
+            <thead>
+                <tr> <th class="first_column subheader"> Foo </th> </tr>
+            </thead>
+            <tbody>
+                <tr> <td rowspan="2"> 1 </td> </tr>
+                <tr> <td style="display: none"> 1 </td> </tr>
+                <tr> <td rowspan="2"> 2 </td> </tr>
+                <tr> <td style="display: none"> 2 </td> </tr>
+            </tbody>
+        </table>"""
+
+    t = TestTable(rows=(x for x in rows))
+    t = t.bind(request=req('get'))
+    verify_table_html(table=t, expected_html=expected_html)
+    verify_table_html(table=t, expected_html=expected_html)

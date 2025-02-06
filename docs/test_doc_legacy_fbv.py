@@ -28,7 +28,7 @@ Add iommi to a FBV
 """
 
 
-def test_legacy_fbv(small_discography, artist):
+def test_legacy_fbv(small_discography, black_sabbath):
     # language=rst
     """
     Let's say we have a simple view to display an album:
@@ -45,8 +45,8 @@ def test_legacy_fbv(small_discography, artist):
         )
 
     # @test
-    response = view_artist(req('get'), artist_name=artist.name)
-    assert artist.name in response.content.decode()
+    response = view_artist(req('get'), artist_name=black_sabbath.name)
+    assert black_sabbath.name in response.content.decode()
     show_output(response)
     # @end
 
@@ -56,7 +56,7 @@ def test_legacy_fbv(small_discography, artist):
     """
 
 
-def test_legacy_fbv_step2(small_discography, artist):
+def test_legacy_fbv_step2(small_discography, black_sabbath):
     # language=rst
     """
     Add an iommi table
@@ -80,8 +80,8 @@ def test_legacy_fbv_step2(small_discography, artist):
         )
 
     # @test
-    response = view_artist(req('get'), artist_name=artist.name)
-    assert artist.name in response.content.decode()
+    response = view_artist(req('get'), artist_name=black_sabbath.name)
+    assert black_sabbath.name in response.content.decode()
     show_output(response)
     # @end
 
@@ -91,7 +91,7 @@ def test_legacy_fbv_step2(small_discography, artist):
     """
 
 
-def test_legacy_fbv_step3(artist, album, track):
+def test_legacy_fbv_step3(black_sabbath, album, track):
     # language=rst
     """
     AJAX dispatch
@@ -139,16 +139,16 @@ def test_legacy_fbv_step3(artist, album, track):
     """
 
     # @test
-    response = view_artist(req('get'), artist_name=artist.name)
-    assert artist.name in response.content.decode()
+    response = view_artist(req('get'), artist_name=black_sabbath.name)
+    assert black_sabbath.name in response.content.decode()
     # ajax dispatch
-    response = view_artist(req('get', **{'/choices': album.name}), artist_name=artist.name)
-    assert artist.name not in response.content.decode()
+    response = view_artist(req('get', **{'/choices': album.name}), artist_name=black_sabbath.name)
+    assert black_sabbath.name not in response.content.decode()
     assert album.name in response.content.decode()
     # @end
 
 
-def test_legacy_fbv_step4(artist, album, track):
+def test_legacy_fbv_step4(black_sabbath, album, track):
     # language=rst
     """
     Multiple iommi components
@@ -183,11 +183,11 @@ def test_legacy_fbv_step4(artist, album, track):
         )
 
     # @test
-    response = view_artist(req('get'), artist_name=artist.name)
+    response = view_artist(req('get'), artist_name=black_sabbath.name)
     show_output(response)
-    assert artist.name in response.content.decode()
+    assert black_sabbath.name in response.content.decode()
     # ajax dispatch
-    response = view_artist(req('get', **{'/album/choices': album.name}), artist_name=artist.name)
-    assert artist.name not in response.content.decode()
+    response = view_artist(req('get', **{'/album/choices': album.name}), artist_name=black_sabbath.name)
+    assert black_sabbath.name not in response.content.decode()
     assert album.name in response.content.decode()
     # @end

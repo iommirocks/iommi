@@ -3,7 +3,6 @@ from django.template import Template
 from docs.models import Album
 from iommi import (
     Form,
-    html,
     Page,
 )
 from tests.helpers import (

@@ -9,6 +9,7 @@ from iommi.docs import (
     _generate_tests_from_class_doc,
     _generate_tests_from_class_docs,
     get_default_classes,
+    rst_from_pytest,
 )
 from iommi.refinable import (
     Refinable,
@@ -240,8 +241,6 @@ def test_2():
     f.seek(0)
     target_f = StringIO()
 
-    from make_doc_rsts import rst_from_pytest
-
     rst_from_pytest(source_f=f, target_f=target_f, target=None)
 
     v = target_f.getvalue()
@@ -264,7 +263,7 @@ def test_generate_tests_from_class_doc():
 
     f = StringIO()
     source_filename, actual_filename, doc_generator = list(
-        _generate_tests_from_class_doc(f=f, c=Foo, classes=[], cookbook_name_by_refinable_name={})
+        _generate_tests_from_class_doc(f=f, c=Foo, classes=[], uses_by_field={})
     )
     actual_doc = doc_generator()
 

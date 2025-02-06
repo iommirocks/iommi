@@ -125,6 +125,9 @@ base = Style(
                 template='iommi/form/heading.html',
             ),
         ),
+        non_editable_input=dict(
+            attrs__disabled=lambda fragment, **_: True if fragment.tag in ('input', 'textarea') else None,
+        ),
     ),
     Column=dict(
         shortcuts=dict(
@@ -153,6 +156,7 @@ base = Style(
     Query=dict(
         template='iommi/query/form.html',
         advanced__template='iommi/query/advanced.html',
+        assets__iommi_css=Asset.css(attrs__href=lambda **_: static('css/iommi.css')),
         form__attrs__class__iommi_filter=True,
     ),
     Actions=dict(

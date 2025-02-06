@@ -179,7 +179,7 @@ def test_traverse_on_iommi():
         'query': 'parts/a_table/query',
         'query/columns': 'parts/a_table/query/filters/columns',
         'query/fusk': 'parts/a_table/query/filters/fusk',
-        'query_form_toggle_script': 'parts/a_table/assets/query_form_toggle_script',
+        'query_form_toggle_script': 'parts/a_table/query/advanced/assets/query_form_toggle_script',
         'select': 'parts/a_table/columns/select',
         'some_form': 'parts/some_form',
         'some_other_form': 'parts/some_other_form',
@@ -191,6 +191,7 @@ def test_traverse_on_iommi():
         'text': 'parts/a_table/container/children/text',
         'toggle': 'parts/a_table/query/advanced/toggle',
         'validate': 'parts/some_form/fields/fisk/endpoints/validate',
+        'iommi_css': 'parts/a_table/query/assets/iommi_css',
     }
     assert len(actual.values()) == len(set(actual.values()))
     page = page.bind(request=req('get'))
@@ -493,10 +494,8 @@ def test_invoke_callback_error_message_function():
         t.invoke_callback(broken_callback)
 
     actual = str(e.value)
-    assert actual.startswith(
-        'TypeError when invoking callback `<function test_invoke_callback_error_message_function.<locals>.broken_callback at 0x'
-    )
-    assert actual.endswith('`.\nKeyword arguments:\n    params\n    request\n    root\n    traversable\n    user')
+    expected = 'TypeError when invoking callback iommi.traversable__tests.broken_callback.\nKeyword arguments:\n    params\n    request\n    root\n    traversable\n    user'
+    assert actual == expected
 
 
 def test_invoke_callback_transparent_type_error():

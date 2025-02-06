@@ -683,6 +683,22 @@ def test_non_editable():
     )
 
 
+def test_non_editable_textarea():
+    verify_part_html(
+        part=Form(
+            fields__foo=Field.textarea(editable=False),
+        ),
+        find__name='div',
+        # language=html
+        expected_html="""
+            <div>
+                <label for="id_foo">Foo</label>
+                <textarea id="id_foo" name="foo" disabled=""></textarea>
+            </div>
+        """,
+    )
+
+
 def test_non_editable_other_tag():
     verify_part_html(
         part=Form(
@@ -3930,3 +3946,13 @@ def test_required_truthy_bug():
     assert form.actions.submit.iommi_name() == 'submit'
     assert 'genres' not in form.get_errors()['fields']
     assert form.get_errors()['fields']['name'] == {'This field is required'}
+
+
+def test_parsed_data_does_not_crash_on_non_editable():
+    Form.create(
+        auto__model=Album,
+        fields__name=dict(
+            editable=False,
+            parsed_data=lambda **_: 1,
+        )
+    ).bind(request=req('POST', **{'-submit': ''}))

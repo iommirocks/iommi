@@ -8,7 +8,7 @@ Tutorial
     This tutorial is intended for a reader that is well versed in the Django basics of the ORM,
     urls routing, function based views, and templates.
 
-    It is also expected that you have already installed iommi in your project. Read section 1 of :doc:`Getting started <getting_started>`.
+    It is also expected that you have already installed iommi in your project. Read section 1 of `Getting started <getting_started>`_.
 
 
 This tutorial will build a discography app. Let's start with the models:
@@ -86,11 +86,12 @@ def create_discography_dump():
             for track in album.tracks.all():
                 yield f"Track.objects.create(album=y, name={track.name!r}, index={track.index})"
 
+
 def test_setup_data():
     # @test
     with open(Path(__file__).parent / 'custom' / 'big_discography.py', 'w') as f:
-        for l in create_discography_dump():
-            f.write(l)
+        for line in create_discography_dump():
+            f.write(line)
             f.write('\n')
     # @end
 
@@ -99,7 +100,7 @@ def test_setup_data():
     Example data
     ------------
     
-    If you want it to get the same examples as in this tutorial, run `this code`_.
+    If you want it to get the same example data as in this tutorial, run `this code`_.
 
     .. _this code: https://raw.githubusercontent.com/iommirocks/iommi/master/docs/custom/big_discography.py
     """
@@ -111,113 +112,22 @@ def test_declarative_tables():
     Tables
     ------
 
-    We’ll start with using iommi declarative tables to create a list of albums:
+    Creating a table view of a model in iommi is simple:
+
     """
-
-    class AlbumTable(Table):
-        name = Column()
-        artist = Column()
-        year = Column()
-
-    def index(request):
-        return AlbumTable(
-            title='Albums',
-            rows=Album.objects.all(),
-        )
-
-    # @test
-    show_output(index(req('get')))
-    # @end
-
-    # language=rst
-    """
-    The iommi middleware will handle if you return an iommi type and render it properly.
-    
-    At this point you might think "Hold on! Where is the template?". There isn't one. We don't need a template. iommi works at a higher level of abstraction. Don't worry, you can drop down to templates if you need to though. This will be covered later.
-    
-    
-    You get sorting and pagination by default, and we're using the default bootstrap 4 style. iommi ships with more styles that you can switch to, or you can implement your own custom style.
-    """
-
-
-def test_class_meta():
-    # language=rst
-    """
-    class Meta
-    ==========
-
-    The `class Meta` concept in iommi is slightly different from how it's used in Django. In iommi any argument to the constructor of a class can be put into `Meta`. In fact, ONLY valid arguments to the constructor can be set in `Meta`. In our example above we set `title` and `rows`. We can also instead set them via `Meta`:
-    """
-
-    class AlbumTable(Table):
-        name = Column()
-        artist = Column()
-        year = Column()
-
-        class Meta:
-            title = 'Albums'
-            rows = Album.objects.all()
-
-    def index(request):
-        return AlbumTable()
-
-    # @test
-    index(req('get'))
-    # @end
-
-    # language=rst
-    """
-    This will do the same thing! But with a slight twist: parameters set in `Meta` are just defaults, meaning you can still override them later in the constructor call (or in subclasses).
-    
-    Using as_view
-    =============
-    
-    The view we have so far doesn't use the `request` argument. We can simplify it by doing this instead:    
-    """
-
-    urlpatterns = [
-        path('', AlbumTable().as_view()),
-    ]
-
-    # @test
-    show_output_collapsed(urlpatterns[0])
-    # @end
-
-    # language=rst
-    """
-    This looks superficially similar to class based views, but they are very different! Notice the parenthesis after the class name for example. And Django CBVs can't be combined with iommi classes because they are radically different concepts. 
-    
-    That an instance of `AlbumTable` is created here means we can pass arguments here:
-    """
-
-    urlpatterns = [
-        path('', AlbumTable(title='Other title', page_size=2).as_view()),
-    ]
-
-    # @test
-    show_output_collapsed(urlpatterns[0])
-    # @end
-
-    # language=rst
-    """
-    
-    auto__model
-    ===========
-    
-    The next step in the simplification is to realize that this table is trivially derived from the model definition. iommi has features to do this for you so we can simplify even further! We delete the entire `AlbumTable` class and replace the url definition with this single line:
-    """
-
     urlpatterns = [
         path('', Table(auto__model=Album).as_view()),
     ]
 
     # @test
-    show_output_collapsed(urlpatterns[0])
+    show_output(urlpatterns[0])
     # @end
 
     # language=rst
     """
-    You don't even need to specify the title of the table, as we use the plural verbose name of the model. These are all defaults, not hard coded values, so you can pass parameters to the `Table` constructor here to override anything you want.
+    You get sorting and pagination by default, and we're using the default bootstrap 5 style. iommi ships with :ref:`more styles <style>` that you can switch to, or you can :ref:`implement your own custom style <style>`.
+    
+    At this point you might think "Hold on! Where is the template?". There isn't one. We don't need a template. iommi works at a higher level of abstraction. Don't worry, you can drop down to templates if you need to. There are examples of this in the :ref:`table cookbook <cookbook-tables>`, and much more. One of the most important concepts is to include or exclude columns using includes: `auto__include=['name', 'artist']`, or using excludes: `auto__exclude=['artist', 'year']`. 
     """
 
 
@@ -227,7 +137,7 @@ def test_pages():
     Pages
     -----
 
-    So far we’ve just created a table, but often you want something a little more complex, especially for your index page. iommi has a concept of a `Page` that is used to build up a bigger page from smaller building blocks. Let’s build out our simple web app to have separate pages for albums, artists and tracks:
+    So far we’ve just created a single table, but often you want something a little more complex, especially for your index page. iommi has a concept of a :ref:`Page <pages>` that is used to build up a bigger page from smaller building blocks. Let’s build out our simple web app to have separate pages for albums, artists and tracks:
     """
 
     urlpatterns = [
@@ -241,7 +151,6 @@ def test_pages():
     show_output_collapsed(urlpatterns[1])
     show_output_collapsed(urlpatterns[2])
     # @end
-
 
     # language=rst
     """
@@ -293,7 +202,7 @@ def test_path_decoding():
 
     We’ll also introduce a page for an individual artist. We will use iommi's :doc:`path` here.
 
-    First we register the path component we want to decode:
+    First we register the path component we want to decode (in your `AppConfig` `ready`):
     """
 
     register_path_decoding(
@@ -306,15 +215,15 @@ def test_path_decoding():
     """
 
     class ArtistPage(Page):
-        title = html.h1(lambda params, **_: params.artist.name)
+        title = html.h1(lambda artist, **_: artist.name)
 
         albums = Table(
             auto__model=Album,
-            rows=lambda params, **_: Album.objects.filter(artist=params.artist),
+            rows=lambda artist, **_: Album.objects.filter(artist=artist),
         )
         tracks = Table(
             auto__model=Track,
-            rows=lambda params, **_: Track.objects.filter(album__artist=params.artist),
+            rows=lambda artist, **_: Track.objects.filter(album__artist=artist),
         )
 
     urlpatterns = [
@@ -327,7 +236,10 @@ def test_path_decoding():
 
     # language=rst
     """
-    Path decoders in iommi are more convenient compared to Django path decoders, as instead of writing `<artist:artist>` everywhere, you can instead write `<artist_name>`. They are also much easier to set up. 
+    Path decoders in iommi can be more convenient compared to Django path
+    decoders, as instead of writing `<artist:artist>` everywhere, you can instead
+    write `<artist_name>` or `<artist_pk>`. They are also easier to set up and 
+    gives you hook points for access control if needed. 
     """
 
 
@@ -355,7 +267,6 @@ def test_table_customization():
     # @test
     show_output(albums)
     # @end
-
 
     # language=rst
     """    
@@ -393,7 +304,6 @@ def test_table_customization():
     # @test
     show_output(albums)
     # @end
-
 
     # language=rst
     """
@@ -529,7 +439,6 @@ def test__foo():
     show_output(albums)
     # @end
 
-
     # language=rst
     """
     
@@ -565,7 +474,6 @@ def test__foo():
     show_output(albums)
     # @end
 
-
     # language=rst
     """
     
@@ -586,10 +494,9 @@ def test__foo():
         class Meta:
             pass
             # @test
-            parts__menu__items_container__attrs__style={'flex-direction': 'row'}
+            parts__menu__items_container__attrs__style = {'flex-direction': 'row'}
             parts__menu__sub_menu__change_password__attrs__style__margin = '0 1rem'
             # @end
-
 
     urlpatterns = [
         path('iommi-admin/', include(MyAdmin.urls())),
@@ -616,6 +523,7 @@ def test__foo():
         
     """
 
+
 def test_forms():
     # language=rst
     """
@@ -624,13 +532,19 @@ def test_forms():
 
     iommi also comes with a library for forms. This can look very much like the
     forms library built into Django, but is different in some crucial ways. Let's
-    look at the most basic example from the Django documentation:
+    take a simple example of a `ModelForm`:
 
     """
     from django import forms
 
-    class NameForm(forms.Form):
-        your_name = forms.CharField(label='Your name')
+    class AlbumForm(forms.ModelForm):
+        class Meta:
+            model = Album
+            fields = ['name', 'artist']
+
+    # @test
+    AlbumForm()
+    # @end
 
     # language=rst
     """ 
@@ -647,21 +561,21 @@ def test_forms():
 
         {% endblock %}
 
-    In iommi the same is written as:
-
+    In iommi the same can be written as:
     """
-    class NameForm(Form):
-        your_name = Field.text()
 
+    class AlbumForm(Form):
+        class Meta:
+            auto__model = Album
+            auto__include = ['name', 'artist']
 
     # @test
-    show_output(NameForm())
+    show_output(AlbumForm())
     # @end
-
 
     # language=rst
     """
-    No template needed, and this is the view too.
+    No template needed, and this is the view too with `Form.edit` or `Form.createcookbook-forms`.
     
     In iommi you always get a form encoding specified on the form, so they all work
     with file uploads. Missing form encoding on the form tag is a very common 
@@ -669,20 +583,24 @@ def test_forms():
     you can configure via `actions__submit`:
     """
 
-    class NameForm(Form):
-        your_name = Field.text()
-
+    class AlbumForm(Form):
         class Meta:
+            auto__model = Album
+            auto__include = ['name', 'artist']
             actions__submit__display_name = 'Save'
 
     # language=rst
     """    
     In iommi we use `class Meta` a lot, similar to Django, but in iommi it's not
     just a bucket of values, it has a precise definition: values in `Meta` are 
-    passed into the constructor. So the example above is roughly the same as:
+    passed into the constructor. So the example above is semantically the same as:
     """
 
-    NameForm(actions__submit__display_name='Save')
+    AlbumForm(
+        auto__model=Album,
+        auto__include=['name', 'artist'],
+        actions__submit__display_name='Save',
+    )
 
     # language=rst
     """
@@ -694,36 +612,14 @@ def test_forms():
     an error message.
 
 
-    Automatic forms
-    ===============
-
-    iommi can also derive forms from Django model definitions: 
-    `Form(auto__model=Artist)`. You can specify which fields to include or exclude
-    via `auto__include` or `auto__exclude`, and the fields can still be customized
-    fully. An example of this could be to insert a CSS class `foo` on the label
-    tag of a field `name`: 
-    """
-
-    form = Form(
-        auto__model=Artist,
-        fields__name__label__attrs__class__foo=True,
-    )
-
-    # @test
-    show_output(form)
-    # @end
-
-
-    # language=rst
-    """
     There are many many more customizations options available, you can find more
-    in the cookbook and the docs for `Field`.
+    in the :ref:`form cookbook <cookbook-forms>` and the docs for `Field`.
 
 
     Automatic views
     ===============
 
-    iommi goes a step further than this though, by supplying full views that can
+    iommi goes a step further than Django forms, by supplying full views that can
     be used from either a declarative form or an auto generated form. An example
     is to have a create view for an `Artist`:
 
@@ -736,15 +632,14 @@ def test_forms():
     show_output(urlpatterns[0])
     # @end
 
-
     # language=rst
     """ 
-    There are three built in forms/views like this: `create`, `edit`, and `delete`.
+    There are four built in forms/views like this: `create`, `edit`, `create_and_edit` and `delete`.
     The `delete` view is a read only form with some styling for the submit button
     and a submit handler that delete the object. We find this to be really nice as
     a confirmation page because you can see what you are about to delete.
-
     """
+
 
 # language=rst
 """    
@@ -752,6 +647,6 @@ Wrap up
 -------
 
 I'm glad you read this far! This has been a very shallow introduction, but
-I've touched on all the major parts in some way, and there is a lot of
-material to cover. I hope you want to give iommi a try. 
+it has touched on all the major parts in some way, and there is a lot of
+material to cover. We hope you want to give iommi a try. 
 """

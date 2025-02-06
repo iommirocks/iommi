@@ -202,6 +202,7 @@ docs/tutorial.rst
 docs/middleware.rst
 docs/edit_tables.rst
 docs/access_control.rst
+docs/abstraction_levels.rst
 
 .cache/pip
 

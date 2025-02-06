@@ -171,10 +171,39 @@ def test_evaluate_strict():
     with pytest.raises(AssertionError) as e:
         evaluate_strict(lambda foo: 1, bar=2, baz=4)
 
-    assert (
-        str(e.value)
-        == "Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a value but strict mode was active, the signature doesn't match the given parameters. We had these arguments: bar, baz"
-    )
+    expected = '''
+Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a value but strict mode was active. The signature doesn't match the given parameters.
+
+    Possible inputs:
+        bar
+        baz
+
+    Function inputs:
+        foo
+    '''
+    assert str(e.value).strip() == expected.strip()
+
+    assert evaluate_strict(lambda **_: 1, bar=2, baz=4) == 1
+
+
+def test_evaluate_strict_for_def():
+    def bar(foo, **_):
+        return 1
+
+    with pytest.raises(AssertionError) as e:
+        evaluate_strict(bar, bar=2, baz=4)
+
+    expected = '''
+Evaluating iommi.evaluate__tests.bar didn't resolve it into a value but strict mode was active. The signature doesn't match the given parameters.
+
+    Possible inputs:
+        bar
+        baz
+
+    Function inputs:
+        foo
+'''
+    assert str(e.value).strip() == expected.strip()
 
     assert evaluate_strict(lambda **_: 1, bar=2, baz=4) == 1
 
@@ -193,8 +222,7 @@ def test_get_callable_description():
         assert False  # pragma: no cover
 
     description = get_callable_description(foo)
-    assert description.startswith('`<function test_get_callable_description.<locals>.foo at')
-    assert description.endswith('`')
+    assert description == 'iommi.evaluate__tests.foo'
 
 
 def test_get_callable_description_nested_lambda():

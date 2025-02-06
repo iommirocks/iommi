@@ -1,5 +1,6 @@
 import copy
 import functools
+import inspect
 from typing import (
     Any,
     Dict,
@@ -10,6 +11,7 @@ from iommi.attrs import (
     evaluate_attrs,
 )
 from iommi.base import (
+    keys,
     NOT_BOUND_MESSAGE,
     items,
 )
@@ -262,7 +264,22 @@ class Traversable(RefinableObject):
         for k in get_special_evaluated_attributes(result):
             v = getattr(result, k)
             if is_callable(v) and not isinstance(v, type):
-                assert False, ('SpecialEvaluatedRefinable not evaluated', k, v, repr(result))
+                arguments = '\n        '.join(keys(result.iommi_evaluate_parameters()))
+                parameters = '\n        '.join(inspect.getfullargspec(v)[0])
+                assert False, f'''SpecialEvaluatedRefinable not evaluated
+
+    Refinable name:
+        {k}
+
+    Path:
+        {result.iommi_dunder_path}
+
+    Possible inputs:
+        {arguments}
+
+    Function inputs:
+        {parameters}
+'''
 
         return result
 

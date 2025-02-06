@@ -45,7 +45,6 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
 from django import setup
 setup()
 
-check_call(f"python {(Path(__file__).parent.parent / 'make_doc_rsts.py').absolute()}", shell=True)
 check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs -q", shell=True)
 
 
@@ -95,7 +94,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'iommi'
-copyright = u'2023, Anders Hovmöller & Johan Lübcke'
+copyright = u'2025, Anders Hovmöller & Johan Lübcke'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

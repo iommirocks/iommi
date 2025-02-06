@@ -26,8 +26,14 @@ def test_parts__pages():
 def test_how_do_i_override_part_of_a_part_page():
     # language=rst
     """
+    .. _override-part-of-page:
+
     How do I override part of a part/page?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Page.parts
+    .. uses Fragment.children
+    .. Attrs
 
     This is all just *standard* iommi declarative magic, but as you are likely new to it
     this might take a while to get used to. Let's say you created yourself a master template
@@ -75,9 +81,8 @@ def test_how_do_i_override_part_of_a_part_page():
     an existing namespace, but you can also add new elements or replace bigger
     parts (and most of the time it doesn't matter if you use the `class Meta` or the
     keyword arguments to init syntax):
-
-
     """
+
     class IndexPage(BasePage):
         title = html.img(
             attrs=dict(
@@ -107,10 +112,11 @@ def test_how_do_i_override_part_of_a_part_page():
 def test_how_do_i_set_the_title_of_my_page():
     # language=rst
     """
-    .. _Page.title:
+    .. _title-of-page:
 
     How do I set the title of my page?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Page.title
 
     As in the text shown in the browser status bar?
 
@@ -138,10 +144,11 @@ def test_how_do_i_set_the_title_of_my_page():
 def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
     # language=rst
     """
-    .. _Page.context:
+    .. _context-of-page:
 
     How do I specify the context used when a Template is rendered?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Page.context
 
 
     """

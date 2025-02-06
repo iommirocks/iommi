@@ -1780,7 +1780,7 @@ class Table(Part, Tag):
     columns: Dict[str, Column] = RefinableMembers()
 
     class Meta:
-        assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
+        query__advanced__assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
         assets__table_js_select_all__template = "iommi/table/js_select_all.html"
         member_class = Column
         form_class = Form
@@ -1937,6 +1937,7 @@ class Table(Part, Tag):
         self.initial_rows = self.rows
         self.header = HeaderConfig(_name='header', **self.header).refine_done(parent=self)
         self.row = RowConfig(**self.row).refine_done(parent=self)
+        self._preprocessed_rows = None
 
         # In bind initial_rows will be used to set these 3 (in that order)
         self.sorted_rows = None
@@ -2220,7 +2221,8 @@ class Table(Part, Tag):
         bind_member(self, name='bulk_container')
 
     def get_visible_rows(self):
-        self.visible_rows = self.parts.page.rows
+        if self.visible_rows is None:
+            self.visible_rows = self.parts.page.rows
         return self.visible_rows
 
     def _bind_query(self):
@@ -2280,7 +2282,6 @@ class Table(Part, Tag):
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
         if auto_rowspan_columns:
-            self.visible_rows = list(self.get_visible_rows())
             no_value_set = object()
             for column in auto_rowspan_columns:
                 if column.cell.attrs.get('rowspan', no_value_set) is not no_value_set:
@@ -2346,6 +2347,7 @@ class Table(Part, Tag):
         rows: Union[QuerySet, list],
         sort_key: str,
         descending: bool,
+        table,
         **_,
     ):
         if isinstance(rows, list):
@@ -2353,6 +2355,10 @@ class Table(Part, Tag):
         else:
             sort_keys = [sort_key] if not isinstance(sort_key, list) else sort_key
             sort_keys = [('-' + x if descending else x) for x in sort_keys]
+            if table.model._meta.ordering:
+                sort_keys.extend(table.model._meta.ordering)
+            if sort_keys[-1] != 'pk':
+                sort_keys.append('pk')  # Add pk to always guarantee stable order for pagination.
             return rows.order_by(*sort_keys)
 
     def _bind_headers(self):
@@ -2412,12 +2418,13 @@ class Table(Part, Tag):
             rows = self.get_visible_rows()
         else:
             rows = self.sorted_and_filtered_rows
-        preprocessed_rows = self.invoke_callback(self.preprocess_rows, rows=rows)
+        if not self._preprocessed_rows:
+            self._preprocessed_rows = list(self.invoke_callback(self.preprocess_rows, rows=rows))
 
         row_groups = [c for c in values(self.columns) if c.row_group.include]
         row_group_values = {c._name: None for c in row_groups}
 
-        for i, row in enumerate(preprocessed_rows):
+        for i, row in enumerate(self._preprocessed_rows):
             row = self.invoke_callback(self.preprocess_row, row=row)
             assert row is not None, 'preprocess_row must return the row'
 

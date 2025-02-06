@@ -700,7 +700,6 @@ class Field(Part, Tag):
             call_target=Fragment,
             children__text=lambda fragment, field, **_: None if fragment.tag == 'input' else field.rendered_value,
             attrs__value=lambda fragment, field, **_: field.rendered_value if fragment.tag == 'input' else None,
-            attrs__disabled=lambda fragment, field, **_: True if fragment.tag == 'input' else None,
         ),
         initial=MISSING,
         choice_to_optgroup=None,
@@ -883,6 +882,7 @@ class Field(Part, Tag):
 
         if not self.editable:
             self.value = self.initial
+            self.parsed_data = MISSING
         else:
             self._read_raw_data()
 
@@ -1195,7 +1195,6 @@ class Field(Part, Tag):
         input__attrs__type=None,
         input__attrs__value=None,
         input__children__text=lambda field, **_: field.rendered_value,
-        input__attrs__readonly=lambda field, **_: True if field.editable is False else None,
     )
     def textarea(cls, **kwargs):
         return cls(**kwargs)
