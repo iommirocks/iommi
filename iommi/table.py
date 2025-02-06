@@ -2354,11 +2354,11 @@ class Table(Part, Tag):
             return ordered_by_on_list(rows, sort_key, descending)
         else:
             sort_keys = [sort_key] if not isinstance(sort_key, list) else sort_key
+            sort_keys = [('-' + x if descending else x) for x in sort_keys]
             if table.model._meta.ordering:
                 sort_keys.extend(table.model._meta.ordering)
             if sort_keys[-1] != 'pk':
                 sort_keys.append('pk')  # Add pk to always guarantee stable order for pagination.
-            sort_keys = [('-' + x if descending else x) for x in sort_keys]
             return rows.order_by(*sort_keys)
 
     def _bind_headers(self):
