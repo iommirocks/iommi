@@ -8,4 +8,5 @@ pytest_snapshot==0.9.0
 ruff==0.3.7
 time-machine==2.14.1
 django-fastdev
+-r requirements.txt
 docutils

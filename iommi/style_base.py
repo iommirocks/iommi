@@ -83,6 +83,11 @@ base = Style(
                 ),
             ),
             iommi_js_init=iommi_js_init,
+            iommi_scroll_js=Asset.js(
+                attrs=dict(
+                    src=lambda **_: static('js/iommi-scroll.js'),
+                ),
+            ),
             meta=Asset(
                 mark_safe(
                     '''<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">'''

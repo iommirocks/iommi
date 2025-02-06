@@ -17,6 +17,7 @@ test = Style(
         icons=None,
         iommi_js=None,
         iommi_js_init=None,
+        iommi_scroll_js=None,
         meta=None,
     ),
     Field=dict(

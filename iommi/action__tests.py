@@ -5,6 +5,7 @@ import pytest
 from iommi import (
     Action,
     Column,
+    Part,
     Style,
     Table,
 )
@@ -112,7 +113,7 @@ def test_all_action_shortcuts():
         class Meta:
             extra__fancy = True
 
-    class ThingWithActions(Traversable):
+    class ThingWithActions(Part):
         actions: Dict[str, Action] = RefinableMembers()
 
         def on_refine_done(self):
@@ -123,6 +124,7 @@ def test_all_action_shortcuts():
                 cls=MyFancyAction,
                 members_cls=Actions,
             )
+            super(ThingWithActions, self).on_refine_done()
 
         def on_bind(self):
             bind_members(self, name='actions')
