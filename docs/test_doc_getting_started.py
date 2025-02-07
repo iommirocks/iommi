@@ -18,6 +18,8 @@ pytestmark = pytest.mark.django_db
 def test_getting_started():
     # language=rst
     """
+    .. _getting-started:
+
     Getting started
     ===============
 
