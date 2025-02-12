@@ -38,7 +38,7 @@ def test_how_do_i_customize_the_rendering_of_a_table():
     Table rendering can be customized on multiple levels. You pass a template with the `template` argument, which
     is either a template name or a `Template` object.
 
-    Customize the HTML attributes of the table tag via the `attrs` argument. See attrs_.
+    Customize the HTML attributes of the table tag via the `attrs` argument. See :ref:`attrs <attributes>`.
 
     To customize the row, see `How do I customize the rendering of a row?`_
 
@@ -99,7 +99,7 @@ def test_how_do_i_customize_the_rendering_of_a_cell():
 
     You can customize the :doc:`Cell` rendering in several ways:
 
-    - You can modify the html attributes via `cell__attrs`. See the question on attrs_
+    - You can modify the html attributes via `cell__attrs`. See :ref:`attrs <attributes>`.
 
     - Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
@@ -276,6 +276,7 @@ def test_how_do_i_enable_searching_filter_on_columns():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Column.filter
+    .. uses Filter.include
 
     Pass the value `filter__include=True` to the column, to enable searching
     in the advanced query language.
@@ -345,7 +346,6 @@ def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specificat
 
     # language=rst
     """
-    .. _attrs:
 
     How do I customize HTML attributes, CSS classes or CSS style specifications?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -421,7 +421,7 @@ def test_how_do_i_customize_the_rendering_of_a_row():
 
     You can customize the row rendering in two ways:
 
-    - You can modify the html attributes via `row__attrs`. See the question on attrs_
+    - You can modify the html attributes via `row__attrs`. See :ref:`attrs <attributes>`.
 
     - Use `row__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
@@ -442,7 +442,7 @@ def test_how_do_i_customize_the_rendering_of_a_header():
 
     You can customize headers in two ways:
 
-    - You can modify the html attributes via `header__attrs`. See the question on attrs_
+    - You can modify the html attributes via `header__attrs`. See :ref:`attrs <attributes>`.
 
     - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
@@ -887,7 +887,7 @@ def test_what_is_the_difference_between_attr_and__name():
 def test_table_with_foreign_key_reverse(small_discography):
     # language=rst
     """
-    .. _reverse-fk:
+    .. _reverse-fk-table:
 
     How do I show a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1085,6 +1085,7 @@ def test_indexed_rows(small_discography):
     # language=rst
     """
     .. _row-numbers:
+
     How do I show row numbers?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Cells.row_index
@@ -1161,6 +1162,7 @@ def test_dont_render_header(small_discography):
     # language=rst
     """
     .. _stop-header-render:
+
     How do I stop rendering the header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.header

@@ -20,6 +20,12 @@ docReady(function() {
             resizeIFrameToFitContent(e.target);
         });
     }
+
+    // Always expand the first section
+    let x = document.getElementById('toctree-checkbox-1');
+    if (!x.checked) {
+        x.click();
+    }
 });
 
 function toggle(id, source) {

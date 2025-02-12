@@ -203,6 +203,23 @@ docs/middleware.rst
 docs/edit_tables.rst
 docs/access_control.rst
 docs/abstraction_levels.rst
+docs/attr.rst
+docs/after.rst
+docs/attributes.rst
+docs/auto.rst
+docs/common_config.rst
+docs/components.rst
+docs/endpoints.rst
+docs/extra_params.rst
+docs/fragments.rst
+docs/include.rst
+docs/iommi_style.rst
+docs/name.rst
+docs/tag.rst
+docs/template.rst
+docs/assets.rst
+docs/title.rst
+
 
 .cache/pip
 

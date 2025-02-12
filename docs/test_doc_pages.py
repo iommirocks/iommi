@@ -24,7 +24,7 @@ def test_pages():
 
     iommi pages are used to compose parts of a page into a full page. A "part" can be any iommi component (like :ref:`Table <tables>`, :ref:`Form <forms>`, :doc:`Fragment`), or a plain Python string, or a Django `Template <https://docs.djangoproject.com/en/5.1/topics/templates/>`_.
 
-    The `html`_ builder function is used to create simple :doc:`Fragment`s for div, h1, span, etc.
+    The `html`_ builder function is used to create simple :doc:`Fragment` objects for div, h1, span, etc.
 
     """
 

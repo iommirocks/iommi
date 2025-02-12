@@ -664,7 +664,7 @@ def test_form_with_foreign_key_reverse(small_discography, black_sabbath):
     # language=rst
     """
 
-    .. _reverse-fk:
+    .. _reverse-fk-form:
 
     How do I enable a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -875,7 +875,7 @@ def test_nested_forms(medium_discography):
     .. uses save_nested_forms
     .. uses Action.post_handler
 
-    You need to use the `save_nested_forms` post handler to have a single save button for all the nested forms and `EditTable`s:
+    You need to use the ``save_nested_forms`` post handler to have a single save button for all the nested forms and edit tables:
     """
 
     class MyNestedForm(Form):

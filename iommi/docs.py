@@ -220,6 +220,27 @@ def _generate_tests_from_class_doc(f, c, classes, uses_by_field):
     )
 
 
+concepts = {
+    'after': 'after',
+    'assets': 'assets',
+    'attr': 'attr',
+    'attrs': 'attributes',
+    'auto': 'auto',
+    'endpoints': 'endpoints',
+    'extra': 'extra',
+    'extra_evaluated': 'extra',
+    'extra_params': 'extra_params',
+    'include': 'include',
+    'iommi_style': 'iommi_style',
+    'name': 'name',
+    'display_name': 'name',
+    'tag': 'tag',
+    'template': 'template',
+    'title': 'title',
+    'h_tag': 'title',
+}
+
+
 def _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field):
     def w(levels, s):
         f.write(indent_levels(levels, s))
@@ -361,6 +382,10 @@ request = req('get')
             if refinable in defaults:
                 w(0, f'Default: `{default_description(defaults.pop(refinable))}`')
 
+            if refinable in concepts:
+                w(1, f'See :ref:`{concepts[refinable]} <{concepts[refinable]}>`')
+                w(0, '')
+
             cookbook_usages = uses_by_field.get(f'{c.__name__}.{refinable}', [])
             if cookbook_usages:
                 w(0, '')
@@ -368,6 +393,9 @@ request = req('get')
                 for id_, title in cookbook_usages:
                     w(1, f':ref:`{id_}`')
                     w(0, '')
+            else:
+                if refinable not in concepts:
+                    print(f'WARNING: {c.__name__}.{refinable} has no cookbook examples')
 
         w(0, '')
 

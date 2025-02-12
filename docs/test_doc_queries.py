@@ -15,6 +15,8 @@ pytestmark = pytest.mark.django_db
 def test_queries():
     # language=rst
     """
+    .. _queries:
+
     Queries
     =======
 

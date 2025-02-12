@@ -16,26 +16,21 @@ Contents:
 
    getting_started
    tutorial
-   equivalency
+   common_config
+   components
    cookbook
-   forms
-   pages
-   tables
-   edit_tables
-   queries
-   path
-   extra
-   views
-   dev_tools
-   admin
-   styles
-   registrations
-   production_use
-   api
-   philosophy
-   architecture
-   legacy_fbv
+   understanding
    access_control
+   admin
+   api
+   dev_tools
+   legacy_fbv
+   path
+   production_use
+   registrations
+   styles
+   views
+
    imports
    history
    authors

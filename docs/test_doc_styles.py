@@ -261,6 +261,7 @@ def test_switching_style_for_a_single_part():
     # language=rst
     """
     .. _switching_style_for_a_single_part:
+
     Changing style for a single part
     --------------------------------
 

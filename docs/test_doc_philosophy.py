@@ -47,7 +47,7 @@ def test_philosophy():
     The philosophy has these main parts:
 
     """
-    
+
 
 def test_no_silent_mistakes():
     # language=rst
@@ -77,7 +77,7 @@ def test_no_silent_mistakes():
 
 
     """
-    
+
 
 def test_everything_has_a_name():
     # language=rst
@@ -362,6 +362,8 @@ def test_single_point_customization_with_no_boilerplate():
 def test_escape_hatches_included():
     # language=rst
     """
+    .. _escape-hatches:
+
     Escape hatches included
     -----------------------
 

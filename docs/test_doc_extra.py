@@ -8,8 +8,12 @@ request = req('get')
 def test_extra_and_extra_evaluated():
     # language=rst
     """
-    extra and extra_evaluated
-    =========================
+    .. _extra:
+
+    .. _extra_evaluated:
+
+    `extra` and `extra_evaluated`
+    =============================
 
     Very often it's useful to add some little bit of data on the side that you need
     later to customize something. We think it's important to support this use case

@@ -18,6 +18,8 @@ def fill_dummy_data(): pass
 def test_edit_tables(really_big_discography):
     # language=rst
     """
+    .. _edit-tables:
+
     Edit tables
     ===========
 
