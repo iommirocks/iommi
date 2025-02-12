@@ -47,5 +47,7 @@ Refinable members
 ^^^^^^
 
 Default: `lambda X: X, # noqa: N803`
+    See :ref:`name <name>`
+
 
     """

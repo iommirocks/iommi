@@ -61,6 +61,8 @@ Default: `""`
 description of the name field
 
 Default: `foo-name`
+    See :ref:`name <name>`
+
 
 `refinable_func`
 ^^^^^^^^^^^^^^^^

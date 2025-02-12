@@ -46,5 +46,7 @@ Refinable members
 `name`
 ^^^^^^
 
+    See :ref:`name <name>`
+
 
     """
