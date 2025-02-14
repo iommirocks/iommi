@@ -158,6 +158,7 @@ docs/FormAutoConfig.rst
 docs/QueryAutoConfig.rst
 docs/TableAutoConfig.rst
 docs/views.rst
+docs/semantic_models.rst
 
 # these are created by mutation testing
 docs/XXtest*

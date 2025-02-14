@@ -11,3 +11,4 @@ These pages cover the thinking behind iommi, which will help write idiomatic and
    equivalency
    philosophy
    registrations
+   semantic_models
