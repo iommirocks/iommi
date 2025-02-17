@@ -422,9 +422,9 @@ class EditTable(Table):
 
         auto = Namespace(self.auto)
 
-        auto.pop('rows', None)
         if 'model' not in auto and 'rows' in auto:
             auto['model'] = auto.rows.model
+        auto.pop('rows', None)
 
         self.create_form = self.get_meta().form_class(
             **setdefaults_path(
