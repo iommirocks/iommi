@@ -1,6 +1,9 @@
 import pytest
 
-from docs.models import Album
+from docs.models import (
+    Album,
+    Artist,
+)
 from iommi.declarative.namespace import Namespace
 from iommi.edit_table import (
     EditColumn,
@@ -402,5 +405,23 @@ def test_edit_table_post_row_group(small_discography):
     assert Album.objects.get(pk=small_discography[0].pk).year == 5
     assert Album.objects.get(pk=small_discography[1].pk).year == 7
 
+
+@pytest.mark.django_db
+def test_edit_table__auto__rows_1(small_discography):
+    edit_table = EditTable(
+        auto__rows=Album.objects.all(),
+        columns__year__field__include=True,
+    )
+    edit_table.bind(request=req('get'))
+
+
+@pytest.mark.django_db
+def test_edit_table__auto__rows_2(small_discography):
+    edit_table = EditTable(
+        auto__rows=Artist.objects.all(),
+        auto__include=['name'],
+        columns__year__field__include=True,
+    )
+    edit_table.bind(request=req('get'))
 
 # TODO: attr=None on a column crashes
