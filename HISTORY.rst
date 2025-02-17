@@ -1,12 +1,35 @@
 Changelog
 ---------
 
+7.10.0 (2025-02-17)
+~~~~~~~~~~~~~~~~~~~
+
+* Add scroll restore for `Form`
+
+* Support `IntegerField` with `choices`
+
+* Advanced filter js, and css as separate assets
+
+* Stable ordering when paginating by adding automatic sorting on `ordering` plus pk
+
+* Using `auto__rows` without `model` on an `EditTable` crashed
+
+* Fixed incorrect rendering of global errors on `Table`
+
+* Fixed invalid HTML output on error feedback page for `EditTable`
+
+* Move declarations of assets and endpoints from Traversable down to Part. This can fix some obscure errors during style definitions.
+
+* `non_editable_input` `attrs__disabled` moved to base style + added textarea. This will make some styling possible that was not possible before.
+
+
 7.9.1 (2025-01-17)
 ~~~~~~~~~~~~~~~~~~
 
 * Fixed crash when specifying `Field.parsed_data` callback and the field was not editable
 
 * Improved error messages for evaluation
+
 
 7.9.0 (2025-01-14)
 ~~~~~~~~~~~~~~~~~~
