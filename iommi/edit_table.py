@@ -98,7 +98,7 @@ class EditCell(Cell):
                 errors = self.table.edit_errors.get(path)
                 if errors:
                     return Template(
-                        '{{ input_html }}<br><span class="text-danger"><ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></a>'
+                        '{{ input_html }}<br><span class="text-danger"><ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>'
                     ).render(context=Context(dict(input_html=input_html, errors=errors)))
 
             return input_html
