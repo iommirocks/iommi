@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.10.1 (2025-02-18)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed missing end tag in error output for `Table`
+
+
 7.10.0 (2025-02-17)
 ~~~~~~~~~~~~~~~~~~~
 
