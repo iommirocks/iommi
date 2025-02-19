@@ -48,7 +48,10 @@ def inject_args(args, kwargs, extra_args, pos_arg_names, merge_namespaces):
         new_value = new_kwargs.get(k, None)
         if merge_namespaces and isinstance(new_value, Namespace):
             if v is not None:
-                new_kwargs[k] = Namespace(new_value, v)
+                if isinstance(v, dict):
+                    new_kwargs[k] = Namespace(new_value, v)
+                else:
+                    new_kwargs[k] = v.refine(**new_value)
             else:
                 new_kwargs[k] = None
         else:

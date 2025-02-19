@@ -2113,7 +2113,17 @@ class Table(Part, Tag):
             self.bulk = self.bulk.refine_done(parent=self)
 
         if self.query is not None:
+            self.query._name = 'query'
             self.query = self.query.refine_done(parent=self)
+        elif isinstance(query_args, Query):
+            query_args._name = 'query'
+            self.query = query_args.refine_done(parent=self)
+        elif query_args:
+            self.query = self.query_class(
+                _name='query',
+                model=self.model,
+                **query_args,
+            ).refine_done(parent=self)
 
         self.bulk_container = self.bulk_container(_name='bulk_container').refine_done(parent=self)
         self.container = self.container(_name='container').refine_done(parent=self)
@@ -2252,6 +2262,9 @@ class Table(Part, Tag):
             else:
                 empty_result = []
             self.rows = self.sorted_and_filtered_rows = self.sorted_rows = empty_result
+
+        if self.query is not None and not self.query.filters and not self.query.form.fields:
+            self.query = None
 
     def _bind_bulk_form(self):
         if self.bulk is None:

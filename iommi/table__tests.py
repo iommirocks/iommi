@@ -804,8 +804,7 @@ def test_column_filter_include():
         columns__a__filter__include=False,
         columns__a__filter__field__include=True,
     ).bind()
-    assert list(t.query.filters.keys()) == []
-    assert list(t.query.form.fields.keys()) == []
+    assert t.query is None
 
 
 @pytest.mark.django_db
@@ -828,8 +827,7 @@ def test_column_filter_include_lambda():
         columns__a__filter__include=lambda **_: False,
         columns__a__filter__field__include=True,
     ).bind()
-    assert list(t.query.filters.keys()) == []
-    assert list(t.query.form.fields.keys()) == []
+    assert t.query is None
 
 
 @pytest.mark.django_db
@@ -839,8 +837,7 @@ def test_column_filter_include_lambda2():
         columns__b__filter__include=lambda **_: False,
         columns__b__filter__field__include=True,
     ).bind()
-    assert list(t.query.filters.keys()) == []
-    assert list(t.query.form.fields.keys()) == []
+    assert t.query is None
 
 
 @pytest.mark.django_db
@@ -2702,7 +2699,7 @@ def test_render_column_attribute():
     t = FooTable()
     t = t.bind(request=None)
 
-    assert not keys(t.query.filters)
+    assert t.query is None
 
     assert list(t.columns.keys()) == ['a', 'b', 'c']
     assert [k for k, v in items(t.columns) if v.render_column] == ['a']
@@ -3035,6 +3032,7 @@ def test_reinvoke():
     class MyTable(Table):
         class Meta:
             auto__model = TFoo
+            columns__b__filter__include=True
 
     class MyPage(Page):
         my_table = MyTable(columns__a__filter__include=True)
@@ -3054,6 +3052,7 @@ def test_reinvoke_2():
         class Meta:
             auto__model = TFoo
             columns__a__filter__include = True
+            columns__b__filter__include = True
 
     assert 'a' in MyTable().bind(request=req('get')).query.filters
 
@@ -3983,7 +3982,11 @@ def test_filter_model_mixup2():
 
 
 def test_turn_off_entire_query():
-    t = Table(auto__model=TBar, columns__foo__filter__include=True, query__include=False).bind(request=req('get'))
+    t = Table(
+        auto__model=TBar,
+        columns__foo__filter__include=True,
+        query__include=False,
+    ).bind(request=req('get'))
     assert t.query is None
 
 
@@ -4561,3 +4564,20 @@ def test_auto_rowspan_and_render_twice_generator(NoSortTable):  # noqa: N803
     t = t.bind(request=req('get'))
     verify_table_html(table=t, expected_html=expected_html)
     verify_table_html(table=t, expected_html=expected_html)
+
+
+def test_table_explicit_query():
+    Table(
+        rows=[],
+        query=Query(
+            filter=lambda rows, **_: rows,
+        ),
+    ).bind(request=req('get'))
+
+
+def test_table_list_custom_query():
+    Table(
+        rows=[],
+        query__filter=lambda rows, **_: rows,
+        query__filters__foo=Filter(),
+    ).bind(request=req('get'))
