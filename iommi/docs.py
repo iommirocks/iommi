@@ -133,17 +133,18 @@ def get_default_classes():
     ]
 
 
-def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this is tested by rtd anyway
+def generate_api_docs_tests(directory, classes=None, verbose=False):  # pragma: no cover - this is tested by rtd anyway
     """
     Generate test files for declarative APIs
 
     :param directory: directory to write the .py files into
     :param classes: list of classes to generate tests for
+    :param verbose: print verbose warnings for missing docs
     """
     if classes is None:
         classes = get_default_classes()
 
-    doc_by_filename = _generate_tests_from_class_docs(classes=classes)  # pragma: no mutate
+    doc_by_filename = _generate_tests_from_class_docs(classes=classes, verbose=verbose)  # pragma: no mutate
     for source_filename, filename, doc_generator in doc_by_filename:  # pragma: no mutate
         doc = doc_generator()
         with open(directory / filename, 'w') as f2:  # pragma: no mutate
@@ -202,21 +203,21 @@ def get_namespace(c):
     )
 
 
-def _generate_tests_from_class_docs(classes):
+def _generate_tests_from_class_docs(classes, verbose=False):
     uses_by_field = uses_from_cookbooks()
 
     for c in classes:
         from io import StringIO
 
         f = StringIO()
-        yield _generate_tests_from_class_doc(f, c, classes, uses_by_field)
+        yield _generate_tests_from_class_doc(f, c, classes, uses_by_field, verbose=verbose)
 
 
-def _generate_tests_from_class_doc(f, c, classes, uses_by_field):
+def _generate_tests_from_class_doc(f, c, classes, uses_by_field, verbose=False):
     return (
         inspect.getfile(c),
         'test_doc__api_%s.py' % c.__name__,
-        lambda: _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field),
+        lambda: _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field, verbose=verbose),
     )
 
 
@@ -241,7 +242,7 @@ concepts = {
 }
 
 
-def _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field):
+def _generate_tests_from_class_doc_inner(f, c, classes, uses_by_field, verbose):
     def w(levels, s):
         f.write(indent_levels(levels, s))
         f.write('\n')
@@ -394,7 +395,7 @@ request = req('get')
                     w(1, f':ref:`{id_}`')
                     w(0, '')
             else:
-                if refinable not in concepts:
+                if refinable not in concepts and verbose:
                     print(f'WARNING: {c.__name__}.{refinable} has no cookbook examples')
 
         w(0, '')
