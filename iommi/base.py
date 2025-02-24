@@ -15,7 +15,7 @@ class UnknownMissingValueException(Exception):
 
 class Missing:
     def __bool__(self):
-        raise UnknownMissingValueException('MISSING is neither True nor False,it is unknown')
+        raise UnknownMissingValueException('MISSING is neither True nor False, it is unknown')
 
     def __str__(self):
         return 'MISSING'
