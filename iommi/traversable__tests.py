@@ -679,3 +679,39 @@ def test_params_gets_expanded_during_evaluate():
 
     Page(title=callback).as_view()(my_request, foo=17)
     assert was_called
+
+
+def test_evaluated_refinable_respects_order():
+    @with_meta
+    class MyRefinableObject(Traversable):
+        a = EvaluatedRefinable()
+        b = EvaluatedRefinable()
+        c = EvaluatedRefinable()
+        d = EvaluatedRefinable()
+        e = EvaluatedRefinable()
+        f = EvaluatedRefinable()
+
+    order = []
+
+    def register(name):
+        nonlocal order
+        order.append(name)
+
+    my_refinable = MyRefinableObject(
+        a=lambda **_: register('a'),
+        b=lambda **_: register('b'),
+        c=lambda **_: register('c'),
+        d=lambda **_: register('d'),
+        e=lambda **_: register('e'),
+        f=lambda **_: register('f'),
+
+    ).bind()
+
+    assert order == [
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f',
+    ]

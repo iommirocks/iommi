@@ -262,12 +262,13 @@ class RefinableObject:
 
         result.on_refine_done()
 
-        refinables_dynamic = set()
+        # dict instead of set() to respect order
+        refinables_dynamic = dict()
         for k in get_evaluated_attributes(result):
             v = getattr(result, k)
             if callable(v):
                 get_signature(v)  # warm the signature cache
-                refinables_dynamic.add(k)
+                refinables_dynamic[k] = True
         result._refinables_dynamic = refinables_dynamic
         return result
 
