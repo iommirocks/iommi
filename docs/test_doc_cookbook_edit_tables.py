@@ -24,8 +24,12 @@ def test_tables():
 def test_how_do_you_edit_one_to_one_in_a_table(black_sabbath):
     # language=rst
     """
+    .. _edit-table-one-to-one:
+
     How do you edit one-to-one fields in an edit table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses EditColumn.field
 
     Include them in `auto__include`. Say you have a profile model for an artist:
     """

@@ -55,6 +55,7 @@ def test_how_do_you_turn_off_pagination(small_discography):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Table.page_size
+    .. uses EditTable.page_size
 
     Specify `page_size=None`:
     """
@@ -96,6 +97,11 @@ def test_how_do_i_customize_the_rendering_of_a_cell():
     .. uses Cell.attrs
     .. uses Cell.template
     .. uses Cell.url
+    .. uses EditCell.attrs
+    .. uses EditCell.template
+    .. uses EditCell.url
+    .. uses Column.cell
+    .. uses EditColumn.cell
 
     You can customize the :doc:`Cell` rendering in several ways:
 
@@ -118,6 +124,9 @@ def test_how_do_i_make_a_link_in_a_cell(album):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Cell.url
+    .. uses EditCell.url
+    .. uses Column.cell
+    .. uses EditColumn.cell
 
     This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
 
@@ -144,6 +153,10 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
 
     .. uses Cell.value
     .. uses Cell.format
+    .. uses EditCell.value
+    .. uses EditCell.format
+    .. uses Column.cell
+    .. uses EditColumn.cell
 
     Let's say we have a model like this:
 
@@ -216,6 +229,7 @@ def test_how_do_i_reorder_columns():
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Column.after
+    .. uses EditColumn.after
 
     By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
 
@@ -276,6 +290,7 @@ def test_how_do_i_enable_searching_filter_on_columns():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Column.filter
+    .. uses EditColumn.filter
     .. uses Filter.include
 
     Pass the value `filter__include=True` to the column, to enable searching
@@ -314,6 +329,7 @@ def test_how_do_i_make_a_freetext_search_field():
     How do I make a freetext search field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Filter.freetext
+    .. uses Column.filter
 
     If you want to filter based on a freetext query on one or more columns we've got a nice little feature for this:
 
@@ -416,6 +432,7 @@ def test_how_do_i_customize_the_rendering_of_a_row():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Table.row
+    .. uses EditTable.row
     .. uses RowConfig.attrs
     .. uses RowConfig.template
 
@@ -439,6 +456,7 @@ def test_how_do_i_customize_the_rendering_of_a_header():
     How do I customize the rendering of a header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.header
+    .. uses EditColumn.header
 
     You can customize headers in two ways:
 
@@ -459,6 +477,7 @@ def test_how_do_i_turn_off_the_header():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Table.header
+    .. uses EditTable.header
 
     Set `header__template` to `None`.
 
@@ -484,6 +503,7 @@ def test_how_do_i_specify_which_columns_to_show():
     How do I specify which columns to show?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.include
+    .. uses EditColumn.include
 
     Pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
     """
@@ -510,8 +530,8 @@ def test_how_do_i_access_table_data_programmatically_(capsys, small_discography)
 
     How do I access table data programmatically (like for example to dump to json)?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     .. uses Table.cells_for_rows
+    .. uses EditTable.cells_for_rows
 
     Here's a simple example that prints a table to stdout:
 
@@ -540,6 +560,8 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.attr
     .. uses Table.auto
+    .. uses EditColumn.attr
+    .. uses EditTable.auto
 
     Let's say we have two models:
 
@@ -608,9 +630,10 @@ def test_how_do_i_turn_off_sorting(small_discography):
 
     How do I turn off sorting? (on a column or table wide)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     .. uses Table.sortable
     .. uses Column.sortable
+    .. uses EditTable.sortable
+    .. uses EditColumn.sortable
 
     To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
     """
@@ -647,6 +670,7 @@ def test_how_do_i_specify_the_title_of_a_header(small_discography):
     How do I specify the title of a header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.display_name
+    .. uses EditColumn.display_name
 
     The `display_name` property of a column is displayed in the header.
 
@@ -670,6 +694,7 @@ def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instea
     How do I set the default sort order of a column to be descending instead of ascending?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.sort_default_desc
+    .. uses EditColumn.sort_default_desc
 
     """
 
@@ -687,6 +712,8 @@ def test_how_do_i_group_columns():
     How do I group columns?
     ~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.group
+    .. uses EditColumn.group
+
     """
 
     table = Table(
@@ -714,6 +741,7 @@ def test_how_do_i_group_rows(medium_discography):
     How do I group rows?
     ~~~~~~~~~~~~~~~~~~~~
     .. uses Column.row_group
+    .. uses EditColumn.row_group
 
     Use `row_group`. By default this will output a `<th>` tag. You can configure it like any other fragment if you want to change that to a `<td>`. Note that the order of the columns in the table is used for grouping. This is why in the example below the `year` column is moved to index zero: we want to group on year first.
     """
@@ -753,6 +781,7 @@ def test_how_do_i_get_rowspan_on_a_table(small_discography, black_sabbath):
     How do I get rowspan on a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.auto_rowspan
+    .. uses EditColumn.auto_rowspan
 
     You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
     """
@@ -777,6 +806,7 @@ def test_how_do_i_enable_bulk_editing(small_discography):
     How do I enable bulk editing?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.bulk
+    .. uses EditColumn.bulk
 
     Editing multiple items at a time is easy in iommi with the built in bulk
     editing. Enable it for a columns by passing `bulk__include=True`:
@@ -812,6 +842,7 @@ def test_how_do_i_enable_bulk_delete(small_discography):
     How do I enable bulk delete?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.bulk
+    .. uses EditTable.bulk
     """
 
     table = Table(
@@ -842,6 +873,7 @@ def test_how_do_i_make_a_custom_bulk_action(album):
     How do I make a custom bulk action?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.bulk
+    .. uses EditTable.bulk
 
     You need to first show the select column by passing
     `columns__select__include=True`, then define a submit `Action` with a post
@@ -877,6 +909,10 @@ def test_what_is_the_difference_between_attr_and__name():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.attr
     .. uses Column.name
+    .. uses EditColumn.attr
+    .. uses EditColumn.name
+    .. uses Column.cell
+    .. uses EditColumn.cell
 
     `attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: `attr='foo__bar'` is functionally equivalent to `cell__value=lambda row, **_: row.foo.bar`. Set `attr` to `None` to not read any attribute from the row.
 
@@ -892,6 +928,7 @@ def test_table_with_foreign_key_reverse(small_discography):
     How do I show a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.include
+    .. uses EditColumn.include
 
     By default reverse foreign key relationships are hidden. To turn it on, pass `include=True` to the column:
     """
@@ -920,6 +957,7 @@ def test_table_with_m2m_key_reverse(small_discography):
     How do I show a reverse many-to-many relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.include
+    .. uses EditColumn.include
 
     By default reverse many-to-many relationships are hidden. To turn it on, pass `include=True` to the column:
     """
@@ -955,6 +993,8 @@ def test_insert_arbitrary_html(big_discography):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.container
     .. uses Table.outer
+    .. uses EditTable.container
+    .. uses EditTable.outer
 
     Sometimes you want to insert some extra html, css, or `Part` into a
     `Table`. You can do this with the `container` or `outer` namespaces.
@@ -989,6 +1029,9 @@ def test_custom_actions(small_discography):
     .. uses Table.actions
     .. uses Cell.url
     .. uses Column.link
+    .. uses EditTable.actions
+    .. uses EditCell.url
+    .. uses EditColumn.link
 
     For the entire table:
     """
@@ -1029,6 +1072,7 @@ def test_render_additional_rows(small_discography):
     How do I render additional rows?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.rows
+    .. uses EditTable.rows
     .. uses RowConfig.template
 
     Using `rows__template` you can render the default row with `{{ cells.render }}` and then your own custom data:
@@ -1061,6 +1105,7 @@ def test_initial_filter_on_table(really_big_discography):
     How do I set an initial filter to a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.query
+    .. uses EditTable.query
     .. uses Query.form
 
     The `Query` of a `Table` has a `Form` where you can set the initial value:
@@ -1090,6 +1135,10 @@ def test_indexed_rows(small_discography):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Cells.row_index
     .. uses Cell.value
+    .. uses EditCells.row_index
+    .. uses EditCell.value
+    .. uses Column.cell
+    .. uses EditColumn.cell
 
     Use `cells.row_index` to get the index of the row in the current rendering.
     """
@@ -1117,6 +1166,9 @@ def test_nested_foreign_keys(big_discography):
     How do I show nested foreign key relationships?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.auto
+    .. uses EditTable.auto
+    .. uses Column.cell
+    .. uses EditColumn.cell
 
     Say you have a list of tracks and you want to show the album and then from that album, you also want to show the artist:
     """
@@ -1166,6 +1218,7 @@ def test_dont_render_header(small_discography):
     How do I stop rendering the header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.header
+    .. uses EditTable.header
     .. uses HeaderConfig.include
 
     Use `header__template=None` to not render the header, or
