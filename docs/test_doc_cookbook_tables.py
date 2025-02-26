@@ -4,6 +4,7 @@ from iommi._web_compat import Template
 from tests.helpers import (
     req,
     show_output,
+    show_output_collapsed,
 )
 
 request = req('get')
@@ -43,6 +44,8 @@ def test_how_do_i_customize_the_rendering_of_a_table():
     To customize the row, see `How do I customize the rendering of a row?`_
 
     To customize the cell, see `How do I customize the rendering of a cell?`_
+
+    To customize the rendering of the table, see `table-as-div`_
     """
 
 
@@ -376,6 +379,8 @@ def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specificat
 
     .. code-block:: pycon
 
+        >>> from iommi.attrs import render_attrs
+        >>> from iommi.declarative.namespace import Namespace
         >>> render_attrs(Namespace(foo='bar'))
         ' foo="bar"'
 
@@ -682,29 +687,58 @@ def test_how_do_i_specify_the_title_of_a_header(small_discography):
     )
 
     # @test
+    assert Album.objects.count() > 0
     show_output(table)
     # @end
 
 
-def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instead_of_ascending():
+def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instead_of_ascending(medium_discography):
     # language=rst
     """
-    .. _default-sort-order:
+    .. _sort-direction:
 
-    How do I set the default sort order of a column to be descending instead of ascending?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    How do I set the default sort direction of a column to be descending instead of ascending?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.sort_default_desc
     .. uses EditColumn.sort_default_desc
 
     """
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__sort_default_desc=True,  # or a lambda!
     )
 
+    # @test
+    assert Album.objects.count() > 0
+    show_output_collapsed(table)
+    # @end
 
-def test_how_do_i_group_columns():
+
+def test_how_do_i_set_the_default_sort_order_on_a_table(medium_discography):
+    # language=rst
+    """
+    .. _default-sort-order
+
+    How do I set the default sorting column of a table?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.default_sort_order
+
+    Tables are sorted by default on the order specified in the models `Meta` and then on `pk`. Set `default_sort_order` to set another default ordering:
+    """
+
+    table = Table(
+        auto__model=Album,
+        default_sort_order='year',
+    )
+
+    # @test
+    assert Album.objects.count() > 0
+    show_output(table)
+    # @end
+
+
+def test_how_do_i_group_columns(medium_discography):
     # language=rst
     """
     .. _group-columns:
@@ -1251,3 +1285,36 @@ def test_dont_render_header(small_discography):
     show_output(t)
     assert '<thead>' not in t.__html__() and 'None' not in t.__html__()
     # @end
+
+
+def test_render_table_as_div(medium_discography):
+    # language=rst
+    """
+    .. _table-as-div:
+
+    How do I render a Table as divs?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.tag
+    .. uses Table.tbody
+    .. uses Table.cell
+    .. uses CellConfig.tag
+    .. uses RowConfig.tag
+    .. uses Table.header
+    .. uses Header.template
+
+
+    You can render a `Table` as a div with the shortcut `Table.div`:
+    """
+
+    table = Table.div(
+        auto__model=Album,
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    This shortcut changes the rendering of the entire table from `<table>` to `<div>` by specifying the `tag` configuration, changes the `<tbody>` to a `<div>` via `tbody__tag`, the row via `row__tag` and removes the header with `header__template=None`.
+    """
