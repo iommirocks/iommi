@@ -59,6 +59,7 @@ def test_how_do_you_turn_off_pagination(small_discography):
 
     .. uses Table.page_size
     .. uses EditTable.page_size
+    .. uses TableAutoConfig.model
 
     Specify `page_size=None`:
     """
@@ -131,6 +132,7 @@ def test_how_do_i_make_a_link_in_a_cell(album):
     .. uses Column.cell
     .. uses EditColumn.cell
     .. uses Table.columns
+    .. uses TableAutoConfig.model
 
     This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
 
@@ -145,6 +147,7 @@ def test_how_do_i_make_a_link_in_a_cell(album):
     # @test
     show_output(table)
     # @end
+
 
 
 def test_how_do_i_create_a_column_based_on_computed_data_():
@@ -162,6 +165,7 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
     .. uses Column.cell
     .. uses EditColumn.cell
     .. uses Table.columns
+    .. uses TableAutoConfig.model
 
     Let's say we have a model like this:
 
@@ -236,6 +240,7 @@ def test_how_do_i_reorder_columns():
     .. uses Column.after
     .. uses EditColumn.after
     .. uses Table.columns
+    .. uses TableAutoConfig.model
 
     By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
 
@@ -298,6 +303,7 @@ def test_how_do_i_enable_searching_filter_on_columns():
     .. uses Column.filter
     .. uses EditColumn.filter
     .. uses Filter.include
+    .. uses TableAutoConfig.model
 
     Pass the value `filter__include=True` to the column, to enable searching
     in the advanced query language.
@@ -336,6 +342,7 @@ def test_how_do_i_make_a_freetext_search_field():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Filter.freetext
     .. uses Column.filter
+    .. uses TableAutoConfig.model
 
     If you want to filter based on a freetext query on one or more columns we've got a nice little feature for this:
 
@@ -512,6 +519,8 @@ def test_how_do_i_specify_which_columns_to_show():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.include
     .. uses EditColumn.include
+    .. uses TableAutoConfig.model
+    .. uses Column.render_column
 
     Pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
     """
@@ -526,9 +535,48 @@ def test_how_do_i_specify_which_columns_to_show():
     """
     This will show the column `name` only if the GET parameter `some_parameter` is set to `hello!`.
 
-    To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
-
+    To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead. This is useful to for example turn on filtering for a column, but not render it:
     """
+
+    table = Table(
+        auto__model=Album,
+        columns__year__render_column=False,
+        columns__year__filter__include=True,
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    Instead of using `auto__include`, you can also use `auto__exclude` to just exclude the columns you don't want:
+    """
+
+    table = Table(
+        auto__model=Album,
+        auto__exclude=['year'],
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    There is also a config option `default_included` which is by default `True`, which is where iommi's default behavior of showing all columns comes from. If you set it to `False` columns are now opt-in:
+    """
+
+    table = Table(
+        auto__model=Album,
+        auto__default_included=False,
+        # Turn on only the name column
+        columns__name__include=True,
+    )
+
+    # @test
+    show_output(table)
+    # @end
 
 
 def test_how_do_i_access_table_data_programmatically_(capsys, small_discography):
@@ -750,6 +798,7 @@ def test_how_do_i_group_columns(medium_discography):
     ~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.group
     .. uses EditColumn.group
+    .. uses TableAutoConfig.model
 
     """
 
@@ -779,6 +828,7 @@ def test_how_do_i_group_rows(medium_discography):
     ~~~~~~~~~~~~~~~~~~~~
     .. uses Column.row_group
     .. uses EditColumn.row_group
+    .. uses TableAutoConfig.rows
 
     Use `row_group`. By default this will output a `<th>` tag. You can configure it like any other fragment if you want to change that to a `<td>`. Note that the order of the columns in the table is used for grouping. This is why in the example below the `year` column is moved to index zero: we want to group on year first.
     """
@@ -1206,6 +1256,7 @@ def test_nested_foreign_keys(big_discography):
     .. uses EditTable.auto
     .. uses Column.cell
     .. uses EditColumn.cell
+    .. uses TableAutoConfig.include
 
     Say you have a list of tracks and you want to show the album and then from that album, you also want to show the artist:
     """
