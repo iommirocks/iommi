@@ -270,7 +270,7 @@ Changelog
 
 * Preserving filters from other table filters and sorting (fixes #496)
 
-* If you had `?order=` in your URL without value, you got `IndexError`(string index out of range) (fixes #495)
+* If you had `?order=` in your URL without value, you got `IndexError` (string index out of range) (fixes #495)
 
 * Documentation fixes by first time contributor Viktor <dpedesigns@hotmail.com>
 

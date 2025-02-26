@@ -130,6 +130,7 @@ def test_how_do_i_make_a_link_in_a_cell(album):
     .. uses EditCell.url
     .. uses Column.cell
     .. uses EditColumn.cell
+    .. uses Table.columns
 
     This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
 
@@ -160,6 +161,7 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
     .. uses EditCell.format
     .. uses Column.cell
     .. uses EditColumn.cell
+    .. uses Table.columns
 
     Let's say we have a model like this:
 
@@ -233,6 +235,7 @@ def test_how_do_i_reorder_columns():
 
     .. uses Column.after
     .. uses EditColumn.after
+    .. uses Table.columns
 
     By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
 
@@ -718,7 +721,7 @@ def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instea
 def test_how_do_i_set_the_default_sort_order_on_a_table(medium_discography):
     # language=rst
     """
-    .. _default-sort-order
+    .. _default-sort-order:
 
     How do I set the default sorting column of a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1302,7 +1305,6 @@ def test_render_table_as_div(medium_discography):
     .. uses Table.header
     .. uses Header.template
 
-
     You can render a `Table` as a div with the shortcut `Table.div`:
     """
 
@@ -1317,4 +1319,107 @@ def test_render_table_as_div(medium_discography):
     # language=rst
     """
     This shortcut changes the rendering of the entire table from `<table>` to `<div>` by specifying the `tag` configuration, changes the `<tbody>` to a `<div>` via `tbody__tag`, the row via `row__tag` and removes the header with `header__template=None`.
+    """
+
+
+def test_how_do_i_do_custom_processing_on_rows(medium_discography):
+    # language=rst
+    """
+    .. table-preprocess_rows:
+
+    How do I do custom processing on rows before rendering?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.preprocess_row
+    .. uses Table.preprocess_rows
+    .. uses EditTable.preprocess_row
+    .. uses EditTable.preprocess_rows
+
+    Sometimes it's useful to further process the rows before rendering, by fetching more data, doing calculations, etc. If you can use `QuerySet.annotate()`, that's great, but sometimes that's not enough. This is where `preprocess_row` and `preprocess_rows` come in. The first is called on each row, and the second is called for the entire list as a whole.
+
+    Note that this is all done *after* pagination.
+
+    Modifying row by row:
+    """
+    def preprocess_album(row, **_):
+        row.year += 1000
+        return row
+
+    table = Table(
+        auto__model=Album,
+        preprocess_row=preprocess_album,
+    )
+
+    # language=rst
+    """
+    Note that `preprocess_row` requires that you return the object. This is because you can return a different object if you'd like.
+    """
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    Modifying the entire list:
+    """
+
+    def preprocess_albums(rows, **_):
+        for i, row in enumerate(rows):
+            row.index = i
+        return rows
+
+    table = Table(
+        auto__model=Album,
+        preprocess_rows=preprocess_albums,
+        columns__index=Column.number(),
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    Note that `preprocess_rows` requires that you return the list. That is because you can also return a totally new list if you'd like.
+    """
+
+
+def test_how_do_i_set_an_empty_message():
+    # language=rst
+    """
+    .. table-empty-message:
+
+    How do I set an empty message?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.empty_message
+    .. uses EditTable.empty_message
+
+    By default iommi will render an empty table simply as empty:
+    """
+
+    table = Table(
+        auto__model=Album,
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    If you want to instead display an explicit message when the table is empty, you use `empty_message`:
+    """
+
+    table = Table(
+        auto__model=Album,
+        empty_message='Destruction of the empty spaces is my one and only crime',
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    This setting is probably something you want to set up in your `Style`, and not per table.
     """

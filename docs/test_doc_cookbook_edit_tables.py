@@ -30,6 +30,8 @@ def test_how_do_you_edit_one_to_one_in_a_table(black_sabbath):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses EditColumn.field
+    .. uses EditColumn.columns
+    .. uses EditColumn.auto
 
     Include them in `auto__include`. Say you have a profile model for an artist:
     """
