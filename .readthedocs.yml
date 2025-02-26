@@ -17,3 +17,4 @@ build:
   jobs:
     post_build:
       - cp "iommi/static/js/iommi.js" "$READTHEDOCS_OUTPUT/html/_static/"
+      - cp "iommi/static/js/iommi-scroll.js" "$READTHEDOCS_OUTPUT/html/_static/"

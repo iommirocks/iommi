@@ -21,11 +21,10 @@ docReady(function() {
         });
     }
 
-    // Always expand the first section
-    let x = document.getElementById('toctree-checkbox-1');
-    if (!x.checked) {
-        x.click();
-    }
+    // Expand the components section, if nothing else is expanded.
+   if (!document.querySelectorAll(".sidebar-tree .toctree-checkbox:checked").length) {
+       document.querySelector("a[href='components.html']").parentElement.querySelector("input.toctree-checkbox[type='checkbox']").checked = true;
+   }
 });
 
 function toggle(id, source) {
