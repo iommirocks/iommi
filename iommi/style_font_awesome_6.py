@@ -1,5 +1,5 @@
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 
 from iommi import (
     Style,
@@ -20,7 +20,7 @@ font_awesome_6 = Style(
         delete__extra__icon='trash',
         download__extra__icon='download',
         boolean__cell__format=lambda value, **_: (
-            mark_safe(f'<i class="fa fa-check" title="{gettext("Yes")}"></i>') if value else ''
+            mark_safe(f'<i class="fa fa-check" title="{gettext_lazy("Yes")}"></i>') if value else ''
         ),
         select=dict(
             extra__icon='fa-regular fa-square-check',

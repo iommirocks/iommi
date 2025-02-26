@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.urls import path
-from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 
 from examples import (
     example_adding_decorator,
@@ -32,7 +32,7 @@ examples = []
 example = example_adding_decorator(examples)
 
 
-@example(gettext('Readme example 1'))
+@example(gettext_lazy('Readme example 1'))
 def table_readme_example_1(request):
     # Say I have a class...
     class Foo:
@@ -57,7 +57,7 @@ def table_readme_example_1(request):
     return FooTable(rows=foos)
 
 
-@example(gettext('Readme example 2'))
+@example(gettext_lazy('Readme example 2'))
 def table_readme_example_2(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
@@ -73,14 +73,14 @@ def table_readme_example_2(request):
     return BarTable(rows=TBar.objects.all(), page_size=20)
 
 
-@example(gettext('Auto from model example 1'))
+@example(gettext_lazy('Auto from model example 1'))
 def table_auto_example_1(request):
     return Table(
         auto__model=Foo,
     )
 
 
-@example(gettext('Auto from model example 2'))
+@example(gettext_lazy('Auto from model example 2'))
 def table_auto_example_2(request):
     return Table(
         auto__model=Foo,
@@ -88,7 +88,7 @@ def table_auto_example_2(request):
     )
 
 
-@example(gettext('Kitchen sink example'))
+@example(gettext_lazy('Kitchen sink example'))
 def table_kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
@@ -146,7 +146,7 @@ example_6_view = Table(
 example_6_view = example('Table expressed directly as a view function')(example_6_view)
 
 
-@example(gettext('Two tables on the same page'))
+@example(gettext_lazy('Two tables on the same page'))
 def table_two(request):
     return Page(
         parts__table_1=Table(
@@ -163,7 +163,7 @@ def table_two(request):
     )
 
 
-@example(gettext('post handlers on lists'))
+@example(gettext_lazy('post handlers on lists'))
 def table_post_handler_on_lists(request):
     class Foo:
         def __init__(self, i):
@@ -199,7 +199,7 @@ def table_post_handler_on_lists(request):
     return FooTable(rows=foos)
 
 
-@example(gettext('You can have extra fields in your form that the query will ignore'))
+@example(gettext_lazy('You can have extra fields in your form that the query will ignore'))
 def extra_fields(request):
     class FooTable(Table):
         name = Column(filter__include=True)
@@ -211,7 +211,7 @@ def extra_fields(request):
     return table
 
 
-@example(gettext('Tables know how to render as CSV files'))
+@example(gettext_lazy('Tables know how to render as CSV files'))
 def csv(request):
     class ArtistTable(Table):
         class Meta:
@@ -245,7 +245,7 @@ def csv(request):
     )
 
 
-@example(gettext('EditTable example'))
+@example(gettext_lazy('EditTable example'))
 def edit_table(request):
     return EditTable(
         auto__model=Album,

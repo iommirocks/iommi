@@ -1,4 +1,4 @@
-import datetime
+from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
@@ -9,7 +9,7 @@ from django.template import (
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 
 from examples import (
     example_adding_decorator,
@@ -40,7 +40,7 @@ examples = []
 example = example_adding_decorator(examples)
 
 
-@example(gettext("Use much like a django form"))
+@example(gettext_lazy("Use much like a django form"))
 def form_example_1(request):
     class FruitForm(Form):
         name = Field()
@@ -72,7 +72,7 @@ def form_example_1(request):
     )
 
 
-@example(gettext("Use more ideomatic like an iommi part"))
+@example(gettext_lazy("Use more ideomatic like an iommi part"))
 def form_example_2(request):
     class FruitForm(Form):
         class Meta:
@@ -90,7 +90,7 @@ def form_example_2(request):
     return FruitForm()
 
 
-@example(gettext("Endpoints using ajax need no extra url entry"))
+@example(gettext_lazy("Endpoints using ajax need no extra url entry"))
 def form_example_3(request):
     class TrackForm(Form):
         artist = Field.choice_queryset(choices=Track.objects.all())
@@ -98,12 +98,12 @@ def form_example_3(request):
     return TrackForm()
 
 
-@example(gettext("Create forms from database models"))
+@example(gettext_lazy("Create forms from database models"))
 def form_example_4(request):
     return Form.create(auto__model=Artist)
 
 
-@example(gettext("Create edit forms from database models"))
+@example(gettext_lazy("Create edit forms from database models"))
 def form_example_5(request):
     class MyForm(Form):
         name = Field()
@@ -111,7 +111,7 @@ def form_example_5(request):
     return MyForm.edit(instance=Artist.objects.all().first())
 
 
-@example(gettext("Custom actions can be added to forms"))
+@example(gettext_lazy("Custom actions can be added to forms"))
 def form_example_6(request):
     @staticmethod
     def do_nothing(**_):
@@ -129,7 +129,7 @@ def form_example_6(request):
     )
 
 
-@example(gettext("Multiple forms can be composed in a page"))
+@example(gettext_lazy("Multiple forms can be composed in a page"))
 class KitchenForm(Form):
     kitchen_foo = Field()
 
@@ -178,7 +178,7 @@ def form_example_7(request):
     return KitchenPage()
 
 
-@example(gettext("Custom validation for all fields in a form"))
+@example(gettext_lazy("Custom validation for all fields in a form"))
 def form_example_8(request):
     class FruitForm(Form):
         class Meta:
@@ -209,25 +209,25 @@ def form_example_8(request):
     return FruitForm()
 
 
-@example(gettext("Error messages"))
+@example(gettext_lazy("Error messages"))
 def form_example_error_messages(request):
     def form_error_messages(form, **_):
-        form.add_error(gettext('Global error message 1'))
-        form.add_error(gettext('Global error message 2'))
+        form.add_error(gettext_lazy('Global error message 1'))
+        form.add_error(gettext_lazy('Global error message 2'))
 
     def field_error_messages(field, **_):
-        field.add_error(gettext('Field error message 1'))
-        field.add_error(gettext('Field error message 2'))
+        field.add_error(gettext_lazy('Field error message 1'))
+        field.add_error(gettext_lazy('Field error message 2'))
 
     return Form(
-        title=gettext('Error messages'),
+        title=gettext_lazy('Error messages'),
         auto__model=Artist,
         post_validation=form_error_messages,
         fields__name__post_validation=field_error_messages,
     )
 
 
-@example(gettext("Form children do not need to be all fields"))
+@example(gettext_lazy("Form children do not need to be all fields"))
 def form_example_children_that_are_not_fields(request):
     def on_submit(form, **_):
         if not form.is_valid():
@@ -260,7 +260,7 @@ def form_example_children_that_are_not_fields(request):
     )
 
 
-@example(gettext("Form children do not need to be all fields -- declarative"))
+@example(gettext_lazy("Form children do not need to be all fields -- declarative"))
 def form_example_children_that_are_not_fields_declarative(request):
     def on_submit(form, **_):
         if not form.is_valid():
@@ -296,7 +296,7 @@ def form_example_children_that_are_not_fields_declarative(request):
     return MyForm()
 
 
-@example(gettext("Nested forms -- to abstract out behaviour and create complex 'fields'."))
+@example(gettext_lazy("Nested forms -- to abstract out behaviour and create complex 'fields'."))
 def form_example_nested_forms(request):
     """Here we have two fields first_day, last_day and want to abstract
     out the validation behaviour. Maybe because we have several
@@ -327,7 +327,7 @@ def form_example_nested_forms(request):
                     return
                 return html.pre(f"You posted {form.apply(Struct())}").bind(request=request)
 
-    today = datetime.date.today()
+    today = date.today()
     return Page(
         parts__title1=Header("Without instance"),
         parts__form1=MyForm(),
@@ -336,7 +336,7 @@ def form_example_nested_forms(request):
     )
 
 
-@example(gettext("File upload"))
+@example(gettext_lazy("File upload"))
 def form_example_file_upload(request):
     class FileForm(Form):
         upload = Field.file()
@@ -350,7 +350,7 @@ def form_example_file_upload(request):
     return FileForm()
 
 
-@example(gettext("Field groups"))
+@example(gettext_lazy("Field groups"))
 def form_example_field_groups(request):
     class FieldGroupForm(Form):
         a = Field()
@@ -363,7 +363,7 @@ def form_example_field_groups(request):
     return FieldGroupForm()
 
 
-@example(gettext("Dependent choices"))
+@example(gettext_lazy("Dependent choices"))
 def form_example_dependent_fields(request):
     def album_choices(form, **_):
         if form.fields.artist.value:

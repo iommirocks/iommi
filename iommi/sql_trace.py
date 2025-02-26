@@ -18,6 +18,7 @@ from django.db import connections
 from django.db.backends import utils as django_db_utils
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.http import HttpResponse
+from django.utils.timezone import now
 
 from iommi._web_compat import format_html
 from iommi.attrs import render_style
@@ -88,7 +89,7 @@ class Middleware:
 
     def __call__(self, request):
         set_current_request(request)
-        request.iommi_start_time = datetime.now()
+        request.iommi_start_time = now()
         sql_trace = request.GET.get('_iommi_sql_trace')
 
         if sql_trace is None:
@@ -478,7 +479,7 @@ def sql_debug_last_call(response):
 
     if settings.DEBUG:
         total_sql_time = f" (sql time: {sql_debug_total_time():.3f}s)"
-        duration = f' ({(datetime.now() - request.iommi_start_time).total_seconds():.3f}s)'
+        duration = f' ({(now() - request.iommi_start_time).total_seconds():.3f}s)'
         sql_debug(
             msg=f'{request.META["REQUEST_METHOD"]} {request.get_full_path()} -> {response.status_code} {duration}{total_sql_time}'
         )

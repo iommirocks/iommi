@@ -1,5 +1,5 @@
-import datetime
 import operator
+from datetime import datetime
 from functools import reduce
 from typing import (
     Type,
@@ -19,7 +19,7 @@ from django.db.models import (
 )
 from django.utils import timezone
 from django.utils.translation import (
-    gettext,
+    gettext_lazy,
     pgettext,
 )
 from pyparsing import (
@@ -155,8 +155,8 @@ def value_to_str_for_query(filter, v):
         return {True: '1', False: '0'}.get(v)
     if type(v) in (int, float):
         return str(v)
-    if isinstance(v, datetime.datetime) and timezone.is_aware(v):
-        v = timezone.make_naive(v, timezone=datetime.timezone.utc)
+    if isinstance(v, datetime) and timezone.is_aware(v):
+        v = timezone.make_naive(v, timezone=timezone.utc)
     if isinstance(v, Model):
         model = type(v)
         search_field = filter.search_fields[-1]
@@ -618,7 +618,7 @@ class Advanced(Fragment):
     def on_refine_done(self):
         self.toggle = self.toggle(
             _name='toggle',
-            display_name=gettext('Switch to advanced search'),
+            display_name=gettext_lazy('Switch to advanced search'),
         ).refine_done(parent=self)
         super(Advanced, self).on_refine_done()
 
@@ -750,7 +750,7 @@ class Query(Part):
                 freetext_search_config,
                 _name=FREETEXT_SEARCH_NAME,
                 call_target__cls=field_class,
-                display_name=gettext('Search'),
+                display_name=gettext_lazy('Search'),
                 required=False,
                 include=lambda query, **_: any(filter.freetext for filter in values(query.filters)),
                 help__include=False,

@@ -42,7 +42,8 @@ from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils import timezone
 from django.utils.functional import Promise
-from django.utils.translation import gettext
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
@@ -156,7 +157,7 @@ def bool_parse(string_value, **_):
     elif s in ('0', 'false', 'f', 'no', 'n', 'off'):
         return False
     else:
-        raise ValueError(gettext('{} is not a valid boolean value').format(string_value))
+        raise ValueError(gettext_lazy('{} is not a valid boolean value').format(string_value))
 
 
 def many_to_many_factory_read_from_instance(field, instance, **_):
@@ -301,7 +302,7 @@ def float_parse(string_value: str, **_):
         return float(string_value)
     except ValueError:
         # Acrobatics so we get equal formatting in python 2/3
-        raise ValueError(gettext("Could not convert string to float: {}").format(string_value))
+        raise ValueError(gettext_lazy("Could not convert string to float: {}").format(string_value))
 
 
 def int_parse(string_value, **_):
@@ -312,7 +313,7 @@ def choice_is_valid(field, parsed_data, **_):
     if not field.parse_empty_string_as_none and parsed_data == "":
         # django models.CharField(choices=..., blank=True, null=False) does not need to have an empty choice
         return True, ''
-    return parsed_data in field.choices, gettext('{} not in available choices').format(parsed_data)
+    return parsed_data in field.choices, gettext_lazy('{} not in available choices').format(parsed_data)
 
 
 def choice_parse(form, field, string_value, **_):
@@ -330,7 +331,7 @@ def choice_queryset__is_valid(field, parsed_data, **_):
     value = ", ".join(field.raw_data) if field.is_list else field.raw_data
     return (
         field.choices.filter(pk=parsed_data.pk).exists(),
-        gettext('{} not in available choices').format(value),
+        gettext_lazy('{} not in available choices').format(value),
     )
 
 
@@ -428,7 +429,7 @@ def datetime_parse(string_value, traversable=None, **_):
     if result is None:
         formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
         raise ValidationError(
-            gettext(
+            gettext_lazy(
                 'Time data "{string_value}" does not match any of the formats "now", {formats}, '
                 'and is not a relative date like "2d" or "2 weeks ago"'
             ).format(
@@ -457,13 +458,13 @@ def date_parse(string_value, **_):
         return datetime.strptime(string_value, date_iso_format).date()
     except ValueError as e:
         if 'out of range' in str(e) or 'unconverted data remains' in str(e):
-            extra_information = f' ({gettext("out of range")})'
+            extra_information = f' ({gettext_lazy("out of range")})'
 
     result = parse_relative_date(string_value)
     if result is None:
         formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
         raise ValidationError(
-            gettext(
+            gettext_lazy(
                 'Time data "{string_value}" does not match any of the formats "now", {formats}, '
                 'and is not a relative date like "2d" or "2 weeks ago"{extra_information}'
             ).format(
@@ -488,7 +489,7 @@ time_iso_formats = [
 
 def time_parse(string_value, **_):
     if string_value.lower() == 'now':
-        return datetime.now().time()
+        return now().time()
     for time_iso_format in time_iso_formats:
         try:
             return datetime.strptime(string_value, time_iso_format).time()
@@ -496,7 +497,7 @@ def time_parse(string_value, **_):
             pass
     formats = ', '.join('"%s"' % x for x in time_iso_formats)
     raise ValidationError(
-        gettext('Time data "{string_value}" does not match any of the formats "now" or {formats}').format(
+        gettext_lazy('Time data "{string_value}" does not match any of the formats "now" or {formats}').format(
             string_value=string_value,
             formats=formats,
         )
@@ -512,7 +513,7 @@ def decimal_parse(string_value, **_):
         return Decimal(string_value)
     except InvalidOperation:
         raise ValidationError(
-            gettext("Invalid literal for Decimal: '{string_value}'").format(string_value=string_value)
+            gettext_lazy("Invalid literal for Decimal: '{string_value}'").format(string_value=string_value)
         )
 
 
@@ -537,7 +538,7 @@ def email_parse(string_value, field=None, **_):
 def phone_number_is_valid(parsed_data, **_):
     return (
         re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE),
-        gettext(
+        gettext_lazy(
             'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
         ),
     )
@@ -1009,7 +1010,7 @@ class Field(Part, Tag):
                 and self.required
                 and (value == [] if self.is_list else value in [None, ''])
             ):
-                self.add_error(gettext('This field is required'))
+                self.add_error(gettext_lazy('This field is required'))
             else:
                 self.value = value
         else:
@@ -1253,7 +1254,7 @@ class Field(Part, Tag):
     @with_defaults(
         choices=[True, False],
         choice_id_formatter=lambda choice, **_: 'true' if choice else 'false',
-        choice_display_name_formatter=lambda choice, **_: gettext('Yes') if choice else gettext('No'),
+        choice_display_name_formatter=lambda choice, **_: gettext_lazy('Yes') if choice else gettext_lazy('No'),
         parse=boolean_tristate__parse,
         required=False,
     )
@@ -1521,7 +1522,7 @@ def delete_object__post_handler(form, **_):
                 objects = getattr(e, 'protected_objects', None)
             if objects is None:
                 # This message must match the one in Django exactly to get translations for free
-                form.add_error((gettext("Cannot delete %(name)s") % {"name": str(instance)}) + str(e))
+                form.add_error((gettext_lazy("Cannot delete %(name)s") % {"name": str(instance)}) + str(e))
                 return
 
             # This message must match the one in Django exactly to get translations for free
@@ -1567,9 +1568,9 @@ def delete_object__post_handler(form, **_):
 # noinspection PyUnreachableCode
 if False:
     # These are needed to make makemessages collect these strings
-    gettext('create')
-    gettext('edit')
-    gettext('delete')
+    gettext_lazy('create')
+    gettext_lazy('edit')
+    gettext_lazy('delete')
 
 
 class FormAutoConfig(AutoConfig):
@@ -1733,15 +1734,15 @@ class Form(Part, Tag):
         crud_type = self.extra.get('crud_type')
         if 'title' not in self.iommi_namespace and crud_type is not None:
             self.title = lambda form, **_: capitalize(
-                gettext('%(crud_type)s %(model_name)s')
+                gettext_lazy('%(crud_type)s %(model_name)s')
                 % dict(
-                    crud_type=gettext(form.extra.crud_type),
+                    crud_type=gettext_lazy(form.extra.crud_type),
                     model_name=(form.model or form.instance)._meta.verbose_name,
                 )
             )
             extra_action_defaults = setdefaults_path(
                 extra_action_defaults,
-                submit__display_name=lambda form, **_: gettext('Save') if form.extra.crud_type == 'edit' else capitalize(gettext(form.extra.crud_type)),
+                submit__display_name=lambda form, **_: gettext_lazy('Save') if form.extra.crud_type == 'edit' else capitalize(gettext_lazy(form.extra.crud_type)),
             )
 
         # Submit is special.
@@ -2146,7 +2147,7 @@ class Form(Part, Tag):
             after=0,
             tag='p',
             children__text=lambda instance, **_: (
-                gettext('Are you sure you want to delete the %(model_name)s "%(instance)s"?')
+                gettext_lazy('Are you sure you want to delete the %(model_name)s "%(instance)s"?')
                 % dict(model_name=instance._meta.verbose_name, instance=str(instance))
             ),
         ),

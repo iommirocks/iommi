@@ -1,4 +1,4 @@
-from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 
 from iommi._web_compat import mark_safe
 from iommi.fragment import html
@@ -18,7 +18,7 @@ bootstrap_icons = Style(
         delete__extra__icon='trash',
         download__extra__icon='download',
         boolean__cell__format=lambda value, **_: mark_safe(
-            f'<i class="bi bi-check-lg fs-3" title="{gettext("Yes")}"></i>'
+            f'<i class="bi bi-check-lg fs-3" title="{gettext_lazy("Yes")}"></i>'
         )
         if value
         else '',

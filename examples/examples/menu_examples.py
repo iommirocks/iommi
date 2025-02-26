@@ -1,5 +1,5 @@
 from django.urls import path
-from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 
 from examples import (
     example_adding_decorator,
@@ -17,7 +17,7 @@ examples = []
 example = example_adding_decorator(examples)
 
 
-@example(gettext("A sample menu"))
+@example(gettext_lazy("A sample menu"))
 def menu_test(request):
     class FooPage(Page):
         menu = Menu(
