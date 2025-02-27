@@ -34,6 +34,80 @@ def test_forms():
     """
 
 
+def test_how_do_i_specify_which_fields_to_show():
+    # language=rst
+    """
+    .. _show-fields:
+
+    How do I specify which fields to show?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.include
+    .. uses FormAutoConfig.model
+    .. uses FormAutoConfig.include
+    .. uses FormAutoConfig.exclude
+    .. uses FormAutoConfig.default_included
+
+    Pass `include=False` to hide the field or `include=True` to show it. By default fields are shown, except the primary key field that is by default hidden. You can also pass a callable here like so:
+    """
+
+    Form.create(
+        auto__model=Album,
+        fields__name__include=
+            lambda request, **_: request.GET.get('some_parameter') == 'hello!',
+    )
+
+    # language=rst
+    """
+    This will show the field `name` only if the GET parameter `some_parameter` is set to `hello!`.
+
+    To be more precise, `include` turns off the entire field. See  :ref:`field-non-editable` and :ref:`field-hidden`  
+    """
+
+    # language=rst
+    """
+    Use `auto__include`, to specify the complete list of fields you want:
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        auto__include=['name', 'artist'],
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+    # language=rst
+    """
+    Instead of using `auto__include`, you can also use `auto__exclude` to just exclude the fields you don't want:
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        auto__exclude=['year'],
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+    # language=rst
+    """
+    There is also a config option `default_included` which is by default `True`, which is where iommi's default behavior of showing all fields comes from. If you set it to `False` fields are now opt-in:
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        auto__default_included=False,
+        # Turn on only the name field
+        fields__name__include=True,
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+
 def test_how_do_i_supply_a_custom_parser_for_a_field():
     # language=rst
     """
@@ -146,6 +220,7 @@ def test_how_do_i_make_an_entire_form_non_editable(album):
     How do I make an entire form non-editable?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Form.editable
+    .. uses FormAutoConfig.instance
 
     This is a very common case so there's a special syntax for this: pass a `bool` to the form:
     """
@@ -573,7 +648,7 @@ def test_how_do_I_change_redirect_target(black_sabbath):
 
     How do I change where the form redirects to after completion?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    .. uses FormAutoConfig.instance
     .. uses Form.extra
 
     iommi by default redirects to `..` after edit/create/delete. You can
@@ -668,8 +743,8 @@ def test_form_with_foreign_key_reverse(small_discography, black_sabbath):
 
     How do I enable a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     .. uses Form.auto
+    .. uses FormAutoConfig.instance
 
     By default reverse foreign key relationships are hidden. To turn it on, pass `include=True` to the field. Note that these are read only, because the semantics of hijacking another models foreign keys would be quite weird.
     """
@@ -1072,5 +1147,27 @@ def test_how_do_i_make_a_form_to_create_or_edit(black_sabbath, album):
     # @test
     form = form.bind(request=user_req('get'))
     assert form.title == 'Edit album'
+    show_output(form)
+    # @end
+
+
+def test_how_do_i_create_a_hidden_field():
+    # language=rst
+    """
+    .. _field-hidden:
+
+    How do I create a hidden field?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.hidden
+
+    Use the `Field.hidden` shortcut:
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        fields__artist=Field.hidden(),
+    )
+
+    # @test
     show_output(form)
     # @end

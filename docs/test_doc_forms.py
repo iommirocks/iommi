@@ -304,6 +304,9 @@ def test_post_handlers():
 def test_customization_of_save_behavior():
     # language=rst
     """
+
+    .. _Field-hardcoded:
+
     Customization of save behavior on `Form.create`/`edit`
     ------------------------------------------------------
 

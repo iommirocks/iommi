@@ -519,8 +519,11 @@ def test_how_do_i_specify_which_columns_to_show():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Column.include
     .. uses EditColumn.include
-    .. uses TableAutoConfig.model
     .. uses Column.render_column
+    .. uses TableAutoConfig.model
+    .. uses TableAutoConfig.include
+    .. uses TableAutoConfig.exclude
+    .. uses TableAutoConfig.default_included
 
     Pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
     """
@@ -542,6 +545,20 @@ def test_how_do_i_specify_which_columns_to_show():
         auto__model=Album,
         columns__year__render_column=False,
         columns__year__filter__include=True,
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    Use `auto__include`, to specify the complete list of columns you want:
+    """
+
+    table = Table(
+        auto__model=Album,
+        auto__include=['name', 'artist'],
     )
 
     # @test
