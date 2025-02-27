@@ -16,5 +16,4 @@ build:
     python: "3.11"
   jobs:
     post_build:
-      - cp "iommi/static/js/iommi.js" "$READTHEDOCS_OUTPUT/html/_static/"
-      - cp "iommi/static/js/iommi-scroll.js" "$READTHEDOCS_OUTPUT/html/_static/"
+      - cp -r "iommi/static/" "$READTHEDOCS_OUTPUT/html/_static/"
