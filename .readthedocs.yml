@@ -17,3 +17,5 @@ build:
   jobs:
     post_build:
       - cp -r "iommi/static/" "$READTHEDOCS_OUTPUT/html/_static/"
+      - ls "$READTHEDOCS_OUTPUT/html/_static/"
+      - ls "$READTHEDOCS_OUTPUT/html/"
