@@ -7,8 +7,8 @@ from iommi.style_bootstrap5 import bootstrap5
 bootstrap_docs = Style(
     bootstrap5,
     root__assets__doc_style=Asset.css(attrs__href='https://docs.iommi.rocks/en/latest/_static/iframe_custom.css'),
-    root__assets__iommi_js=Asset.js(attrs=dict(src='https://docs.iommi.rocks/en/latest/_static/iommi.js')),
-    root__assets__iommi_scroll_js=Asset.js(attrs=dict(src='https://docs.iommi.rocks/en/latest/_static/iommi-scroll.js')),
+    root__assets__iommi_js=Asset.js(attrs=dict(src='https://docs.iommi.rocks/en/latest/_static/js/iommi.js')),
+    root__assets__iommi_scroll_js=Asset.js(attrs=dict(src='https://docs.iommi.rocks/en/latest/_static/js/iommi-scroll.js')),
     internal=True,
     Container=dict(
         attrs__class={
