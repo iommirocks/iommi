@@ -1,3 +1,9 @@
+/*
+
+The embedded iframes should not try to show ads and flyouts. They also need some different padding to look ok.
+
+*/
+
 .navbar-expand-lg .navbar-nav .nav-link {
     padding-right: 0.5rem;
     padding-left: 0.5rem;
@@ -20,5 +26,10 @@ button {
 
 
 readthedocs-flyout {
+    display: none;
+}
+
+
+#readthedocs-ea {
     display: none;
 }
