@@ -16,6 +16,6 @@ build:
     python: "3.11"
   jobs:
     post_build:
-      - cp -r "iommi/static/" "$READTHEDOCS_OUTPUT/html/_static/"
+      - cp -r "iommi/static/*.*" "$READTHEDOCS_OUTPUT/html/_static/"
       - ls "$READTHEDOCS_OUTPUT/html/_static/"
       - ls "$READTHEDOCS_OUTPUT/html/"
