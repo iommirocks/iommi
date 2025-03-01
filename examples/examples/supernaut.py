@@ -29,19 +29,6 @@ register_path_decoding(artist=lambda string, **_: Artist.objects.get(name=string
 register_path_decoding(album=lambda string, **_: Album.objects.get(name=string))
 
 
-# Menu -----------------------------
-
-
-class SupernautMenu(Menu):
-    home = MenuItem(url='/supernaut/', display_name=_('Home'))
-    artists = MenuItem(url='/supernaut/artists/', display_name=_('Artists'))
-    albums = MenuItem(url='/supernaut/albums/', display_name=_('Albums'))
-    tracks = MenuItem(url='/supernaut/tracks/', display_name=_('Tracks'))
-
-    class Meta:
-        attrs__class = {'fixed-top': True}
-
-
 # Tables ---------------------------
 
 
@@ -88,8 +75,6 @@ class ArtistTable(Table):
 
 
 class IndexPage(Page):
-    menu = SupernautMenu()
-
     title = html.h1(_('Supernaut'))
     welcome_text = html.div(_('This is a discography of the best acts in music!'))
 

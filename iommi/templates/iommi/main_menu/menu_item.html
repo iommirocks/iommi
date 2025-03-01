@@ -1,0 +1,18 @@
+{% if item.include %}
+    <li{{ item.rendered_attrs }}>
+        {% if item.items %}
+            <details {% if item.open %}open{% endif %}>
+
+                <summary>
+                    <div class="menu_open_close"></div>
+                    {{ item.link }}
+                </summary>
+                <ul>
+                    {% include "iommi/main_menu/menu_items.html" with items=item.items.values %}
+                </ul>
+            </details>
+        {% else %}
+            {{ item.link }}
+        {% endif %}
+    </li>
+{% endif %}

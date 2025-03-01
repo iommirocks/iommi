@@ -40,7 +40,6 @@ _path_component_to_decode_data: typing.Dict[
 ] = {}
 
 
-
 def camel_to_snake(s):
     return _camel_to_snake_regex.sub('_', s).lower()
 

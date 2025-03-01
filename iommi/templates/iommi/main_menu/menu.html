@@ -1,0 +1,20 @@
+{% block above %}{% endblock %}
+<div class="menu">
+
+    <nav>
+        {% block before_ul %}
+            <a id="menu-logo" href="/"><div class="iommi_logo_menu"></div></a>
+        {% endblock %}
+        <ul>
+            {% block before_items %}{% endblock %}
+
+            {{ menu.render_items }}
+
+            {% block after_items %}{% endblock %}
+        </ul>
+        {% block after_ul %}{% endblock %}
+    </nav>
+
+
+    {% block bottom %}{% endblock %}
+</div>

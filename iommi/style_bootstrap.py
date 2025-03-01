@@ -57,7 +57,6 @@ bootstrap_base = Style(
         attrs__class={
             'container': True,
             'mt-5': True,
-            'pt-5': True,
         },
     ),
     Field=dict(

@@ -16,4 +16,8 @@ def dummy_view(request):
     return HttpResponse('this is a dummy view')
 
 
-urlpatterns = [path('dummy/', dummy_view, name='dummy_view'), path('admin/', include(MyAdmin.urls()))]
+urlpatterns = [
+    path('dummy/', dummy_view, name='dummy_view'),
+    path('admin/', include(MyAdmin.urls())),
+
+]

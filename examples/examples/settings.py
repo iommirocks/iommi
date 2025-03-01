@@ -87,6 +87,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'iommi.middleware',
+    'iommi.experimental.main_menu.menu_access_control_middleware',
 ]
 
 
@@ -124,6 +125,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 IOMMI_DEBUG = True
+IOMMI_MAIN_MENU = 'examples.main_menu.main_menu'
 
 STATIC_ROOT = Path(__file__).parent.joinpath('static')
 
