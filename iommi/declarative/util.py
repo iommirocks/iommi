@@ -44,21 +44,16 @@ def inject_args(args, kwargs, extra_args, pos_arg_names, merge_namespaces):
     else:
         new_args = args
 
-    for k, v in kwargs.items():
-        new_value = new_kwargs.get(k, None)
-        if merge_namespaces and isinstance(new_value, Namespace):
-            if v is not None:
-                new_kwargs[k] = Namespace(new_value, v)
-            else:
-                new_kwargs[k] = None
-        else:
-            new_kwargs[k] = v
+    if merge_namespaces:
+        new_kwargs = Namespace(new_kwargs, kwargs)
+    else:
+        new_kwargs.update(kwargs)
 
     return new_args, new_kwargs
 
 
 def strip_prefix(s, *, prefix, strict=False):
     if s.startswith(prefix):
-        return s[len(prefix):]
+        return s[len(prefix) :]
     assert strict is False, f"String '{s}' does not start with prefix '{prefix}'"
     return s

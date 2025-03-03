@@ -4561,3 +4561,20 @@ def test_auto_rowspan_and_render_twice_generator(NoSortTable):  # noqa: N803
     t = t.bind(request=req('get'))
     verify_table_html(table=t, expected_html=expected_html)
     verify_table_html(table=t, expected_html=expected_html)
+
+
+def test_table_explicit_query():
+    Table(
+        rows=[],
+        query=Query(
+            filter=lambda rows, **_: rows,
+        ),
+    ).bind(request=req('get'))
+
+
+def test_table_list_custom_query():
+    Table(
+        rows=[],
+        query__filter=lambda rows, **_: rows,
+        query__filters__foo=Filter(),
+    ).bind(request=req('get'))

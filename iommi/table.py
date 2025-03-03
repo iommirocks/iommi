@@ -1636,6 +1636,13 @@ class TableAutoConfig(AutoConfig):
 
     rows = Refinable()
 
+def endpoint__tbody(table, **_):
+    return {
+        'html': table.container.__html__(
+            render=lambda fragment, context: fragment.render_text_or_children(context=context)
+        )
+    }
+
 
 def endpoint__csv(table, **_):
     from datetime import timezone
@@ -1780,8 +1787,6 @@ class Table(Part, Tag):
     columns: Dict[str, Column] = RefinableMembers()
 
     class Meta:
-        query__advanced__assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
-        assets__table_js_select_all__template = "iommi/table/js_select_all.html"
         member_class = Column
         form_class = Form
         query_class = Query
@@ -1790,24 +1795,6 @@ class Table(Part, Tag):
         cells_class = Cells
         row_group_class = RowGroup
 
-        @staticmethod
-        def endpoints__tbody__func(table, **_):
-            return {
-                'html': table.container.__html__(
-                    render=lambda fragment, context: fragment.render_text_or_children(context=context)
-                )
-            }
-
-        endpoints__csv__func = endpoint__csv
-
-        container__attrs = Namespace(
-            {
-                'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
-                'data-iommi-id': lambda table, **_: table.iommi_path,
-            }
-        )
-
-        query__form__attrs = {'data-iommi-id-of-table': lambda table, **_: table.iommi_path}
         columns = EMPTY
         parts = EMPTY
         row__attrs__class = EMPTY
@@ -1875,6 +1862,17 @@ class Table(Part, Tag):
         # style
         query__form__actions__submit__call_target=Action.button,
         title=MISSING,
+        endpoints__tbody__func=endpoint__tbody,
+        endpoints__csv__func=endpoint__csv,
+        query__advanced__assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html",
+        query__form__attrs = {
+            'data-iommi-id-of-table': lambda table, **_: table.iommi_path,
+        },
+        assets__table_js_select_all__template = "iommi/table/js_select_all.html",
+        container__attrs ={
+            'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
+            'data-iommi-id': lambda table, **_: table.iommi_path,
+        },
     )
     def __init__(
         self,
