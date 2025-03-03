@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
@@ -53,15 +55,29 @@ bootstrap5_base = Style(
             )
         ),
         auto_darkmode=Asset.js(
-            children__source=mark_safe('''            
+            children__source=mark_safe(dedent('''
                 function updateTheme() {
-                    document.querySelector("html").setAttribute("data-bs-theme",
-                    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                    document.querySelector("html").setAttribute("data-bs-theme", window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
                 }
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme)
                 updateTheme()             
-            ''')
+            '''))
         ),
+        select2_dark_mode=Asset(
+            tag='style',
+            children__source=dedent('''
+            [data-bs-theme=dark] .select2-container--default .select2-selection--single,
+            [data-bs-theme=dark] .select2-container--default .select2-results__option,
+            [data-bs-theme=dark] .select2-container--default .select2-selection--multiple {
+                color: white;
+                background: var(--bs-body-bg);;
+            }
+            [data-bs-theme=dark]  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+                color: white;
+                background: #444;
+            }
+            ''')
+        )
     ),
     Container=dict(
         tag='div',
