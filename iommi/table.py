@@ -39,7 +39,7 @@ from django.utils.html import (
     conditional_escape,
 )
 from django.utils.translation import (
-    gettext,
+    gettext_lazy,
     gettext_lazy,
 )
 
@@ -252,9 +252,9 @@ def yes_no_formatter(value, **_):
     if value is None:
         return ''
     if value == 1:  # boolean True is equal to 1
-        return gettext('Yes')
+        return gettext_lazy('Yes')
     if value == 0:  # boolean False is equal to 0
-        return gettext('No')
+        return gettext_lazy('No')
     assert False, f"Unable to convert {value} to Yes/No"
 
 
@@ -733,7 +733,7 @@ class Column(Part):
         filter__call_target__attribute='boolean',
         filter__field__call_target__attribute='boolean_tristate',
         bulk__call_target__attribute='boolean',
-        cell__format=lambda value, **_: mark_safe(f'<span title="{gettext("Yes")}">&#10004;</span>') if value else '',
+        cell__format=lambda value, **_: mark_safe(f'<span title="{gettext_lazy("Yes")}">&#10004;</span>') if value else '',
     )
     def boolean(cls, **kwargs):
         # language=rst

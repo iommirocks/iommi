@@ -6,6 +6,7 @@ from datetime import (
 
 import pytest
 import time_machine
+from django.utils.timezone import now
 
 from iommi._web_compat import ValidationError
 from iommi.datetime_parsing import (
@@ -43,8 +44,8 @@ def test_parse_relative_date_error_condition_no_match():
 
 
 def test_parse_relative_datetime():
-    assert parse_relative_datetime('now') == datetime.now()
-    assert parse_relative_datetime('today') == datetime.now()
+    assert parse_relative_datetime('now') == now()
+    assert parse_relative_datetime('today') == now()
 
 
 def test_parse_relative_date_relative():

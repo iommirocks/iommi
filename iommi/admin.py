@@ -16,7 +16,7 @@ from django.urls import (
     path,
     reverse,
 )
-from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 
 from iommi import (
     EditTable,
@@ -139,15 +139,15 @@ class Admin(Page):
         sub_menu=dict(
             root=MenuItem(
                 url=lambda admin, **_: reverse('iommi.Admin.all_models', current_app=admin.app_name),
-                display_name=gettext('iommi administration'),
+                display_name=gettext_lazy('iommi administration'),
             ),
             change_password=MenuItem(
                 url=lambda admin, **_: reverse(change_password, current_app=admin.app_name),
-                display_name=gettext('Change password'),
+                display_name=gettext_lazy('Change password'),
             ),
             logout=MenuItem(
                 url=lambda admin, **_: reverse(logout, current_app=admin.app_name),
-                display_name=gettext('Logout'),
+                display_name=gettext_lazy('Logout'),
             ),
         ),
     )
@@ -405,7 +405,7 @@ class Admin(Page):
         return cls(
             parts=dict(
                 all_models=table,
-                add_models_title=html.h1(gettext('Add models to admin'), include=settings.DEBUG),
+                add_models_title=html.h1(gettext_lazy('Add models to admin'), include=settings.DEBUG),
                 add_models_help_text=html.p(
                     format_html(
                         '''
@@ -448,7 +448,7 @@ class Admin(Page):
             actions=dict(
                 create=dict(
                     display_name=lambda page, **_: (
-                        gettext('Create %(model_name)s') % dict(model_name=page.model._meta.verbose_name)
+                        gettext_lazy('Create %(model_name)s') % dict(model_name=page.model._meta.verbose_name)
                     ),
                     attrs__href='create/',
                 ),

@@ -1,7 +1,7 @@
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 
 from examples import (
@@ -25,13 +25,13 @@ examples = []
 example = example_adding_decorator(examples)
 
 
-@example(gettext('Standard example'))
+@example(gettext_lazy('Standard example'))
 class HelloWorldPage(Page):
     h1 = html.h1('Hello world!')
     p = html.p('This is an iommi page!')
 
 
-@example(gettext('View with some calculation to do before making the page'))
+@example(gettext_lazy('View with some calculation to do before making the page'))
 def page_view_example_2(request):
     math_result = 1 + 1
 
@@ -41,7 +41,7 @@ def page_view_example_2(request):
     return MathPage()
 
 
-@example(gettext('Further specializing an already defined page'))
+@example(gettext_lazy('Further specializing an already defined page'))
 def page_view_example_3(request):
     math_result = 1 + 1
 
@@ -50,7 +50,7 @@ def page_view_example_3(request):
     )
 
 
-@example(gettext('Busy page with different components'))
+@example(gettext_lazy('Busy page with different components'))
 def page_view_example_4(request):
     class BusyPage(Page):
         tfoo = Table(auto__model=TFoo, page_size=5, columns__name__filter=dict(include=True, field__include=True))

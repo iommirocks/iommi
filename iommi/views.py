@@ -1,5 +1,3 @@
-from gettext import gettext
-
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.hashers import check_password
@@ -12,6 +10,7 @@ from django.urls import (
     path,
 )
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy
 
 from iommi import (
     Column,
@@ -88,7 +87,7 @@ def crud_views(*, model, table, create, edit, delete, detail):
 
 class LogoutForm(Form):
     class Meta:
-        title = gettext('Confirm log out')
+        title = gettext_lazy('Confirm log out')
 
         actions__submit__display_name = 'Log out'
 
@@ -102,11 +101,11 @@ logout = LogoutForm().as_view()
 
 
 class LoginForm(Form):
-    username = Field(display_name=gettext('Username'))
-    password = Field.password(display_name=gettext('Password'))
+    username = Field(display_name=gettext_lazy('Username'))
+    password = Field.password(display_name=gettext_lazy('Password'))
 
     class Meta:
-        title = gettext('Login')
+        title = gettext_lazy('Login')
 
         @staticmethod
         def actions__submit__post_handler(form, **_):
@@ -121,7 +120,7 @@ class LoginForm(Form):
                     auth.login(request, user)
                     return HttpResponseRedirect(request.GET.get('next', '/'))
 
-                form.add_error(gettext('Unknown username or password'))
+                form.add_error(gettext_lazy('Unknown username or password'))
 
 
 class LoginPage(Page):
@@ -140,7 +139,7 @@ def current_password__is_valid(form, parsed_data, **_):
     return (
         (True, None)
         if check_password(parsed_data, form.get_request().user.password)
-        else (False, gettext('Incorrect password'))
+        else (False, gettext_lazy('Incorrect password'))
     )
 
 
@@ -156,13 +155,13 @@ def confirm_password__is_valid(form, parsed_data, **_):
     return (
         (True, None)
         if parsed_data == form.fields.new_password.value
-        else (False, gettext('New passwords does not match'))
+        else (False, gettext_lazy('New passwords does not match'))
     )
 
 
 class ChangePasswordForm(Form):
     class Meta:
-        title = gettext('Change password')
+        title = gettext_lazy('Change password')
 
         @staticmethod
         def actions__submit__post_handler(form, request, **_):
@@ -172,9 +171,9 @@ class ChangePasswordForm(Form):
                 user.save()
                 return HttpResponseRedirect('..')
 
-    current_password = Field.password(is_valid=current_password__is_valid, display_name=gettext('Current password'))
-    new_password = Field.password(is_valid=new_password__is_valid, display_name=gettext('New password'))
-    confirm_password = Field.password(is_valid=confirm_password__is_valid, display_name=gettext('Confirm password'))
+    current_password = Field.password(is_valid=current_password__is_valid, display_name=gettext_lazy('Current password'))
+    new_password = Field.password(is_valid=new_password__is_valid, display_name=gettext_lazy('New password'))
+    confirm_password = Field.password(is_valid=confirm_password__is_valid, display_name=gettext_lazy('Confirm password'))
 
 
 class ChangePasswordPage(Page):
