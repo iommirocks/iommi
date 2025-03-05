@@ -176,7 +176,10 @@ class Part(Traversable):
         return response
 
     def iommi_collected_assets(self):
-        return sort_after(self.iommi_root()._iommi_collected_assets)
+        main_menu = getattr(self.get_request(), 'iommi_main_menu', None)
+        menu_assets = main_menu.assets() if main_menu else {}
+
+        return {**menu_assets, **sort_after(self.iommi_root()._iommi_collected_assets)}
 
 
 def get_title(part):
@@ -235,6 +238,7 @@ def render_root(*, part, context, **render):
         ),
         iommi_language_code=getattr(request, 'LANGUAGE_CODE', settings.LANGUAGE_CODE),
         assets=assets,
+        request=request,
         **(part.context if isinstance(part, Page) else {}),
         **context,
     )

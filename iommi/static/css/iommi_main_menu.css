@@ -1,0 +1,394 @@
+:root {
+    --iommi-menu-width: 18rem;
+    --iommi-iommi-menu-width: 4rem;
+    --iommi-menu-background-color: #0d6efd;
+    --iommi-menu-text-color-color: #689fff;
+}
+
+body {
+    margin-left: 10rem;
+}
+
+nav.fixed-top {
+    margin-top: 0 !important;
+    margin-left: var(--iommi-menu-width);
+}
+
+.compact_menu nav.fixed-top {
+    margin-top: 0 !important;
+    margin-left: var(--iommi-iommi-menu-width);
+}
+
+.dev .menu {
+   background-color: #1c4817;
+}
+
+.test .menu {
+   background-color: #17510d;
+}
+
+body.sidebar_menu_active {
+    margin-left: calc(var(--iommi-menu-width) + 2rem);
+}
+
+body.sidebar_menu_active.compact_menu {
+    margin-left: calc(var(--iommi-iommi-menu-width) + 2rem);
+}
+
+body.right_sidebar_menu_active {
+    margin-right: calc(var(--iommi-menu-width) + 2rem);
+}
+
+body.right_sidebar_menu_active.compact_menu {
+    margin-right: calc(var(--iommi-iommi-menu-width) + 2rem);
+}
+
+
+.menu {
+    display: flex;
+    align-content: space-between;
+    flex-wrap: wrap;
+    height: 100vh;
+    max-height: 100vh;
+    background-color: var(--iommi-menu-background-color);
+    color: var(--iommi-menu-text-color-color);
+    z-index: 50;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: var(--iommi-menu-width);
+    padding: 0;
+    overflow: scroll;
+    scrollbar-width: none; /* no scrollbar firefox */
+    a {
+        color: var(--iommi-menu-text-color-color);
+    }
+
+    a.highlighted,
+    .highlighted a {
+        background-color: #228017;
+    }
+
+    #menu-logo {
+        max-width: 100%;
+    }
+
+    .hamburger_toggler {
+        display: none;
+    }
+
+    li.is_active > details > summary > a,
+    li.is_active > a {
+        color: white;
+    }
+
+    ::-webkit-scrollbar {
+        display: none; /* no scrollbar Safari and Chrome */
+    }
+
+    ::-webkit-details-marker {
+        display:none;
+    }
+
+    i {
+        width: 1.5rem;
+        text-align: center;
+    }
+
+    summary {
+        /* no default disclosure triangle */
+        list-style: none;
+    }
+
+    details > summary .menu_open_close {
+        width: 3rem;
+        position: absolute;
+        right: 0;
+        height: 2rem;
+        padding-top: 0.5rem;
+        opacity: 0.5;
+    }
+
+    details > summary .menu_open_close:hover {
+        opacity: 1;
+    }
+
+    details > summary .menu_open_close::after {
+        content: "▶";
+        font-size: 70%;
+        float: right;
+        margin-right: 1rem;
+    }
+
+    details[open] > summary .menu_open_close::after {
+        content: "▼";
+        font-size: 70%;
+    }
+
+    nav {
+        width: 100%;
+        ul {
+            padding-inline-start: 0;
+            list-style: none;
+        }
+
+        a {
+            white-space: pre;
+        }
+
+        a span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 90%;
+        }
+
+        ul ul {
+        }
+
+        ul a {
+            padding-left: 1rem;
+        }
+
+        ul ul a {
+            padding-left: 2rem;
+        }
+
+        ul ul ul a {
+            padding-left: 3rem;
+        }
+
+        ul ul ul ul a {
+            padding-left: 4rem;
+        }
+
+        ul ul ul ul ul a {
+            padding-left: 5rem;
+        }
+
+        li {
+        }
+    }
+
+    summary a {
+    }
+
+    a {
+        text-decoration: none;
+        line-height: 1.8rem;
+        display: block;
+    }
+
+    a:hover,
+    a:hover i,
+    summary:hover,
+    summary:hover a span,
+    details > summary:hover a::after,
+    #compact_menu_toggler:hover {
+        background-color: var(--iommi-menu-background-color);
+        color: var(--iommi-menu-text-color-color) !important;
+    }
+}
+
+.iommi_logo_menu {
+    margin-top: 0.5rem;
+    margin-left: 0.7rem;
+    margin-bottom: 0.5rem;
+    padding: 1rem;
+    zoom: 148%;
+    height: 1rem;
+    /*noinspection CssUnknownTarget*/
+    background: url(https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/iommi/static/images/iommi_logo_text_only.svg) no-repeat;
+    background-size: contain;
+    display: block;
+}
+
+.iommi_logo_menu a.nav-link {
+    color: transparent !important;
+}
+
+.container {
+    margin-left: unset;
+    margin-right: unset;
+}
+
+#compact_menu_toggler {
+    width: 100%;
+    text-align: center;
+    zoom: 1.4;
+}
+
+.compact_menu_expand {
+    display: none;
+}
+.compact_menu_expand,
+.compact_menu_collapse {
+    cursor: pointer;
+}
+.compact_menu_collapse {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.compact_menu .menu {
+    width: var(--iommi-iommi-menu-width);
+
+    .iommi_logo_menu {
+        zoom: 0.7;
+
+        height: 5rem;
+        width: 5rem;
+        margin-left: 0.4rem;
+        /*noinspection CssUnknownTarget*/
+        background: url(https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/iommi/static/images/iommi_logo_for_dark_background.svg);
+        background-size: cover;
+    }
+
+
+    li {
+        text-align: center;
+    }
+
+    i {
+        zoom: 1.5;
+        line-height: 2rem;
+    }
+    ul ul {
+        i {
+            zoom: normal;
+        }
+        ul li {
+            zoom: 0.9;
+        }
+        li {
+            display: inline-block;
+        }
+    }
+
+    a span,
+    .menu_open_close {
+        display: none;
+    }
+
+    nav ul a,
+    nav ul ul a,
+    nav ul ul ul a,
+    nav ul ul ul ul a,
+    nav ul ul ul ul ul a {
+        padding-left: 0;
+    }
+
+    nav ul ul {
+        border-top: 1px solid black;
+        border-bottom: 3px solid black;
+    }
+
+    .compact_menu_collapse {
+        display: none;
+    }
+    .compact_menu_expand {
+        display: unset;
+    }
+}
+
+.menu_bottom {
+    li {
+        text-align: center;
+    }
+}
+
+.hamburger_toggler i {
+    color: white;
+}
+
+.hamburger_toggler {
+    display: none;
+}
+
+/* mobile */
+@media screen and (max-width: 767px) {
+    .menu {
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+
+        .hamburger_toggler {
+            display: inline;
+            position: absolute;
+            right: 1rem;
+            top: 0.5rem;
+            i {
+                zoom: 2;
+            }
+        }
+    }
+
+    .hamburger_toggler {
+        display: inline;
+        position: fixed;
+        right: 0;
+        top: 0;
+        padding: 0.5rem;
+        z-index: 99;
+        i {
+            zoom: 2;
+        }
+    }
+
+    #compact_menu_toggler {
+        display: none;
+    }
+
+    body.sidebar_menu_active,
+    body.sidebar_menu_active.compact_menu {
+        margin-left: 0;
+    }
+
+    .compact_menu .menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3rem;
+
+        .iommi_logo_menu {
+
+            /*noinspection CssUnknownTarget*/
+            background: url(https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/iommi/static/images/iommi_logo_for_dark_background.svg);
+            margin-top: 1rem;
+            margin-left: 1rem;
+            margin-bottom: 1rem;
+            display: block;
+            padding: 1rem;
+            width: 8rem;
+            background-size: cover;
+            height: 3rem;
+        }
+    }
+
+    .menu.right_menu {
+        display: none;
+    }
+}
+
+@media print {
+    .menu {
+        display: none !important;
+    }
+
+    body {
+        margin-left: unset !important;
+    }
+}
+
+
+.right_menu {
+    left: unset;
+    right: 0;
+    z-index: 5;
+
+    li,
+    li a {
+        white-space: normal;
+    }
+}

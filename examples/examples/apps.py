@@ -1,5 +1,7 @@
 from django.apps import AppConfig
 
+from iommi.path import register_path_decoding
+
 
 class ExampleConfig(AppConfig):
     name = 'examples'
@@ -15,3 +17,5 @@ class ExampleConfig(AppConfig):
 
         register_search_fields(model=Artist, search_fields=['name'], allow_non_unique=True)
         register_search_fields(model=Album, search_fields=['name'], allow_non_unique=True)
+        register_path_decoding(artist_pk=Artist)
+        register_path_decoding(album_pk=Album)

@@ -10,7 +10,13 @@
     {% endfor %}
     {% block iommi_head_contents_last %}{% endblock %}
 </head>
-<body{% block iommi_body_tag_attrs %}{% endblock %}>
+<body{% block iommi_body_tag_attrs %}{% if request.iommi_main_menu %} class="sidebar_menu_active"{% endif %}{% endblock %}>
+    {% block iommi_main_menu %}
+        {% if request.iommi_main_menu %}
+            {{ request.iommi_main_menu }}
+        {% endif %}
+    {% endblock %}
+
     {% block iommi_top %}{% endblock %}
 
     {{ container.iommi_open_tag }}

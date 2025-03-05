@@ -159,6 +159,9 @@ docs/QueryAutoConfig.rst
 docs/TableAutoConfig.rst
 docs/views.rst
 docs/semantic_models.rst
+docs/M.rst
+docs/MainMenu.rst
+docs/main_menu.rst
 
 # these are created by mutation testing
 docs/XXtest*

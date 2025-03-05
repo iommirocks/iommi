@@ -540,3 +540,10 @@ class Admin(Page):
                 path('', auth_views()),
             ]
         )
+
+    @classmethod
+    def m(cls):
+        from iommi.experimental.main_menu import M
+        return M(
+            view=cls.all_models(),
+        )

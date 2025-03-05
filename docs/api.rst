@@ -22,6 +22,8 @@ API Reference
    Fragment
    Header
    HeaderConfig
+   M
+   MainMenu
    Members
    Menu
    MenuItem

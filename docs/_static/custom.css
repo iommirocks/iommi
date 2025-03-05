@@ -100,3 +100,9 @@ h2 {
         display: none;
     }
 }
+
+.iommi_logo_menu {
+    /*noinspection CssUnknownTarget*/
+    background: url(https://docs.iommi.rocks/en/latest/_static/images/iommi_logo_text_only.svg) no-repeat;
+    background-size: contain;
+}

@@ -149,8 +149,6 @@ menu = Menu(
 
 
 class ExamplesPage(Page):
-    menu = menu
-
     footer = html.div(
         html.hr(),
         html.a('iommi rocks!', attrs__href='http://iommi.rocks/'),
@@ -307,4 +305,3 @@ class ExampleAdmin(Admin):
                 style=StyleSelector(title='Change iommi style'),
             ),
         )
-
