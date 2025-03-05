@@ -87,7 +87,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'iommi.middleware',
-    'iommi.experimental.main_menu.menu_access_control_middleware',
+    'iommi.experimental.main_menu.main_menu_middleware',
 ]
 
 
