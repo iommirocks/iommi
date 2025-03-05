@@ -20,5 +20,4 @@ bootstrap_docs = Style(
         attrs__style__padding='1rem',
     ),
     Admin__parts__table__h_tag__attrs__style={'margin-top': '3rem'},
-
 )
