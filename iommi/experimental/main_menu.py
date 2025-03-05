@@ -71,6 +71,10 @@ class MainMenu:
             c._set_name(name)
 
     def urlpatterns(self):
+        if 'iommi.experimental.main_menu.main_menu_middleware' not in settings.MIDDLEWARE:
+            # This is an explicit raise instead of an `assert` because I'm paranoid of people running Python in optimized mode with skipped asserts.
+            raise AssertionError('To use the iommi main menu, you must add `iommi.experimental.main_menu.main_menu_middleware` to the MIDDLEWARE list.')
+
         return [
             path(x.path, x.urlpatterns())
             for x in self.items.values()
@@ -380,8 +384,8 @@ class BoundM:
             item.check_access()
 
 
-def menu_access_control_middleware(get_response):
-    def menu_access_control_middleware_inner(request):
+def main_menu_middleware(get_response):
+    def main_menu_middleware_inner(request):
         if request.resolver_match is None:
             request.resolver_match = get_resolver().resolve(request.path_info)
 
@@ -395,7 +399,7 @@ def menu_access_control_middleware(get_response):
                     return handler403(request, exception=exception)
 
         menu_fully_qualified_name = getattr(settings, 'IOMMI_MAIN_MENU', None)
-        assert menu_fully_qualified_name is not None, "To use the menu_access_control_middleware, you must define settings.IOMMI_MAIN_MENU as a string to the full path to the main menu declaration"
+        assert menu_fully_qualified_name is not None, "To use the main_menu_middleware, you must define settings.IOMMI_MAIN_MENU as a string to the full path to the main menu declaration"
         assert '.' in menu_fully_qualified_name, "IOMMI_MAIN_MENU must be in `your_module.symbol` format"
         menu_module_name, _, menu_symbol_name = menu_fully_qualified_name.rpartition('.')
 
@@ -410,4 +414,4 @@ def menu_access_control_middleware(get_response):
 
         return get_response(request)
 
-    return menu_access_control_middleware_inner
+    return main_menu_middleware_inner

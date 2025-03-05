@@ -14,7 +14,7 @@ from iommi.experimental.main_menu import (
     EXTERNAL,
     M,
     MainMenu,
-    menu_access_control_middleware,
+    main_menu_middleware,
     path,
 )
 from iommi.path import (
@@ -186,7 +186,7 @@ def test_access(settings):
     settings.ROOT_URLCONF = 'iommi.experimental.main_menu__tests'
 
     ok = object()
-    inner = menu_access_control_middleware(lambda request: ok)
+    inner = main_menu_middleware(lambda request: ok)
 
     assert inner(staff_req('get', url='/foo/')) == ok
     assert inner(staff_req('get', url='/foo/bar/')) == ok
@@ -241,7 +241,7 @@ def test_path_decoding(settings, black_sabbath):
 
     with register_path_decoding(artist_pk=PathDecoder(decode=decode_artist, name='artist')):
         ok = object()
-        inner = menu_access_control_middleware(lambda request: ok)
+        inner = main_menu_middleware(lambda request: ok)
 
         assert inner(staff_req('get', url=f'/{black_sabbath.pk}/')) == ok
 
@@ -251,7 +251,7 @@ def test_path_decoding(settings, black_sabbath):
 
     with register_path_decoding(artist_pk=PathDecoder(decode=decode_artist_permission_denied, name='artist')):
         ok = object()
-        inner = menu_access_control_middleware(lambda request: ok)
+        inner = main_menu_middleware(lambda request: ok)
 
         result = inner(staff_req('get', url=f'/{black_sabbath.pk}/'))
         assert isinstance(result, HttpResponseForbidden)

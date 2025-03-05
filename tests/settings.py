@@ -44,7 +44,7 @@ IOMMI_DEFAULT_STYLE = 'test'
 IOMMI_MAIN_MENU = 'tests.main_menu.main_menu'
 
 MIDDLEWARE = [
-    'iommi.experimental.main_menu.menu_access_control_middleware',
+    'iommi.experimental.main_menu.main_menu_middleware',
     'iommi.live_edit.Middleware',
     'iommi.sql_trace.Middleware',
     'django.middleware.security.SecurityMiddleware',
