@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+7.11.0 (2025-03-05)
+~~~~~~~~~~~~~~~~~~~
+
+* New `MainMenu` component added. This is marked as experimental, which means it can contain breaking changes in minor versions of iommi.
+
+* Translation fixes for multi-language installs.
+
+* The select2 component got some style fixes for bootstrap 5 dark mode.
+
+* Respect declaration order of `EvaluatedRefinable`
+
+
 7.10.1 (2025-02-18)
 ~~~~~~~~~~~~~~~~~~~
 
