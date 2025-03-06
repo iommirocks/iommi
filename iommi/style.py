@@ -56,7 +56,7 @@ class Style:
         sub_styles=EMPTY,
     )
     def __init__(
-        self, *bases, base_template=None, content_block=None, root=None, internal=False, sub_styles=None, **kwargs
+        self, *bases, base_template=None, content_block=None, root=None, internal=False, sub_styles=None, icon_formatter=None, **kwargs
     ):
         self.name = None
         self.internal = internal
@@ -74,6 +74,13 @@ class Style:
             for base in reversed(bases):
                 if base.content_block:
                     self.content_block = base.content_block
+                    break
+
+        self.icon_formatter = icon_formatter
+        if not self.icon_formatter:
+            for base in reversed(bases):
+                if base.icon_formatter:
+                    self.icon_formatter = base.icon_formatter
                     break
 
         self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
