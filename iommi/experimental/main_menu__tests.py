@@ -21,6 +21,7 @@ from iommi.path import (
     PathDecoder,
     register_path_decoding,
 )
+from iommi.style import resolve_style
 from tests.helpers import (
     req,
     staff_req,
@@ -129,6 +130,8 @@ def test_item_rendering():
 
 
 def test_rendering():
+    assert resolve_style(None).name == 'test'
+
     menu = menu_declaration.bind(request=staff_req('get', url='/foo/bar/baz/'))
     verify_html(
         actual_html=str(menu),
@@ -169,7 +172,7 @@ def test_rendering():
                             <a alt="External" href="https://example.com" target=\'"blank"\'>
                                 <span>
                                     External
-                                    <i class="fa fa-arrow-up-right-from-square">
+                                    <i class="fa fa-external-link">
                                     </i>
                                 </span>
                             </a>

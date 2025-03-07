@@ -353,11 +353,13 @@ class BoundM:
         external = ''
         target = ''
 
+        style = resolve_style(None)
+
         if self.m.icon is not None:
-            icon = format_html('<i class="fa fa-{}"></i> ', self.m.icon)
+            icon = style.icon_formatter(self.m.icon)
 
         if url.startswith('https://'):
-            external = format_html(' <i class="fa fa-arrow-up-right-from-square"></i> ')
+            external = format_html(' {} ', style.icon_formatter('external'))
             target = ' target="blank"'
         return format_html('<a href="{}" alt="{}" {}>{}<span>{}{}</span></a>', url, self.display_name, target, icon, self.display_name, external)
 
