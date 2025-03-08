@@ -215,7 +215,7 @@ class M:
             c.parent = self
             c._set_name(name)
 
-        if isinstance(self.url, str) or self.path is not MISSING:
+        if isinstance(self.url, str) and self.path is MISSING:
             assert not self.items and not self.paths, "External links can't have subitems"
 
         if self.view is EXTERNAL:
@@ -233,7 +233,7 @@ class M:
             self.path = self.name + '/'
 
     def urlpatterns(self):
-        if isinstance(self.url, str) or self.path is MISSING:
+        if isinstance(self.url, str) and self.path is MISSING:
             return []
 
         if self.view is EXTERNAL:
