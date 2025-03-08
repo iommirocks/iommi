@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.11.1 (2025-03-08)
+~~~~~~~~~~~~~~~~~~~
+
+* Introduce `Style.icon_formatter` to handle creating icons across icon libraries. So far only implemented in `MainMenu`.
+
+* `MainMenu` external URLs fix
+
+
 7.11.0 (2025-03-05)
 ~~~~~~~~~~~~~~~~~~~
 
