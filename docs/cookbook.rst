@@ -11,3 +11,4 @@ Cookbook
    cookbook_edit_tables
    cookbook_queries
    cookbook_porting
+   cookbook_main_menu

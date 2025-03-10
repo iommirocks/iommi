@@ -39,6 +39,10 @@ def test_base(settings, medium_discography):
     - add the url patterns from the menu to your app
 
     Access control is recursive, meaning that if a user does not have access to a menu item, it is automatically denied access to all subitems.
+
+    .. note::
+
+        There are many more examples in :doc:`the cookbook <cookbook_main_menu>`.
     """
 
     # @test

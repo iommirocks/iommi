@@ -1,12 +1,15 @@
 from django.template import Template
 from django.utils.translation import gettext_lazy
 
+from docs.models import Album
 from iommi.experimental.main_menu import (
     EXTERNAL,
     M,
     MainMenu,
     path,
 )
+from iommi.path import register_path_decoding
+from iommi.struct import Struct
 from tests.helpers import (
     req,
     show_output,
@@ -28,7 +31,7 @@ Main menu
 
 """
 
-albums_view = edit_album_view = things_view = artists_view = lambda request, **_: None
+albums_view = edit_album_view = things_view = artists_view = album_view = lambda request, **_: None
 
 
 def test_include(staff_user):
@@ -241,5 +244,43 @@ def test_template():
     """
 
 
-# url + path + params
-# (i18n with okrand?)
+def test_drill_down(album):
+    # language=rst
+    """
+    How do I show which specific I am on in the menu?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses M.path
+    .. uses M.url
+    .. uses M.params
+
+    If you have a list of objects and you click into one of them, you might want to show that item in the menu, and potentially also sub-pages for that item. You do that by using iommi path decoders, and mapping everything together with `display_name`, `path`, `params` and `url`:
+
+    """
+
+    # @test
+    with register_path_decoding(album_pk=Album):
+        # @end
+
+        menu = MainMenu(
+            items=dict(
+                albums=M(
+                    view=albums_view,
+                    items=dict(
+                        album=M(
+                            view=album_view,
+                            display_name=lambda album, **_: str(album),
+                            path='<album_pk>/',
+                            params={'album'},
+                            url=lambda album, **_: f'/albums/{album.pk}/',
+                        ),
+                    )
+                ),
+            ),
+        )
+
+        # @test
+        request = req('get', url=f'/albums/{album.pk}/')
+        request.iommi_view_params = Struct(album=album)
+
+        show_output(menu, request=request)
+        # @end

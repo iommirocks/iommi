@@ -221,7 +221,7 @@ def _show_path_from_name(name):
 _show_output_used = set()
 
 
-def show_output(part, url='/', user=None):
+def show_output(part, url='/', user=None, request=None):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(
         Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''),
@@ -237,7 +237,8 @@ def show_output(part, url='/', user=None):
     file_path = _show_path_from_name(name)
     makedirs(file_path.parent, exist_ok=True)
 
-    request = req('get', url=url)
+    if request is None:
+        request = req('get', url=url)
 
     if user:
         request.user = user
@@ -254,7 +255,8 @@ def show_output(part, url='/', user=None):
             part = Page(
                 parts__user=Template(
                     '''
-                    User is staff: {{ user.is_staff }}
+                    User is staff: {{ user.is_staff }}<br>
+                    URL: {{ request.get_full_path }}<br>
                     '''
                 )
             ).bind(request=request)
