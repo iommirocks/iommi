@@ -27,9 +27,9 @@ iommi is a toolkit to build web apps faster. It's built on Django but goes a lot
 
 It has:
 
-- `forms <https://docs.iommi.rocks/en/latest/forms.html>`_: that feel familiar, but can handle growing complexity better than Django's forms
-- `tables <https://docs.iommi.rocks/en/latest/tables.html>`_: that are powerful out of the box and scale up to arbitrary complexity
-- a system to `compose parts <https://docs.iommi.rocks/en/latest/pages.html>`_:, like forms, menus, and tables, into bigger pages
+- `forms <https://docs.iommi.rocks//forms.html>`_: that feel familiar, but can handle growing complexity better than Django's forms
+- `tables <https://docs.iommi.rocks//tables.html>`_: that are powerful out of the box and scale up to arbitrary complexity
+- a system to `compose parts <https://docs.iommi.rocks//pages.html>`_:, like forms, menus, and tables, into bigger pages
 - tools that will speed up your development like live edit, jump to code, great feedback for missing select/prefetch related, a profiler, and more.
 - great error messages when you make a mistake
 
@@ -68,7 +68,7 @@ For more examples, see the `examples project <https://github.com/iommirocks/iomm
 Getting started
 ---------------
 
-See `getting started <https://docs.iommi.rocks/en/latest/getting_started.html>`_.
+See `getting started <https://docs.iommi.rocks//getting_started.html>`_.
 
 
 Running tests

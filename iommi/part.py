@@ -63,7 +63,7 @@ class Part(Traversable):
     """
     `Part` is the base class for parts of a page that can be rendered as html, and can respond to ajax and post.
 
-    See the `howto <https://docs.iommi.rocks/en/latest/cookbook_parts_pages.html#parts-pages>`_ for example usages.
+    See the `howto <https://docs.iommi.rocks//cookbook_parts_pages.html#parts-pages>`_ for example usages.
     """
 
     include: bool = SpecialEvaluatedRefinable()
@@ -177,7 +177,7 @@ class Part(Traversable):
 
     def iommi_collected_assets(self):
         main_menu = getattr(self.get_request(), 'iommi_main_menu', None)
-        menu_assets = main_menu.assets() if main_menu else {}
+        menu_assets = main_menu.assets if main_menu else {}
 
         return {**menu_assets, **sort_after(self.iommi_root()._iommi_collected_assets)}
 

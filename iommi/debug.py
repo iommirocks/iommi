@@ -148,7 +148,7 @@ def endpoint__debug_tree(endpoint, **_):
             attr='type_name',
             cell__format=lambda row, **_: (
                 format_html(
-                    '{prefix}<a href="https://docs.iommi.rocks/en/latest/{type_name}.html{anchor}">{display_name}</a>',
+                    '{prefix}<a href="https://docs.iommi.rocks//{type_name}.html{anchor}">{display_name}</a>',
                     prefix=row.prefix,
                     type_name=row.type_name,
                     anchor=f'#{row.shortcut.replace("_", "-")}' if row.shortcut else '',
@@ -321,7 +321,7 @@ def iommi_debug_panel(part):
                 toolbar.append(create('<div style="float: right" onclick="iommi_close_pick_toolbar()">close</div>'));
                 for (let i in window.iommi_pick_stack) {
                     let x = window.iommi_pick_stack[i];
-                    toolbar.append(create('<div style="background-color: ' + getColor(i) + '">' + x[0] + ' <a href="https://docs.iommi.rocks/en/latest/' + x[1] + '.html">' + x[1] + '</a></div>'));
+                    toolbar.append(create('<div style="background-color: ' + getColor(i) + '">' + x[0] + ' <a href="https://docs.iommi.rocks//' + x[1] + '.html">' + x[1] + '</a></div>'));
                 }
             }
 

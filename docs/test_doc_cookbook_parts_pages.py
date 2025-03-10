@@ -86,7 +86,7 @@ def test_how_do_i_override_part_of_a_part_page():
     class IndexPage(BasePage):
         title = html.img(
             attrs=dict(
-                src='https://docs.iommi.rocks/en/latest/_static/logo_with_outline.svg',
+                src='https://docs.iommi.rocks/_static/logo_with_outline.svg',
                 alt='iommi logo',
                 width='70px',
             ),

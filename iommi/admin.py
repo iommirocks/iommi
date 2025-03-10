@@ -32,6 +32,7 @@ from iommi import (
 from iommi._web_compat import format_html
 from iommi.base import (
     build_as_view_wrapper,
+    capitalize,
     items,
     values,
 )
@@ -411,7 +412,7 @@ class Admin(Page):
                         '''
                             Copy the conf value to the `Meta` class of an `iommi_admin.py` file.
 
-                            Read <a href="https://docs.iommi.rocks/en/latest/admin.html#customization">the docs for admin customization</a> for more information.
+                            Read <a href="https://docs.iommi.rocks//admin.html#customization">the docs for admin customization</a> for more information.
                         ''',
                     ),
                     include=settings.DEBUG,
@@ -546,4 +547,5 @@ class Admin(Page):
         from iommi.experimental.main_menu import M
         return M(
             view=cls.all_models(),
+            display_name=capitalize(gettext_lazy('admin')),
         )

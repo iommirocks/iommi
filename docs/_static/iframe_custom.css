@@ -21,7 +21,6 @@ The embedded iframes should not try to show ads and flyouts. They also need some
 a,
 .select2,
 button {
-    pointer-events: none;
 }
 
 
@@ -36,4 +35,11 @@ readthedocs-flyout {
 
 .sidebar_menu_active {
     min-height: 10rem;
+}
+
+
+.iommi_logo_menu {
+    /*noinspection CssUnknownTarget*/
+    background: url(/_static/images/iommi_logo_text_only.svg) no-repeat !important;
+    background-size: contain !important;
 }

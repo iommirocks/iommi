@@ -243,6 +243,10 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             get_debug_menu,
         )
         from iommi.table import Paginator
+        from iommi.experimental.main_menu import (
+            MainMenu,
+            M,
+        )
 
         default_classes = [
             Action,
@@ -267,6 +271,8 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Query,
             Table,
             get_debug_menu().__class__,
+            MainMenu,
+            M,
         ]
     if additional_classes is None:
         additional_classes = []

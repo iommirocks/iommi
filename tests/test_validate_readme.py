@@ -12,9 +12,9 @@ def test_validate_readme():
         repo_readme = f.read()
 
     # normalize the readmes:
-    docs_readme = docs_readme.replace('https://docs.iommi.rocks/en/latest/', '').replace(':doc:', '')
+    docs_readme = docs_readme.replace('https://docs.iommi.rocks//', '').replace(':doc:', '')
     repo_readme = (
-        repo_readme.replace('https://docs.iommi.rocks/en/latest/', '').replace('.html>`_', '>`').replace('docs/', '')
+        repo_readme.replace('https://docs.iommi.rocks//', '').replace('.html>`_', '>`').replace('docs/', '')
     )
 
     exit_code = 0
