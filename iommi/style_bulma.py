@@ -152,7 +152,6 @@ bulma_base = Style(
         tag='aside',
         attrs__class={
             'navbar': False,
-            'menu': True,
         },
     ),
     Paginator=dict(

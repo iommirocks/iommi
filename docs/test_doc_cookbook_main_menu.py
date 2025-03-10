@@ -247,8 +247,8 @@ def test_template():
 def test_drill_down(album):
     # language=rst
     """
-    How do I show which specific I am on in the menu?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    How do I show which specific object I am on in the menu?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses M.path
     .. uses M.url
     .. uses M.params

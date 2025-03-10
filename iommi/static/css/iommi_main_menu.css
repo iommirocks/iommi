@@ -5,7 +5,7 @@
     --iommi-menu-text-color-color: #689fff;
 }
 
-body:has(.menu) {
+body:has(.main_menu) {
     margin-left: 10rem;
 }
 
@@ -19,11 +19,11 @@ nav.fixed-top {
     margin-left: var(--iommi-iommi-menu-width);
 }
 
-.dev .menu {
+.dev .main_menu {
    background-color: #1c4817;
 }
 
-.test .menu {
+.test .main_menu {
    background-color: #17510d;
 }
 
@@ -44,7 +44,7 @@ body.right_sidebar_menu_active.compact_menu {
 }
 
 
-.menu {
+.main_menu {
     display: flex;
     align-content: space-between;
     flex-wrap: wrap;
@@ -229,7 +229,7 @@ body.right_sidebar_menu_active.compact_menu {
     padding-bottom: 0.5rem;
 }
 
-.compact_menu .menu {
+.compact_menu .main_menu {
     width: var(--iommi-iommi-menu-width);
 
     .iommi_logo_menu {
@@ -290,7 +290,7 @@ body.right_sidebar_menu_active.compact_menu {
     }
 }
 
-.menu_bottom {
+.main_menu_bottom {
     li {
         text-align: center;
     }
@@ -306,7 +306,7 @@ body.right_sidebar_menu_active.compact_menu {
 
 /* mobile */
 @media screen and (max-width: 767px) {
-    .menu {
+    .main_menu {
         width: 100vw;
         position: fixed;
         top: 0;
@@ -344,7 +344,7 @@ body.right_sidebar_menu_active.compact_menu {
         margin-left: 0;
     }
 
-    .compact_menu .menu {
+    .compact_menu .main_menu {
         position: fixed;
         top: 0;
         left: 0;
@@ -366,13 +366,13 @@ body.right_sidebar_menu_active.compact_menu {
         }
     }
 
-    .menu.right_menu {
+    .main_menu.right_menu {
         display: none;
     }
 }
 
 @media print {
-    .menu {
+    .main_menu {
         display: none !important;
     }
 

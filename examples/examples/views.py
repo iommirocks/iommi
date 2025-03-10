@@ -158,7 +158,7 @@ class ExamplesPage(Page):
 
 
 class IndexPage(ExamplesPage):
-    header = html.h1('Welcome to iommi examples application')
+    header = Header('Welcome to the iommi examples application')
     logo = html.img(
         attrs__src='https://docs.iommi.rocks/_static/logo_with_outline.svg',
         attrs__style__width='30%',
