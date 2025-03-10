@@ -1,5 +1,5 @@
 {% block above %}{% endblock %}
-<div class="main_menu">
+<div{{ main_menu.attrs }}>
 
     <nav>
         {% block before_ul %}
@@ -8,7 +8,7 @@
         <ul>
             {% block before_items %}{% endblock %}
 
-            {{ menu.render_items }}
+            {{ main_menu.render_items }}
 
             {% block after_items %}{% endblock %}
         </ul>

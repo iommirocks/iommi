@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+* The previously hardcoded `menu` CSS class on the `MainMenu` has been moved to the style definition, and the default changed to `main_menu`.
+
+* The main menu template variable `menu` was renamed `main_menu`.
+
+
 7.11.1 (2025-03-08)
 ~~~~~~~~~~~~~~~~~~~
 

@@ -187,6 +187,7 @@ base = Style(
     ),
     LiveEditPage__iommi_style='bootstrap',
     MainMenu=dict(
+        attrs__class__main_menu=True,
         assets=dict(
             iommi_main_menu_css=Asset.css(attrs__href='/static/css/iommi_main_menu.css')
         ),

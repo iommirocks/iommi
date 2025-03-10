@@ -118,6 +118,9 @@ class BoundMainMenu:
         self.template = template
         self.paths = main_menu.paths
         self.assets = assets
+        self._own_evaluate_parameters = self.own_evaluate_parameters()
+
+        self.attrs = evaluate_attrs(self, **self._own_evaluate_parameters)
 
         self.raw_items = {
             k: v.bind(request=request, root=self)
@@ -168,13 +171,22 @@ class BoundMainMenu:
         return self.__html__()
 
     def __html__(self):
-        return render_template(self.request, self.template, dict(menu=self))
+        return render_template(self.request, self.template, self._own_evaluate_parameters)
 
     def render_items(self):
         return format_html('{}' * len(self.items), *[x.__html__() for x in self.items.values()])
 
     def __repr__(self):
         return '<BoundMainMenu>'
+
+    def own_evaluate_parameters(self):
+        request = self.request
+        return {
+            'request': request,
+            'user': getattr(request, 'user', None) if request else None,
+            'main_menu': self,
+            **getattr(request, 'iommi_view_params', {}),
+        }
 
 
 class M:
