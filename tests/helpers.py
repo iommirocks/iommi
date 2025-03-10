@@ -7,6 +7,7 @@ from os import (
 from pathlib import Path
 from uuid import uuid4
 
+from django.template import Template
 from django.test import RequestFactory
 from django.urls import URLPattern
 
@@ -220,7 +221,7 @@ def _show_path_from_name(name):
 _show_output_used = set()
 
 
-def show_output(part, url='/'):
+def show_output(part, url='/', user=None):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(
         Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''),
@@ -236,22 +237,32 @@ def show_output(part, url='/'):
     file_path = _show_path_from_name(name)
     makedirs(file_path.parent, exist_ok=True)
 
+    request = req('get', url=url)
+
+    if user:
+        request.user = user
+
     if isinstance(part, URLPattern):
         if url.startswith('/'):
             url = url[1:]
         match = part.resolve(url)
-        part = part.callback(req('get', url=url), **(match.kwargs if match else {}))
+        part = part.callback(request, **(match.kwargs if match else {}))
 
     with open(file_path, 'wb') as f:
         if isinstance(part, MainMenu):
-            request = req('get')
             request.iommi_main_menu = part.bind(request=request)
-            part = Page().bind(request=request)
+            part = Page(
+                parts__user=Template(
+                    '''
+                    User is staff: {{ user.is_staff }}
+                    '''
+                )
+            ).bind(request=request)
 
         if isinstance(part, bytes):
             content = part
         else:
-            content = render_if_needed(req('get', url=url), part).content
+            content = render_if_needed(request, part).content
         f.write(content)
         return content
 

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from django.contrib.auth.models import User
 from django.db import connection
 
 from docs.models import (
@@ -247,3 +248,8 @@ def really_big_discography():
             artist=artist_by_name[album['artist']],
             year=album['year'],
         )
+
+
+@pytest.fixture
+def staff_user():
+    return User.objects.create(username='staff_user', is_staff=True)

@@ -1,3 +1,4 @@
+from django.template import Template
 from django.utils.translation import gettext_lazy
 
 from iommi.experimental.main_menu import (
@@ -28,6 +29,37 @@ Main menu
 """
 
 albums_view = edit_album_view = things_view = artists_view = lambda request, **_: None
+
+
+def test_include(staff_user):
+    # language=rst
+    """
+    How do I control which menu items are shown for a user?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses M.include
+
+    Using `include` you can control which menu items are shown for a given user. This also controls access, so you can know that your menu and your access control are always in sync.
+    """
+
+    menu = MainMenu(
+        items=dict(
+            albums=M(
+                view=albums_view,
+            ),
+            artists=M(
+                view=artists_view,
+                include=lambda user, **_: user.is_staff,
+            ),
+        ),
+    )
+
+    # @test
+    show_output(menu)
+    # @end
+
+    # @test
+    show_output(menu, user=staff_user)
+    # @end
 
 
 def test_display_name():
@@ -170,12 +202,44 @@ def test_nesting():
     """
 
 
+def test_template():
+    # language=rst
+    """
+    How do I put arbitrary html in the menu?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses M.template
 
-# subitems/nesting
-# open, hardcoded always open and lambda
+    With the `template` argument you can put arbitrary html into menu items:
+    """
+
+    menu = MainMenu(
+        items=dict(
+            albums=M(
+                view=EXTERNAL,
+                template=Template('''
+                <li style="margin-left: 1rem">
+                    <span style="display: inline-block; width: 1.5rem; background: red; border-radius: 50%">&nbsp;</span>
+                    <span style="display: inline-block; width: 1.5rem; background: orange; border-radius: 50%">&nbsp;</span>
+                    <span style="display: inline-block; width: 1.5rem; background: yellow; border-radius: 50%">&nbsp;</span>
+                    <span style="display: inline-block; width: 1.5rem; background: green; border-radius: 50%">&nbsp;</span>
+                    <span style="display: inline-block; width: 1.5rem; background: blue; border-radius: 50%">&nbsp;</span>
+                </li>
+                ''')
+            ),
+        ),
+    )
+
+    # @test
+    show_output(menu)
+    # @end
+
+    # language=rst
+    """
+    Note that you want to include the `<li>` tag.
+        
+    You can also override the base template via your `Style`. 
+    """
 
 
 # url + path + params
-# template
-# include/access control
 # (i18n with okrand?)
