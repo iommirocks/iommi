@@ -89,13 +89,21 @@ class MainMenu:
         if self.template is MISSING:
             template = template
 
+        assets = {
+            k: v.bind(request=request)
+            for k, v in conf.pop('assets', {}).items()
+        }
+
         attrs = Namespace(self.attrs, conf.pop('attrs', {}))
+
+        assert not conf, f'Unknown configuration {conf} for `MainMenu`'
 
         return BoundMainMenu(
             self,
             request,
             attrs=attrs,
             template=template,
+            assets=assets,
         )
 
     def __repr__(self):
@@ -103,12 +111,13 @@ class MainMenu:
 
 
 class BoundMainMenu:
-    def __init__(self, main_menu, request, attrs, template):
+    def __init__(self, main_menu, request, attrs, template, assets):
         self.main_menu = main_menu
         self.request = request
         self.attrs = attrs
         self.template = template
         self.paths = main_menu.paths
+        self.assets = assets
 
         self.raw_items = {
             k: v.bind(request=request, root=self)
@@ -163,14 +172,6 @@ class BoundMainMenu:
 
     def render_items(self):
         return format_html('{}' * len(self.items), *[x.__html__() for x in self.items.values()])
-
-    def assets(self):
-        # TODO: this needs to come from the Style
-        return dict(
-            iommi_main_menu_css=Asset.css(
-                attrs__href='/_static/css/iommi_main_menu.css'
-            ).bind(request=self.request),
-        )
 
     def __repr__(self):
         return '<BoundMainMenu>'
