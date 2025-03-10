@@ -5,7 +5,7 @@
     --iommi-menu-text-color-color: #689fff;
 }
 
-body {
+body:has(.menu) {
     margin-left: 10rem;
 }
 
@@ -197,7 +197,7 @@ body.right_sidebar_menu_active.compact_menu {
     zoom: 148%;
     height: 1rem;
     /*noinspection CssUnknownTarget*/
-    background: url(https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/iommi/static/images/iommi_logo_text_only.svg) no-repeat;
+    background: url(/_static/images/iommi_logo_text_only.svg) no-repeat;
     background-size: contain;
     display: block;
 }
@@ -239,7 +239,7 @@ body.right_sidebar_menu_active.compact_menu {
         width: 5rem;
         margin-left: 0.4rem;
         /*noinspection CssUnknownTarget*/
-        background: url(https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/iommi/static/images/iommi_logo_for_dark_background.svg);
+        background: url(/_static/images/iommi_logo_for_dark_background.svg);
         background-size: cover;
     }
 
@@ -354,7 +354,7 @@ body.right_sidebar_menu_active.compact_menu {
         .iommi_logo_menu {
 
             /*noinspection CssUnknownTarget*/
-            background: url(https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/iommi/static/images/iommi_logo_for_dark_background.svg);
+            background: url(/_static/images/iommi_logo_for_dark_background.svg);
             margin-top: 1rem;
             margin-left: 1rem;
             margin-bottom: 1rem;

@@ -33,3 +33,7 @@ readthedocs-flyout {
 #readthedocs-ea {
     display: none;
 }
+
+.sidebar_menu_active {
+    min-height: 10rem;
+}

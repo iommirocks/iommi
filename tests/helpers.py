@@ -11,6 +11,7 @@ from django.test import RequestFactory
 from django.urls import URLPattern
 
 from iommi import (
+    Page,
     Table,
     middleware,
     render_if_needed,
@@ -18,6 +19,7 @@ from iommi import (
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
+from iommi.experimental.main_menu import MainMenu
 from iommi.member import (
     bind_members,
     refine_done_members,
@@ -241,6 +243,11 @@ def show_output(part, url='/'):
         part = part.callback(req('get', url=url), **(match.kwargs if match else {}))
 
     with open(file_path, 'wb') as f:
+        if isinstance(part, MainMenu):
+            request = req('get')
+            request.iommi_main_menu = part.bind(request=request)
+            part = Page().bind(request=request)
+
         if isinstance(part, bytes):
             content = part
         else:

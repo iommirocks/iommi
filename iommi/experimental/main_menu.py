@@ -168,7 +168,7 @@ class BoundMainMenu:
         # TODO: this needs to come from the Style
         return dict(
             iommi_main_menu_css=Asset.css(
-                attrs__href='/static/css/iommi_main_menu.css'
+                attrs__href='/_static/css/iommi_main_menu.css'
             ).bind(request=self.request),
         )
 
