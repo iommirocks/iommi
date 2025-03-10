@@ -137,7 +137,7 @@ def test_rendering():
         actual_html=str(menu),
         # language=html
         expected_html='''
-            <div class="menu">
+            <div class="main_menu">
                 <nav>
                     <a href="/" id="menu-logo">
                          <div class="iommi_logo_menu">
