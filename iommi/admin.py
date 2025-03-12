@@ -362,6 +362,8 @@ class Admin(Page):
                     row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
                 ),
             ),
+            edit_actions__add_row__include=False,
+            edit_actions__save__include=False,
         )
 
         add_models = setdefaults_path(
@@ -401,6 +403,8 @@ class Admin(Page):
                     row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
                 ),
             ),
+            edit_actions__add_row__include=False,
+            edit_actions__save__include=False,
         )
 
         return cls(
