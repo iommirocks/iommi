@@ -137,6 +137,7 @@ class Admin(Page):
     apps: Namespace = Refinable()
 
     menu = Menu(
+        include=lambda request, **_: getattr(request, 'iommi_main_menu', None) is None,
         sub_menu=dict(
             root=MenuItem(
                 url=lambda admin, **_: reverse('iommi.Admin.all_models', current_app=admin.app_name),
