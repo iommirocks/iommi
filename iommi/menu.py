@@ -18,6 +18,7 @@ from iommi.attrs import Attrs
 from iommi.base import (
     capitalize,
     items,
+    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
@@ -215,6 +216,7 @@ class Menu(MenuBase):
         super(Menu, self).__init__(**kwargs)
 
     def __html__(self, *, render=None):
+        assert self._is_bound, NOT_BOUND_MESSAGE
         return TransientFragment(
             tag=self.tag,
             template=self.template,

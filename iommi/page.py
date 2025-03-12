@@ -11,6 +11,7 @@ from iommi._web_compat import (
 from iommi.base import (
     build_as_view_wrapper,
     items,
+    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
@@ -116,6 +117,7 @@ class Page(Part):
 
     @dispatch(render=lambda rendered: format_html('{}' * len(rendered), *values(rendered)))
     def __html__(self, *, render=None):
+        assert self._is_bound, NOT_BOUND_MESSAGE
         self.context = evaluate_as_needed(self.context or {}, self.iommi_evaluate_parameters())
         request = self.get_request()
         context = {**self.get_context(), **self.iommi_evaluate_parameters()}

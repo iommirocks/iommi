@@ -2020,6 +2020,7 @@ class Form(Part, Tag):
         render__call_target=render_template,
     )
     def __html__(self, *, render=None):
+        assert self._is_bound, NOT_BOUND_MESSAGE
         setdefaults_path(
             render,
             template=self.template,

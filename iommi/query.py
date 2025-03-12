@@ -727,6 +727,7 @@ class Query(Part):
         render__call_target=render_template,
     )
     def __html__(self, *, render=None):
+        assert self._is_bound, NOT_BOUND_MESSAGE
         if not self.iommi_bound_members().filters.iommi_bound_members():
             return ''
 
