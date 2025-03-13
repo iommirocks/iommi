@@ -553,4 +553,5 @@ class Admin(Page):
         return M(
             view=cls.all_models(),
             display_name=capitalize(gettext_lazy('admin')),
+            paths=cls.urls().urlpatterns,
         )
