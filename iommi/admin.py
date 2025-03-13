@@ -364,6 +364,7 @@ class Admin(Page):
             ),
             edit_actions__add_row__include=False,
             edit_actions__save__include=False,
+            attrs__class__table=False,
         )
 
         add_models = setdefaults_path(
