@@ -119,7 +119,6 @@ def read_config(f):
 @with_meta  # we need @with_meta again here to make sure this constructor gets all the meta arguments first
 class Admin(Page):
     class Meta:
-        iommi_style = 'bootstrap'
         table_class = EditTable
         form_class = Form
         apps = EMPTY
