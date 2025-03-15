@@ -89,7 +89,7 @@ class LogoutForm(Form):
     class Meta:
         title = gettext_lazy('Confirm log out')
 
-        actions__submit__display_name = 'Log out'
+        actions__submit__display_name = gettext_lazy('Log out')
 
         @staticmethod
         def actions__submit__post_handler(request, **_):
