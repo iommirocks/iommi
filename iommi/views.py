@@ -155,7 +155,7 @@ def confirm_password__is_valid(form, parsed_data, **_):
     return (
         (True, None)
         if parsed_data == form.fields.new_password.value
-        else (False, gettext_lazy('New passwords does not match'))
+        else (False, gettext_lazy('New passwords do not match'))
     )
 
 

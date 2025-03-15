@@ -71,7 +71,7 @@ msgid "Incorrect password"
 msgstr "Неправильний пароль"
 
 #: admin.py:621
-msgid "New passwords does not match"
+msgid "New passwords do not match"
 msgstr "Нові паролі не збігаються"
 
 #: admin.py:637

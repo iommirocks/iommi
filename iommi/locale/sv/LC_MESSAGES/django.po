@@ -57,7 +57,7 @@ msgid "Incorrect password"
 msgstr "Felaktigt lösenord"
 
 #: admin.py:621
-msgid "New passwords does not match"
+msgid "New passwords do not match"
 msgstr "Dom nya lösenorden är olika"
 
 #: admin.py:637

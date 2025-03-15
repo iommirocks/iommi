@@ -59,7 +59,7 @@ msgid "Incorrect password"
 msgstr "Nesprávné heslo"
 
 #: admin.py:621
-msgid "New passwords does not match"
+msgid "New passwords do not match"
 msgstr "Nová hesla se neshodují"
 
 #: admin.py:637

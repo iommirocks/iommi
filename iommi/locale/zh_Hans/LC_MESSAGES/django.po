@@ -68,7 +68,7 @@ msgid "Incorrect password"
 msgstr "错误的密码"
 
 #: admin.py:621
-msgid "New passwords does not match"
+msgid "New passwords do not match"
 msgstr "两次新密码不一致"
 
 #: admin.py:637
