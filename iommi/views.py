@@ -101,7 +101,7 @@ logout = LogoutForm().as_view()
 
 
 class LoginForm(Form):
-    username = Field(display_name=gettext_lazy('Username'))
+    username = Field(display_name=gettext_lazy('Username'), input__attrs__autofocus=True)
     password = Field.password(display_name=gettext_lazy('Password'))
 
     class Meta:
@@ -125,11 +125,6 @@ class LoginForm(Form):
 
 class LoginPage(Page):
     form = LoginForm()
-    set_focus = html.script(
-        mark_safe(
-            'document.getElementById("id_username").focus();',
-        )
-    )
 
 
 login = LoginPage().as_view()
@@ -171,18 +166,13 @@ class ChangePasswordForm(Form):
                 user.save()
                 return HttpResponseRedirect('..')
 
-    current_password = Field.password(is_valid=current_password__is_valid, display_name=gettext_lazy('Current password'))
+    current_password = Field.password(is_valid=current_password__is_valid, display_name=gettext_lazy('Current password'), input__attrs__autofocus=True)
     new_password = Field.password(is_valid=new_password__is_valid, display_name=gettext_lazy('New password'))
     confirm_password = Field.password(is_valid=confirm_password__is_valid, display_name=gettext_lazy('Confirm password'))
 
 
 class ChangePasswordPage(Page):
     form = ChangePasswordForm()
-    set_focus = html.script(
-        mark_safe(
-            'document.getElementById("id_current_password").focus();',
-        )
-    )
 
 
 change_password = ChangePasswordPage().as_view()
