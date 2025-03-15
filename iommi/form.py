@@ -822,6 +822,11 @@ class Field(Part, Tag):
 
     @staticmethod
     @refinable
+    def render_value_on_error(field, **_) -> str:
+        return field.raw_data
+
+    @staticmethod
+    @refinable
     def render_value(form: 'Form', field: 'Field', value: Any, **kwargs) -> str:
         # language=rst
         """
@@ -1080,7 +1085,7 @@ class Field(Part, Tag):
     @property
     def rendered_value(self):
         if self.errors:
-            return self.raw_data
+            return self.invoke_callback(self.render_value_on_error, value=self.value)
         return self.invoke_callback(self.render_value, value=self.value)
 
     def _build_option(self, choice):
@@ -1222,6 +1227,8 @@ class Field(Part, Tag):
     @classmethod
     @with_defaults(
         input__attrs__type='password',
+        render_value=lambda **_: '',
+        render_value_on_error=lambda **_: '',
     )
     def password(cls, **kwargs):
         return cls(**kwargs)

@@ -1050,6 +1050,12 @@ def test_password():
     assert ' type="password" ' in Form(fields__foo=Field.password()).bind(request=req('get', foo='1')).__html__()
 
 
+def test_password_value_is_never_reflected():
+    assert 'supernaut' not in Form(fields__foo=Field.password()).bind(request=req('get', foo='supernaut')).__html__()
+
+    assert 'supernaut' not in Form(fields__foo=Field.password()).bind(request=req('post', **{'foo': 'supernaut', '-': ''})).__html__()
+
+
 def test_choice_not_required():
     class MyForm(Form):
         foo = Field.choice(required=False, choices=['bar'])
