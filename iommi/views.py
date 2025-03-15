@@ -166,9 +166,21 @@ class ChangePasswordForm(Form):
                 user.save()
                 return HttpResponseRedirect('..')
 
-    current_password = Field.password(is_valid=current_password__is_valid, display_name=gettext_lazy('Current password'), input__attrs__autofocus=True, input__attrs__autocomplete="new-password")
-    new_password = Field.password(is_valid=new_password__is_valid, display_name=gettext_lazy('New password'), input__attrs__autocomplete="new-password")
-    confirm_password = Field.password(is_valid=confirm_password__is_valid, display_name=gettext_lazy('Confirm password'))
+    current_password = Field.password(
+        is_valid=current_password__is_valid,
+        display_name=gettext_lazy('Current password'),
+        input__attrs__autofocus=True,
+        input__attrs__autocomplete='new-password',
+    )
+    new_password = Field.password(
+        is_valid=new_password__is_valid,
+        display_name=gettext_lazy('New password'),
+        input__attrs__autocomplete='new-password',
+    )
+    confirm_password = Field.password(
+        is_valid=confirm_password__is_valid,
+        display_name=gettext_lazy('Confirm password'),
+    )
 
 
 class ChangePasswordPage(Page):
