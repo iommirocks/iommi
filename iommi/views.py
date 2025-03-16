@@ -143,7 +143,7 @@ def new_password__is_valid(form, parsed_data, **_):
         validate_password(parsed_data, form.get_request().user)
         return True, None
     except ValidationError as e:
-        return False, ','.join(e)
+        return False, ' '.join(e)
 
 
 def confirm_password__is_valid(form, parsed_data, **_):
