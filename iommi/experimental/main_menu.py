@@ -13,7 +13,6 @@ from django.urls import (
 from django.utils.translation import gettext_lazy
 
 from iommi import (
-    Asset,
     MISSING,
 )
 from iommi._web_compat import (
@@ -30,7 +29,10 @@ from iommi.declarative.namespace import (
     EMPTY,
     Namespace,
 )
-from iommi.evaluate import evaluate_strict
+from iommi.evaluate import (
+    evaluate_as_needed,
+    evaluate_strict,
+)
 from iommi.path import decode_path_components
 from iommi.struct import Struct
 from iommi.style import resolve_style
@@ -194,8 +196,10 @@ class M:
         items=EMPTY,
         attrs__style=EMPTY,
         attrs__class=EMPTY,
+        extra=EMPTY,
+        extra_evaluated=EMPTY,
     )
-    def __init__(self, *, icon=None, view=None, view_kwargs=None, path=MISSING, url=None, open=None, params=None, display_name=None, items=None, include=None, attrs, template=MISSING, paths=None):
+    def __init__(self, *, icon=None, view=None, view_kwargs=None, path=MISSING, url=None, open=None, params=None, display_name=None, items=None, include=None, attrs, template=MISSING, paths=None, extra, extra_evaluated):
 
         assert view is not None or view is EXTERNAL, f'Items should either have a view function specified, or supply EXTERNAL to mark the item as having an external URL and thus not needing access control. Got {view!r}'
 
@@ -221,6 +225,8 @@ class M:
         self.open = open
         self.attrs = attrs
         self.template = template
+        self.extra = extra
+        self.extra_evaluated = extra_evaluated
         if params is not None:
             assert isinstance(params, set), '`params` must be a `set`'
             assert self.path, 'if `params` is set, `path` must also be set'
@@ -375,6 +381,14 @@ class BoundM:
             external = format_html(' {} ', style.icon_formatter('external'))
             target = ' target="blank"'
         return format_html('<a href="{}" alt="{}" {}>{}<span>{}{}</span></a>', url, self.display_name, target, icon, self.display_name, external)
+
+    @property
+    def extra(self):
+        return self.m.extra
+
+    @cached_property
+    def extra_evaluated(self):
+        return Struct(evaluate_as_needed(self.m.extra_evaluated or {}, self._own_evaluate_parameters))
 
     @cached_property
     def url(self):

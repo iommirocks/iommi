@@ -123,7 +123,7 @@ def test_item_rendering():
         actual_html=str(menu.active_item),
         expected_html='''
             <li class="baz is_active">        
-                <a href="/foo/bar/baz/" alt="Baz" ><span>Baz</span></a>        
+                <a href="/foo/bar/baz/" title="Baz" ><span>Baz</span></a>
             </li>
         ''',
     )
@@ -148,7 +148,7 @@ def test_rendering():
                             <details open>
                                 <summary>
                                     <div class="menu_open_close"></div>
-                                    <a href="/foo/" alt="Foo"><i class="fa fa-edit"></i><span>Foo</span></a>
+                                    <a href="/foo/" title="Foo"><i class="fa fa-edit"></i><span>Foo</span></a>
                                 </summary>
             
                                 <ul>
@@ -156,11 +156,11 @@ def test_rendering():
                                         <details open>
                                             <summary>
                                                 <div class="menu_open_close"></div>
-                                                <a href="/foo/bar/" alt="Bar"><span>Bar</span></a>
+                                                <a href="/foo/bar/" title="Bar"><span>Bar</span></a>
                                             </summary>
                                             <ul>
                                                 <li class="baz is_active">
-                                                    <a href="/foo/bar/baz/" alt="Baz"><span>Baz</span></a>
+                                                    <a href="/foo/bar/baz/" title="Baz"><span>Baz</span></a>
                                                 </li>
                                             </ul>
                                         </details>
@@ -169,7 +169,7 @@ def test_rendering():
                             </details>
                         </li>
                         <li>
-                            <a alt="External" href="https://example.com" target=\'"blank"\'>
+                            <a title="External" href="https://example.com" target=\'"blank"\'>
                                 <span>
                                     External
                                     <i class="fa fa-external-link">
