@@ -380,7 +380,7 @@ class BoundM:
         if url.startswith('https://'):
             external = format_html(' {} ', style.icon_formatter('external'))
             target = ' target="blank"'
-        return format_html('<a href="{}" alt="{}" {}>{}<span>{}{}</span></a>', url, self.display_name, target, icon, self.display_name, external)
+        return format_html('<a href="{}" title="{}" {}>{}<span>{}{}</span></a>', url, self.display_name, target, icon, self.display_name, external)
 
     @property
     def extra(self):
