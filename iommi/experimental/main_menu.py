@@ -62,12 +62,16 @@ class MainMenu:
         items=EMPTY,
         attrs__style=EMPTY,
         attrs__class=EMPTY,
+        extra=EMPTY,
+        extra_evaluated=EMPTY,
     )
-    def __init__(self, *, items=None, attrs, template=MISSING, paths=None):
+    def __init__(self, *, items=None, attrs, template=MISSING, paths=None, extra, extra_evaluated):
         self.items = items
         self.attrs = attrs
         self.template = template
         self.paths = paths or []
+        self.extra = extra
+        self.extra_evaluated = extra_evaluated
         for name, c in self.items.items():
             c.parent = self
             c._set_name(name)
@@ -177,6 +181,14 @@ class BoundMainMenu:
 
     def render_items(self):
         return format_html('{}' * len(self.items), *[x.__html__() for x in self.items.values()])
+
+    @property
+    def extra(self):
+        return self.main_menu.extra
+
+    @cached_property
+    def extra_evaluated(self):
+        return Struct(evaluate_as_needed(self.main_menu.extra_evaluated or {}, self._own_evaluate_parameters))
 
     def __repr__(self):
         return '<BoundMainMenu>'
@@ -337,6 +349,7 @@ class BoundM:
             'request': request,
             'user': request.user if request else None,
             'item': self,
+            'main_menu': self.root,
             **getattr(request, 'iommi_view_params', {}),
         }
 

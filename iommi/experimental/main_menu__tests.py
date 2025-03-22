@@ -301,3 +301,59 @@ def test_m_url_error_case():
         ).urlpatterns()
 
     assert str(e.value) == "External links can't have subitems"
+
+
+def test_m_extra():
+    menu = MainMenu(
+        items=dict(
+            foo=M(
+                view=EXTERNAL,
+                url=lambda item, **_: item.extra.url,
+                extra__url='https://example.com',
+            ),
+        ),
+    ).bind(request=req('get'))
+
+    assert 'https://example.com' in str(menu)
+
+
+def test_m_extra_evaluated():
+    menu = MainMenu(
+        items=dict(
+            foo=M(
+                view=EXTERNAL,
+                url=lambda item, **_: item.extra_evaluated.url,
+                extra_evaluated__url=lambda **_: 'https://example.com',
+            ),
+        ),
+    ).bind(request=req('get'))
+
+    assert 'https://example.com' in str(menu)
+
+
+def test_main_menu_extra():
+    menu = MainMenu(
+        extra__url='https://example.com',
+        items=dict(
+            foo=M(
+                view=EXTERNAL,
+                url=lambda main_menu, **_: main_menu.extra.url,
+            ),
+        ),
+    ).bind(request=req('get'))
+
+    assert 'https://example.com' in str(menu)
+
+
+def test_main_menu_extra_evaluated():
+    menu = MainMenu(
+        extra_evaluated__url=lambda **_: 'https://example.com',
+        items=dict(
+            foo=M(
+                view=EXTERNAL,
+                url=lambda main_menu, **_: main_menu.extra_evaluated.url,
+            ),
+        ),
+    ).bind(request=req('get'))
+
+    assert 'https://example.com' in str(menu)
