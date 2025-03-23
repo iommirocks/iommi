@@ -834,6 +834,7 @@ class Query(Part):
             try:
                 q = query.get_q()
             except QueryException:
+                # This exception is dumped into `query_error` inside `get_q` before being reraised, so it's fine to ignore it here.
                 pass
             if q:
                 rows = rows.filter(q)
