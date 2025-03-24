@@ -56,6 +56,28 @@ def test_order_after_name():
     )
 
 
+def test_order_after_name_explicit_after():
+    sorts_right(
+        dict(
+            foo=Struct(expected_position=0),
+            bar=Struct(expected_position=2),
+            quux=Struct(after='>foo', expected_position=1),
+            baz=Struct(expected_position=3),
+        )
+    )
+
+
+def test_order_before_name():
+    sorts_right(
+        dict(
+            foo=Struct(expected_position=0),
+            bar=Struct(expected_position=2),
+            quux=Struct(after='<bar', expected_position=1),
+            baz=Struct(expected_position=3),
+        )
+    )
+
+
 def test_order_after_name_stable():
     sorts_right(
         dict(
