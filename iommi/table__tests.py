@@ -1049,6 +1049,75 @@ def test_bulk_edit_table():
 
 
 @pytest.mark.django_db
+def test_bulk_edit_all_multiple_tables():
+    assert TFoo.objects.all().count() == 0
+
+    foos = [
+        TFoo.objects.create(a=1, b=""),
+        TFoo.objects.create(a=2, b=""),
+        TFoo.objects.create(a=3, b=""),
+        TFoo.objects.create(a=4, b=""),
+    ]
+
+    class FirstTable(Table):
+        a = Column.integer(sortable=False, bulk__include=True)
+        b = Column()
+        class Meta:
+            page_size = 2
+            rows = TFoo.objects.all().order_by('pk')
+
+    class SecondTable(Table):
+        a = Column.integer(sortable=False)
+        b = Column(bulk__include=True)
+
+        class Meta:
+            page_size = 2
+            rows = TFoo.objects.all().order_by('pk')
+
+    p = Page(parts__first_table=FirstTable(), parts__second_table=SecondTable()).bind(request=req('get'))
+    # These asserts are assumptions for the later requests and asserts to make sense
+    assert p.parts.first_table.bulk.fields._all_pks_.iommi_path == "_all_pks_"
+    assert p.parts.first_table.bulk.fields.a.iommi_path == "bulk/a"
+    assert p.parts.first_table.bulk.actions.submit.iommi_path == "bulk/submit"
+    assert p.parts.second_table.bulk.fields._all_pks_.iommi_path == "bulk/_all_pks_"
+    assert p.parts.second_table.bulk.fields.b.iommi_path == "bulk/b"
+    assert p.parts.second_table.bulk.actions.submit.iommi_path == "second_table/bulk/submit"
+
+    result = p.__html__()
+    assert '<button accesskey="s" name="-bulk/submit">Bulk change</button>' in result, result
+    assert '<button accesskey="s" name="-second_table/bulk/submit">Bulk change</button>' in result, result
+
+    # Test edit all on first table
+    Page(
+        parts__first_table=FirstTable(),
+        parts__second_table=SecondTable()
+    ).bind(
+        request=req('post', **{'_all_pks_': '1', 'bulk/a': '11', '-bulk/submit': ''}),
+    ).render_to_response()
+
+    assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
+        (foos[0].pk, 11, ''),
+        (foos[1].pk, 11, ''),
+        (foos[2].pk, 11, ''),
+        (foos[3].pk, 11, ''),
+    ]
+
+    # Test edit all on second table
+    Page(
+        parts__first_table=FirstTable(),
+        parts__second_table=SecondTable()
+    ).bind(
+        request=req('post', **{'bulk/_all_pks_': '1', 'bulk/b': 'changed2', '-second_table/bulk/submit': ''}),
+    ).render_to_response()
+
+    assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
+        (foos[0].pk, 11, 'changed2'),
+        (foos[1].pk, 11, 'changed2'),
+        (foos[2].pk, 11, 'changed2'),
+        (foos[3].pk, 11, 'changed2'),
+    ]
+
+@pytest.mark.django_db
 def test_bulk_edit_filtered():
     foo1 = TFoo.objects.create(a=1, b="")
     foo2 = TFoo.objects.create(a=2, b="")
