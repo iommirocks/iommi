@@ -7,11 +7,17 @@
 
 Ordering of fields and columns is based on the declared order, the order in the model (when using :ref:`auto`), and the `after` configuration. The last takes precedent over the others.
 
-To order fields, you supply either the name of a field, an index, or the special value `LAST` to put a field last.
+To order fields, set `after` to:
+
+- `field_name` to place after the named field
+- `>field_name` to place after the named field
+- `<field_name` to place before the named field
+- an integer index
+- the special value `LAST` to put a field last
 
 Using `after` is especially useful when you already have a complex object that you want to add one or a few fields to in some specific position.
-
 """
+
 from docs.models import Album
 from iommi import (
     Form,

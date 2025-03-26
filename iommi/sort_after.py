@@ -16,6 +16,7 @@ def sort_after(d):
     unmoved = []
     to_be_moved_by_index = []
     to_be_moved_by_name = defaultdict(list)
+    to_be_moved_by_name_before = defaultdict(list)
     to_be_moved_last = []
     for x in items(d):
         after = getattr(x[1], 'after', None)
@@ -26,7 +27,14 @@ def sort_after(d):
         elif isinstance(after, int):
             to_be_moved_by_index.append(x)
         else:
-            to_be_moved_by_name[x[1].after].append(x)
+            a = x[1].after
+            if a.startswith('>'):
+                a = a[1:]
+            elif a.startswith('<'):
+                a = a[1:]
+                to_be_moved_by_name_before[a].append(x)
+                continue
+            to_be_moved_by_name[a].append(x)
 
     if len(unmoved) == len(d):
         return d
@@ -36,6 +44,8 @@ def sort_after(d):
     )  # pragma: no mutate (infinite loop when x.after changed to None, but if changed to a number manually it exposed a missing test)
 
     def place(x):
+        for y in to_be_moved_by_name_before.pop(x[0], []):
+            yield from place(y)
         yield x
         for y in to_be_moved_by_name.pop(x[0], []):
             yield from place(y)
@@ -74,6 +84,14 @@ def sort_after(d):
         raise SortAfterException(
             f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} '
             f'but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} '
+            f'not exist.\nAvailable names:\n    {available_names}'
+        )
+
+    if to_be_moved_by_name_before:
+        available_names = "\n    ".join(sorted(list(d.keys())))
+        raise SortAfterException(
+            f'Tried to order before {", ".join(sorted(to_be_moved_by_name_before.keys()))} '
+            f'but {"that key does" if len(to_be_moved_by_name_before) == 1 else "those keys do"} '
             f'not exist.\nAvailable names:\n    {available_names}'
         )
 
