@@ -2464,8 +2464,7 @@ class Table(Part, Tag):
     def _selection_identifiers(self, prefix):
         """Return a list of identifiers of the selected rows. Or 'all' if all
         sorted_and_filtered_rows are selected."""
-        # TODO: this needs to be namespaced
-        if self.get_request().POST.get('_all_pks_') == '1':
+        if '_all_pks_' in self.bulk.fields and self.get_request().POST.get(self.bulk.fields._all_pks_.iommi_path) == '1':
             return 'all'
         else:
             return [key[len(prefix) :] for key in self.get_request().POST if key.startswith(prefix)]
