@@ -315,7 +315,10 @@ def default_cell__value(column, row, **kwargs):
     if column.attr is None:
         return None
     else:
-        return getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs))
+        try:
+            return getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs))
+        except AttributeError:
+            return None
 
 
 class DataRetrievalMethods(Enum):
@@ -1090,7 +1093,7 @@ class Cells(Traversable, Tag):
         for column in values(self.get_table().columns):
             if not column.render_column:
                 continue
-            yield self.cell_class(cells=self, column=column).refine_done(parent=self)
+            yield self.cell_class(cells=self, column=column, parent=self)
 
     def __len__(self):
         return self.column_count()
@@ -1100,7 +1103,7 @@ class Cells(Traversable, Tag):
 
     def __getitem__(self, name):
         column = self.iommi_parent().columns[name]
-        return self.cell_class(cells=self, column=column).refine_done(parent=self)
+        return self.cell_class(cells=self, column=column, parent=self)
 
 
 class RowGroup(Fragment):
@@ -1115,25 +1118,36 @@ class RowGroup(Fragment):
         return dict(row_group=self)
 
 
-class CellConfig(RefinableObject, Tag):
-    url: str = Refinable()
-    url_title: str = Refinable()
-    attrs: Attrs = Refinable()
-    tag: str = Refinable()
-    template: Union[str, Template] = Refinable()
-    value = Refinable()
-    contents = Refinable()
-    format: Callable = Refinable()
-    link: Namespace = Refinable()
+class CellConfig(TransientFragment, Tag):
+    def __init__(self, *,
+            url: str,
+            url_title: str,
+            attrs: Attrs,
+            tag: str,
+            template: Union[str, Template],
+            value,
+            contents,
+            format: Callable,
+            link: Namespace,
+            parent,
+        ):
+        super(CellConfig, self).__init__(parent=parent, template=template, attrs=attrs, children=None, tag=tag)
+        self.url = url
+        self.url_title = url_title
+        self.value = value
+        self.contents = contents
+        self.format = format
+        self.link = link
 
 
 class Cell(CellConfig):
     @dispatch
-    def __init__(self, cells: Cells, column):
+    def __init__(self, cells: Cells, column, **kwargs):
         kwargs = setdefaults_path(
             Namespace(),
             column.cell,
             column.table.cell,
+            **kwargs,
         )
         super(Cell, self).__init__(**kwargs)
         self._name = 'cell'
@@ -1146,8 +1160,6 @@ class Cell(CellConfig):
         self.cells = cells
         self.table = cells.get_table()
         self.row = cells.row
-
-    def on_refine_done(self):
         self._evaluate_parameters = merged(
             self.column.iommi_evaluate_parameters(),
             cells=self.cells,
@@ -1677,7 +1689,7 @@ def endpoint__csv(table, **_):
             return value
 
     def cell_value(cells, bound_column):
-        value = Cell(cells, bound_column).refine_done(parent=cells).value
+        value = Cell(cells, bound_column, parent=cells).value
         return bound_column.extra_evaluated.get('report_value', value)
 
     def rows():
@@ -2289,7 +2301,7 @@ class Table(Part, Tag):
                 prev_value = no_value_set
                 prev_row = no_value_set
                 for cells in self.cells_for_rows():
-                    value = Cell(cells, column).refine_done(parent=self).value
+                    value = Cell(cells, column, parent=self).value
                     if prev_value != value:
                         rowspan_by_row[id(cells.row)] = 1
                         prev_value = value
