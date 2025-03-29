@@ -131,7 +131,7 @@ class EditCells(Cells):
             field = self.get_field(column)
             if not field:
                 continue
-            yield self.cell_class(cells=self, column=column)
+            yield self.cell_class(cells=self, column=column, parent=self)
 
 
 class EditColumn(Column):
