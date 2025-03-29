@@ -67,6 +67,7 @@ class HTMLStats(pstats.Stats):
                         <th class="numeric"><a href="?_iommi_prof=cumtime">cumtime</a></th>
                         <th class="numeric">percall</th>
                         <th>function</th>
+                        <th></th>
                         <th>filename</th>
                         <th>lineno</th>
                     </tr>
