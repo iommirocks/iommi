@@ -8,10 +8,10 @@ from iommi.evaluate import (
     evaluate_as_needed_recursively,
     evaluate_strict,
 )
+from iommi.debug import iommi_debug_on
 
 
 def evaluate_attrs(obj, **kwargs):
-    from iommi.debug import iommi_debug_on
 
     attrs = obj.attrs or {}
 
@@ -153,8 +153,6 @@ class Attrs(Namespace):
     """
 
     def __init__(self, _parent, **attrs):
-        from iommi.debug import iommi_debug_on
-
         if iommi_debug_on() and getattr(_parent, '_name', None) is not None:
             attrs['data-iommi-path'] = _parent.iommi_dunder_path
             attrs['data-iommi-type'] = type(_parent).__name__

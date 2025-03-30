@@ -16,16 +16,7 @@ from iommi._web_compat import (
     mark_safe,
 )
 from iommi.base import items
-from iommi.member import (
-    MemberBinder,
-    Members,
-)
 from iommi.struct import Struct
-from iommi.traversable import (
-    PathNotFoundException,
-    Traversable,
-    declared_members,
-)
 
 from ._web_compat import settings
 
@@ -51,6 +42,16 @@ def endpoint__debug_tree(endpoint, **_):
     assert root._is_bound
 
     def rows(node, name='', path=None):
+        from iommi.member import (
+            MemberBinder,
+            Members,
+        )
+        from iommi.traversable import (
+            PathNotFoundException,
+            Traversable,
+            declared_members,
+        )
+
         if path is None:
             path = []
         is_struct = type(node) is Struct
@@ -279,6 +280,7 @@ def get_instantiated_at_info(frame):
 
 
 def filename_and_line_num_from_part(part):
+    from iommi.traversable import Traversable
     filename, line_num = getattr(part, '_instantiated_at_info', (None, None))
     if (filename, line_num) == (None, None) and isinstance(part, Traversable):
         # inspect.findsource() parses the full AST of the file, so beware the performance implications
