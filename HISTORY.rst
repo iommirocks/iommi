@@ -1,6 +1,37 @@
 Changelog
 ---------
 
+7.12.0 (2025-03-26)
+~~~~~~~~~~~~~~~~~~~
+
+* Support sorting before a named field with `after`. Specify `<foo` to sort before `foo`, and you can also explicitly sort after with `>foo`.
+
+* `MainMenu`: added `extra` and `extra_evaluate`
+
+* `Table` rendering is now up to 20% faster
+
+* Fixed bulk 'all items on all pages' with multiple tables on a page
+
+* `M` `<a>` tags should render `title` attributes, not `alt`
+
+* `Field.password` should never render out password in the html, not even for validation errors
+
+* Password change form should have semantic attrs to specify that it's password change
+
+* Set autofocus via attrs instead of JS
+
+* Admin: set password previously set the encrypted password. Now you can type the password like you'd expect.
+
+* Admin: support `MainMenu` based apps
+
+* Admin: styling fix for "all models" page
+
+* Admin: should not be hardcoded to bootstrap style
+
+* Admin: don't show add row/save on "all models" page
+
+* Improved translations
+
 7.11.2 (2025-03-11)
 ~~~~~~~~~~~~~~~~~~~
 
