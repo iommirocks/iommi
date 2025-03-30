@@ -92,7 +92,7 @@ def render_attrs(attrs):
             v = f'{value}'.replace('"', '&quot;')
             yield f'{key}="{v}"'
 
-    r = mark_safe(' %s' % ' '.join(parts()))
+    r = mark_safe(f" {' '.join(parts())}")
     return '' if r == ' ' else r
 
 
