@@ -426,15 +426,16 @@ class EditTable(Table):
             auto['model'] = auto.rows.model
         auto.pop('rows', None)
 
-        self.create_form = self.get_meta().form_class(
-            **setdefaults_path(
-                Namespace(),
-                self.create_form,
-                fields=fields,
-                _name='create_form',
-                auto=auto,
+        if self.create_form is not None:
+            self.create_form = self.get_meta().form_class(
+                **setdefaults_path(
+                    Namespace(),
+                    self.create_form,
+                    fields=fields,
+                    _name='create_form',
+                    auto=auto,
+                )
             )
-        )
 
         if auto:
             auto.default_included = False
@@ -459,13 +460,15 @@ class EditTable(Table):
 
         declared_fields = self.edit_form.iommi_namespace.fields
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
-        self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
+        if self.create_form is not None:
+            self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
         bind_members(self, name='edit_actions')
         bind_member(self, name='edit_form')
-        bind_member(self, name='create_form')
+        if self.create_form is not None:
+            bind_member(self, name='create_form')
 
         # If this is a nested form register it with the parent, need
         # to do this early because is_target needs self.parent_form
@@ -476,15 +479,16 @@ class EditTable(Table):
                 self.parent_form.nested_forms[self._name] = self
                 self.outer.tag = None
 
-        if self.model is not None:
-            sentinel_row = self.model(pk='#sentinel#')
-        else:
-            sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.create_form.fields)})
-        self.attrs['data-add-template'] = (
-            self.cells_class(row=sentinel_row, row_index=-1, is_create_template=True, **self.row.as_dict())
-            .bind(parent=self.create_form)
-            .__html__()
-        )
+        if self.create_form is not None:
+            if self.model is not None:
+                sentinel_row = self.model(pk='#sentinel#')
+            else:
+                sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.create_form.fields)})
+            self.attrs['data-add-template'] = (
+                self.cells_class(row=sentinel_row, row_index=-1, is_create_template=True, **self.row.as_dict())
+                .bind(parent=self.create_form)
+                .__html__()
+            )
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
