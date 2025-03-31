@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+
+7.12.1 (2025-03-26)
+~~~~~~~~~~~~~~~~~~~
+
+* `EditTable.create_form` should be able to be `None` to remove the add row feature
+
+* Fixed crash on admin "all models" page
+
+
 7.12.0 (2025-03-26)
 ~~~~~~~~~~~~~~~~~~~
 

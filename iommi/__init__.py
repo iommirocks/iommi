@@ -1,4 +1,4 @@
-__version__ = '7.12.0'
+__version__ = '7.12.1'
 
 from functools import wraps
 
