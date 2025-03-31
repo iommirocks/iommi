@@ -374,6 +374,7 @@ class Admin(Page):
             include=settings.DEBUG,
             call_target__cls=cls.get_meta().table_class,
             sortable=False,
+            create_form=None,
             rows=functools.partial(rows_raw, included_filter=True),
             page_size=None,
             columns__app_name=cls.get_meta().table_class.get_meta().member_class(auto_rowspan=True),
