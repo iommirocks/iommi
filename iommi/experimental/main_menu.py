@@ -390,7 +390,7 @@ class BoundM:
         if self.m.icon is not None:
             icon = style.icon_formatter(self.m.icon)
 
-        if url.startswith('https://'):
+        if url.startswith('https://') or url.startswith('http://'):
             external = format_html(' {} ', style.icon_formatter('external'))
             target = ' target="blank"'
         return format_html('<a href="{}" title="{}" {}>{}<span>{}{}</span></a>', url, self.display_name, target, icon, self.display_name, external)
