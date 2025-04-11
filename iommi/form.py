@@ -1,4 +1,5 @@
 import re
+import warnings
 from contextlib import contextmanager
 from datetime import (
     datetime,
@@ -175,7 +176,7 @@ def many_to_many_factory_write_to_instance(field, instance, value, **_):
 
 _field_factory_by_field_type = {}
 _foreign_key_field_factory_by_model = {}
-_m2m_field_factory_by_model = {}
+_many_to_many_field_factory_by_model = {}
 
 
 def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -196,6 +197,16 @@ def register_foreign_key_field_factory(model, *, shortcut_name=MISSING, factory=
         assert not kwargs, 'Can not provide both a factory and additional defaults separately'
 
     _foreign_key_field_factory_by_model[model] = factory
+
+
+def register_many_to_many_field_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+    else:
+        assert not kwargs, 'Can not provide both a factory and additional defaults separately'
+
+    _many_to_many_field_factory_by_model[model] = factory
 
 
 def create_object__post_handler(*, form, **kwargs):
@@ -1476,7 +1487,10 @@ class Field(Part, Tag):
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
     @classmethod
-    @with_defaults
+    @with_defaults(
+        display_name=lambda field, **_: capitalize(field.model_field.remote_field.model._meta.verbose_name_plural),
+        help_text=None,
+    )
     def many_to_many(cls, model_field, **kwargs):
         setdefaults_path(
             kwargs,
@@ -1488,11 +1502,9 @@ class Field(Part, Tag):
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
     @classmethod
-    @with_defaults(
-        display_name=lambda field, **_: capitalize(field.model_field.remote_field.model._meta.verbose_name_plural),
-        help_text=None,
-    )
+    @with_defaults()
     def many_to_many_reverse(cls, model_field, **kwargs):
+        warnings.warn('many_to_many_reverse is no longer needed, just use many_to_many', DeprecationWarning)
         return cls.many_to_many(model_field=model_field, **kwargs)
 
     @classmethod

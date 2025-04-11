@@ -3,16 +3,15 @@ from django.db.models import (
     CASCADE,
     CharField,
     ForeignKey,
+    ManyToManyField,
     Model,
 )
-from django.template import Template
 
 import iommi
 from iommi import (
-    Form,
     register_factory,
     register_foreign_key_factory,
-    Style,
+    register_many_to_many_factory,
 )
 from iommi.shortcut import with_defaults
 from tests.helpers import req
@@ -31,15 +30,21 @@ def test_semantic_models():
 
     """
 
+    # @test
+    class Role(Model):
+        pass
+    # @end
+
     class User(Model):
         is_active = BooleanField()
         name = CharField()
         person_number = CharField()
         manager = ForeignKey('self', on_delete=CASCADE)
+        roles = ManyToManyField(Role, blank=True)
 
     # @test
     try:
-    # @end
+        # @end
 
         # language=rst
         """
@@ -84,11 +89,15 @@ def test_semantic_models():
 
         # language=rst
         """
-        For foreign key fields it would be cumbersome to make custom classes, so registrations are done slightly differently:
+        For foreign key, and many-to-many fields it would be cumbersome to make custom classes, so registrations are done slightly differently:
     
         """
 
+        # foreign key and one-to-one
+        # related, related_multiple
         register_foreign_key_factory(User, shortcut_name='user')
+        # many-to-many and one-to-many (aka reverse foreign key)
+        register_many_to_many_factory(Role, shortcut_name='roles')
 
         # @test
         person_number__parse = lambda **_: None
@@ -113,6 +122,11 @@ def test_semantic_models():
             )
             def user(cls, **kwargs):
                 return cls.foreign_key(**kwargs)
+
+            @classmethod
+            @with_defaults()
+            def roles(cls, **kwargs):
+                return cls.many_to_many(**kwargs)
 
         # language=rst
         """

@@ -26,6 +26,16 @@ def register_foreign_key_factory(model, *, shortcut_name=MISSING, factory=MISSIN
     register_foreign_key_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
 
 
+def register_many_to_many_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    from iommi.form import register_many_to_many_field_factory
+    from iommi.query import register_many_to_many_filter_factory
+    from iommi.table import register_many_to_many_column_factory
+
+    register_many_to_many_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_many_to_many_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_many_to_many_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+
+
 def setup_db_compat_django():
     from django.db.models import (
         AutoField,

@@ -1,4 +1,5 @@
 import operator
+import warnings
 from datetime import datetime
 from functools import reduce
 from typing import (
@@ -134,6 +135,7 @@ FREETEXT_SEARCH_NAME = 'freetext_search'
 
 _filter_factory_by_field_type = {}
 _foreign_key_filter_factory_by_model = {}
+_many_to_many_filter_factory_by_model = {}
 
 
 def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -150,6 +152,14 @@ def register_foreign_key_filter_factory(django_field_class, *, shortcut_name=MIS
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
     _foreign_key_filter_factory_by_model[django_field_class] = factory
+
+
+def register_many_to_many_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _many_to_many_filter_factory_by_model[django_field_class] = factory
 
 
 def to_string_surrounded_by_quote(v):
@@ -580,6 +590,7 @@ class Filter(Part):
     @classmethod
     @with_defaults
     def many_to_many_reverse(cls, model_field, **kwargs):
+        warnings.warn('many_to_many_reverse is no longer needed, just use many_to_many', DeprecationWarning)
         return cls.many_to_many(model_field=model_field, **kwargs)
 
 

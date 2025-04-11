@@ -9,6 +9,7 @@ from iommi._db_compat import (
     register_factory,
     setup_db_compat,
     register_foreign_key_factory,
+    register_many_to_many_factory,
 )
 from iommi.action import Action
 from iommi.asset import Asset
@@ -22,6 +23,7 @@ from iommi.form import (
     Form,
     register_field_factory,
     register_foreign_key_field_factory,
+    register_many_to_many_field_factory,
 )
 from iommi.fragment import (
     Fragment,
@@ -44,6 +46,7 @@ from iommi.query import (
     Query,
     register_filter_factory,
     register_foreign_key_filter_factory,
+    register_many_to_many_filter_factory,
 )
 from iommi.sort_after import LAST
 from iommi.style import (
@@ -56,6 +59,7 @@ from iommi.table import (
     register_cell_formatter,
     register_column_factory,
     register_foreign_key_column_factory,
+    register_many_to_many_column_factory,
 )
 
 
@@ -152,6 +156,10 @@ __all__ = [
     'register_foreign_key_field_factory',
     'register_foreign_key_filter_factory',
     'register_foreign_key_column_factory',
+    'register_many_to_many_factory',
+    'register_many_to_many_field_factory',
+    'register_many_to_many_filter_factory',
+    'register_many_to_many_column_factory',
     'register_cell_formatter',
     'register_style',
     'register_search_fields',
