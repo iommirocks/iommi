@@ -965,6 +965,10 @@ class Field(Part, Tag):
         form = self.form
         assert form is not None, "Each field needs a form."
 
+        if isinstance(self.choices, QuerySet):
+            # Clone queryset to avoid accidental caching across requests
+            self.choices = self.choices.all()
+
         form.all_fields[self._name] = self
 
         if self.attr is MISSING:
@@ -1329,23 +1333,8 @@ class Field(Part, Tag):
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
     )
-    def choice_queryset(cls, choices: QuerySet = None, **kwargs):
-        if 'model' not in kwargs:
-            if isinstance(choices, QuerySet):
-                kwargs['model'] = choices.model
-            elif 'model_field' in kwargs:
-                pass
-            else:
-                assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
-
-        instance = cls.choice(**kwargs)
-        instance = instance.refine(
-            Prio.shortcut,
-            choices=(
-                (lambda form, **_: choices.all()) if isinstance(choices, QuerySet) else choices
-            ),  # clone the QuerySet if needed
-        )
-        return instance
+    def choice_queryset(cls, **kwargs):
+        return cls.choice(**kwargs)
 
     @classmethod
     @with_defaults(
