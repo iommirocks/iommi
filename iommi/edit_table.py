@@ -73,11 +73,13 @@ from iommi.shortcut import (
 from iommi.sort_after import LAST
 from iommi.struct import Struct
 from iommi.table import (
+    _column_factory_by_field_type,
+    _related_column_factory_by_model,
+    _related_multiple_column_factory_by_model,
     Cell,
     Cells,
     Column,
     Table,
-    _column_factory_by_field_type,
 )
 
 _edit_column_factory_by_field_type = {}
@@ -204,6 +206,8 @@ class EditColumn(Column):
             model=model,
             factory_lookup={**_column_factory_by_field_type, **_edit_column_factory_by_field_type},
             factory_lookup_register_function=register_edit_column_factory,
+            related_factory_lookup=_related_column_factory_by_model,
+            related_multiple_factory_lookup=_related_multiple_column_factory_by_model,
             model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=base_defaults_factory,

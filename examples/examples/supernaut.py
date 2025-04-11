@@ -4,18 +4,15 @@ from django.urls import (
 )
 from django.utils.translation import gettext_lazy as _
 
-from iommi import (
+from examples.iommi import (
     Action,
     Column,
     Form,
-    Menu,
-    MenuItem,
     Page,
     Table,
-    html,
 )
+from iommi import html
 from iommi.path import register_path_decoding
-
 from .models import (
     Album,
     Artist,
@@ -103,7 +100,7 @@ class ArtistPage(Page):
     title = html.h1(lambda params, **_: params.artist.name)
 
     albums = AlbumTable(auto__model=Album, rows=lambda params, **_: Album.objects.filter(artist=params.artist))
-    tracks = TrackTable(auto__model=Track, rows=lambda params, **_: Track.objects.filter(album__artist=params.artist))
+    # tracks = TrackTable(auto__model=Track, rows=lambda params, **_: Track.objects.filter(album__artist=params.artist))
 
 
 class AlbumPage(Page):

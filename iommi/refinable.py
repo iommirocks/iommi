@@ -72,6 +72,11 @@ def flatten_items(namespace, _prefix=''):
 class RefinableNamespace(Namespace):
     __iommi_refined_stack: List[Tuple[Prio, Namespace, List[Tuple[str, Any]]]]
 
+    def print_origin(self, refinable_name):
+        for prio, params in self.as_stack():
+            if refinable_name in params:
+                print(prio, params[refinable_name])
+
     def as_stack(self):
         return [(prio.name, dict(flattened_params)) for prio, _, flattened_params in self._get_parent_stack()]
 

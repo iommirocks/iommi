@@ -17,6 +17,8 @@ from iommi.form import (
     Field,
     Form,
     register_field_factory,
+    register_related_field_factory,
+    register_related_multiple_field_factory,
 )
 from iommi.fragment import (
     Container,
@@ -26,6 +28,8 @@ from iommi.fragment import (
 )
 from iommi.from_model import (
     register_factory,
+    register_related_factory,
+    register_related_multiple_factory,
     register_search_fields,
     setup_db_compat,
 )
@@ -46,6 +50,8 @@ from iommi.query import (
     Filter,
     Query,
     register_filter_factory,
+    register_related_filter_factory,
+    register_related_multiple_filter_factory,
 )
 from iommi.sort_after import LAST
 from iommi.style import (
@@ -57,8 +63,11 @@ from iommi.table import (
     Table,
     register_cell_formatter,
     register_column_factory,
+    register_related_column_factory,
+    register_related_multiple_column_factory,
 )
 from iommi.thread_locals import get_current_request
+
 
 setup_db_compat()
 
@@ -155,6 +164,14 @@ __all__ = [
     'register_field_factory',
     'register_filter_factory',
     'register_column_factory',
+    'register_related_factory',
+    'register_related_field_factory',
+    'register_related_filter_factory',
+    'register_related_column_factory',
+    'register_related_multiple_factory',
+    'register_related_multiple_field_factory',
+    'register_related_multiple_filter_factory',
+    'register_related_multiple_column_factory',
     'register_cell_formatter',
     'register_style',
     'register_search_fields',
