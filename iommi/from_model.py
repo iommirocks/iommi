@@ -1,4 +1,5 @@
 import warnings
+from textwrap import dedent
 from typing import (
     Dict,
     List,
@@ -6,7 +7,13 @@ from typing import (
 )
 
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Field as DjangoField
+from django.db.models import (
+    Field as DjangoField,
+    ForeignKey,
+    ManyToManyField,
+    OneToOneField,
+    QuerySet,
+)
 from django.db.models import (
     ManyToManyRel,
     ManyToOneRel,
@@ -82,7 +89,9 @@ def member_from_model(
     model,
     factory_lookup,
     defaults_factory,
-    factory_lookup_register_function=None,
+    factory_lookup_register_function,
+    related_factory_lookup,
+    related_multiple_factory_lookup,
     model_field_name=None,
     model_field=None,
     **kwargs,
@@ -104,6 +113,8 @@ def member_from_model(
                 factory_lookup=factory_lookup,
                 defaults_factory=defaults_factory,
                 factory_lookup_register_function=factory_lookup_register_function,
+                related_factory_lookup=related_factory_lookup,
+                related_multiple_factory_lookup=related_multiple_factory_lookup,
                 model_field_name=field_path_rest,
                 **kwargs,
             )
@@ -119,7 +130,15 @@ def member_from_model(
     if model_field_type == GeneratedField:
         model_field_type = type(model_field.output_field)
 
-    factory = factory_lookup.get(model_field_type, MISSING)
+    factory = MISSING
+    if isinstance(model_field, (ForeignKey, OneToOneField, OneToOneRel)):
+        factory = related_factory_lookup.get(model_field.remote_field.model, MISSING)
+
+    if isinstance(model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)):
+        factory = related_multiple_factory_lookup.get(model_field.remote_field.model, MISSING)
+
+    if factory is MISSING:
+        factory = factory_lookup.get(model_field_type, MISSING)
 
     if factory is MISSING:
         for django_field_type, foo in reversed(list(factory_lookup.items())):
@@ -130,12 +149,9 @@ def member_from_model(
     if factory is MISSING:
 
         def no_factory_defined(**_):
-            message = f'No factory for {model.__name__}.{model_field_name} of type {model_field_type.__name__}.'
-            if factory_lookup_register_function is not None:
-                message += (
-                    ' Register a factory with register_factory or %s, you can also register one that returns None to not handle this field type'
-                    % factory_lookup_register_function.__name__
-                )
+            message = dedent(f'''\
+                No factory for {model.__name__}.{model_field_name} of type {model_field_type.__name__}.
+                Register a factory with register_factory or {factory_lookup_register_function.__name__}, you can also register one that returns `None` to not handle this field type.''')
             raise AssertionError(message)
 
         factory = no_factory_defined
@@ -342,6 +358,45 @@ def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSI
     register_column_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
 
 
+def register_related_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    from iommi.form import register_related_field_factory
+    from iommi.query import register_related_filter_factory
+    from iommi.table import register_related_column_factory
+
+    register_related_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+
+
+def register_related_multiple_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    from iommi.form import register_related_multiple_field_factory
+    from iommi.query import register_related_multiple_filter_factory
+    from iommi.table import register_related_multiple_column_factory
+
+    register_related_multiple_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_multiple_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_multiple_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+
+
+def model_from_choices(choices):
+    """Extract model from a choices QuerySet, asserting it is indeed a QuerySet."""
+    assert isinstance(
+        choices, QuerySet
+    ), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
+    return choices.model
+
+
+def related_choices_from_model_field(model_field, **_):
+    if isinstance(model_field, (ForeignKey, OneToOneField)):
+        model = model_field.foreign_related_fields[0].model
+    elif isinstance(model_field, (OneToOneRel, ManyToOneRel, ManyToManyField, ManyToManyRel)):
+        model = model_field.remote_field.model
+    else:
+        assert False, f'Unknown model field type {model_field}'
+
+    return choices_from_model_field(model, model_field)
+
+
 def get_limit_choices_to(model_field):
     if hasattr(model_field, 'get_limit_choices_to'):
         return model_field.get_limit_choices_to()
@@ -485,19 +540,26 @@ def setup_db_compat_django():
     register_factory(FileField, shortcut_name='file')
     register_factory(AutoField, shortcut_name='integer', include=False)
     register_factory(
-        ManyToOneRel,
-        shortcut_name='foreign_key_reverse',
+        ManyToOneRel,  # reverse FK
+        shortcut_name='related_multiple',
         include=False,
         after=LAST,
     )
     register_factory(
-        ManyToManyRel,
-        shortcut_name='many_to_many_reverse',
+        ManyToManyRel,  # reverse ManyToMany
+        shortcut_name='related_multiple',
         include=False,
         after=LAST,
     )
-    register_factory(ManyToManyField, shortcut_name='many_to_many')
-    register_factory(ForeignKey, shortcut_name='foreign_key')
+    register_factory(ManyToManyField, shortcut_name='related_multiple')
+    register_factory(ForeignKey, shortcut_name='related')
+    register_factory(OneToOneField, shortcut_name='related')
+    register_factory(
+        OneToOneRel,
+        shortcut_name='related',
+        include=False,
+        after=LAST,
+    )
     register_factory(GenericIPAddressField, shortcut_name='text')
     register_factory(FilePathField, shortcut_name='text')
     register_factory(BinaryField, factory=None)

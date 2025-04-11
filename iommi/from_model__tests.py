@@ -31,6 +31,7 @@ from iommi.from_model import (
 from iommi.shortcut import with_defaults
 from tests.helpers import req
 from tests.models import (
+    ChoicesModel,
     Foo,
     FormFromModelTest,
     OtherModel,
@@ -157,7 +158,7 @@ def test_field_from_model_factory_error_message():
 
     assert (
         str(error.value)
-        == "No factory for FooFromModelTestModel.foo of type CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
+        == "No factory for FooFromModelTestModel.foo of type CustomField.\nRegister a factory with register_factory or register_field_factory, you can also register one that returns `None` to not handle this field type."
     )
 
 
@@ -259,6 +260,22 @@ def test_weird_override_bug_working_case_2(MyField):  # noqa: N803
         fields__foo=MyField.my_integer(),
     )
     assert form.bind().fields.foo.extra.value == 'this is my shortcut'
+
+
+def test_override_call_target():
+    form = Form(
+        auto__model=ChoicesModel,
+        fields__color__call_target=Field.radio,
+    )
+    assert form.bind().fields.color.iommi_shortcut_stack == ['radio', 'choice']
+
+
+def test_override_call_target2():
+    form = Form(
+        auto__model=ChoicesModel,
+        fields__color__call_target__attribute='radio',
+    )
+    assert form.bind().fields.color.iommi_shortcut_stack == ['radio', 'choice']
 
 
 def test_get_field_many_to_many_reverse():

@@ -1,0 +1,13 @@
+{% extends "iommi/base.html" %}
+
+{% block iommi_head_contents_last %}
+    {% if request.iommi_example_source_css %}
+        <style>{{ request.iommi_example_source_css }}</style>
+    {% endif %}
+{% endblock %}
+
+{% block iommi_top %}
+    {% if request.iommi_example_source %}
+        {{ request.iommi_example_source }}
+    {% endif %}
+{% endblock %}

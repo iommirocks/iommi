@@ -5,8 +5,8 @@ from datetime import (
     time,
 )
 from enum import (
-    Enum,
     auto,
+    Enum,
 )
 from functools import total_ordering
 from io import StringIO
@@ -65,23 +65,23 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.base import (
-    MISSING,
-    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     items,
     keys,
+    MISSING,
     model_and_rows,
+    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    Namespace,
     flatten,
     getattr_path,
+    Namespace,
     setdefaults_path,
 )
 from iommi.endpoint import (
@@ -98,12 +98,12 @@ from iommi.form import (
     Form,
 )
 from iommi.fragment import (
+    build_and_bind_h_tag,
     Fragment,
     Header,
+    html,
     Tag,
     TransientFragment,
-    build_and_bind_h_tag,
-    html,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -112,6 +112,7 @@ from iommi.from_model import (
     create_members_from_model,
     get_search_fields,
     member_from_model,
+    related_choices_from_model_field,
 )
 from iommi.member import (
     bind_member,
@@ -130,14 +131,14 @@ from iommi.query import (
     Query,
 )
 from iommi.refinable import (
+    evaluated_refinable,
     EvaluatedRefinable,
     Prio,
     Refinable,
+    refinable,
     RefinableMembers,
     RefinableObject,
     SpecialEvaluatedRefinable,
-    evaluated_refinable,
-    refinable,
 )
 from iommi.shortcut import (
     Shortcut,
@@ -148,19 +149,20 @@ from iommi.sort_after import (
     sort_after,
 )
 from iommi.struct import (
-    Struct,
     merged,
+    Struct,
 )
 from iommi.traversable import (
     Traversable,
 )
-
 from .declarative.util import strip_prefix
 from .from_model import base_defaults_factory
 
 LAST = LAST
 
 _column_factory_by_field_type = {}
+_related_column_factory_by_model = {}
+_related_multiple_column_factory_by_model = {}
 
 
 def register_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -169,6 +171,22 @@ def register_column_factory(django_field_class, *, shortcut_name=MISSING, factor
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
     _column_factory_by_field_type[django_field_class] = factory
+
+
+def register_related_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _related_column_factory_by_model[django_field_class] = factory
+
+
+def register_related_multiple_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _related_multiple_column_factory_by_model[django_field_class] = factory
 
 
 DESCENDING = 'descending'
@@ -370,10 +388,14 @@ def foreign_key__sort_key(column, **_):
 
 def get_choices_from_column(table, traversable, **_):
     column_definition = table.iommi_namespace.columns[traversable.iommi_name()]
-    return evaluate(
+    return evaluate_strict(
         column_definition.choices,
         **traversable.iommi_evaluate_parameters(),
     )
+
+
+def related__choices(traversable, **_):
+    return related_choices_from_model_field(traversable.model_field)
 
 
 class Column(Part):
@@ -548,6 +570,8 @@ class Column(Part):
             model=model,
             factory_lookup=_column_factory_by_field_type,
             factory_lookup_register_function=register_column_factory,
+            related_factory_lookup=_related_column_factory_by_model,
+            related_multiple_factory_lookup=_related_multiple_column_factory_by_model,
             model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=base_defaults_factory,
@@ -1006,43 +1030,46 @@ class Column(Part):
         data_retrieval_method=DataRetrievalMethods.prefetch,
         sortable=False,
         extra__django_related_field=True,
+        display_name=lambda column, **_: capitalize(column.model_field.remote_field.model._meta.verbose_name_plural),
+        choices=related__choices,
     )
-    def many_to_many(cls, model_field, **kwargs):
-        setdefaults_path(
-            kwargs,
-            choices=choices_from_model_field(model_field.remote_field.model, model_field),
-            model_field=model_field,
-        )
+    def related_multiple(cls, **kwargs):
         return cls.multi_choice_queryset(**kwargs)
+
+    @classmethod
+    @with_defaults()
+    def many_to_many(cls, **kwargs):
+        return cls.related_multiple(**kwargs)
 
     @classmethod
     @with_defaults(
         bulk__call_target__attribute='many_to_many_reverse',
         filter__call_target__attribute='many_to_many_reverse',
-        display_name=lambda column, **_: capitalize(column.model_field.remote_field.model._meta.verbose_name_plural),
     )
     def many_to_many_reverse(cls, model_field, **kwargs):
         return cls.many_to_many(model_field=model_field, **kwargs)
 
     @classmethod
     @with_defaults(
-        bulk__call_target__attribute='foreign_key',
-        filter__call_target__attribute='foreign_key',
+        bulk__call_target__attribute='related',
+        filter__call_target__attribute='related',
         data_retrieval_method=DataRetrievalMethods.select,
         sort_key=foreign_key__sort_key,
+        choices=related__choices,
     )
-    def foreign_key(cls, model_field, **kwargs):
+    def related(cls, *, model_field, **kwargs):
         remote_model = model_field.remote_field.model
         if hasattr(remote_model, 'get_absolute_url'):
             setdefaults_path(
                 kwargs,
                 cell__url=lambda value, **_: value.get_absolute_url() if value is not None else None,
             )
-        setdefaults_path(
-            kwargs,
-            choices=choices_from_model_field(remote_model, model_field),
-        )
         return cls.choice_queryset(model_field=model_field, **kwargs)
+
+    @classmethod
+    @with_defaults()
+    def foreign_key(cls, **kwargs):
+        return cls.related(**kwargs)
 
     @classmethod
     @with_defaults(
@@ -2179,7 +2206,7 @@ class Table(Part, Tag):
                 assert False, "The builtin bulk actions only work on querysets."
             declared_bulk_fields = Struct()
             add_hidden_all_pks_field(declared_bulk_fields)
-            # noinspection PyArgumentList,PyCallingNonCallable
+            bulk_args: dict
             self.bulk = form_class(
                 _name='bulk',
                 # We don't want form's default submit button unless somebody

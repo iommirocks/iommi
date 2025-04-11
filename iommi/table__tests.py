@@ -2822,9 +2822,12 @@ def test_shortcuts_map_to_form_and_query(name, shortcut):
         'delete',
         'download',
         'edit',
+        'foreign_key',  # delegates to related
         'icon',
         'link',
+        'many_to_many',  # delegates to related_multiple
         'number',  # no equivalent in Field or Filter, there you have to choose integer or float
+        'related_multiple',  # maps to many_to_many in Filter/Field
         'run',
         'select',
         'substring',
@@ -3078,6 +3081,8 @@ def test_all_column_shortcuts():
         columns__column_of_type_foreign_key__model_field=TBar.foo.field,
         columns__column_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
         columns__column_of_type_many_to_many_reverse__model_field=TFoo.tbar_set.field,
+        columns__column_of_type_related__model_field=TBar.foo.field,
+        columns__column_of_type_related_multiple__model_field=TFoo.tbar_set.field,
     )
 
     table = MyFancyTable(
@@ -4661,6 +4666,7 @@ def test_table_list_custom_query():
         query__filter=lambda rows, **_: rows,
         query__filters__foo=Filter(),
     ).bind(request=req('get'))
+
 
 
 def test_table_headers_pick_up_sorting_from_queryset():

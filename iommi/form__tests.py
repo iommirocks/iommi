@@ -1188,7 +1188,7 @@ def test_missing_choices():
 
     with pytest.raises(
         AssertionError,
-        match='The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field',
+        match='To use Field.choice, you must pass the choices list',
     ):
         Field.choice_queryset().refine_done()
 
@@ -1561,6 +1561,8 @@ def test_overriding_parse_empty_string_as_none_in_shortcut():
             model_field=CharField(blank=True),
             factory_lookup={CharField: s},
             factory_lookup_register_function=register_field_factory,
+            related_factory_lookup={},
+            related_multiple_factory_lookup={},
             defaults_factory=field_defaults_factory,
         )
     ).refine_done()
@@ -2685,9 +2687,9 @@ def test_not_registered_custom_field():
         Form(auto__model=NotRegisteredCustomFieldModel).bind(request=req('get'))
 
     assert (
-        str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField. '
+        str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField.\n'
         'Register a factory with register_factory or register_field_factory, you can also register one that '
-        'returns None to not handle this field type'
+        'returns `None` to not handle this field type.'
     )
 
 
@@ -2804,7 +2806,7 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
 
     assert (
         str(e.value)
-        == 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
+        == 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
     )
 
 
@@ -2975,8 +2977,12 @@ def test_all_field_shortcuts():
         fields__field_of_type_choice_queryset__choices=TFoo.objects.none(),
         fields__field_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
         fields__field_of_type_many_to_many__model_field=TBaz.foo.field,
+        fields__field_of_type_related__model_field=TBar.foo.field,
+        fields__field_of_type_related__model=TBar,
         fields__field_of_type_foreign_key__model_field=TBar.foo.field,
         fields__field_of_type_foreign_key__model=TBar,
+        fields__field_of_type_related_multiple__model_field=TFoo.tbar_set.field,
+        fields__field_of_type_related_multiple__model=TFoo,
         fields__field_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
         fields__field_of_type_foreign_key_reverse__model=TFoo,
         fields__field_of_type_many_to_many_reverse__model_field=TFoo.tbar_set.field,

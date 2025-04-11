@@ -1,20 +1,19 @@
+from examples import (
+    playground,
+    storybook,
+    supernaut,
+)
+from examples.iommi import Form
 from examples.models import (
     Album,
     Artist,
     Track,
 )
-from iommi import Form
 from iommi.admin import Admin
-from iommi.main_menu import (
+from iommi.experimental.main_menu import (
     EXTERNAL,
     M,
     MainMenu,
-)
-
-from examples import (
-    playground,
-    storybook,
-    supernaut,
 )
 
 main_menu = MainMenu(
