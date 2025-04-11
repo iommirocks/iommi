@@ -182,6 +182,8 @@ def many_to_many_factory_write_to_instance(field, instance, value, **_):
 
 
 _field_factory_by_field_type = {}
+_foreign_key_field_factory_by_model = {}
+_m2m_field_factory_by_model = {}
 
 
 def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -192,6 +194,16 @@ def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory
         assert not kwargs, 'Can not provide both a factory and additional defaults separately'
 
     _field_factory_by_field_type[django_field_class] = factory
+
+
+def register_foreign_key_field_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+    else:
+        assert not kwargs, 'Can not provide both a factory and additional defaults separately'
+
+    _foreign_key_field_factory_by_model[model] = factory
 
 
 def create_object__post_handler(*, form, **kwargs):
@@ -590,7 +602,9 @@ def duration_parse(string_value, **_):
     for part in string_value.split(' '):
         m = re.match(r'(?P<number>\d+\.?\d*?)(?P<suffix>[a-zA-Z])', part)
         if not m:
-            raise ValidationError(f'Invalid duration pattern "{part}". Durations are a number followed by a time unit, like d for days')
+            raise ValidationError(
+                f'Invalid duration pattern "{part}". Durations are a number followed by a time unit, like d for days'
+            )
         suffix = m.groupdict()['suffix']
         number = m.groupdict()['number']
         if suffix not in suffix_to_kwarg:
@@ -1559,9 +1573,7 @@ class Field(Part, Tag):
     @classmethod
     @with_defaults
     def hardcoded(cls, **kwargs):
-        assert (
-            'parsed_data' in kwargs
-        ), 'Specify a hardcoded value by passing `parsed_data`'
+        assert 'parsed_data' in kwargs, 'Specify a hardcoded value by passing `parsed_data`'
         return cls(template='iommi/blank.html', **kwargs)
 
     @classmethod
@@ -1667,6 +1679,7 @@ class FormAutoConfig(AutoConfig):
     """
     :param instance: An instance of a Django model. If this field is specified, the `model` attribute will be automatically derived. This cannot be a callable, in that case set `model` and use `instance=lambda...` instead of `auto__instance`.
     """
+
     instance = Refinable()
     type = Refinable()  # one of 'create', 'edit', 'delete'
 
@@ -1683,7 +1696,6 @@ class FieldGroup(Fragment):
     parameter='_fields_dict',
     add_init_kwargs=False,
     is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
-
 )
 class Form(Part, Tag):
     # language=rst
@@ -1878,7 +1890,9 @@ class Form(Part, Tag):
             self.title = default_title
             extra_action_defaults = setdefaults_path(
                 extra_action_defaults,
-                submit__display_name=lambda form, **_: gettext_lazy('Save') if form.extra.crud_type == 'edit' else capitalize(gettext_lazy(form.extra.crud_type)),
+                submit__display_name=lambda form, **_: gettext_lazy('Save')
+                if form.extra.crud_type == 'edit'
+                else capitalize(gettext_lazy(form.extra.crud_type)),
             )
 
         # Submit is special.
