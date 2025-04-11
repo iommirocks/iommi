@@ -1,3 +1,12 @@
+from django.db.models import (
+    ForeignKey,
+    ManyToManyField,
+    ManyToManyRel,
+    ManyToOneRel,
+    OneToOneField,
+    OneToOneRel,
+)
+
 from iommi.base import MISSING
 from iommi.shortcut import Shortcut
 
@@ -16,24 +25,24 @@ def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSI
     register_column_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
 
 
-def register_foreign_key_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
-    from iommi.form import register_foreign_key_field_factory
-    from iommi.query import register_foreign_key_filter_factory
-    from iommi.table import register_foreign_key_column_factory
+def register_related_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    from iommi.form import register_related_field_factory
+    from iommi.query import register_related_filter_factory
+    from iommi.table import register_related_column_factory
 
-    register_foreign_key_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
-    register_foreign_key_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
-    register_foreign_key_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
 
 
-def register_many_to_many_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
-    from iommi.form import register_many_to_many_field_factory
-    from iommi.query import register_many_to_many_filter_factory
-    from iommi.table import register_many_to_many_column_factory
+def register_related_multiple_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    from iommi.form import register_related_multiple_field_factory
+    from iommi.query import register_related_multiple_filter_factory
+    from iommi.table import register_related_multiple_column_factory
 
-    register_many_to_many_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
-    register_many_to_many_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
-    register_many_to_many_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_multiple_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_multiple_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_related_multiple_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
 
 
 def setup_db_compat_django():
@@ -144,20 +153,29 @@ def setup_db_compat_django():
     register_factory(FloatField, shortcut_name='float')
     register_factory(FileField, shortcut_name='file')
     register_factory(AutoField, shortcut_name='integer', include=False)
+
     register_factory(
-        ManyToOneRel,
-        shortcut_name='foreign_key_reverse',
+        ManyToOneRel,  # reverse FK
+        shortcut_name='related_multiple',
         include=False,
         after=LAST,
     )
     register_factory(
-        ManyToManyRel,
-        shortcut_name='many_to_many_reverse',
+        ManyToManyRel,  # reverse ManyToMany
+        shortcut_name='related_multiple',
         include=False,
         after=LAST,
     )
-    register_factory(ManyToManyField, shortcut_name='many_to_many')
-    register_factory(ForeignKey, shortcut_name='foreign_key')
+    register_factory(ManyToManyField, shortcut_name='related_multiple')
+    register_factory(ForeignKey, shortcut_name='related')
+    register_factory(OneToOneField, shortcut_name='related')
+    register_factory(
+        OneToOneRel,
+        shortcut_name='related',
+        include=False,
+        after=LAST,
+    )
+
     register_factory(GenericIPAddressField, shortcut_name='text')
     register_factory(FilePathField, shortcut_name='text')
     register_factory(BinaryField, factory=None)
@@ -214,3 +232,12 @@ def field_defaults_factory(model_field):
         r['parse_empty_string_as_none'] = model_field.null
 
     return r
+
+
+def related_choices_from_model_field(model_field, **_):
+    if isinstance(model_field, (ForeignKey, OneToOneField)):
+        return model_field.foreign_related_fields[0].model.objects.all()
+
+    if isinstance(model_field, (OneToOneRel, ManyToOneRel, ManyToManyField, ManyToManyRel)):
+        return model_field.remote_field.model.objects.all()
+    assert False, f'Unknown model field type {model_field}'

@@ -1,5 +1,4 @@
 import re
-import warnings
 from contextlib import contextmanager
 from datetime import (
     datetime,
@@ -32,8 +31,14 @@ from django.db import (
 )
 from django.db.models import (
     Case,
+    ForeignKey,
     IntegerField,
+    ManyToManyField,
+    ManyToManyRel,
+    ManyToOneRel,
     Model,
+    OneToOneField,
+    OneToOneRel,
     Q,
     QuerySet,
     When,
@@ -45,17 +50,20 @@ from django.utils.functional import Promise
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 
-from iommi._db_compat import field_defaults_factory
+from iommi._db_compat import (
+    field_defaults_factory,
+    related_choices_from_model_field,
+)
 from iommi._web_compat import (
-    HttpResponseRedirect,
-    Template,
-    URLValidator,
-    ValidationError,
     csrf,
     format_html,
+    HttpResponseRedirect,
     render_template,
+    Template,
     template_types,
+    URLValidator,
     validate_email,
+    ValidationError,
 )
 from iommi.action import (
     Action,
@@ -64,13 +72,13 @@ from iommi.action import (
 )
 from iommi.attrs import Attrs
 from iommi.base import (
-    MISSING,
-    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     items,
     keys,
+    MISSING,
+    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.datetime_parsing import (
@@ -81,9 +89,9 @@ from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    Namespace,
     flatten,
     getattr_path,
+    Namespace,
     setattr_path,
     setdefaults_path,
 )
@@ -95,18 +103,18 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.fragment import (
+    build_and_bind_h_tag,
     Fragment,
     Header,
     Tag,
     TransientFragment,
-    build_and_bind_h_tag,
 )
 from iommi.from_model import (
     AutoConfig,
-    NoRegisteredSearchFieldException,
     create_members_from_model,
     get_search_fields,
     member_from_model,
+    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_member,
@@ -121,15 +129,18 @@ from iommi.part import (
     request_data,
 )
 from iommi.refinable import (
+    evaluated_refinable,
     EvaluatedRefinable,
     Prio,
     Refinable,
+    refinable,
     RefinableMembers,
     SpecialEvaluatedRefinable,
-    evaluated_refinable,
-    refinable,
 )
-from iommi.shortcut import Shortcut, with_defaults
+from iommi.shortcut import (
+    Shortcut,
+    with_defaults,
+)
 from iommi.sort_after import sort_after
 from iommi.struct import Struct
 from iommi.traversable import Traversable
@@ -160,17 +171,22 @@ def bool_parse(string_value, **_):
         raise ValueError(gettext_lazy('{} is not a valid boolean value').format(string_value))
 
 
-def many_to_many_factory_read_from_instance(field, instance, **_):
+def related_multiple__read_from_instance(field, instance, **_):
     return getattr_path(instance, field.attr).all()
 
 
-def many_to_many_factory_write_to_instance(field, instance, value, **_):
+def related_multiple__write_to_instance(field, instance, value, **_):
     getattr_path(instance, field.attr).set(value or [])
 
 
+# Backwards compatibility
+many_to_many_factory_read_from_instance = related_multiple__read_from_instance
+many_to_many_factory_write_to_instance = related_multiple__write_to_instance
+
+
 _field_factory_by_field_type = {}
-_foreign_key_field_factory_by_model = {}
-_many_to_many_field_factory_by_model = {}
+_related_field_factory_by_model = {}
+_related_multiple_field_factory_by_model = {}
 
 
 def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -183,24 +199,24 @@ def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory
     _field_factory_by_field_type[django_field_class] = factory
 
 
-def register_foreign_key_field_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+def register_related_field_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
     else:
         assert not kwargs, 'Can not provide both a factory and additional defaults separately'
 
-    _foreign_key_field_factory_by_model[model] = factory
+    _related_field_factory_by_model[model] = factory
 
 
-def register_many_to_many_field_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+def register_related_multiple_field_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
     else:
         assert not kwargs, 'Can not provide both a factory and additional defaults separately'
 
-    _many_to_many_field_factory_by_model[model] = factory
+    _related_multiple_field_factory_by_model[model] = factory
 
 
 def create_object__post_handler(*, form, **kwargs):
@@ -632,6 +648,10 @@ def boolean_tristate__parse(string_value, **_):
     return bool_parse(string_value)
 
 
+def related__choices(field, **_):
+    return related_choices_from_model_field(field.model_field)
+
+
 @with_meta
 class Field(Part, Tag):
     # language=rst
@@ -884,7 +904,7 @@ class Field(Part, Tag):
     def help_text(field, **_):
         if field.model_field is None:
             return ''
-        return field.model_field.help_text or ''
+        return getattr(field.model_field, 'help_text', '')
 
     @staticmethod
     @refinable
@@ -1170,7 +1190,8 @@ class Field(Part, Tag):
             model=model,
             factory_lookup=_field_factory_by_field_type,
             factory_lookup_register_function=register_field_factory,
-            foreign_key_factory_lookup=_foreign_key_field_factory_by_model,
+            related_factory_lookup=_related_field_factory_by_model,
+            related_multiple_factory_lookup=_related_multiple_field_factory_by_model,
             defaults_factory=field_defaults_factory,
             model_field_name=model_field_name,
             model_field=model_field,
@@ -1457,50 +1478,48 @@ class Field(Part, Tag):
         return cls(**kwargs)
 
     @classmethod
+    @with_defaults(
+        choices=related__choices,
+    )
+    def related(cls, model_field, model, **kwargs):
+        del model
+        return cls.choice_queryset(model_field=model_field, **kwargs)
+
+    @classmethod
     @with_defaults
     def foreign_key(cls, model_field, model, **kwargs):
-        del model
-        setdefaults_path(
-            kwargs,
-            choices=model_field.foreign_related_fields[0].model.objects.all(),
-        )
-        return cls.choice_queryset(model_field=model_field, **kwargs)
+        return cls.related(model_field=model_field, model=model, **kwargs)
 
     @classmethod
     @with_defaults(
         editable=False,
         display_name=lambda field, **_: capitalize(field.model_field.related_model._meta.verbose_name_plural),
-        help_text=None,
+        choices=related__choices,
+        extra__django_related_field=True,
     )
-    def foreign_key_reverse(cls, *, model_field, **kwargs):
-        setdefaults_path(
-            kwargs,
-            choices=lambda field, **_: field.model_field.remote_field.model.objects.all(),
-            read_from_instance=lambda field, instance, **_: getattr_path(instance, field.attr).all(),
-            extra__django_related_field=True,
-        )
-        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
+    def foreign_key_reverse(cls, **kwargs):
+        return cls.related_multiple(**kwargs)
 
     @classmethod
     @with_defaults(
         display_name=lambda field, **_: capitalize(field.model_field.remote_field.model._meta.verbose_name_plural),
-        help_text=None,
+        choices=related__choices,
+        read_from_instance=related_multiple__read_from_instance,
+        write_to_instance=related_multiple__write_to_instance,
+        extra__django_related_field=True,
     )
-    def many_to_many(cls, model_field, **kwargs):
-        setdefaults_path(
-            kwargs,
-            choices=model_field.remote_field.model.objects.all(),
-            read_from_instance=many_to_many_factory_read_from_instance,
-            write_to_instance=many_to_many_factory_write_to_instance,
-            extra__django_related_field=True,
-        )
-        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
+    def related_multiple(cls, **kwargs):
+        return cls.multi_choice_queryset(**kwargs)
 
     @classmethod
     @with_defaults()
-    def many_to_many_reverse(cls, model_field, **kwargs):
-        warnings.warn('many_to_many_reverse is no longer needed, just use many_to_many', DeprecationWarning)
-        return cls.many_to_many(model_field=model_field, **kwargs)
+    def many_to_many(cls, **kwargs):
+        return cls.related_multiple(**kwargs)
+
+    @classmethod
+    @with_defaults()
+    def many_to_many_reverse(cls, **kwargs):
+        return cls.related_multiple(**kwargs)
 
     @classmethod
     def hardcoded(cls, **kwargs):

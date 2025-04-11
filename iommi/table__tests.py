@@ -3061,6 +3061,8 @@ def test_all_column_shortcuts():
         columns__column_of_type_foreign_key__model_field=TBar.foo.field,
         columns__column_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
         columns__column_of_type_many_to_many_reverse__model_field=TFoo.tbar_set.field,
+        columns__column_of_type_related__model_field=TBar.foo.field,
+        columns__column_of_type_related_multiple__model_field=TFoo.tbar_set.field,
     )
 
     table = MyFancyTable(

@@ -10,6 +10,8 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     Field as DjangoField,
     ForeignKey,
+    ManyToManyField,
+    OneToOneField,
 )
 from django.db.models import (
     ManyToManyRel,
@@ -83,7 +85,8 @@ def member_from_model(
     factory_lookup,
     defaults_factory,
     factory_lookup_register_function,
-    foreign_key_factory_lookup,
+    related_factory_lookup,
+    related_multiple_factory_lookup,
     model_field_name=None,
     model_field=None,
     **kwargs,
@@ -105,7 +108,8 @@ def member_from_model(
                 factory_lookup=factory_lookup,
                 defaults_factory=defaults_factory,
                 factory_lookup_register_function=factory_lookup_register_function,
-                foreign_key_factory_lookup=foreign_key_factory_lookup,
+                related_factory_lookup=related_factory_lookup,
+                related_multiple_factory_lookup=related_multiple_factory_lookup,
                 model_field_name=field_path_rest,
                 **kwargs,
             )
@@ -118,8 +122,11 @@ def member_from_model(
             model_field_name = model_field.name
 
     factory = MISSING
-    if isinstance(model_field, ForeignKey):
-        factory = foreign_key_factory_lookup.get(model_field.remote_field.model, MISSING)
+    if isinstance(model_field, (ForeignKey, OneToOneField, OneToOneRel)):
+        factory = related_factory_lookup.get(model_field.remote_field.model, MISSING)
+
+    if isinstance(model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)):
+        factory = related_multiple_factory_lookup.get(model_field.remote_field.model, MISSING)
 
     if factory is MISSING:
         factory = factory_lookup.get(type(model_field), MISSING)

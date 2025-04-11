@@ -1,5 +1,4 @@
 import operator
-import warnings
 from datetime import datetime
 from functools import reduce
 from typing import (
@@ -24,43 +23,44 @@ from django.utils.translation import (
     pgettext,
 )
 from pyparsing import (
+    alphanums,
+    alphas,
     Char,
     Forward,
     Group,
     Keyword,
+    oneOf,
     ParseException,
     ParseResults,
     QuotedString,
+    quotedString,
     Word,
     ZeroOrMore,
-    alphanums,
-    alphas,
-    oneOf,
-    quotedString,
 )
 
+from iommi._db_compat import related_choices_from_model_field
 from iommi._web_compat import (
+    render_template,
     Template,
     ValidationError,
-    render_template,
 )
 from iommi.action import (
     Action,
 )
 from iommi.base import (
-    MISSING,
-    NOT_BOUND_MESSAGE,
     items,
     keys,
+    MISSING,
     model_and_rows,
+    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    Namespace,
     getattr_path,
+    Namespace,
     setdefaults_path,
 )
 from iommi.declarative.with_meta import with_meta
@@ -70,12 +70,11 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.form import (
-    Form,
     bool_parse,
     boolean_tristate__parse,
     date_parse,
-    datetime_parse,
     float_parse,
+    Form,
     int_parse,
     time_parse,
 )
@@ -84,10 +83,10 @@ from iommi.fragment import (
 )
 from iommi.from_model import (
     AutoConfig,
-    NoRegisteredSearchFieldException,
     create_members_from_model,
     get_search_fields,
     member_from_model,
+    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_member,
@@ -101,9 +100,9 @@ from iommi.refinable import (
     EvaluatedRefinable,
     Prio,
     Refinable,
+    refinable,
     RefinableMembers,
     SpecialEvaluatedRefinable,
-    refinable,
 )
 from iommi.shortcut import (
     Shortcut,
@@ -136,8 +135,8 @@ Q_OPERATOR_BY_QUERY_OPERATOR = {
 FREETEXT_SEARCH_NAME = 'freetext_search'
 
 _filter_factory_by_field_type = {}
-_foreign_key_filter_factory_by_model = {}
-_many_to_many_filter_factory_by_model = {}
+_related_filter_factory_by_model = {}
+_related_multiple_filter_factory_by_model = {}
 
 
 def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -148,20 +147,20 @@ def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factor
     _filter_factory_by_field_type[django_field_class] = factory
 
 
-def register_foreign_key_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+def register_related_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
-    _foreign_key_filter_factory_by_model[django_field_class] = factory
+    _related_filter_factory_by_model[django_field_class] = factory
 
 
-def register_many_to_many_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+def register_related_multiple_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
-    _many_to_many_filter_factory_by_model[django_field_class] = factory
+    _related_multiple_filter_factory_by_model[django_field_class] = factory
 
 
 def to_string_surrounded_by_quote(v):
@@ -242,6 +241,10 @@ def choice_queryset__is_valid_filter(name, filter, **_):
         filter.attr,
         f"{name} cannot be a part of a query, it has no attr so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (True, '') (filter__is_valid_filter=lambda **_: (True, '') for a Column)",
     )
+
+
+def related__choices(filter, **_):
+    return related_choices_from_model_field(filter.model_field)
 
 
 @with_meta
@@ -354,7 +357,8 @@ class Filter(Part):
             model=model,
             factory_lookup=_filter_factory_by_field_type,
             factory_lookup_register_function=register_filter_factory,
-            foreign_key_factory_lookup=_foreign_key_filter_factory_by_model,
+            related_factory_lookup=_related_filter_factory_by_model,
+            related_multiple_factory_lookup=_related_multiple_filter_factory_by_model,
             model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},  # TODO: this is wrong! but base_defaults_factory doesn't work either.. there's no display_name on Filter
@@ -557,44 +561,43 @@ class Filter(Part):
 
     @classmethod
     @with_defaults(
-        field__call_target__attribute='foreign_key',
+        field__call_target__attribute='related',
+        choices=related__choices,
     )
-    def foreign_key(cls, model_field, **kwargs):
-        setdefaults_path(
-            kwargs,
-            choices=model_field.foreign_related_fields[0].model.objects.all(),
-        )
-        return cls.choice_queryset(model_field=model_field, **kwargs)
+    def related(cls, **kwargs):
+        return cls.choice_queryset(**kwargs)
+
+    @classmethod
+    @with_defaults
+    def foreign_key(cls, **kwargs):
+        return cls.related(**kwargs)
 
     @classmethod
     @with_defaults(
         field__call_target__attribute='foreign_key_reverse',
+        extra__django_related_field=True,
     )
-    def foreign_key_reverse(cls, *, model_field, **kwargs):
-        setdefaults_path(
-            kwargs,
-            choices=model_field.remote_field.model.objects.all(),
-            extra__django_related_field=True,
-        )
-        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
+    def foreign_key_reverse(cls, **kwargs):
+        return cls.related_multiple(**kwargs)
 
     @classmethod
     @with_defaults(
         field__call_target__attribute='many_to_many',
+        choices=related__choices,
+        extra__django_related_field=True,
     )
-    def many_to_many(cls, model_field, **kwargs):
-        setdefaults_path(
-            kwargs,
-            choices=model_field.remote_field.model.objects.all(),
-            extra__django_related_field=True,
-        )
-        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
+    def related_multiple(cls, **kwargs):
+        return cls.multi_choice_queryset(**kwargs)
 
     @classmethod
     @with_defaults
-    def many_to_many_reverse(cls, model_field, **kwargs):
-        warnings.warn('many_to_many_reverse is no longer needed, just use many_to_many', DeprecationWarning)
-        return cls.many_to_many(model_field=model_field, **kwargs)
+    def many_to_many(cls, **kwargs):
+        return cls.related_multiple(**kwargs)
+
+    @classmethod
+    @with_defaults
+    def many_to_many_reverse(cls, **kwargs):
+        return cls.many_to_many(**kwargs)
 
 
 Filter.value_to_q.iommi_needs_attr = True
@@ -780,11 +783,11 @@ class Query(Part):
             )
 
         for name, filter in items(self.iommi_namespace.filters):
-            _orig_include = getattr_path(filter, 'field__include', not filter.freetext)
+            orig_include = getattr_path(filter, 'field__include', not filter.freetext)
             declared_fields[name] = setdefaults_path(
                 Namespace(
                     include=(
-                        lambda query, field, _orig_include=_orig_include, **_: (
+                        lambda query, field, _orig_include=orig_include, **_: (
                             field.iommi_name() in query.filters
                             and evaluate_strict(_orig_include, **query.iommi_evaluate_parameters())
                         )

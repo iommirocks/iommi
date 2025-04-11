@@ -10,8 +10,8 @@ from django.db.models import (
 import iommi
 from iommi import (
     register_factory,
-    register_foreign_key_factory,
-    register_many_to_many_factory,
+    register_related_factory,
+    register_related_multiple_factory,
 )
 from iommi.shortcut import with_defaults
 from tests.helpers import req
@@ -94,10 +94,9 @@ def test_semantic_models():
         """
 
         # foreign key and one-to-one
-        # related, related_multiple
-        register_foreign_key_factory(User, shortcut_name='user')
+        register_related_factory(User, shortcut_name='user')
         # many-to-many and one-to-many (aka reverse foreign key)
-        register_many_to_many_factory(Role, shortcut_name='roles')
+        register_related_multiple_factory(Role, shortcut_name='roles')
 
         # @test
         person_number__parse = lambda **_: None
@@ -121,7 +120,7 @@ def test_semantic_models():
                 choices=lambda **_: User.objects.filter(is_active=True),
             )
             def user(cls, **kwargs):
-                return cls.foreign_key(**kwargs)
+                return cls.related(**kwargs)
 
             @classmethod
             @with_defaults()
@@ -148,7 +147,7 @@ def test_semantic_models():
 
     # @test
     finally:
-        from iommi.form import _foreign_key_field_factory_by_model
-        if User in _foreign_key_field_factory_by_model:
-            del _foreign_key_field_factory_by_model[User]
+        from iommi.form import _related_field_factory_by_model
+        if User in _related_field_factory_by_model:
+            del _related_field_factory_by_model[User]
     # @end

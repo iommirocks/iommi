@@ -1540,7 +1540,8 @@ def test_overriding_parse_empty_string_as_none_in_shortcut():
         model_field=CharField(blank=True),
         factory_lookup={CharField: s},
         factory_lookup_register_function=register_field_factory,
-        foreign_key_factory_lookup={},
+        related_factory_lookup={},
+        related_multiple_factory_lookup={},
         defaults_factory=field_defaults_factory,
     ).refine_done()
 
