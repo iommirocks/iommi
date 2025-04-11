@@ -632,14 +632,14 @@ def test_bootstrap_template_snafu():
 def test_filter_assets_for_foreign_key3():
     q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='horizontal').bind(request=req('get'))
     assert q.form.fields.foo.iommi_style.name == 'horizontal'
-    assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
+    assert q.form.fields.foo.iommi_shortcut_stack == ['related', 'choice_queryset', 'choice']
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
 
     form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
     assert 'data-choices-endpoint' in form.fields.foo.__html__()
 
     q = Query(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
-    assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
+    assert q.form.fields.foo.iommi_shortcut_stack == ['related', 'choice_queryset', 'choice']
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
 
 

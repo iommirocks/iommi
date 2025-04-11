@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
-from iommi import register_foreign_key_factory
+from iommi import register_related_factory
 from iommi.path import register_path_decoding
 
 
@@ -20,4 +20,4 @@ class ExampleConfig(AppConfig):
         register_search_fields(model=Album, search_fields=['name'], allow_non_unique=True)
         register_path_decoding(artist_pk=Artist)
         register_path_decoding(album_pk=Album)
-        register_foreign_key_factory(Artist, shortcut_name='artist')
+        register_related_factory(Artist, shortcut_name='artist')
