@@ -132,7 +132,8 @@ Q_OPERATOR_BY_QUERY_OPERATOR = {
 
 FREETEXT_SEARCH_NAME = 'freetext_search'
 
-_filter_factory_by_django_field_type = {}
+_filter_factory_by_field_type = {}
+_foreign_key_filter_factory_by_model = {}
 
 
 def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -140,7 +141,15 @@ def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factor
     if factory is MISSING:
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
-    _filter_factory_by_django_field_type[django_field_class] = factory
+    _filter_factory_by_field_type[django_field_class] = factory
+
+
+def register_foreign_key_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _foreign_key_filter_factory_by_model[django_field_class] = factory
 
 
 def to_string_surrounded_by_quote(v):
@@ -326,11 +335,13 @@ class Filter(Part):
             return r
 
     @classmethod
-    def from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
+    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,
-            factory_lookup=_filter_factory_by_django_field_type,
+            factory_lookup=_filter_factory_by_field_type,
+            factory_lookup_register_function=register_filter_factory,
+            foreign_key_factory_lookup=_foreign_key_filter_factory_by_model,
             model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},  # TODO: this is wrong! but base_defaults_factory doesn't work either.. there's no display_name on Filter

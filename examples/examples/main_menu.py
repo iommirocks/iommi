@@ -1,24 +1,21 @@
-from examples.models import (
-    Album,
-    Artist,
-    Track,
-)
-from iommi import Form
-from iommi.admin import Admin
-from iommi.experimental.main_menu import (
-    EXTERNAL,
-    M,
-    MainMenu,
-)
-
-import examples.views as views
 from examples import (
-    experimental_examples,
     form_examples,
     menu_examples,
     page_examples,
     supernaut,
     table_examples,
+)
+from examples.iommi import Form
+from examples.models import (
+    Album,
+    Artist,
+    Track,
+)
+from iommi.admin import Admin
+from iommi.experimental.main_menu import (
+    EXTERNAL,
+    M,
+    MainMenu,
 )
 
 main_menu = MainMenu(

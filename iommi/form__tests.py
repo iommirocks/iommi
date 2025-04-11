@@ -1540,6 +1540,7 @@ def test_overriding_parse_empty_string_as_none_in_shortcut():
         model_field=CharField(blank=True),
         factory_lookup={CharField: s},
         factory_lookup_register_function=register_field_factory,
+        foreign_key_factory_lookup={},
         defaults_factory=field_defaults_factory,
     ).refine_done()
 
@@ -2347,9 +2348,9 @@ def test_not_registered_custom_field():
         Form(auto__model=NotRegisteredCustomFieldModel).bind(request=req('get'))
 
     assert (
-        str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField. '
+        str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField.\n'
         'Register a factory with register_factory or register_field_factory, you can also register one that '
-        'returns None to not handle this field type'
+        'returns `None` to not handle this field type.'
     )
 
 
