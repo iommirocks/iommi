@@ -1,4 +1,5 @@
 import csv
+import warnings
 from datetime import (
     date,
     datetime,
@@ -157,6 +158,7 @@ LAST = LAST
 
 _column_factory_by_field_type = {}
 _foreign_key_column_factory_by_model = {}
+_many_to_many_column_factory_by_model = {}
 
 
 def register_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -173,6 +175,14 @@ def register_foreign_key_column_factory(django_field_class, *, shortcut_name=MIS
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
     _foreign_key_column_factory_by_model[django_field_class] = factory
+
+
+def register_many_to_many_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _many_to_many_column_factory_by_model[django_field_class] = factory
 
 
 DESCENDING = 'descending'
@@ -995,6 +1005,7 @@ class Column(Part):
         data_retrieval_method=DataRetrievalMethods.prefetch,
         sortable=False,
         extra__django_related_field=True,
+        display_name=lambda column, **_: capitalize(column.model_field.remote_field.model._meta.verbose_name_plural),
     )
     def many_to_many(cls, model_field, **kwargs):
         setdefaults_path(
@@ -1008,9 +1019,9 @@ class Column(Part):
     @with_defaults(
         bulk__call_target__attribute='many_to_many_reverse',
         filter__call_target__attribute='many_to_many_reverse',
-        display_name=lambda column, **_: capitalize(column.model_field.remote_field.model._meta.verbose_name_plural),
     )
     def many_to_many_reverse(cls, model_field, **kwargs):
+        warnings.warn('many_to_many_reverse is no longer needed, just use many_to_many', DeprecationWarning)
         return cls.many_to_many(model_field=model_field, **kwargs)
 
     @classmethod
