@@ -156,6 +156,7 @@ from ._db_compat import base_defaults_factory
 LAST = LAST
 
 _column_factory_by_field_type = {}
+_foreign_key_column_factory_by_model = {}
 
 
 def register_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -164,6 +165,14 @@ def register_column_factory(django_field_class, *, shortcut_name=MISSING, factor
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
     _column_factory_by_field_type[django_field_class] = factory
+
+
+def register_foreign_key_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _foreign_key_column_factory_by_model[django_field_class] = factory
 
 
 DESCENDING = 'descending'
@@ -527,6 +536,7 @@ class Column(Part):
             model=model,
             factory_lookup=_column_factory_by_field_type,
             factory_lookup_register_function=register_column_factory,
+            foreign_key_factory_lookup=_foreign_key_column_factory_by_model,
             model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=base_defaults_factory,

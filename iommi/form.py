@@ -1159,6 +1159,7 @@ class Field(Part, Tag):
             model=model,
             factory_lookup=_field_factory_by_field_type,
             factory_lookup_register_function=register_field_factory,
+            foreign_key_factory_lookup=_foreign_key_field_factory_by_model,
             defaults_factory=field_defaults_factory,
             model_field_name=model_field_name,
             model_field=model_field,

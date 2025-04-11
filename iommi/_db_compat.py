@@ -17,9 +17,13 @@ def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSI
 
 
 def register_foreign_key_factory(model, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
-    register_foreign_key_field_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
-    register_foreign_key_filter_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
-    register_foreign_key_column_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    from iommi.form import register_foreign_key_field_factory
+    from iommi.query import register_foreign_key_filter_factory
+    from iommi.table import register_foreign_key_column_factory
+
+    register_foreign_key_field_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_foreign_key_filter_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_foreign_key_column_factory(model, shortcut_name=shortcut_name, factory=factory, **kwargs)
 
 
 def setup_db_compat_django():

@@ -1,4 +1,5 @@
 import warnings
+from textwrap import dedent
 from typing import (
     Dict,
     List,
@@ -6,7 +7,10 @@ from typing import (
 )
 
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Field as DjangoField
+from django.db.models import (
+    Field as DjangoField,
+    ForeignKey,
+)
 from django.db.models import (
     ManyToManyRel,
     ManyToOneRel,
@@ -78,7 +82,8 @@ def member_from_model(
     model,
     factory_lookup,
     defaults_factory,
-    factory_lookup_register_function=None,
+    factory_lookup_register_function,
+    foreign_key_factory_lookup,
     model_field_name=None,
     model_field=None,
     **kwargs,
@@ -100,6 +105,7 @@ def member_from_model(
                 factory_lookup=factory_lookup,
                 defaults_factory=defaults_factory,
                 factory_lookup_register_function=factory_lookup_register_function,
+                foreign_key_factory_lookup=foreign_key_factory_lookup,
                 model_field_name=field_path_rest,
                 **kwargs,
             )
@@ -111,7 +117,12 @@ def member_from_model(
         if model_field_name is None:
             model_field_name = model_field.name
 
-    factory = factory_lookup.get(type(model_field), MISSING)
+    factory = MISSING
+    if isinstance(model_field, ForeignKey):
+        factory = foreign_key_factory_lookup.get(model_field.remote_field.model, MISSING)
+
+    if factory is MISSING:
+        factory = factory_lookup.get(type(model_field), MISSING)
 
     if factory is MISSING:
         for django_field_type, foo in reversed(list(factory_lookup.items())):
@@ -122,12 +133,9 @@ def member_from_model(
     if factory is MISSING:
 
         def no_factory_defined(**_):
-            message = f'No factory for {model.__name__}.{model_field_name} of type {type(model_field).__name__}.'
-            if factory_lookup_register_function is not None:
-                message += (
-                    ' Register a factory with register_factory or %s, you can also register one that returns None to not handle this field type'
-                    % factory_lookup_register_function.__name__
-                )
+            message = dedent(f'''\
+                No factory for {model.__name__}.{model_field_name} of type {type(model_field).__name__}.
+                Register a factory with register_factory or {factory_lookup_register_function.__name__}, you can also register one that returns `None` to not handle this field type.''')
             raise AssertionError(message)
 
         factory = no_factory_defined
