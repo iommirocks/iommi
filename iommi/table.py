@@ -379,14 +379,14 @@ def foreign_key__sort_key(column, **_):
 
 def get_choices_from_column(table, traversable, **_):
     column_definition = table.iommi_namespace.columns[traversable.iommi_name()]
-    return evaluate(
+    return evaluate_strict(
         column_definition.choices,
         **traversable.iommi_evaluate_parameters(),
     )
 
 
-def related__choices(column, **_):
-    return related_choices_from_model_field(column.model_field)
+def related__choices(traversable, **_):
+    return related_choices_from_model_field(traversable.model_field)
 
 
 class Column(Part):

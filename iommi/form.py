@@ -440,9 +440,10 @@ def choice_queryset__extra__filter_and_sort(field, value, **_):
 
 
 def choice_queryset__parse(field, string_value, **_):
+    model = field.model or field.choices.model
     try:
         return field.choices.get(pk=string_value) if string_value else None
-    except field.model.DoesNotExist as e:
+    except model.DoesNotExist as e:
         raise ValidationError(str(e))
 
 
@@ -655,8 +656,8 @@ def boolean_tristate__parse(string_value, **_):
     return bool_parse(string_value)
 
 
-def related__choices(field, **_):
-    return related_choices_from_model_field(field.model_field)
+def related__choices(traversable, **_):
+    return related_choices_from_model_field(traversable.model_field)
 
 
 class Field(Part, Tag):
@@ -793,11 +794,6 @@ class Field(Part, Tag):
         super(Field, self).__init__(**kwargs)
 
     def on_refine_done(self):
-        if 'choice' in getattr(self, 'iommi_shortcut_stack', []):
-            assert (
-                self.iommi_namespace.get('choices') is not None
-            ), 'To use Field.choice, you must pass the choices list'
-
         model_field = self.model_field
         if model_field and model_field.remote_field:
             self.model = model_field.remote_field.model
@@ -821,6 +817,11 @@ class Field(Part, Tag):
         self._raw_data = self.raw_data
 
         super(Field, self).on_refine_done()
+
+        if 'choice' in getattr(self, 'iommi_shortcut_stack', []):
+            assert (
+                self.choices
+            ), 'To use Field.choice, you must pass the choices list'
 
     @property
     def form(self):
