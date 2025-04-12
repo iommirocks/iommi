@@ -243,8 +243,8 @@ def choice_queryset__is_valid_filter(name, filter, **_):
     )
 
 
-def related__choices(filter, **_):
-    return related_choices_from_model_field(filter.model_field)
+def related__choices(traversable, **_):
+    return related_choices_from_model_field(traversable.model_field)
 
 
 @with_meta

@@ -1172,7 +1172,7 @@ def test_missing_choices():
 
     with pytest.raises(
         AssertionError,
-        match='The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field',
+        match='To use Field.choice, you must pass the choices list',
     ):
         Field.choice_queryset().refine_done()
 
