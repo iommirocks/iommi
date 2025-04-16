@@ -1,5 +1,4 @@
 import re
-import warnings
 from contextlib import contextmanager
 from datetime import (
     datetime,
@@ -47,15 +46,15 @@ from django.utils.translation import gettext_lazy
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
+    csrf,
+    format_html,
     HttpResponseRedirect,
+    render_template,
     Template,
     template_types,
     URLValidator,
-    ValidationError,
-    csrf,
-    format_html,
-    render_template,
     validate_email,
+    ValidationError
 )
 from iommi.action import (
     Action,
@@ -64,14 +63,14 @@ from iommi.action import (
 )
 from iommi.attrs import Attrs
 from iommi.base import (
-    keys,
-    MISSING,
-    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     items,
-    values,
+    keys,
+    MISSING,
+    NOT_BOUND_MESSAGE,
+    values
 )
 from iommi.datetime_parsing import (
     parse_relative_date,
@@ -81,13 +80,12 @@ from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    Namespace,
     flatten,
     getattr_path,
+    Namespace,
     setattr_path,
-    setdefaults_path,
+    setdefaults_path
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import DISPATCH_PREFIX
 from iommi.error import Errors
 from iommi.evaluate import (
@@ -95,18 +93,18 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.fragment import (
-    TransientFragment,
+    build_and_bind_h_tag,
     Fragment,
     Header,
     Tag,
-    build_and_bind_h_tag,
+    TransientFragment
 )
 from iommi.from_model import (
     AutoConfig,
-    NoRegisteredSearchFieldException,
     create_members_from_model,
     get_search_fields,
     member_from_model,
+    NoRegisteredSearchFieldException
 )
 from iommi.member import (
     bind_member,
@@ -121,15 +119,18 @@ from iommi.part import (
     request_data,
 )
 from iommi.refinable import (
+    evaluated_refinable,
     EvaluatedRefinable,
     Prio,
     Refinable,
-    RefinableMembers,
-    SpecialEvaluatedRefinable,
-    evaluated_refinable,
     refinable,
+    RefinableMembers,
+    SpecialEvaluatedRefinable
 )
-from iommi.shortcut import Shortcut, with_defaults
+from iommi.shortcut import (
+    Shortcut,
+    with_defaults
+)
 from iommi.sort_after import sort_after
 from iommi.struct import Struct
 from iommi.traversable import Traversable
@@ -608,7 +609,6 @@ def boolean_tristate__parse(string_value, **_):
     return bool_parse(string_value)
 
 
-@with_meta
 class Field(Part, Tag):
     # language=rst
     """
@@ -1602,7 +1602,6 @@ class FieldGroup(Fragment):
     is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
 
 )
-@with_meta
 class Form(Part, Tag):
     # language=rst
     """
@@ -1768,7 +1767,7 @@ class Form(Part, Tag):
             name='actions',
             members_from_namespace=self.actions,
             extra_member_defaults=extra_action_defaults,
-            cls=self.get_meta().action_class,
+            cls=self.action_class,
             members_cls=Actions,
         )
 
@@ -1790,7 +1789,7 @@ class Form(Part, Tag):
             members_from_namespace=self.fields,
             members_from_declared=_fields_dict,
             members_from_auto=fields_from_auto,
-            cls=self.get_meta().member_class,
+            cls=self.member_class,
             extra_member_defaults=extra_member_defaults,
         )
 

@@ -21,11 +21,7 @@ from iommi.base import (
     capitalize,
     values,
 )
-from iommi.declarative.namespace import (
-    EMPTY,
-    setdefaults_path,
-)
-from iommi.declarative.with_meta import with_meta
+from iommi.declarative.namespace import EMPTY
 from iommi.fragment import (
     Fragment,
     Tag,
@@ -41,7 +37,6 @@ from iommi.refinable import (
 from iommi.shortcut import with_defaults
 
 
-@with_meta
 class Action(Fragment):
     # language=rst
     """

@@ -23,70 +23,68 @@ from django.utils.translation import (
     pgettext,
 )
 from pyparsing import (
+    alphanums,
+    alphas,
     Char,
     Forward,
     Group,
     Keyword,
+    oneOf,
     ParseException,
     ParseResults,
     QuotedString,
-    Word,
-    ZeroOrMore,
-    alphanums,
-    alphas,
-    oneOf,
     quotedString,
+    Word,
+    ZeroOrMore
 )
 
 from iommi._web_compat import (
-    Template,
-    ValidationError,
     render_template,
+    Template,
+    ValidationError
 )
 from iommi.action import (
     Action,
 )
 from iommi.base import (
-    MISSING,
-    NOT_BOUND_MESSAGE,
     items,
     keys,
+    MISSING,
     model_and_rows,
-    values,
+    NOT_BOUND_MESSAGE,
+    values
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    Namespace,
     getattr_path,
-    setdefaults_path,
+    Namespace,
+    setdefaults_path
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import path_join
 from iommi.evaluate import (
     evaluate,
     evaluate_strict,
 )
 from iommi.form import (
-    Form,
     bool_parse,
     boolean_tristate__parse,
     date_parse,
-    datetime_parse,
     float_parse,
+    Form,
     int_parse,
-    time_parse,
+    time_parse
 )
 from iommi.fragment import (
     Fragment,
 )
 from iommi.from_model import (
     AutoConfig,
-    NoRegisteredSearchFieldException,
     create_members_from_model,
     get_search_fields,
     member_from_model,
+    NoRegisteredSearchFieldException
 )
 from iommi.member import (
     bind_member,
@@ -100,9 +98,9 @@ from iommi.refinable import (
     EvaluatedRefinable,
     Prio,
     Refinable,
-    RefinableMembers,
-    SpecialEvaluatedRefinable,
     refinable,
+    RefinableMembers,
+    SpecialEvaluatedRefinable
 )
 from iommi.shortcut import (
     Shortcut,
@@ -225,7 +223,6 @@ def choice_queryset__is_valid_filter(name, filter, **_):
     )
 
 
-@with_meta
 class Filter(Part):
     """
     Class that describes a filter that you can search for.
@@ -628,7 +625,6 @@ class Advanced(Fragment):
 
 
 @declarative(Filter, '_filters_dict', add_init_kwargs=False)
-@with_meta
 class Query(Part):
     # language=rst
     """
@@ -653,8 +649,8 @@ class Query(Part):
     template: Union[str, Template] = EvaluatedRefinable()
     form_container: Fragment = EvaluatedRefinable()
 
-    member_class = Refinable()
-    form_class = Refinable()
+    member_class: Type[Filter] = Refinable()
+    form_class: Type[Form] = Refinable()
 
     # Filters need to be at the end to not steal the short names
     filters: Namespace = RefinableMembers()
@@ -713,7 +709,7 @@ class Query(Part):
             members_from_namespace=self.filters,
             members_from_declared=self.get_declared('_filters_dict'),
             members_from_auto=filters_from_auto,
-            cls=self.get_meta().member_class,
+            cls=self.member_class,
         )
 
         self._on_refine_done_form()
@@ -740,7 +736,7 @@ class Query(Part):
         return render(request=self.get_request())
 
     def _on_refine_done_form(self):
-        field_class = self.get_meta().form_class.get_meta().member_class
+        field_class = self.form_class.get_meta().member_class
 
         declared_fields = Struct()
 
@@ -791,8 +787,7 @@ class Query(Part):
 
         # noinspection PyCallingNonCallable
         self.form: Form = (
-            self.get_meta()
-            .form_class(
+            self.form_class(
                 **setdefaults_path(
                     Namespace(),
                     form_args,

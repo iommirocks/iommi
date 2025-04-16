@@ -12,7 +12,6 @@ from iommi import (
     Table,
     html,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
     InvalidEndpointPathException,
     find_target,
@@ -109,7 +108,6 @@ def test_middleware_fallthrough_on_non_part():
 
 @override_settings(DEBUG=True)
 def test_dispatch_auto_json():
-    @with_meta
     class MyPart(Part):
         class Meta:
             @staticmethod

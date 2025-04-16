@@ -43,7 +43,6 @@ from iommi.declarative.namespace import (
     Namespace,
     setdefaults_path,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
@@ -65,7 +64,6 @@ joined_app_name_and_model = {
 }
 
 
-@with_meta
 class Messages(Fragment):
     class Meta:
         tag = 'div'
@@ -116,7 +114,7 @@ def read_config(f):
     return read_config_wrapper
 
 
-@with_meta  # we need @with_meta again here to make sure this constructor gets all the meta arguments first
+
 class Admin(Page):
     class Meta:
         table_class = EditTable

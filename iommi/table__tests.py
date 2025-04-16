@@ -3370,9 +3370,6 @@ def test_sort_list():
 
 def test_sort_with_name():
     class TestTable(Table):
-        class Meta:
-            _name = 'my_table'
-
         foo = Column()
         bar = Column.number(sort_key='bar')
 

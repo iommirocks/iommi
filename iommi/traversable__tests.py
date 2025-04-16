@@ -27,7 +27,6 @@ from iommi.declarative.namespace import (
     EMPTY,
     Namespace,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.evaluate import evaluate_strict
 from iommi.member import (
     bind_members,
@@ -393,7 +392,6 @@ def test_get_config():
                 return super_classmethod(**kwargs)
 
         @declarative(Fruit, 'fruits', add_init_kwargs=False)
-        @with_meta
         class BasketBase(Traversable):
             fruits: Dict = RefinableMembers()
 
@@ -682,7 +680,6 @@ def test_params_gets_expanded_during_evaluate():
 
 
 def test_evaluated_refinable_respects_order():
-    @with_meta
     class MyRefinableObject(Traversable):
         a = EvaluatedRefinable()
         b = EvaluatedRefinable()
