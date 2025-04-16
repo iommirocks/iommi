@@ -367,7 +367,7 @@ def get_choices_from_column(table, traversable, **_):
     )
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Column(Part):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
@@ -1041,7 +1041,7 @@ class Column(Part):
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
-@with_meta
+# @with_meta(add_init_kwargs=False)
 class Cells(Traversable, Tag):
     """
     Internal class used in row rendering.
@@ -1230,7 +1230,7 @@ class TemplateConfig(RefinableObject):
     template: str = Refinable()
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 class HeaderConfig(Traversable, Tag):
     tag: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
@@ -1454,7 +1454,7 @@ def paginator__count(rows, **_):
         return None
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Paginator(Traversable, Tag):
     tag: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
@@ -1729,7 +1729,7 @@ class _Lazy_tbody:
 
 
 @declarative(Column, '_columns_dict', add_init_kwargs=False)
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Table(Part, Tag):
     # language=rst
     """

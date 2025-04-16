@@ -608,7 +608,7 @@ def boolean_tristate__parse(string_value, **_):
     return bool_parse(string_value)
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Field(Part, Tag):
     # language=rst
     """
@@ -1602,7 +1602,7 @@ class FieldGroup(Fragment):
     is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
 
 )
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Form(Part, Tag):
     # language=rst
     """

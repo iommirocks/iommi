@@ -163,7 +163,7 @@ class Tag:
             return format_html('</{}>', self.tag)
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Fragment(Part, Tag):
     # language=rst
     """

@@ -41,7 +41,6 @@ from iommi.refinable import (
 from iommi.shortcut import with_defaults
 
 
-@with_meta
 class Action(Fragment):
     # language=rst
     """

@@ -36,6 +36,7 @@ from iommi.declarative.namespace import (
     setdefaults_path,
 )
 from iommi.declarative.util import strip_prefix
+from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     path_join,
@@ -111,6 +112,8 @@ class EditCell(Cell):
         super(EditCell, self).on_refine_done()
 
 
+# TODO should not be @with_meta, should be enough to inherit from Cells
+@with_meta
 class EditCells(Cells):
     is_create_template = Refinable()
 

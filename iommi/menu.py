@@ -94,7 +94,7 @@ class MenuBase(Part, Tag):
             )
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 class MenuItem(MenuBase):
     """
     Class that is used for the clickable menu items in a menu.
@@ -179,7 +179,7 @@ def _path_plus_query(url):
     return parsed_url
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 @declarative(MenuItem, '_sub_menu_dict', add_init_kwargs=False)
 class Menu(MenuBase):
     """

@@ -2045,9 +2045,6 @@ def test_choice_queryset_ajax_attrs_direct():
     user2 = User.objects.create(username='bar')
 
     class MyForm(Form):
-        class Meta:
-            _name = 'form_name'
-
         username = Field.choice_queryset(choices=User.objects.all().order_by('username'))
         not_returning_anything = Field.integer()
 

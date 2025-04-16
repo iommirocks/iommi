@@ -225,7 +225,7 @@ def choice_queryset__is_valid_filter(name, filter, **_):
     )
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Filter(Part):
     """
     Class that describes a filter that you can search for.
@@ -628,7 +628,7 @@ class Advanced(Fragment):
 
 
 @declarative(Filter, '_filters_dict', add_init_kwargs=False)
-@with_meta
+@with_meta(add_init_kwargs=False)
 class Query(Part):
     # language=rst
     """

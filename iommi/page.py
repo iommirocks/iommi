@@ -50,7 +50,7 @@ from iommi.sort_after import sort_after
 from iommi.traversable import Traversable
 
 
-@with_meta
+@with_meta(add_init_kwargs=False)
 @declarative(
     parameter='parts_dict',
     is_member=lambda obj: isinstance(obj, (Part, str) + template_types),

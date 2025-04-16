@@ -321,3 +321,25 @@ def test_check_attribute_existence():
         ),
     ):
         Fruit(smell=17)
+
+
+def test_no_add_init_kwargs():
+    @with_meta(add_init_kwargs=False)
+    class MyRefinable(RefinableObject):
+        a = Refinable()
+
+        class Meta:
+            a = 17
+
+    assert MyRefinable(a=42).refine_done().a == 42
+    assert MyRefinable().refine_done().a == 17
+
+def test_with_meta_merge():
+    @with_meta(add_init_kwargs=False)
+    class MyRefinable(RefinableObject):
+        a = Refinable()
+
+        class Meta:
+            a__foo = 17
+
+    assert MyRefinable(a__bar=42).refine_done().a == dict(foo=17, bar=42)
