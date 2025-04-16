@@ -1,7 +1,8 @@
 import functools
 
-from .namespace import Namespace
-from .util import add_args_to_init_call
+from iommi.declarative.namespace import Namespace
+from iommi.declarative.util import add_args_to_init_call
+from iommi.struct import Struct
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -25,7 +26,7 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
         add_args_to_init_call(class_to_decorate, get_extra_args_function, True)
 
     setattr(class_to_decorate, 'get_meta', classmethod(get_meta))
-    setattr(class_to_decorate, 'get_meta_unmerged', classmethod(get_meta_unmerged))
+    setattr(class_to_decorate, 'get_meta_flat', classmethod(get_meta_flat))
     setattr(class_to_decorate, '__iommi_with_meta', True)
     setattr(class_to_decorate, '__iommi_with_meta_add_init_kwargs', add_init_kwargs)
 
@@ -51,8 +52,8 @@ def get_meta(cls):
     return merged_attributes
 
 
-def get_meta_unmerged(cls):
-    attributes = dict()
+def get_meta_flat(cls):
+    attributes = Struct()
     for class_ in reversed(cls.mro()):
         if hasattr(class_, 'Meta'):
             for meta_class_ in reversed(class_.Meta.mro()):

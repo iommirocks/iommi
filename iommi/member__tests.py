@@ -7,7 +7,6 @@ from iommi import (
     html,
     register_style,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     find_target,
@@ -125,7 +124,6 @@ def test_ordering():
 
 
 def test_inclusion():
-    @with_meta
     class IncludableFruit(Fruit):
         include = Refinable()
 

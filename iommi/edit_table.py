@@ -36,7 +36,6 @@ from iommi.declarative.namespace import (
     setdefaults_path,
 )
 from iommi.declarative.util import strip_prefix
-from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     path_join,
@@ -288,7 +287,6 @@ def edit_table__post_handler(table, request, **_):
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
-@with_meta(add_init_kwargs=False)
 class EditTable(Table):
     # language=rst
     """

@@ -11,8 +11,11 @@ from typing import (
 from iommi.base import items
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
-from iommi.declarative.namespace import getattr_path, \
-    Namespace
+from iommi.declarative.namespace import (
+    getattr_path,
+    Namespace,
+)
+from iommi.declarative.with_meta import get_meta_flat
 from iommi.evaluate import get_signature
 
 
@@ -222,13 +225,14 @@ class RefinableObject:
 
         assert not result.is_refine_done, f"refine_done() already invoked on {result!r}"
 
-        if getattr(result, '__iommi_with_meta', False):
-            if getattr(result, '__iommi_with_meta_add_init_kwargs', True):
+        meta_params = get_meta_flat(result.__class__)
+        if meta_params:
+            if getattr(result, '__iommi_with_meta', False):
                 warnings.warn(
                     f'RefinableObject {result.__class__} should not merge class Meta attributes into the constructor invocation. '
-                    f'Use @with_meta(add_init_kwargs=True) instead.'
+                    f'Drop @with_meta decorator.'
                 )
-            result.iommi_namespace = result.iommi_namespace._refine(Prio.meta, **result.get_meta_unmerged())
+            result.iommi_namespace = result.iommi_namespace._refine(Prio.meta, **meta_params)
 
 
         if hasattr(result, 'apply_style'):

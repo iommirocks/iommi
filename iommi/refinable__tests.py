@@ -8,7 +8,6 @@ from iommi import (
 )
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
-from iommi.declarative.with_meta import with_meta
 from iommi.refinable import (
     Prio,
     Refinable,
@@ -64,7 +63,7 @@ def test_refinable():
 
 
 def test_with_meta():
-    @with_meta
+    # @with_meta
     class MyRefinableObject(RefinableObject):
         a = Refinable()
         b = Refinable()
@@ -73,7 +72,7 @@ def test_with_meta():
             a = 1
 
     my_refinable = MyRefinableObject(b=2)
-    assert my_refinable.iommi_namespace == Namespace(a=1, b=2)
+    assert my_refinable.refine_done().iommi_namespace == Namespace(a=1, b=2)
 
 
 def test_with_dispatch():
@@ -324,7 +323,6 @@ def test_check_attribute_existence():
 
 
 def test_no_add_init_kwargs():
-    @with_meta(add_init_kwargs=False)
     class MyRefinable(RefinableObject):
         a = Refinable()
 
@@ -335,7 +333,6 @@ def test_no_add_init_kwargs():
     assert MyRefinable().refine_done().a == 17
 
 def test_with_meta_merge():
-    @with_meta(add_init_kwargs=False)
     class MyRefinable(RefinableObject):
         a = Refinable()
 

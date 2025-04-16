@@ -87,7 +87,7 @@ from iommi.declarative.namespace import (
     setattr_path,
     setdefaults_path,
 )
-from iommi.declarative.with_meta import with_meta
+from iommi.declarative.with_meta import get_meta_flat
 from iommi.endpoint import DISPATCH_PREFIX
 from iommi.error import Errors
 from iommi.evaluate import (
@@ -608,7 +608,6 @@ def boolean_tristate__parse(string_value, **_):
     return bool_parse(string_value)
 
 
-@with_meta(add_init_kwargs=False)
 class Field(Part, Tag):
     # language=rst
     """
@@ -1602,7 +1601,6 @@ class FieldGroup(Fragment):
     is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
 
 )
-@with_meta(add_init_kwargs=False)
 class Form(Part, Tag):
     # language=rst
     """
@@ -1768,7 +1766,7 @@ class Form(Part, Tag):
             name='actions',
             members_from_namespace=self.actions,
             extra_member_defaults=extra_action_defaults,
-            cls=self.get_meta().action_class,
+            cls=self.action_class,
             members_cls=Actions,
         )
 
@@ -1892,7 +1890,7 @@ class Form(Part, Tag):
     @dispatch()
     def fields_from_model(cls, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class,
+            member_class=get_meta_flat(cls).member_class,
             **kwargs,
         )
 

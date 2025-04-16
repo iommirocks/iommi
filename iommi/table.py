@@ -82,7 +82,7 @@ from iommi.declarative.namespace import (
     getattr_path,
     setdefaults_path,
 )
-from iommi.declarative.with_meta import with_meta
+from iommi.declarative.with_meta import get_meta_flat
 from iommi.endpoint import (
     DISPATCH_PREFIX,
     path_join,
@@ -367,7 +367,6 @@ def get_choices_from_column(table, traversable, **_):
     )
 
 
-@with_meta(add_init_kwargs=False)
 class Column(Part):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
@@ -1163,7 +1162,6 @@ class Cell(CellConfig):
     def get_request(self):
         return self.cells.get_request()
 
-@with_meta(add_init_kwargs=False)
 class Cells(Traversable, Tag):
     """
     Internal class used in row rendering.
@@ -1232,7 +1230,6 @@ class TemplateConfig(RefinableObject):
     template: str = Refinable()
 
 
-@with_meta(add_init_kwargs=False)
 class HeaderConfig(Traversable, Tag):
     tag: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
@@ -1456,7 +1453,6 @@ def paginator__count(rows, **_):
         return None
 
 
-@with_meta(add_init_kwargs=False)
 class Paginator(Traversable, Tag):
     tag: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
@@ -1731,7 +1727,6 @@ class _Lazy_tbody:
 
 
 @declarative(Column, '_columns_dict', add_init_kwargs=False)
-@with_meta(add_init_kwargs=False)
 class Table(Part, Tag):
     # language=rst
     """
@@ -1960,7 +1955,7 @@ class Table(Part, Tag):
             self,
             name='actions',
             members_from_namespace=self.actions,
-            cls=self.get_meta().action_class,
+            cls=self.action_class,
             members_cls=Actions,
         )
         refine_done_members(
@@ -1969,7 +1964,7 @@ class Table(Part, Tag):
             members_from_namespace=self.columns,
             members_from_declared=self.get_declared('_columns_dict'),
             members_from_auto=columns_from_auto,
-            cls=self.get_meta().member_class,
+            cls=self.member_class,
             extra_member_defaults=extra_column_defaults,
         )
 
@@ -1988,7 +1983,8 @@ class Table(Part, Tag):
         self.header_levels = None
 
         def add_hidden_all_pks_field(declared_bulk_fields):
-            declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
+            form_member_class = get_meta_flat(form_class).member_class
+            declared_bulk_fields._all_pks_ = form_member_class.hidden(
                 _name='_all_pks_',
                 attr=None,
                 initial='0',
@@ -1996,12 +1992,12 @@ class Table(Part, Tag):
                 input__attrs__class__all_pks=True,
             )
 
-        form_class = self.get_meta().form_class
+        form_class = self.form_class
         if self.model:
             # Query
             filters = Struct()
 
-            field_class = self.get_meta().query_class.get_meta().member_class
+            field_class = get_meta_flat(self.query_class).member_class
 
             for name, column in items(self.iommi_namespace.columns):
                 if getattr(column, 'include', None) is False:
@@ -2016,7 +2012,11 @@ class Table(Part, Tag):
                     model_field_name=column.model_field_name,
                     _name=name,
                     attr=name if column.attr is MISSING else column.attr,
-                    field__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                    field__call_target__cls=get_meta_flat(
+                        get_meta_flat(
+                            self.query_class
+                        ).form_class
+                    ).member_class,
                     field__display_name=column.display_name,
                 )
                 # Special case for automatic query config
@@ -2032,21 +2032,20 @@ class Table(Part, Tag):
 
                 filters[name] = filter()
 
-            self.query = self.get_meta().query_class(
-                **setdefaults_path(
-                    Namespace(),
-                    query_args,
-                    filters=filters,
-                    _name='query',
-                    model=self.model,
-                )
+            query_params = setdefaults_path(
+                Namespace(),
+                query_args,
+                filters=filters,
+                _name='query',
+                model=self.model,
             )
+            self.query = self.query_class(**query_params)
 
             declared_filters = self.query.iommi_namespace.filters
             self.query = self.query.refine(Prio.table_defaults, filters=declared_filters)
 
             # Bulk
-            field_class = self.get_meta().form_class.get_meta().member_class
+            field_class = get_meta_flat(self.form_class).member_class
 
             declared_bulk_fields = Struct()
             for name, column in items(self.iommi_namespace.columns):
@@ -2455,7 +2454,7 @@ class Table(Part, Tag):
     @dispatch()
     def columns_from_model(cls, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class,
+            member_class=get_meta_flat(cls).member_class,
             **kwargs,
         )
 

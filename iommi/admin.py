@@ -43,7 +43,7 @@ from iommi.declarative.namespace import (
     Namespace,
     setdefaults_path,
 )
-from iommi.declarative.with_meta import with_meta
+from iommi.declarative.with_meta import get_meta_flat
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
@@ -65,7 +65,6 @@ joined_app_name_and_model = {
 }
 
 
-@with_meta
 class Messages(Fragment):
     class Meta:
         tag = 'div'
@@ -116,7 +115,7 @@ def read_config(f):
     return read_config_wrapper
 
 
-@with_meta  # we need @with_meta again here to make sure this constructor gets all the meta arguments first
+
 class Admin(Page):
     class Meta:
         table_class = EditTable
@@ -352,7 +351,7 @@ class Admin(Page):
             Namespace(),
             table if table is not None else {},
             title='',
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=get_meta_flat(cls).table_class,
             call_target__attribute='div',
             sortable=False,
             rows=rows,
@@ -372,16 +371,22 @@ class Admin(Page):
         add_models = setdefaults_path(
             Namespace(),
             include=settings.DEBUG,
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=get_meta_flat(cls).table_class,
             sortable=False,
             create_form=None,
             rows=functools.partial(rows_raw, included_filter=True),
             page_size=None,
-            columns__app_name=cls.get_meta().table_class.get_meta().member_class(auto_rowspan=True),
+            columns__app_name=get_meta_flat(
+                get_meta_flat(
+                    cls
+                ).table_class
+            ).member_class(auto_rowspan=True),
             columns__conf=(
-                cls.get_meta()
-                .table_class.get_meta()
-                .member_class(
+                get_meta_flat(
+                    get_meta_flat(
+                        cls
+                    ).table_class
+                ).member_class(
                     cell__value=lambda row, **_: f'apps__{row.key}__include = True' if row.key else '',
                     cell__format=lambda value, **_: (
                         format_html(
@@ -438,7 +443,7 @@ class Admin(Page):
         table = setdefaults_path(
             Namespace(),
             table if table is not None else {},
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=get_meta_flat(cls).table_class,
             columns=dict(
                 edit=dict(
                     call_target__attribute='edit',
@@ -487,7 +492,7 @@ class Admin(Page):
         form = setdefaults_path(
             Namespace(),
             form if form is not None else {},
-            call_target__cls=cls.get_meta().form_class,
+            call_target__cls=get_meta_flat(cls).form_class,
             call_target__attribute=operation,
             extra__on_save=on_save,
             extra__on_delete=on_delete,

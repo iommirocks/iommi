@@ -62,7 +62,7 @@ from iommi.declarative.namespace import (
     getattr_path,
     setdefaults_path,
 )
-from iommi.declarative.with_meta import with_meta
+from iommi.declarative.with_meta import get_meta_flat
 from iommi.endpoint import path_join
 from iommi.evaluate import (
     evaluate,
@@ -225,7 +225,6 @@ def choice_queryset__is_valid_filter(name, filter, **_):
     )
 
 
-@with_meta(add_init_kwargs=False)
 class Filter(Part):
     """
     Class that describes a filter that you can search for.
@@ -628,7 +627,6 @@ class Advanced(Fragment):
 
 
 @declarative(Filter, '_filters_dict', add_init_kwargs=False)
-@with_meta(add_init_kwargs=False)
 class Query(Part):
     # language=rst
     """
@@ -740,7 +738,7 @@ class Query(Part):
         return render(request=self.get_request())
 
     def _on_refine_done_form(self):
-        field_class = self.get_meta().form_class.get_meta().member_class
+        field_class = get_meta_flat(self.form_class).member_class
 
         declared_fields = Struct()
 
@@ -791,8 +789,7 @@ class Query(Part):
 
         # noinspection PyCallingNonCallable
         self.form: Form = (
-            self.get_meta()
-            .form_class(
+            self.form_class(
                 **setdefaults_path(
                     Namespace(),
                     form_args,
@@ -1116,7 +1113,7 @@ class Query(Part):
     @dispatch()
     def filters_from_model(cls, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class,
+            member_class=get_meta_flat(cls).member_class,
             **kwargs,
         )
 
