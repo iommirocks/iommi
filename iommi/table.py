@@ -1042,68 +1042,6 @@ class Column(Part):
 
 
 # @with_meta(add_init_kwargs=False)
-class Cells(Traversable, Tag):
-    """
-    Internal class used in row rendering.
-
-    You can access the current row via `.row` and the current row index via `.row_index`.
-    """
-
-    template: Union[str, Template] = EvaluatedRefinable()
-    attrs: Attrs = SpecialEvaluatedRefinable()
-    tag: str = EvaluatedRefinable()
-    extra: Dict[str, Any] = Refinable()
-    # not EvaluatedRefinable because this is an evaluated container so is special
-    extra_evaluated: Dict[str, Any] = Refinable()
-    cell_class: Type['Cell'] = Refinable()
-
-    def __init__(self, row, row_index, cell_class=None, **kwargs):
-        # This doesn't use a nice Meta definition because it would be a circular
-        if cell_class is None:
-            cell_class = Cell
-        super(Cells, self).__init__(_name='row', cell_class=cell_class, **kwargs)
-        assert not isinstance(row, Cells)
-        self.row: Any = row
-        self.row_index = row_index
-
-    def own_evaluate_parameters(self):
-        return dict(cells=self, row=self.row)
-
-    def get_table(self):
-        return self.iommi_evaluate_parameters()['table']
-
-    def __html__(self):
-        if self.template:
-            return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
-
-        return self.render()
-
-    def render(self):
-        return TransientFragment(
-            tag=self.tag,
-            attrs=self.attrs,
-            children=dict(text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))),
-            parent=self,
-        ).__html__()
-
-    def __str__(self):
-        return self.__html__()
-
-    def __iter__(self):
-        for column in values(self.get_table().columns):
-            if not column.render_column:
-                continue
-            yield self.cell_class(cells=self, column=column, parent=self)
-
-    def __len__(self):
-        return self.column_count()
-
-    def column_count(self):
-        return len([x for x in values(self.get_table().columns) if x.render_column])
-
-    def __getitem__(self, name):
-        column = self.iommi_parent().columns[name]
-        return self.cell_class(cells=self, column=column, parent=self)
 
 
 class RowGroup(Fragment):
@@ -1142,7 +1080,7 @@ class CellConfig(TransientFragment, Tag):
 
 class Cell(CellConfig):
     @dispatch
-    def __init__(self, cells: Cells, column, **kwargs):
+    def __init__(self, cells, column, **kwargs):
         kwargs = setdefaults_path(
             Namespace(),
             column.cell,
@@ -1224,6 +1162,70 @@ class Cell(CellConfig):
 
     def get_request(self):
         return self.cells.get_request()
+
+@with_meta(add_init_kwargs=False)
+class Cells(Traversable, Tag):
+    """
+    Internal class used in row rendering.
+
+    You can access the current row via `.row` and the current row index via `.row_index`.
+    """
+
+    template: Union[str, Template] = EvaluatedRefinable()
+    attrs: Attrs = SpecialEvaluatedRefinable()
+    tag: str = EvaluatedRefinable()
+    extra: Dict[str, Any] = Refinable()
+    # not EvaluatedRefinable because this is an evaluated container so is special
+    extra_evaluated: Dict[str, Any] = Refinable()
+    cell_class: Type['Cell'] = Refinable()
+
+    class Meta:
+        cell_class = Cell
+
+    def __init__(self, row, row_index, **kwargs):
+        super(Cells, self).__init__(_name='row', **kwargs)
+        assert not isinstance(row, Cells)
+        self.row: Any = row
+        self.row_index = row_index
+
+    def own_evaluate_parameters(self):
+        return dict(cells=self, row=self.row)
+
+    def get_table(self):
+        return self.iommi_evaluate_parameters()['table']
+
+    def __html__(self):
+        if self.template:
+            return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
+
+        return self.render()
+
+    def render(self):
+        return TransientFragment(
+            tag=self.tag,
+            attrs=self.attrs,
+            children=dict(text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))),
+            parent=self,
+        ).__html__()
+
+    def __str__(self):
+        return self.__html__()
+
+    def __iter__(self):
+        for column in values(self.get_table().columns):
+            if not column.render_column:
+                continue
+            yield self.cell_class(cells=self, column=column, parent=self)
+
+    def __len__(self):
+        return self.column_count()
+
+    def column_count(self):
+        return len([x for x in values(self.get_table().columns) if x.render_column])
+
+    def __getitem__(self, name):
+        column = self.iommi_parent().columns[name]
+        return self.cell_class(cells=self, column=column, parent=self)
 
 
 class TemplateConfig(RefinableObject):

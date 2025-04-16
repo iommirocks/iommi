@@ -112,8 +112,6 @@ class EditCell(Cell):
         super(EditCell, self).on_refine_done()
 
 
-# TODO should not be @with_meta, should be enough to inherit from Cells
-@with_meta
 class EditCells(Cells):
     is_create_template = Refinable()
 
@@ -290,6 +288,7 @@ def edit_table__post_handler(table, request, **_):
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
+@with_meta(add_init_kwargs=False)
 class EditTable(Table):
     # language=rst
     """
@@ -392,8 +391,7 @@ class EditTable(Table):
         super(EditTable, self).on_refine_done()
 
         if self.bulk is None:
-            form_class = self.get_meta().form_class
-            self.bulk = form_class(_name='bulk', attrs__method='post').refine_done(parent=self)
+            self.bulk = self.form_class(_name='bulk', attrs__method='post').refine_done(parent=self)
 
         fields = Struct()
 
@@ -430,34 +428,32 @@ class EditTable(Table):
         auto.pop('rows', None)
 
         if self.create_form is not None:
-            self.create_form = self.get_meta().form_class(
-                **setdefaults_path(
-                    Namespace(),
-                    self.create_form,
-                    fields=fields,
-                    _name='create_form',
-                    auto=auto,
-                )
+            form_params = setdefaults_path(
+                Namespace(),
+                self.create_form,
+                fields=fields,
+                _name='create_form',
+                auto=auto,
             )
+            self.create_form = self.form_class(**form_params)
 
         if auto:
             auto.default_included = False
 
-        self.edit_form = self.get_meta().form_class(
-            **setdefaults_path(
-                Namespace(),
-                self.edit_form,
-                fields=fields,
-                _name='edit_form',
-                auto=auto,
-            )
+        form_params = setdefaults_path(
+            Namespace(),
+            self.edit_form,
+            fields=fields,
+            _name='edit_form',
+            auto=auto,
         )
+        self.edit_form = self.form_class(**form_params)
 
         refine_done_members(
             self,
             name='edit_actions',
             members_from_namespace=self.edit_actions,
-            cls=self.get_meta().action_class,
+            cls=self.action_class,
             members_cls=Actions,
         )
 

@@ -1790,7 +1790,7 @@ class Form(Part, Tag):
             members_from_namespace=self.fields,
             members_from_declared=_fields_dict,
             members_from_auto=fields_from_auto,
-            cls=self.get_meta().member_class,
+            cls=self.member_class,
             extra_member_defaults=extra_member_defaults,
         )
 

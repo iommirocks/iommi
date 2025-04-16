@@ -713,7 +713,7 @@ class Query(Part):
             members_from_namespace=self.filters,
             members_from_declared=self.get_declared('_filters_dict'),
             members_from_auto=filters_from_auto,
-            cls=self.get_meta().member_class,
+            cls=self.member_class,
         )
 
         self._on_refine_done_form()
