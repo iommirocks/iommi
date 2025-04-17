@@ -1,8 +1,10 @@
 from typing import Dict
 
 import pytest
+from django.template import Template
 
 from iommi import (
+    Form,
     Fragment,
     Header,
 )
@@ -17,6 +19,7 @@ from iommi.refinable import (
     prefixes,
     refinable,
 )
+from tests.helpers import req
 
 
 def test_i_stil_med2():
@@ -340,3 +343,17 @@ def test_with_meta_merge():
             a__foo = 17
 
     assert MyRefinable(a__bar=42).refine_done().a == dict(foo=17, bar=42)
+
+def test_fragment_in_fields():
+    class MyForm(Form):
+        class Meta:
+            fields__foo__after = 0
+
+    form = MyForm(
+        fields__foo=Fragment(
+            template=Template(
+                "I see a black moon rising",
+            )
+        )
+    )
+    assert "I see a black moon rising" in form.bind(request=req("get")).__html__()
