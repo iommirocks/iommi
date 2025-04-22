@@ -179,6 +179,9 @@ class Fragment(Part, Tag):
 
         h1 = Fragment(children__text='Tony', tag='h1')
 
+        # There is also a shorthand version that is identical to the above:
+        h1 = Fragment('Tony', tag='h1')
+
     It's easiest to use via the html builder:
 
     .. code-block:: python
