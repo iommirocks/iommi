@@ -818,7 +818,7 @@ class Field(Part, Tag):
 
         super(Field, self).on_refine_done()
 
-        if 'choices' in getattr(self, 'iommi_shortcut_stack', []):
+        if 'choice' in getattr(self, 'iommi_shortcut_stack', []):
             assert (
                 self.choices
             ), 'To use Field.choice, you must pass the choices list'
