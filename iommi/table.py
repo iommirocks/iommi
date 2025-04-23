@@ -82,7 +82,6 @@ from iommi.declarative.namespace import (
     getattr_path,
     setdefaults_path,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
     DISPATCH_PREFIX,
     path_join,
@@ -367,7 +366,6 @@ def get_choices_from_column(table, traversable, **_):
     )
 
 
-@with_meta
 class Column(Part):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
@@ -1041,71 +1039,6 @@ class Column(Part):
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
-@with_meta
-class Cells(Traversable, Tag):
-    """
-    Internal class used in row rendering.
-
-    You can access the current row via `.row` and the current row index via `.row_index`.
-    """
-
-    template: Union[str, Template] = EvaluatedRefinable()
-    attrs: Attrs = SpecialEvaluatedRefinable()
-    tag: str = EvaluatedRefinable()
-    extra: Dict[str, Any] = Refinable()
-    # not EvaluatedRefinable because this is an evaluated container so is special
-    extra_evaluated: Dict[str, Any] = Refinable()
-    cell_class: Type['Cell'] = Refinable()
-
-    def __init__(self, row, row_index, cell_class=None, **kwargs):
-        # This doesn't use a nice Meta definition because it would be a circular
-        if cell_class is None:
-            cell_class = Cell
-        super(Cells, self).__init__(_name='row', cell_class=cell_class, **kwargs)
-        assert not isinstance(row, Cells)
-        self.row: Any = row
-        self.row_index = row_index
-
-    def own_evaluate_parameters(self):
-        return dict(cells=self, row=self.row)
-
-    def get_table(self):
-        return self.iommi_evaluate_parameters()['table']
-
-    def __html__(self):
-        if self.template:
-            return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
-
-        return self.render()
-
-    def render(self):
-        return TransientFragment(
-            tag=self.tag,
-            attrs=self.attrs,
-            children=dict(text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))),
-            parent=self,
-        ).__html__()
-
-    def __str__(self):
-        return self.__html__()
-
-    def __iter__(self):
-        for column in values(self.get_table().columns):
-            if not column.render_column:
-                continue
-            yield self.cell_class(cells=self, column=column, parent=self)
-
-    def __len__(self):
-        return self.column_count()
-
-    def column_count(self):
-        return len([x for x in values(self.get_table().columns) if x.render_column])
-
-    def __getitem__(self, name):
-        column = self.iommi_parent().columns[name]
-        return self.cell_class(cells=self, column=column, parent=self)
-
-
 class RowGroup(Fragment):
     def __init__(self, *, value, **kwargs):
         super(RowGroup, self).__init__(**kwargs)
@@ -1142,7 +1075,7 @@ class CellConfig(TransientFragment, Tag):
 
 class Cell(CellConfig):
     @dispatch
-    def __init__(self, cells: Cells, column, **kwargs):
+    def __init__(self, cells: 'Cells', column, **kwargs):
         kwargs = setdefaults_path(
             Namespace(),
             column.cell,
@@ -1225,12 +1158,74 @@ class Cell(CellConfig):
     def get_request(self):
         return self.cells.get_request()
 
+class Cells(Traversable, Tag):
+    """
+    Internal class used in row rendering.
+
+    You can access the current row via `.row` and the current row index via `.row_index`.
+    """
+
+    template: Union[str, Template] = EvaluatedRefinable()
+    attrs: Attrs = SpecialEvaluatedRefinable()
+    tag: str = EvaluatedRefinable()
+    extra: Dict[str, Any] = Refinable()
+    # not EvaluatedRefinable because this is an evaluated container so is special
+    extra_evaluated: Dict[str, Any] = Refinable()
+    cell_class: Type[Cell] = Refinable()
+
+    class Meta:
+        cell_class = Cell
+
+    def __init__(self, row, row_index, **kwargs):
+        super(Cells, self).__init__(_name='row', **kwargs)
+        assert not isinstance(row, Cells)
+        self.row: Any = row
+        self.row_index = row_index
+
+    def own_evaluate_parameters(self):
+        return dict(cells=self, row=self.row)
+
+    def get_table(self):
+        return self.iommi_evaluate_parameters()['table']
+
+    def __html__(self):
+        if self.template:
+            return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
+
+        return self.render()
+
+    def render(self):
+        return TransientFragment(
+            tag=self.tag,
+            attrs=self.attrs,
+            children=dict(text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))),
+            parent=self,
+        ).__html__()
+
+    def __str__(self):
+        return self.__html__()
+
+    def __iter__(self):
+        for column in values(self.get_table().columns):
+            if not column.render_column:
+                continue
+            yield self.cell_class(cells=self, column=column, parent=self)
+
+    def __len__(self):
+        return self.column_count()
+
+    def column_count(self):
+        return len([x for x in values(self.get_table().columns) if x.render_column])
+
+    def __getitem__(self, name):
+        column = self.iommi_parent().columns[name]
+        return self.cell_class(cells=self, column=column, parent=self)
+
 
 class TemplateConfig(RefinableObject):
     template: str = Refinable()
 
 
-@with_meta
 class HeaderConfig(Traversable, Tag):
     tag: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
@@ -1454,7 +1449,6 @@ def paginator__count(rows, **_):
         return None
 
 
-@with_meta
 class Paginator(Traversable, Tag):
     tag: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
@@ -1729,7 +1723,6 @@ class _Lazy_tbody:
 
 
 @declarative(Column, '_columns_dict', add_init_kwargs=False)
-@with_meta
 class Table(Part, Tag):
     # language=rst
     """
@@ -1783,7 +1776,7 @@ class Table(Part, Tag):
     table_tag_wrapper: Fragment = EvaluatedRefinable()
     outer: Fragment = EvaluatedRefinable()
 
-    member_class = Refinable()
+    member_class: Type[Column] = Refinable()
     form_class: Type[Form] = Refinable()
     query_class: Type[Query] = Refinable()
     action_class: Type[Action] = Refinable()
@@ -1958,7 +1951,7 @@ class Table(Part, Tag):
             self,
             name='actions',
             members_from_namespace=self.actions,
-            cls=self.get_meta().action_class,
+            cls=self.action_class,
             members_cls=Actions,
         )
         refine_done_members(
@@ -1967,7 +1960,7 @@ class Table(Part, Tag):
             members_from_namespace=self.columns,
             members_from_declared=self.get_declared('_columns_dict'),
             members_from_auto=columns_from_auto,
-            cls=self.get_meta().member_class,
+            cls=self.member_class,
             extra_member_defaults=extra_column_defaults,
         )
 
@@ -1986,7 +1979,8 @@ class Table(Part, Tag):
         self.header_levels = None
 
         def add_hidden_all_pks_field(declared_bulk_fields):
-            declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
+            form_member_class = form_class.get_meta().member_class
+            declared_bulk_fields._all_pks_ = form_member_class.hidden(
                 _name='_all_pks_',
                 attr=None,
                 initial='0',
@@ -1994,12 +1988,12 @@ class Table(Part, Tag):
                 input__attrs__class__all_pks=True,
             )
 
-        form_class = self.get_meta().form_class
+        form_class = self.form_class
         if self.model:
             # Query
             filters = Struct()
 
-            field_class = self.get_meta().query_class.get_meta().member_class
+            field_class = self.query_class.get_meta().member_class
 
             for name, column in items(self.iommi_namespace.columns):
                 if getattr(column, 'include', None) is False:
@@ -2014,7 +2008,7 @@ class Table(Part, Tag):
                     model_field_name=column.model_field_name,
                     _name=name,
                     attr=name if column.attr is MISSING else column.attr,
-                    field__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                    field__call_target__cls=self.query_class.get_meta().form_class.get_meta().member_class,
                     field__display_name=column.display_name,
                 )
                 # Special case for automatic query config
@@ -2030,21 +2024,20 @@ class Table(Part, Tag):
 
                 filters[name] = filter()
 
-            self.query = self.get_meta().query_class(
-                **setdefaults_path(
-                    Namespace(),
-                    query_args,
-                    filters=filters,
-                    _name='query',
-                    model=self.model,
-                )
+            query_params = setdefaults_path(
+                Namespace(),
+                query_args,
+                filters=filters,
+                _name='query',
+                model=self.model,
             )
+            self.query = self.query_class(**query_params)
 
             declared_filters = self.query.iommi_namespace.filters
             self.query = self.query.refine(Prio.table_defaults, filters=declared_filters)
 
             # Bulk
-            field_class = self.get_meta().form_class.get_meta().member_class
+            field_class = self.form_class.get_meta().member_class
 
             declared_bulk_fields = Struct()
             for name, column in items(self.iommi_namespace.columns):

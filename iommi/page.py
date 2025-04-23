@@ -20,7 +20,6 @@ from iommi.declarative.namespace import (
     EMPTY,
     Namespace,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.evaluate import (
     evaluate_as_needed,
     find_static_items,
@@ -50,7 +49,6 @@ from iommi.sort_after import sort_after
 from iommi.traversable import Traversable
 
 
-@with_meta
 @declarative(
     parameter='parts_dict',
     is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
@@ -100,7 +98,7 @@ class Page(Part):
             name='parts',
             members_from_namespace=self.parts,
             members_from_declared=_parts_dict,
-            cls=self.get_meta().member_class,
+            cls=self.member_class,
         )
         find_static_items(self.context)
         super(Page, self).on_refine_done()

@@ -23,7 +23,6 @@ from iommi.declarative.namespace import (
     EMPTY,
     Namespace,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.evaluate import (
     evaluate_as_needed,
     evaluate_strict,
@@ -163,7 +162,6 @@ class Tag:
             return format_html('</{}>', self.tag)
 
 
-@with_meta
 class Fragment(Part, Tag):
     # language=rst
     """

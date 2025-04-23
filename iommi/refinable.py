@@ -1,8 +1,7 @@
+import warnings
 from copy import copy
-from enum import (
-    Enum,
-    auto,
-)
+from enum import auto, \
+    Enum
 from typing import (
     Any,
     List,
@@ -13,8 +12,12 @@ from iommi.base import items
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
-    Namespace,
     getattr_path,
+    Namespace,
+)
+from iommi.declarative.with_meta import (
+    get_meta,
+    get_meta_flat,
 )
 from iommi.evaluate import get_signature
 
@@ -48,6 +51,7 @@ class Prio(Enum):
     constructor = auto()
     shortcut = auto()
     style = auto()
+    meta = auto()
     base = auto()
     member = auto()
     refine = auto()
@@ -218,11 +222,29 @@ class RefinableObject:
                 + '\n'
             )
 
+    @classmethod
+    def get_meta(cls):
+        return get_meta(cls)
+
+    @classmethod
+    def get_meta_flat(cls):
+        return get_meta_flat(cls)
+
     def refine_done(self, parent=None):
         result = copy(self)
         del self
 
         assert not result.is_refine_done, f"refine_done() already invoked on {result!r}"
+
+        meta_params = result.get_meta()
+        if meta_params:
+            if getattr(result, '__iommi_with_meta', False):
+                warnings.warn(
+                    f'RefinableObject {result.__class__} should not merge class Meta attributes into the constructor invocation. '
+                    f'Drop @with_meta decorator.'
+                )
+            result.iommi_namespace = result.iommi_namespace._refine(Prio.meta, **meta_params)
+
 
         if hasattr(result, 'apply_style'):
             is_root = parent is None
@@ -233,6 +255,7 @@ class RefinableObject:
 
             iommi_style = resolve_style(iommi_style, enclosing_style=enclosing_style)
             result = result.apply_style(iommi_style, is_root=is_root)
+
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')

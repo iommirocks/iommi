@@ -22,12 +22,7 @@ from iommi.base import (
     values,
 )
 from iommi.declarative import declarative
-from iommi.declarative.namespace import (
-    EMPTY,
-    Namespace,
-    setdefaults_path,
-)
-from iommi.declarative.with_meta import with_meta
+from iommi.declarative.namespace import EMPTY
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate_strict
 from iommi.fragment import (
@@ -94,7 +89,6 @@ class MenuBase(Part, Tag):
             )
 
 
-@with_meta
 class MenuItem(MenuBase):
     """
     Class that is used for the clickable menu items in a menu.
@@ -179,7 +173,6 @@ def _path_plus_query(url):
     return parsed_url
 
 
-@with_meta
 @declarative(MenuItem, '_sub_menu_dict', add_init_kwargs=False)
 class Menu(MenuBase):
     """

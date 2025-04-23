@@ -1,23 +1,28 @@
+import re
 from typing import Dict
 
 import pytest
+from django.template import Template
 
 from iommi import (
+    Form,
     Fragment,
     Header,
+    Page,
 )
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
 from iommi.declarative.with_meta import with_meta
 from iommi.refinable import (
+    prefixes,
     Prio,
     Refinable,
+    refinable,
     RefinableMembers,
     RefinableNamespace,
-    RefinableObject,
-    prefixes,
-    refinable,
+    RefinableObject
 )
+from tests.helpers import req
 
 
 def test_i_stil_med2():
@@ -64,17 +69,18 @@ def test_refinable():
 
 
 def test_with_meta():
-    @with_meta
     class MyRefinableObject(RefinableObject):
         a = Refinable()
         b = Refinable()
 
         class Meta:
             a = 1
+            b__c = 3
 
     my_refinable = MyRefinableObject(b=2)
-    assert my_refinable.iommi_namespace == Namespace(a=1, b=2)
-
+    assert my_refinable.refine_done().iommi_namespace == Namespace(a=1, b=2)
+    assert my_refinable.get_meta() ==Namespace(a=1, b__c=3)
+    assert my_refinable.get_meta_flat() ==dict(a=1, b__c=3)
 
 def test_with_dispatch():
     class MyRefinableObject(RefinableObject):
@@ -321,3 +327,56 @@ def test_check_attribute_existence():
         ),
     ):
         Fruit(smell=17)
+
+
+def test_no_add_init_kwargs():
+    class MyRefinable(RefinableObject):
+        a = Refinable()
+
+        class Meta:
+            a = 17
+
+    assert MyRefinable(a=42).refine_done().a == 42
+    assert MyRefinable().refine_done().a == 17
+
+def test_with_meta_merge():
+    class MyRefinable(RefinableObject):
+        a = Refinable()
+
+        class Meta:
+            a__foo = 17
+
+    assert MyRefinable(a__bar=42).refine_done().a == dict(foo=17, bar=42)
+
+def test_fragment_in_fields():
+    class MyForm(Form):
+        class Meta:
+            fields__foo__after = 0
+
+    form = MyForm(
+        fields__foo=Fragment(
+            template=Template(
+                "I see a black moon rising",
+            )
+        )
+    )
+    assert "I see a black moon rising" in form.bind(request=req("get")).__html__()
+
+def test_with_meta_warning():
+    @with_meta
+    class MyPage(Page):
+        class Meta:
+            extra__banana=17
+
+    with pytest.warns(Warning) as records:
+        p = MyPage().refine_done()
+
+    assert (
+        re.match(
+            r'RefinableObject .* should not merge class Meta attributes into the constructor invocation. '
+            r'Drop @with_meta decorator.',
+            str(records[0].message)
+        )
+    )
+
+    assert p.extra.banana == 17
