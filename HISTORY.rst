@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+7.13.0 (2025-04-24)
+~~~~~~~~~~~~~~~~~~~
+
+* Basic support for `GeneratedField`
+
+* `class Meta` handling changes. This should resolve some config stacking order surprises.
+
+* `MainMenu`: `http` urls should also count as external links
+
 
 7.12.1 (2025-03-26)
 ~~~~~~~~~~~~~~~~~~~
