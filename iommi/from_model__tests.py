@@ -1,3 +1,4 @@
+import django
 import pytest
 from django.contrib.auth.models import (
     Group,
@@ -7,10 +8,13 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     CASCADE,
     CharField,
+    F,
     ForeignKey,
     IntegerField,
     Model,
+    Value,
 )
+from django.db.models.functions import Concat
 
 from iommi import (
     Field,
@@ -274,3 +278,14 @@ def test_error_includes_reverse_field(MyField):  # noqa: N803
         form.bind()
 
     assert 'user_set' in str(e.value)
+
+
+@pytest.mark.skipif(not django.VERSION[:2] >= (5, 0), reason='Requires django 5.0+')
+def test_generated_field():
+    from django.db.models import GeneratedField
+
+    class AModel(Model):
+        generated_field = GeneratedField(expression=Concat(Value('foo:'), F('pk')), output_field=CharField(max_length=100), db_persist=True)
+
+    form = Form(auto__model=AModel).bind(request=req('get'))
+    assert form.fields.generated_field.iommi_shortcut_stack == ['text']
