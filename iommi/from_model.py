@@ -13,6 +13,10 @@ from django.db.models import (
     Model,
     OneToOneRel,
 )
+try:
+    from django.db.models import GeneratedField
+except ImportError:
+    GeneratedField = None
 
 from iommi.base import MISSING
 from iommi.declarative.dispatch import dispatch
@@ -111,7 +115,11 @@ def member_from_model(
         if model_field_name is None:
             model_field_name = model_field.name
 
-    factory = factory_lookup.get(type(model_field), MISSING)
+    model_field_type = type(model_field)
+    if model_field_type == GeneratedField:
+        model_field_type = type(model_field.output_field)
+
+    factory = factory_lookup.get(model_field_type, MISSING)
 
     if factory is MISSING:
         for django_field_type, foo in reversed(list(factory_lookup.items())):
@@ -122,7 +130,7 @@ def member_from_model(
     if factory is MISSING:
 
         def no_factory_defined(**_):
-            message = f'No factory for {model.__name__}.{model_field_name} of type {type(model_field).__name__}.'
+            message = f'No factory for {model.__name__}.{model_field_name} of type {model_field_type.__name__}.'
             if factory_lookup_register_function is not None:
                 message += (
                     ' Register a factory with register_factory or %s, you can also register one that returns None to not handle this field type'
