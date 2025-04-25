@@ -258,3 +258,8 @@ def test_collect_config_returns_none_on_missing():
     from tests import empty_iommi_admin
 
     assert collect_config(empty_iommi_admin) is None
+
+
+def test_no_config():
+    a = Admin.all_models().refine_done()
+    assert 'auth_user' in a.apps

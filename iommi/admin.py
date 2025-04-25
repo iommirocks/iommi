@@ -1,4 +1,5 @@
 import functools
+from traceback import print_stack
 from typing import Type
 from urllib.parse import urlencode
 
@@ -119,8 +120,6 @@ class Admin(Page):
     class Meta:
         table_class = EditTable
         form_class = Form
-        apps = EMPTY
-        parts = EMPTY
 
     model: Type[Model] = Refinable()
     instance: Model = Refinable()
@@ -183,7 +182,11 @@ class Admin(Page):
             ),
         ),
     )
-    def __init__(self, parts, apps, **kwargs):
+    @dispatch(
+        apps=EMPTY,
+        parts=EMPTY,
+    )
+    def __init__(self, apps, parts, **kwargs):
         # Validate apps params
         for k in apps.keys():
             assert k in joined_app_name_and_model, (
@@ -237,6 +240,7 @@ class Admin(Page):
 
     def on_refine_done(self):
         part_name = ''
+        assert self.operation
         part_name += self.operation
         if self.app_name:
             part_name += '_' + self.app_name
