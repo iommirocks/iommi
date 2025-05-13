@@ -141,7 +141,7 @@ def test_declarative_forms():
             instance = lambda params, **_: User.objects.get(pk=params.user_pk)
 
             @staticmethod
-            def actions__submit__post_handler(form, **_):
+            def actions__submit__post_handler(user, form, **_):
                 if not form.is_valid():
                     return  # pragma: no cover
 
