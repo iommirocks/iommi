@@ -6,6 +6,8 @@ from typing import (
 
 from iommi._web_compat import (
     format_html,
+    render_template,
+    Template,
     template_types,
 )
 from iommi.base import (
@@ -67,6 +69,7 @@ class Page(Part):
     context = SpecialEvaluatedRefinable()
     h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
     parts: Dict[str, PartType] = RefinableMembers()
+    template: Union[str, Template] = Refinable()
 
     class Meta:
         member_class = Fragment
@@ -129,7 +132,14 @@ class Page(Part):
             )
             for name, part in items(sort_after(parts))
         }
-        return render(rendered)
+
+        if self.template is None:
+            html = render(rendered)
+        else:
+            context['parts'] = rendered
+            html = render_template(request=self.get_request(), template=self.template, context=context)
+
+        return html
 
     def as_view(self):
         return build_as_view_wrapper(self)

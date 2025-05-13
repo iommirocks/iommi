@@ -237,3 +237,25 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
         'static_part': 'This is a static thing',
     }
     assert next(counter) == 1
+
+
+def test_template():
+    page = Page(
+        parts=dict(foo='Foo', bar=html.div('Bar')),
+        template=Template('{{parts.bar}} {{parts.foo}}')
+    ).bind()
+
+    verify_html(
+        actual_html=render_root(part=page),
+        # language=HTML
+        expected_html='''
+        <!DOCTYPE html>
+        <html lang="en-us">
+            <head> <title/> </head>
+            <body>
+                <div> Bar </div>
+                Foo
+            </body>
+        </html>
+        ''',
+    )
