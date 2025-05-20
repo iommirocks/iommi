@@ -284,3 +284,37 @@ def test_drill_down(album):
 
         show_output(menu, request=request)
         # @end
+
+
+def test_dynamic_submenu(medium_discography):
+    # language=rst
+    """
+    How do I make a data driven dynamic submenu?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses M.items
+
+    There can be cases where you want a dynamic submenu where the items come from the database. To do this, specify `items` as a callable. Note that urls here can't be mapped to paths, as paths need to be known at startup.
+
+    """
+
+    menu = MainMenu(
+        items=dict(
+            albums=M(
+                view=albums_view,
+                items=lambda **_: {
+                    f'album_{album.pk}': M(
+                        view=EXTERNAL,
+                        display_name=str(album),
+                        url=album.get_absolute_url(),
+                    )
+                    for album in Album.objects.all()
+                }
+            )
+        ),
+    )
+
+    # @test
+    request = req('get', url=f'/albums/')
+
+    show_output(menu, request=request)
+    # @end

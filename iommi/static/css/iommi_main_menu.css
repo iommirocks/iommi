@@ -140,6 +140,7 @@ body.right_sidebar_menu_active.compact_menu {
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 90%;
+            white-space: nowrap;
         }
 
         ul ul {
