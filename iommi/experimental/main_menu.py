@@ -228,10 +228,17 @@ class M:
         self.include = include
         self.display_name = display_name
         self._raw_display_name = None  # We need programmatic access to this from okrand for i18n
-        self.items = {
-            k: M(**v) if isinstance(v, dict) else v
-            for k, v in items.items()
-        }
+        self.dynamic_items = None
+        self.items = {}
+
+        if isinstance(items, Namespace) and 'call_target' in items:
+            self.dynamic_items = items['call_target']
+        else:
+            self.items = {
+                k: M(**v) if isinstance(v, dict) else v
+                for k, v in items.items()
+            }
+
         self.parent = None
         self.params = params
         self.open = open
@@ -308,8 +315,16 @@ class BoundM:
 
         assert not conf, f'Unsupported configuration {conf}'
 
+        self._own_evaluate_parameters = self.own_evaluate_parameters()
+
         if self.include:
             self.display_name = self._display_name()
+            items = self.m.items
+
+            if self.m.dynamic_items:
+                assert not items
+                items = evaluate_strict(self.m.dynamic_items, **self._own_evaluate_parameters)
+
             self.raw_items = {
                 k: BoundM(
                     v,
@@ -317,14 +332,12 @@ class BoundM:
                     root=root,
                     parent=self,
                 )
-                for k, v in self.m.items.items()
+                for k, v in items.items()
             }
             self.items = {k: v for k, v in self.raw_items.items() if v.include}
         else:
             self.raw_items = {}
             self.items = {}
-
-        self._own_evaluate_parameters = self.own_evaluate_parameters()
 
         self.attrs = evaluate_attrs(self, **self._own_evaluate_parameters)
 
