@@ -232,7 +232,8 @@ class M:
         self.items = {}
 
         if isinstance(items, Namespace) and 'call_target' in items:
-            self.dynamic_items = items['call_target']
+            self.dynamic_items = items.pop('call_target')
+            assert not items, "You can't mix dynamic items and static items"
         else:
             self.items = {
                 k: M(**v) if isinstance(v, dict) else v

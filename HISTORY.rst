@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.14.0 (2025-05-21)
+~~~~~~~~~~~~~~~~~~~
+
+* `MainMenu`: support for dynamic subitems for `M` objects
+
+* Fix regression with Admin failing when there is no apps config
+
+
 7.13.0 (2025-04-24)
 ~~~~~~~~~~~~~~~~~~~
 
