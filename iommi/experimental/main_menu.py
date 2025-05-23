@@ -393,6 +393,10 @@ class BoundM:
         return self.params_are_satisfied()
 
     @cached_property
+    def icon(self):
+        return evaluate_strict(self.m.icon, **self.own_evaluate_parameters())
+
+    @cached_property
     def link(self):
         url = self.url
         icon = ''
@@ -401,8 +405,8 @@ class BoundM:
 
         style = resolve_style(None)
 
-        if self.m.icon is not None:
-            icon = style.icon_formatter(self.m.icon)
+        if self.icon is not None:
+            icon = style.icon_formatter(self.icon)
 
         if url.startswith('https://') or url.startswith('http://'):
             external = format_html(' {} ', style.icon_formatter('external'))
