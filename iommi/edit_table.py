@@ -292,6 +292,24 @@ def edit_table__post_handler(table, request, **_):
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
+class _EditTable_Lazy_tbody:
+    """Custom tbody for EditTable that includes new rows when there are validation errors."""
+    def __init__(self, table):
+        self.table = table
+
+    def __html__(self):
+        rows = []
+        
+        for cells in self.table.cells_for_rows():
+            rows.append(cells.__html__())
+        
+        if (self.table.create_errors or self.table.edit_errors) and self.table._has_new_rows():
+            for cells in self.table.cells_for_rows_for_create():
+                rows.append(cells.__html__())
+        
+        return mark_safe('\n'.join(rows))
+
+
 class EditTable(Table):
     # language=rst
     """
@@ -500,6 +518,7 @@ class EditTable(Table):
             if virtual_pks:
                 self.attrs['data-next-virtual-pk'] = str(min(virtual_pks) - 1)
         
+        self.tbody.children.text = _EditTable_Lazy_tbody(self)
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
@@ -533,15 +552,9 @@ class EditTable(Table):
         
         return sorted(virtual_pks, reverse=True)
 
-    def cells_for_rows(self, paginate=True):
-        """Override to include new rows when there are validation errors."""
-        for cells in super().cells_for_rows(paginate=paginate):
-            yield cells
-        
-        # Yield create rows if there are errors
-        if self.create_errors:
-            for cells in self.cells_for_rows_for_create():
-                yield cells
+    def _has_new_rows(self):
+        virtual_pks = self._get_virtual_pks_from_post()
+        return bool(virtual_pks)
 
     def cells_for_rows_for_create(self):
         """Yield a Cells instance for each create row sent from the client."""
