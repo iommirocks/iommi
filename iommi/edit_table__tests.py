@@ -379,6 +379,53 @@ def test_edit_table_post_delete():
 
 
 @pytest.mark.django_db
+def test_edit_table_delete_new_row_and_existing_row():
+    existing_foo = TFoo.objects.create(a=1, b='existing')
+    another_foo = TFoo.objects.create(a=2, b='another')
+    
+    edit_table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        columns__b__field__include=True,
+        columns__delete=EditColumn.delete(),
+    ).refine_done()
+    
+    response = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                # First new row data (to be deleted)
+                'columns/a/-1': '99',
+                'columns/b/-1': 'new row to delete',
+                'pk_delete_-1': '',
+                
+                # Second new row data (to be kept)
+                'columns/a/-2': '88',
+                'columns/b/-2': 'new row to keep',
+                
+                # Mark existing row for deletion
+                f'pk_delete_{existing_foo.pk}': '',
+                f'columns/a/{existing_foo.pk}': str(existing_foo.a),
+                f'columns/b/{existing_foo.pk}': existing_foo.b,
+                
+                # Data for the other existing row (unchanged)
+                f'columns/a/{another_foo.pk}': str(another_foo.a),
+                f'columns/b/{another_foo.pk}': another_foo.b,
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+    
+    assert response.status_code == 302
+    assert not TFoo.objects.filter(pk=existing_foo.pk).exists()
+    assert TFoo.objects.filter(pk=another_foo.pk).exists()
+    new_row = TFoo.objects.filter(a=88, b='new row to keep').first()
+    assert new_row is not None
+    assert not TFoo.objects.filter(a=99, b='new row to delete').exists()
+    assert TFoo.objects.count() == 2
+
+
+@pytest.mark.django_db
 def test_edit_table_post_row_group(small_discography):
     edit_table = EditTable(
         auto__model=Album,
