@@ -94,12 +94,17 @@ class EditCell(Cell):
 
             field.attr = orig_attr
 
+            # Check both edit_errors and create_errors
+            errors = None
             if self.table.edit_errors:
                 errors = self.table.edit_errors.get(path)
-                if errors:
-                    return Template(
-                        '{{ input_html }}<br><span class="text-danger"><ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></span>'
-                    ).render(context=Context(dict(input_html=input_html, errors=errors)))
+            if not errors and self.table.create_errors:
+                errors = self.table.create_errors.get(path)
+            
+            if errors:
+                return Template(
+                    '{{ input_html }}<br><span class="text-danger"><ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></span>'
+                ).render(context=Context(dict(input_html=input_html, errors=errors)))
 
             return input_html
         else:
@@ -489,17 +494,25 @@ class EditTable(Table):
                 .bind(parent=self.create_form)
                 .__html__()
             )
+            
+            # Set next virtual PK to avoid conflicts with existing virtual rows
+            virtual_pks = self._get_virtual_pks_from_post()
+            if virtual_pks:
+                self.attrs['data-next-virtual-pk'] = str(min(virtual_pks) - 1)
+        
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
-
-    def cells_for_rows_for_create(self):
-        """Yield a Cells instance for each create row sent from the client."""
-        assert self._is_bound, NOT_BOUND_MESSAGE
-
+    
+    def _get_virtual_pks_from_post(self):
+        """Extract virtual PKs from POST data."""
+        request = self.get_request()
+        if not request or request.method != 'POST':
+            return []
+        
         prefix = self.iommi_path + DISPATCH_PATH_SEPARATOR if self.iommi_path else ''
         delete_prefix = prefix + 'pk_delete_'
-
+        
         def parse_virtual_pk(k):
             if not k.startswith(prefix) or k.startswith(delete_prefix):
                 return None
@@ -510,14 +523,31 @@ class EditTable(Table):
                 return int(parts[-1])
             except ValueError:
                 return None
-
+        
         post_data = self.get_request().POST
         pks = {parse_virtual_pk(k) for k in keys(post_data)}
-        virtual_pks = {
+        virtual_pks = [
             k for k in pks 
             if k is not None and k < 0 and f'{delete_prefix}{k}' not in post_data
-        }
+        ]
+        
+        return sorted(virtual_pks, reverse=True)
 
+    def cells_for_rows(self, paginate=True):
+        """Override to include new rows when there are validation errors."""
+        for cells in super().cells_for_rows(paginate=paginate):
+            yield cells
+        
+        # Yield create rows if there are errors
+        if self.create_errors:
+            for cells in self.cells_for_rows_for_create():
+                yield cells
+
+    def cells_for_rows_for_create(self):
+        """Yield a Cells instance for each create row sent from the client."""
+        assert self._is_bound, NOT_BOUND_MESSAGE
+
+        virtual_pks = self._get_virtual_pks_from_post()
         if not virtual_pks:
             return
 
