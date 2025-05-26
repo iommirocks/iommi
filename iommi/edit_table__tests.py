@@ -472,3 +472,58 @@ def test_edit_table__auto__rows_2(small_discography):
     edit_table.bind(request=req('get'))
 
 # TODO: attr=None on a column crashes
+
+
+@pytest.mark.django_db
+def test_edit_table_multiple_new_rows_validation_errors_preserved():
+    edit_table = EditTable(
+        auto__model=Album,
+        columns__name__field__include=True,
+        columns__name__field__required=True,
+        columns__artist__field__include=True,
+        columns__year__field__include=True,
+    )
+    
+    bound_table = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                # First new row - invalid (missing name)
+                'columns/name/-1': '',
+                'columns/artist/-1': '3',
+                'columns/year/-1': '2023',
+                # Second new row - valid
+                'columns/name/-2': 'Valid Album',
+                'columns/artist/-2': '5',
+                'columns/year/-2': '2024',
+                # Third new row - invalid (missing name)
+                'columns/name/-3': '',
+                'columns/artist/-3': '3',
+                'columns/year/-3': '2025',
+                '-save': '',
+            }
+        )
+    )
+    
+    response = bound_table.render_to_response()
+    assert response.status_code == 200
+    assert bound_table.create_errors
+    assert not bound_table.is_valid()
+    
+    html = response.content.decode()
+    
+    # All 3 new rows should still be displayed
+    assert 'value="2023"' in html
+    assert 'value="2024"' in html
+    assert 'value="2025"' in html
+    assert 'value="Valid Album"' in html
+    assert html.count('This field is required') == 2
+    
+    # Verify row order is preserved
+    pos_2023 = html.find('value="2023"')
+    pos_2024 = html.find('value="2024"')
+    pos_2025 = html.find('value="2025"')
+    assert pos_2023 < pos_2024 < pos_2025
+    
+    assert 'data-next-virtual-pk="-4"' in html
+    assert Album.objects.count() == 0
