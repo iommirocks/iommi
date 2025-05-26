@@ -160,7 +160,7 @@ class EditColumn(Column):
             mark_safe(
                 '''
                     $(document).ready(() => {
-                        $('.edit_table_delete').click((event) => {
+                        $(document).on('click', '.edit_table_delete', (event) => {
                             const checked = $(event.target).closest('tr').find('input')[0].checked;
                             $(event.target).closest('tr').find('input').prop("checked", !checked);
                             $(event.target).closest('tr')[0].style.opacity = checked ? "1.0" : "0.3";
@@ -511,9 +511,12 @@ class EditTable(Table):
             except ValueError:
                 return None
 
-        pks = {parse_virtual_pk(k) for k in keys(self.get_request().POST)}
-
-        virtual_pks = {k for k in pks if k is not None and k < 0}
+        post_data = self.get_request().POST
+        pks = {parse_virtual_pk(k) for k in keys(post_data)}
+        virtual_pks = {
+            k for k in pks 
+            if k is not None and k < 0 and f'{delete_prefix}{k}' not in post_data
+        }
 
         if not virtual_pks:
             return
