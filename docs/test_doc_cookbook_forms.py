@@ -6,7 +6,6 @@ from iommi._web_compat import (
     HttpResponseRedirect,
     mark_safe,
 )
-from iommi.form import save_nested_forms
 from iommi.struct import Struct
 from tests.helpers import (
     req,
@@ -952,6 +951,7 @@ def test_nested_forms(medium_discography):
 
     You need to use the ``save_nested_forms`` post handler to have a single save button for all the nested forms and edit tables:
     """
+    from iommi.form import save_nested_forms
 
     class MyNestedForm(Form):
         edit_ozzy = Form.edit(
