@@ -131,9 +131,19 @@ def test_edit_table_post():
 
     post_save_was_called = False
 
-    def post_save(**_):
+    def post_save(instances, creates, updates, deletes, **_):
         nonlocal post_save_was_called
         post_save_was_called = True
+        assert instances=={
+            1: rows[0],
+            2: rows[1],
+       }
+        assert creates==[]
+        assert updates=={
+            1: {'editable_thing': 'fisk'},
+            2: {'editable_thing': 'fusk'},
+        }
+        assert deletes==[]
 
     edit_table = EditTable(
         columns=dict(
@@ -280,7 +290,19 @@ def test_edit_table_auto_rows():
 @pytest.mark.django_db
 def test_edit_table_post_create():
     foo_pk = TFoo.objects.create(a=1, b='asd').pk
-    edit_table = EditTable(auto__model=TBar).refine_done()
+
+    post_save_called = False
+    post_save_creates = None
+    def post_save(creates, **_):
+        nonlocal post_save_called, post_save_creates
+        post_save_called = True
+        post_save_creates = creates
+
+    edit_table = EditTable(
+        auto__model=TBar,
+        extra__post_save=post_save,
+   ).refine_done()
+
     # language=html
     verify_html(
         actual_html=edit_table.bind().attrs['data-add-template'],
@@ -312,11 +334,13 @@ def test_edit_table_post_create():
     assert not edit_table.get_errors()
     response = edit_table.render_to_response()
     assert response.status_code == 302
+    assert post_save_called
 
     obj = TBar.objects.get()
     assert obj.pk >= 0
     assert obj.foo.pk == foo_pk
     assert obj.c is True
+    assert post_save_creates == [obj]
 
 
 @pytest.mark.django_db
@@ -359,7 +383,19 @@ def test_edit_table_post_create_hardcoded():
 @pytest.mark.django_db
 def test_edit_table_post_delete():
     tfoo = TFoo.objects.create(a=1, b='asd')
-    edit_table = EditTable(auto__model=TFoo, columns__delete=EditColumn.delete()).refine_done()
+    TFoo.objects.create(a=2, b='fgh')
+    post_save_called = False
+    post_save_deletes = None
+    def post_save(deletes, **_):
+        nonlocal post_save_called, post_save_deletes
+        post_save_called = True
+        post_save_deletes = deletes
+
+    edit_table = EditTable(
+        auto__model=TFoo,
+        columns__delete=EditColumn.delete(),
+        extra__post_save=post_save
+    ).refine_done()
 
     response = edit_table.bind(request=req('GET')).render_to_response()
     assert f'name="pk_delete_{tfoo.pk}"' in response.content.decode()
@@ -374,8 +410,9 @@ def test_edit_table_post_delete():
         )
     ).render_to_response()
     assert response.status_code == 302
-
-    assert TFoo.objects.all().count() == 0
+    assert post_save_called
+    assert post_save_deletes == [tfoo.pk]
+    assert TFoo.objects.all().count() == 1
 
 
 @pytest.mark.django_db

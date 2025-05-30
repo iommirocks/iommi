@@ -241,9 +241,21 @@ def edit_table__post_handler(table, request, **_):
     if table.edit_errors or table.create_errors:
         return None
 
+    creates =[]
+    deletes = []
+    updates = defaultdict(dict)
+    instances = {}
+
+    delete_queryset =None
     if isinstance(table.initial_rows, QuerySet):
         prefix = path_join(table.iommi_path, 'pk_delete_')
-        table.bulk_queryset(prefix=prefix).delete()
+        delete_queryset = table.bulk_queryset(prefix=prefix)
+
+    # @todo on_save callback?
+
+    if delete_queryset:
+        deletes = list(delete_queryset.values_list('pk', flat=True))
+        delete_queryset.delete()
 
     def save(cells_iterator, form):
         to_save = []
@@ -264,15 +276,16 @@ def edit_table__post_handler(table, request, **_):
                     field.invoke_callback(field.write_to_instance, instance=instance, value=value)
                     if not field.extra.get('django_related_field', False):
                         attrs_to_save.append(field.attr)
+                    updates[instance.pk][field.attr] = value
 
             to_save.append((instance, attrs_to_save))
+            instances[instance.pk] = instance
 
         to_save.sort(key=lambda x: abs(x[0].pk))
         for instance, attrs_to_save in to_save:
-            if not to_save:
-                pass
             if instance.pk is not None and instance.pk < 0:
                 instance.pk = None
+                creates.append(instance)
             if instance.pk is None:
                 attrs_to_save = None
 
@@ -289,7 +302,7 @@ def edit_table__post_handler(table, request, **_):
     save(table.cells_for_rows_for_create(), table.create_form)
 
     if 'post_save' in table.extra:
-        table.invoke_callback(table.extra.post_save)
+        table.invoke_callback(table.extra.post_save, instances=instances, creates=creates, deletes=deletes, updates=updates)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
