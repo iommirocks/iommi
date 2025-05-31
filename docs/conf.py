@@ -78,6 +78,7 @@ extensions = [
     # 'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
+    'sphinx_llms_txt',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

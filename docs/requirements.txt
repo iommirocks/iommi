@@ -13,3 +13,4 @@ time-machine==2.14.1
 django-fastdev
 docutils
 pyparsing
+sphinx-llms-txt==0.2.2
