@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from typing import (
     Dict,
@@ -510,6 +511,10 @@ class EditTable(Table):
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
         if self.create_form is not None:
             self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
+
+        if 'post_edit' in self.extra:
+            warnings.warn("post_save is deprecated. Use EditColumn.on_save callback", DeprecationWarning)
+
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()

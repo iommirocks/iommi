@@ -582,6 +582,10 @@ def test_edit_table__auto__rows_2(small_discography):
     )
     edit_table.bind(request=req('get'))
 
+def test_callback_rename_deprecations_warning():
+    with pytest.warns(DeprecationWarning):
+        EditTable(extra__post_edit=lambda **_: None).refine_done()
+
 # TODO: attr=None on a column crashes
 
 
