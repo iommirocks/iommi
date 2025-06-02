@@ -129,11 +129,10 @@ def test_edit_table_post():
         ),
     ]
 
-    post_save_was_called = False
+    pre_save_was_called = False
+    on_save_was_called = False
 
-    def post_save(instances, creates, updates, deletes, **_):
-        nonlocal post_save_was_called
-        post_save_was_called = True
+    def check_kwargs(creates, instances, updates, deletes, **_):
         assert instances=={
             1: rows[0],
             2: rows[1],
@@ -144,6 +143,16 @@ def test_edit_table_post():
             2: {'editable_thing': 'fusk'},
         }
         assert deletes==[]
+
+    def pre_save(**kwargs):
+        nonlocal pre_save_was_called
+        pre_save_was_called = True
+        check_kwargs(**kwargs)
+
+    def on_save(**kwargs):
+        nonlocal on_save_was_called
+        on_save_was_called = True
+        check_kwargs(**kwargs)
 
     edit_table = EditTable(
         columns=dict(
@@ -156,7 +165,8 @@ def test_edit_table_post():
             readonly_thing=EditColumn(),
         ),
         rows=rows,
-        extra__post_save=post_save,
+        pre_save=pre_save,
+        on_save=on_save,
     )
 
     # Check validation errors
@@ -195,7 +205,8 @@ def test_edit_table_post():
     assert rows[0].editable_thing == 'fisk'
     assert rows[1].editable_thing == 'fusk'
 
-    assert post_save_was_called
+    assert pre_save_was_called
+    assert on_save_was_called
 
 
 @pytest.mark.django_db
@@ -289,18 +300,38 @@ def test_edit_table_auto_rows():
 
 @pytest.mark.django_db
 def test_edit_table_post_create():
-    foo_pk = TFoo.objects.create(a=1, b='asd').pk
+    foo = TFoo.objects.create(a=1, b='asd')
 
-    post_save_called = False
-    post_save_creates = None
-    def post_save(creates, **_):
-        nonlocal post_save_called, post_save_creates
-        post_save_called = True
-        post_save_creates = creates
+    pre_save_called = False
+    on_save_called = False
+    on_save_creates = None
+
+    def pre_save(creates, instances, updates, deletes, **_):
+        nonlocal pre_save_called
+        pre_save_called = True
+
+        assert len(creates) == 1
+        created = creates[0]
+        assert created.pk is None
+        assert created.foo == foo
+        assert created.c is True
+
+        assert instances == {}
+        assert updates == {}
+        assert deletes == []
+
+    def on_save(creates, instances, updates, deletes, **_):
+        nonlocal on_save_called, on_save_creates
+        on_save_called = True
+        on_save_creates = creates
+        assert instances == {}
+        assert updates == {}
+        assert deletes == []
 
     edit_table = EditTable(
         auto__model=TBar,
-        extra__post_save=post_save,
+        pre_save=pre_save,
+        on_save=on_save,
    ).refine_done()
 
     # language=html
@@ -325,7 +356,7 @@ def test_edit_table_post_create():
         request=req(
             'POST',
             **{
-                'columns/foo/-1': f'{foo_pk}',
+                'columns/foo/-1': f'{foo.pk}',
                 'columns/c/-1': 'true',
                 '-save': '',
             },
@@ -334,13 +365,14 @@ def test_edit_table_post_create():
     assert not edit_table.get_errors()
     response = edit_table.render_to_response()
     assert response.status_code == 302
-    assert post_save_called
+    assert pre_save_called
+    assert on_save_called
 
     obj = TBar.objects.get()
     assert obj.pk >= 0
-    assert obj.foo.pk == foo_pk
+    assert obj.foo == foo
     assert obj.c is True
-    assert post_save_creates == [obj]
+    assert on_save_creates == [obj]
 
 
 @pytest.mark.django_db
@@ -384,17 +416,31 @@ def test_edit_table_post_create_hardcoded():
 def test_edit_table_post_delete():
     tfoo = TFoo.objects.create(a=1, b='asd')
     TFoo.objects.create(a=2, b='fgh')
-    post_save_called = False
-    post_save_deletes = None
-    def post_save(deletes, **_):
-        nonlocal post_save_called, post_save_deletes
-        post_save_called = True
-        post_save_deletes = deletes
+    pre_save_called = False
+    on_save_called = False
+
+    def check_kwargs(creates, instances, updates, deletes, **_):
+        assert creates == []
+        assert updates == {}
+        assert instances == {}
+        assert deletes == [tfoo.pk]
+
+    def pre_save(**kwargs):
+        print(f"{kwargs=}")
+        nonlocal pre_save_called
+        pre_save_called = True
+        check_kwargs(**kwargs)
+
+    def on_save(**kwargs):
+        nonlocal on_save_called
+        on_save_called = True
+        check_kwargs(**kwargs)
 
     edit_table = EditTable(
         auto__model=TFoo,
         columns__delete=EditColumn.delete(),
-        extra__post_save=post_save
+        pre_save=pre_save,
+        on_save=on_save,
     ).refine_done()
 
     response = edit_table.bind(request=req('GET')).render_to_response()
@@ -410,8 +456,8 @@ def test_edit_table_post_delete():
         )
     ).render_to_response()
     assert response.status_code == 302
-    assert post_save_called
-    assert post_save_deletes == [tfoo.pk]
+    assert pre_save_called
+    assert on_save_called
     assert TFoo.objects.all().count() == 1
 
 

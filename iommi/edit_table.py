@@ -209,6 +209,7 @@ def edit_table__post_handler(table, request, **_):
     # 1. Validate all the fields
     table.edit_errors = defaultdict(set)
     table.create_errors = defaultdict(set)
+    table.delete_errors = defaultdict(set)
     parsed_data = {}
 
     assert table.edit_form._is_bound
@@ -238,7 +239,7 @@ def edit_table__post_handler(table, request, **_):
     validate(table.cells_for_rows(), table.edit_form, table.edit_errors)
     validate(table.cells_for_rows_for_create(), table.create_form, table.create_errors)
 
-    if table.edit_errors or table.create_errors:
+    if table.create_errors or table.edit_errors or table.delete_errors:
         return None
 
     creates =[]
@@ -250,59 +251,67 @@ def edit_table__post_handler(table, request, **_):
     if isinstance(table.initial_rows, QuerySet):
         prefix = path_join(table.iommi_path, 'pk_delete_')
         delete_queryset = table.bulk_queryset(prefix=prefix)
-
-    # @todo on_save callback?
-
-    if delete_queryset:
         deletes = list(delete_queryset.values_list('pk', flat=True))
-        delete_queryset.delete()
 
-    def save(cells_iterator, form):
-        to_save = []
+    to_save = []
+
+    def write_to_instances(cells_iterator, form):
         for cells in cells_iterator:
             if not isinstance(cells, EditCells):
                 continue
             instance = cells.row
             form.instance = instance
             attrs_to_save = []
+            is_create = cells.is_create_template
             for cell in cells.iter_editable_cells():
                 path = cell.get_path()
                 value = parsed_data[path]
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
-                if cells.is_create_template or (
+                if is_create or (
                     field.invoke_callback(field.read_from_instance, instance=instance) != value
                 ):
                     field.invoke_callback(field.write_to_instance, instance=instance, value=value)
                     if not field.extra.get('django_related_field', False):
                         attrs_to_save.append(field.attr)
-                    updates[instance.pk][field.attr] = value
+                    if not is_create:
+                        updates[instance.pk][field.attr] = value
+                        instances[instance.pk] = instance
 
-            to_save.append((instance, attrs_to_save))
-            instances[instance.pk] = instance
-
-        to_save.sort(key=lambda x: abs(x[0].pk))
-        for instance, attrs_to_save in to_save:
-            if instance.pk is not None and instance.pk < 0:
-                instance.pk = None
+            if is_create:
                 creates.append(instance)
-            if instance.pk is None:
-                attrs_to_save = None
-
-            if attrs_to_save is None:
-                instance.save()
             else:
-                for prefix in find_unique_prefixes(attrs_to_save):
-                    model_object = instance
-                    if prefix:  # Might be ''
-                        model_object = getattr_path(model_object, prefix)
-                    model_object.save(update_fields=[strip_prefix(x, prefix=f'{prefix}__') for x in attrs_to_save if x.startswith(prefix)])
+                if attrs_to_save:
+                    to_save.append((instance, attrs_to_save))
 
-    save(table.cells_for_rows(), table.edit_form)
-    save(table.cells_for_rows_for_create(), table.create_form)
+    write_to_instances(table.cells_for_rows(), table.edit_form)
+    write_to_instances(table.cells_for_rows_for_create(), table.create_form)
 
-    if 'post_save' in table.extra:
-        table.invoke_callback(table.extra.post_save, instances=instances, creates=creates, deletes=deletes, updates=updates)
+    creates.sort(key=lambda x: abs(x.pk))
+    for instance in creates:
+        instance.pk=None
+
+    to_save.sort(key=lambda x: x[0].pk)
+
+    table.invoke_callback(table.pre_save, instances=instances, creates=creates, deletes=deletes, updates=updates)
+
+    if table.create_errors or table.edit_errors or table.delete_errors:
+        return None
+
+    for instance in creates:
+        instance.save()
+
+    for instance, attrs_to_save in to_save:
+        for prefix in find_unique_prefixes(attrs_to_save):
+            model_object = instance
+            if prefix:  # Might be ''
+                model_object = getattr_path(model_object, prefix)
+            model_object.save(update_fields=[strip_prefix(x, prefix=f'{prefix}__') for x in attrs_to_save if x.startswith(prefix)])
+
+    if delete_queryset:
+        delete_queryset.delete()
+
+    table.invoke_callback(table.on_save, instances=instances, creates=creates, deletes=deletes, updates=updates)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
@@ -342,8 +351,9 @@ class EditTable(Table):
         # @end
     """
 
-    edit_errors = None
     create_errors = None
+    edit_errors = None
+    delete_errors = None
     edit_form: Form = Refinable()
     create_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
@@ -579,7 +589,11 @@ class EditTable(Table):
         if not virtual_pks:
             return
 
-        rows = [self.model(pk=pk) for pk in virtual_pks]
+        rows = []
+        for pk in virtual_pks:
+            instance = self. invoke_callback(self.new_instance)
+            instance.pk = pk
+            rows.append(instance)
 
         for i, row in enumerate(rows):
             row = self.preprocess_row_for_create(table=self, row=row)
@@ -596,8 +610,25 @@ class EditTable(Table):
 
     @staticmethod
     @refinable
+    def new_instance(table, **_):
+        return table.model()
+
+    @staticmethod
+    @refinable
     def preprocess_row_for_create(row, **_):
         return row
+
+    @staticmethod
+    @refinable
+    def pre_save(**_):
+        pass
+
+    @staticmethod
+    @refinable
+    def on_save(table, **kwargs):
+        if 'post_save' in table.extra:
+            table.extra.post_save(table=table, **kwargs)
+
 
     @property
     def render_edit_actions(self):
