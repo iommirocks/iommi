@@ -1171,3 +1171,79 @@ def test_how_do_i_create_a_hidden_field():
     # @test
     show_output(form)
     # @end
+
+
+def test_how_do_i_access_errors():
+    # language=rst
+    """
+    How do I access errors?
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Form.errors
+    .. uses Field.errors
+
+    Forms render errors automatically, but sometimes it's useful to programmatically access the errors. There is `Form.get_errors` for all errors, and `Field.get_errors` for individual fields.
+    """
+
+    def post_validation(**_):
+        raise ValidationError('Hardcoded error on the form')
+
+    form = Form.create(
+        auto__model=Album,
+        fields__name__is_valid=lambda **_: (False, 'Hardcoded error on the field'),
+        post_validation=post_validation,
+    )
+
+    # @test
+    form = form.bind(request=req('post', **{'-submit': '', 'name': 'foo'}))
+    show_output_collapsed(form)
+    # @end
+
+    # language=rst
+    """
+    `Form.get_errors` returns this dictionary:
+    """
+
+    # @test
+    assert form.get_errors() == (
+    # @end
+        {
+            'fields': {
+                'artist': {
+                    'This field is required',
+                },
+                'name': {
+                    'Hardcoded error on the field',
+                },
+                'year': {
+                    'This field is required',
+                },
+            },
+            'global': {
+                'Hardcoded error on the form',
+            },
+        }
+
+    # @test
+    )
+    # @end
+
+    # language=rst
+    """
+    You can get the errors on a given `Field` like this (not that you get a `set`!):
+    """
+
+    # @test
+    field_error = (
+    # @end
+    form.fields.name.get_errors()
+    # @test
+    )
+    # @end
+
+    # @test
+    assert field_error == (
+    # @end
+    {"Hardcoded error on the field"}
+    # @test
+    )
+    # @end
