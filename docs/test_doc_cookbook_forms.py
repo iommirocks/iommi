@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 from docs.models import *
@@ -1246,4 +1247,125 @@ def test_how_do_i_access_errors():
     {"Hardcoded error on the field"}
     # @test
     )
+    # @end
+
+
+def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath):
+    # language=rst
+    """
+    .. _field-write-to-instance:
+
+    How do I customize how a field value is written to the instance?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Field.write_to_instance
+
+    Sometimes you need to customize how a field value is written to a model instance. The `write_to_instance` callback gives you full control over this process. It receives the field, instance, and value as parameters.
+
+    Here are some common use cases:
+
+    Password fields
+    ===============
+
+    Django's password fields require special handling with `set_password()`:
+    """
+
+    def write_password(form, instance, value, **_):
+        if form.is_valid():
+            instance.set_password(value)
+            instance.save()
+
+    form = Form.edit(
+        auto__model=User,
+        auto__include=['password'],
+        fields__password__write_to_instance=write_password,
+    )
+
+    # @test
+    # Create a user instance for testing
+    test_user = User.objects.create_user(username='testuser', password='old password')
+    form = form.refine(instance=test_user)
+    form = form.bind(request=req('post', **{'-submit': '', 'password': 'new password'}))
+    assert isinstance(form.render_to_response(), HttpResponseRedirect)
+    assert not form.get_errors()
+    assert User.objects.get(pk=test_user.pk).check_password('new password')
+    # @end
+
+    # language=rst
+    """
+    Data transformation
+    ===================
+
+    Transform the data before saving (e.g., uppercase, calculations):
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        fields__name__write_to_instance=lambda field, instance, value, **_: setattr(instance, field.attr, value.upper()),
+    )
+
+    # @test
+    form = form.bind(request=req('post', name='paranoid', artist=black_sabbath.pk, year=1970, **{'-submit': ''}))
+    assert not form.get_errors()
+    assert isinstance(form.render_to_response(), HttpResponseRedirect)
+    album = Album.objects.get(name='PARANOID')
+    assert album.name == 'PARANOID'
+    Album.objects.all().delete()
+    # @end
+
+    # language=rst
+    """
+    Many-to-many relationships
+    ==========================
+
+    Many-to-many fields use `.set()` instead of direct assignment:
+    """
+
+    def genre_write_to_instance(instance, value, **_):
+        instance.genres.set(value or [])
+
+    form = Form.edit(
+        auto__model=Album,
+        auto__include=['genres'],
+        fields__genres__write_to_instance=genre_write_to_instance,
+    )
+
+    # @test
+    test_album = Album.objects.create(name='Test Album', artist=black_sabbath, year=1990)
+    heavy_metal = Genre.objects.create(name='Heavy Metal')
+    form = form.refine(instance=test_album)
+    form = form.bind(request=req('post', **{'-submit': '', 'genres': heavy_metal.pk}))
+    assert not form.get_errors()
+    assert isinstance(form.render_to_response(), HttpResponseRedirect)
+    assert list(Album.objects.get(pk=test_album.pk).genres.all().values_list('name', flat=True)) == ['Heavy Metal']
+    # @end
+
+    # language=rst
+    """
+    The default implementation
+    ==========================
+
+    If you want to extend the default behavior rather than replace it:
+    """
+
+    def log_and_write(field, instance, value, **kwargs):
+        # Custom logic before writing
+        print(f"Writing {value} to {field.attr}")
+
+        # Call the default implementation
+        Field.write_to_instance(field=field, instance=instance, value=value, **kwargs)
+
+        # Custom logic after writing
+        print(f"Successfully wrote to {instance}")
+
+    form = Form.edit(
+        auto__model=Album,
+        auto__include=['name'],
+        fields__name__write_to_instance=log_and_write,
+    )
+
+    # @test
+    form = form.refine(instance=test_album)
+    form = form.bind(request=req('post', **{'-submit': '', 'name': 'foo'}))
+    assert not form.get_errors()
+    assert isinstance(form.render_to_response(), HttpResponseRedirect)
     # @end
