@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+7.14.2 (2025-06-04)
+~~~~~~~~~~~~~~~~~~~
+
+
+* `EditTable` delete button fixed for dynamically added rows
+
+* Fixed `EditTable` not displaying new rows with validation errors
+
+* Fixed a crash in `Table` where the code tried to read the default sort order from a model when there was no model present
+
+
 7.14.1 (2025-05-21)
 ~~~~~~~~~~~~~~~~~~~
 
