@@ -106,7 +106,7 @@ def perform_ajax_dispatch(*, root, path, value):
 
     func = getattr(target, 'func', None)
     if not isinstance(target, Endpoint) or func is None:
-        raise InvalidEndpointPathException(f'Target {target!r} is not a valid endpoint handler')
+        raise InvalidEndpointPathException(f'Target "{target!r}" is not a valid endpoint handler')
 
     return target.invoke_callback(func, root=root, value=value)
 
@@ -118,7 +118,7 @@ def perform_post_dispatch(*, root, path, value):
     target = find_target(path=path, root=root)
 
     if getattr(target, 'post_handler', None) is None:
-        raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
+        raise InvalidEndpointPathException(f'Target "{target!r}" has no registered post_handler')
 
     return target.invoke_callback(target.post_handler, value=value)
 
