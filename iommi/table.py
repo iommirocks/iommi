@@ -2358,7 +2358,7 @@ class Table(Part, Tag):
         else:
             sort_keys = [sort_key] if not isinstance(sort_key, list) else sort_key
             sort_keys = [('-' + x if descending else x) for x in sort_keys]
-            if table.model._meta.ordering:
+            if table.model is not None and table.model._meta.ordering:
                 sort_keys.extend(table.model._meta.ordering)
             if sort_keys[-1] != 'pk':
                 sort_keys.append('pk')  # Add pk to always guarantee stable order for pagination.
