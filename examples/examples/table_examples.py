@@ -20,6 +20,7 @@ from examples.views import (
 from iommi import (
     Action,
     Column,
+    EditColumn,
     EditTable,
     Field,
     Page,
@@ -253,6 +254,10 @@ def edit_table(request):
             name=dict(
                 filter__include=True,
                 field__include=True,
+            ),
+            artist=dict(
+                field__include=True,
+                field__editable=False,
             ),
             year__field__include=True,
         ),

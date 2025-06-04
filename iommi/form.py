@@ -757,13 +757,13 @@ class Field(Part, Tag):
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
 
-        self.non_editable_input = Namespace(
+        self.iommi_namespace.non_editable_input = Namespace(
             {
-                **flatten(self.input),
-                **self.non_editable_input,
-                '_name': 'non_editable_input',
+                **flatten(self.iommi_namespace.input),
+                **self.iommi_namespace.non_editable_input,
             }
-        )().refine_done(parent=self)
+        )
+        self.non_editable_input = self.iommi_namespace.non_editable_input(_name='non_editable_input',).refine_done(parent=self)
         self.input = self.input(_name='input').refine_done(parent=self)
         self.label = self.label(_name='label').refine_done(parent=self)
         self.help = self.help(_name='help').refine_done(parent=self)

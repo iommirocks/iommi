@@ -454,7 +454,35 @@ def test_edit_table_post_row_group(small_discography):
 
 
 @pytest.mark.django_db
+def test_non_editable():
+    TFoo(pk=123, a=1, b='asd').save()
+    table = EditTable(
+        auto__model=TFoo,
+        # create_form=None,
+        columns__b__field=dict(
+            include=True,
+            editable=False,
+        )
+    )
+
+    # language=html
+    verify_table_html(
+        table=table,
+        find=dict(name='tbody'),
+        # language=html
+        expected_html='''
+            <tbody>
+                <tr data-pk="123">
+                    <td class="rj"> 1 </td>
+                    <td> <input disabled="" id="id_columns__b__123" name="columns/b/123" type="text" value="asd"/> </td>
+                </tr>
+            </tbody>
+        ''',
+    )
+
+@pytest.mark.django_db
 def test_edit_table__auto__rows_1(small_discography):
+
     edit_table = EditTable(
         auto__rows=Album.objects.all(),
         columns__year__field__include=True,
