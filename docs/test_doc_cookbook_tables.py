@@ -1230,6 +1230,52 @@ def test_initial_filter_on_table(really_big_discography):
     # @end
 
 
+def test_query_from_indexes():
+    # language=rst
+    """
+    .. _query-from-indexes:
+
+    How do I automatically create filters for indexed fields?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.query_from_indexes
+    .. uses EditTable.query_from_indexes
+
+    When you have a model with database indexes, you can use `query_from_indexes=True` to automatically create filters for all the indexed fields. This is useful to quickly get a table with a bunch of filters that you know are performant.
+
+    Consider a model where only some fields have database indexes:
+    """
+
+    # @test
+    # Let's use the Track model which has:
+    # - name: indexed (db_index=True)
+    # - index: not indexed
+    # - album: foreign key (indexed by default)
+    # - duration: not indexed
+    # @end
+
+    table = Table(
+        auto__model=Track,
+        query_from_indexes=True,
+    )
+
+    # @test
+    table = table.bind(request=req('get'))
+
+    filter_names = list(table.query.filters.keys())
+    assert 'name' in filter_names  # has db_index=True
+    assert 'album' in filter_names  # ForeignKey (indexed by default)
+    assert 'index' not in filter_names  # not indexed
+    assert 'duration' not in filter_names  # not indexed
+
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    Without `query_from_indexes`, you need to manually specify which columns should have filters using `columns__<field>__filter__include=True`.
+    """
+
+
 def test_indexed_rows(small_discography):
     # language=rst
     """
