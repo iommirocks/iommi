@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.14.3 (2025-06-10)
+~~~~~~~~~~~~~~~~~~~
+
+* Enable filtering on a table on itself by handling attr=None, and document the behavior
+
+* Don't fail with EditTable having Field.editable=False
+
+* Minor fix to error messages for `InvalidEndpointPathException`
+
+
 7.14.2 (2025-06-04)
 ~~~~~~~~~~~~~~~~~~~
 
