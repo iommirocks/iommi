@@ -120,3 +120,31 @@ def test_how_do_I_set_the_name_for_a_filter(big_discography):
     # @test
     show_output(track_table, '?-query%2Fquery=artist%3D"black+sabbath"')
     # @end
+
+
+def test_how_do_I_filter_on_the_thing_itself(big_discography):
+    # language=rst
+    """
+    How do I filter on the thing itself?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Filter.attr
+    .. uses Filter.
+
+    Filtering a table on the thing itself is sometimes useful, but can be a bit unintuitive:
+    """
+
+    albums = Table(
+        auto__model=Album,
+        auto__include=['name', 'artist', 'year'],
+
+        query__filters__album=Filter.choice_queryset(
+            attr=None,
+            choices=Album.objects.all(),
+            value_to_q=lambda value_string_or_f, **_: Q(pk=value_string_or_f) if value_string_or_f else Q(),
+        ),
+    )
+
+    # @test
+    show_output(albums, '')
+    # @end

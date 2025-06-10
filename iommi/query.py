@@ -1012,7 +1012,10 @@ class Query(Part):
             if filter.pk_lookup_to_q:
                 return filter.invoke_callback(filter.pk_lookup_to_q, pk=pk)
             else:
-                return Q(**{f'{filter.attr}__pk': pk})
+                if filter.attr is not None:
+                    return Q(**{f'{filter.attr}__pk': pk})
+                else:
+                    return Q(pk=pk)
 
         if (
             isinstance(value_string_or_filter_name, str)
