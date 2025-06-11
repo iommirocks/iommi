@@ -32,7 +32,7 @@
       <excludeFolder url="file://$MODULE_DIR$/examples/examples/static/album_art" />
       <excludeFolder url="file://$MODULE_DIR$/mutants" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python (iommi)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
