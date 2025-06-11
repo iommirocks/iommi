@@ -9,11 +9,11 @@ authors = [
 readme = "README.rst"
 requires-python = ">=3.9"
 keywords = ["iommi"]
-license = { text = "BSD" }
+license = "BSD-2-Clause"
+
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: BSD License',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
 ]
@@ -24,16 +24,23 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "beautifulsoup4>=4.12.3",
+    "beautifulsoup4==4.12.3",
     "django-fastdev>=1.13.0",
     "flask",
+    "furo>=2024.8.6",
     "gprof2dot",
     "parso",
-    "pytest-django>=4.8.0",
-    "pytest>=8.1.1",
-    "pytest_snapshot>=0.9.0",
-    "ruff>=0.3.7",
-    "time-machine>=2.14.1",
+    "pytest-django==4.8.0",
+    "pytest==8.1.1",
+    "pytest-snapshot==0.9.0",
+    "ruff==0.3.7",
+    "sphinx>=7.4.7",
+    "time-machine==2.14.1",
+"docutils>=0.21.2",
+    "pyparsing>=3.2.0",
+    "sphinx-llms-txt==0.2.2",
+    "coverage>=7.8.2",
+    "pytest-cov>=6.1.1",
 ]
 
 [project.urls]
@@ -43,8 +50,8 @@ Homepage = "https://github.com/iommirocks/iommi"
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-    packages = ["iommi"]
+[tool.setuptools.package-dir]
+iommi = "iommi"
 
 [tool.ruff]
 exclude = [
@@ -89,7 +96,7 @@ addopts = """
         -r fEsxXw
         --no-migrations
         --junitxml=testreport.xml
-    """
+"""
 DJANGO_SETTINGS_MODULE = "tests.settings"
 python_files = [
     'test_*.py',

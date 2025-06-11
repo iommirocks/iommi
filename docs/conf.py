@@ -45,12 +45,12 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
 from django import setup
 setup()
 
-check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs -q", shell=True)
+check_call(f"cd {(Path(__file__).parent.parent).absolute()}; uv run pytest docs -q", shell=True)
 
 
 def build_finished(app, exception):
     print('Running build_finished')
-    check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python insert_docs_links.py", shell=True)
+    check_call(f"cd {(Path(__file__).parent.parent).absolute()}; uv run --script insert_docs_links.py", shell=True)
 
 
 def setup(app):

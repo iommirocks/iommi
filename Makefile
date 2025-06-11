@@ -13,13 +13,12 @@ help:
 .PHONY: clean
 clean: clean-build clean-pyc
 	rm -rf htmlcov/
-	rm -rf venv
+	rm -rf venv .venv
 
 .PHONY: clean-build
 clean-build:
 	rm -fr build/
 	rm -fr dist/
-	rm -fr lib/*.egg-info
 
 .PHONY: clean-pyc
 clean-pyc:
@@ -70,80 +69,80 @@ lint: ruff
 
 .PHONY: ruff
 ruff:
-	tox -e venv -- ruff check .
+	uv run ruff check .
 
 .PHONY: ruff-format
 ruff-format:
-	tox -e venv -- ruff format .
+	uv run ruff format .
 
 test-all:
 	tox --skip-missing-interpreters
 
 .PHONY: test
 test:
-	venv/bin/pytest
+	uv run pytest
 
 coverage:
-	tox -e coverage
+	uv run pytest \
+        --cov iommi \
+        --cov tests \
+        --cov-config .coveragerc
+	uv run coverage report -m
+	uv run coverage html
 
 .PHONY: docs
-docs: clean-docs
+docs: venv clean-docs
 	rm -f docs/test_doc__*
-	tox -e docs
+	make -C docs clean SPHINXBUILD=../.venv/bin/sphinx-build
+	make -C docs html SPHINXBUILD=../.venv/bin/sphinx-build
 
 docs-viewer:
 	echo "http://127.0.0.1:10331"
-	cd docs/_build/html; ../../../venv/bin/python -m http.server 10331
+	cd docs/_build/html; uv run python -m http.server 10331
 
 test-docs:
-	tox -e docs
-
-.PHONY: docs-coverage
-docs-coverage:
-	tox -e coverage-from-docs
+	make -C docs html
 
 .PHONY: dist
-dist: clean-build clean-pyc venv
-	venv/bin/python -m build
+dist: clean-build clean-pyc
+	uv build
 	ls -l dist
-
-.PHONY: tag
-tag:
-	venv/bin/python util.py tag
-
-.PHONY: release-check
-release-check:
-	venv/bin/python util.py release-check
 
 .PHONY: venv
 venv:
-	tox -e venv
+	uv venv
+	uv sync --dev
 
 .PHONY: run-examples
-run-examples: venv
-	venv/bin/python examples/manage.py migrate
-	venv/bin/python examples/manage.py runserver
+run-examples:
+	uv run --script examples/manage.py migrate
+	uv run --script examples/manage.py runserver
 
 .PHONY: test-live
 test-live:
-	watchmedo shell-command --patterns="*.py" --command="python -m hammett" iommi tests
+	uv run watchmedo shell-command --patterns="*.py" --command="uv run hammett" iommi tests
+
 
 .PHONY: makemessages
 makemessages:
-	(cd iommi && django-admin makemessages -a)
-	(cd examples && django-admin makemessages -a)
+	(cd iommi && uv run django-admin makemessages -a)
+	(cd examples && uv run django-admin makemessages -a)
 
 .PHONY: compilemessages
 compilemessages:
-	(cd iommi && ../venv/bin/django-admin compilemessages)
-	(cd examples && ../venv/bin/django-admin compilemessages)
+	(cd iommi && uv run django-admin compilemessages)
+	(cd examples && uv run django-admin compilemessages)
+
+.PHONY: tag
+tag:
+	uv run --script util.py tag
+
+.PHONY: release-check
+release-check:
+	uv run --script util.py release-check
 
 .PHONY: release
-release: clean-build clean-pyc venv release-check
-	rm -rf dist/ build/ && \
-	django-admin compilemessages \
-	    --ignore=venv \
-	    --ignore=.tox \
-	    --ignore=examples && \
-	venv/bin/python -m build && \
-# 	twine upload dist/*
+release: clean-build release-check
+	(cd iommi && uv run django-admin compilemessages)
+	uv build
+# 	uv publish
