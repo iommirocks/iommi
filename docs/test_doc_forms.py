@@ -319,6 +319,7 @@ def test_customization_of_save_behavior():
     The callbacks are executed in this order:
 
     - `extra__new_instance`: This is called to create a new instance of the model. By default it just calls `form.model()`.
+    - `extra__save`: This is called to save each model_object. By default it calls `model_object.save()`.
     - `extra__pre_save_all_but_related_fields` (only called for `Form.create`)
     - `extra__on_save_all_but_related_fields` (only called for `Form.create`)
     - `extra__pre_save` (before `instance.save()`)
