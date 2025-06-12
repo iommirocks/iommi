@@ -325,6 +325,28 @@ def test_customization_of_save_behavior():
     - `extra__pre_save` (before `instance.save()`)
     - `extra__on_save` (after `instance.save()`)
 
+    **IMPORTANT**: Be careful when using `extra__save`!
+
+    #. the passed kwarg for object instance, which we need to save is `model_object` *and not instance*!
+    #. always test the instance of `model_object` to avoid possible bugs! Because quite often you need to edit objects from multiple models, for example:
+    """
+
+    class AlbumForm(Form):
+        class Meta:
+            auto__model = Album
+            auto__include = ["name", "artist__name"]
+
+            @classmethod
+            def extra__save(model_object, **_):
+                if isinstance(model_object, Album):
+                    # IMPORTANT: always test the proper model when overriding save
+                    model_object.save(foo="bar")
+                else:
+                    # because this gets called for saving the artist.name
+                    model_object.save()
+
+    # language=rst
+    """
     After a POST is completed, the `extra__redirect` callback is executed if present, otherwise `extra__redirect_to`
     is used to determine where to redirect to.
     """

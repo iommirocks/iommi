@@ -2971,7 +2971,10 @@ def test_custom_save():
     )
 
     def extra__save(model_object, **_):
-        model_object.save(update_fields=['f_int'])
+        if isinstance(model_object, CreateOrEditObjectTest):
+            model_object.save(update_fields=['f_int'])
+        else:
+            model_object.save()
 
     form = Form.edit(
         auto__instance=instance,
