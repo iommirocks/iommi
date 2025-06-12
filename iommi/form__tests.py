@@ -2991,7 +2991,7 @@ def test_custom_save():
         ),
     ).render_to_response()
 
-    instance = CreateOrEditObjectTest.objects.get()
+    instance.refresh_from_db()
     assert instance is not None
     assert instance.f_bool is False
     assert instance.f_float == 0.0
