@@ -259,7 +259,7 @@ def create_or_edit_object__post_handler(*, form, is_create=None, **_):
 
         # two phase save for creation in django...
         form.invoke_callback(form.extra.pre_save_all_but_related_fields)
-        form.instance.save()
+        form.invoke_callback(form.extra.save, model_object=form.instance)
         form.invoke_callback(form.extra.on_save_all_but_related_fields)
 
     form.apply(form.instance)
@@ -279,7 +279,7 @@ def create_or_edit_object__post_handler(*, form, is_create=None, **_):
         model_object = form.instance
         if prefix:  # Might be ''
             model_object = getattr_path(model_object, prefix)
-        model_object.save()
+        form.invoke_callback(form.extra.save, model_object=model_object)
     form.invoke_callback(form.extra.on_save)
 
     return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.extra.redirect, form)
@@ -1709,6 +1709,7 @@ class Form(Part, Tag):
         actions_template='iommi/form/actions.html',
         attr=MISSING,
         fields_template=None,
+        extra__save=lambda model_object, **_: model_object.save(),
     )
     def __init__(self, **kwargs):
         super(Form, self).__init__(

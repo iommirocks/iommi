@@ -319,11 +319,34 @@ def test_customization_of_save_behavior():
     The callbacks are executed in this order:
 
     - `extra__new_instance`: This is called to create a new instance of the model. By default it just calls `form.model()`.
+    - `extra__save`: This is called to save each model_object. By default it calls `model_object.save()`.
     - `extra__pre_save_all_but_related_fields` (only called for `Form.create`)
     - `extra__on_save_all_but_related_fields` (only called for `Form.create`)
     - `extra__pre_save` (before `instance.save()`)
     - `extra__on_save` (after `instance.save()`)
 
+    **IMPORTANT**: Be careful when using `extra__save`!
+
+    #. the passed kwarg for object instance, which we need to save is `model_object` *and not instance*!
+    #. always test the instance of `model_object` to avoid possible bugs! Because quite often you need to edit objects from multiple models, for example:
+    """
+
+    class AlbumForm(Form):
+        class Meta:
+            auto__model = Album
+            auto__include = ["name", "artist__name"]
+
+            @classmethod
+            def extra__save(model_object, **_):
+                if isinstance(model_object, Album):
+                    # IMPORTANT: always test the proper model when overriding save
+                    model_object.save(foo="bar")
+                else:
+                    # because this gets called for saving the artist.name
+                    model_object.save()
+
+    # language=rst
+    """
     After a POST is completed, the `extra__redirect` callback is executed if present, otherwise `extra__redirect_to`
     is used to determine where to redirect to.
     """

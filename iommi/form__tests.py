@@ -2958,6 +2958,50 @@ def test_edit_object_foreign_related_attribute():
     assert instance.f_foreign_key.foo == 42
 
 
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_custom_save():
+    instance = CreateOrEditObjectTest.objects.create(
+        f_foreign_key=Foo.objects.create(
+            foo=21,
+        ),
+        f_int=0,
+        f_float=0.0,
+        f_bool=False,
+    )
+
+    def extra__save(model_object, **_):
+        if isinstance(model_object, CreateOrEditObjectTest):
+            model_object.save(update_fields=['f_int'])
+        else:
+            model_object.save()
+
+    form = Form.edit(
+        auto__instance=instance,
+        auto__include=['f_int', 'f_float', 'f_bool'],
+        extra__save=extra__save,
+    )
+
+    form.bind(
+        request=req(
+            'post',
+            **{
+                'f_int': '1',
+                'f_float': '2.3',
+                'f_bool': '1',
+                '-submit': '',
+            },
+        ),
+    ).render_to_response()
+
+    instance.refresh_from_db()
+    assert instance is not None
+    assert instance.f_bool is False
+    assert instance.f_float == 0.0
+    assert instance.f_int == 1
+
+
+
 def test_redirect_default_case():
     sentinel1, sentinel2, sentinel3, sentinel4 = (
         object(),
