@@ -1277,7 +1277,7 @@ class Field(Part, Tag):
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
     )
-    def choice_queryset(cls, choices: QuerySet = None, **kwargs):
+    def choice_queryset(cls, choices: QuerySet | Callable[..., QuerySet] = None, **kwargs):
         if 'model' not in kwargs:
             if isinstance(choices, QuerySet):
                 kwargs['model'] = choices.model

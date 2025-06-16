@@ -2,6 +2,7 @@ import operator
 from datetime import datetime
 from functools import reduce
 from typing import (
+    Callable,
     Type,
     Union,
 )
@@ -398,7 +399,7 @@ class Filter(Part):
         value_to_q=choice_queryset_value_to_q,
         is_valid_filter=choice_queryset__is_valid_filter,
     )
-    def choice_queryset(cls, choices: QuerySet = None, **kwargs):
+    def choice_queryset(cls, choices: QuerySet | Callable[..., QuerySet] = None, **kwargs):
         """
         Field that has one value out of a set.
         """
