@@ -77,7 +77,7 @@ def _render_attrs_parts(attrs):
         elif isinstance(value, (list, tuple)):
             raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value} for key {key}")
         elif callable(value):
-            from .docs import get_docs_callable_description
+            from docs.generate_tests import get_docs_callable_description
 
             raise TypeError(
                 f"Attributes can't be callable, you sent {get_docs_callable_description(value)} for key {key}"

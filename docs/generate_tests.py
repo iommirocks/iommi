@@ -47,7 +47,7 @@ def uses_from_cookbooks():
 
     backrefs = defaultdict(set)
 
-    for filename in glob(str(Path(__file__).parent.parent / 'docs' / 'cookbook_*.rst')):
+    for filename in glob(str(Path(__file__).parent / 'cookbook_*.rst')):
         with open(filename) as f:
             content = f.read()
 
@@ -504,7 +504,7 @@ def _print_rst_or_python(doc, w, indent=0):
 
 
 def write_rst_from_pytest():
-    for source in (Path(__file__).parent.parent / 'docs/').glob('test_*.py'):
+    for source in (Path(__file__).parent).glob('test_*.py'):
         target = source.parent / f'{source.stem.replace("test_doc__api_", "").replace("test_doc_", "")}.rst'
 
         with open(source) as source_f:
@@ -601,3 +601,11 @@ def rst_from_pytest(source_f, target_f, target):
             target_f.write(indent(b.text, '    '))
 
         target_f.write('\n\n')
+
+if __name__ == '__main__':
+    import django
+    django.setup()
+
+    write_rst_from_pytest()
+    generate_api_docs_tests(Path(__file__).parent.absolute())
+    write_rst_from_pytest()

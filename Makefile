@@ -74,13 +74,16 @@ ruff-format:
 test-all:
 	tox --skip-missing-interpreters
 
-test:
+generate-tests:
+	DJANGO_SETTINGS_MODULE=tests.settings python -m docs.generate_tests
+
+test: generate-tests
 	python -m pytest
 
 coverage:
 	tox -e coverage
 
-docs: clean-docs
+docs: clean-docs generate-tests
 	rm -f docs/test_doc__*
 	tox -e docs
 

@@ -5,7 +5,7 @@ from typing import Dict
 import pytest
 
 from iommi import Fragment
-from iommi.docs import (
+from docs.generate_tests import (
     _generate_tests_from_class_doc,
     _generate_tests_from_class_docs,
     get_default_classes,

@@ -33,14 +33,6 @@ def pytest_collection_modifyitems(session, config, items):
     items[:] = sorted(items, key=lambda x: x.fspath)
 
 
-def pytest_sessionstart(session):
-    from iommi.docs import generate_api_docs_tests, write_rst_from_pytest
-
-    write_rst_from_pytest()
-    generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
-    write_rst_from_pytest()
-
-
 @pytest.fixture(autouse=True)
 def reset_sequences(request, django_db_blocker):
     if request.node.get_closest_marker('django_db'):
