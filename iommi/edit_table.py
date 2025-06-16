@@ -87,9 +87,8 @@ class EditCell(Cell):
             field._errors = set()
             field.form.instance = self.row
             field._iommi_path_override = path
-            field.input = field.iommi_namespace.input(_name='input')
-            field.non_editable_input = field.iommi_namespace.non_editable_input(_name='non_editable_input')
-            field.bind_from_instance()
+
+            bind_field_from_instance(field, self.row)
 
             input_html = field.input.__html__()
 
@@ -115,6 +114,14 @@ class EditCell(Cell):
         if self.cells.is_create_template:
             self.value = None
         super(EditCell, self).on_refine_done()
+
+def bind_field_from_instance(field, instance):
+    field.input = field.iommi_namespace.input(_name='input')
+    field.non_editable_input = field.iommi_namespace.non_editable_input(_name='non_editable_input')
+    field.editable = field.iommi_namespace.editable
+    field._evaluate_parameters['instance'] = instance
+
+    field.bind_from_instance()
 
 
 class EditCells(Cells):
@@ -226,9 +233,9 @@ def edit_table__post_handler(table, request, **_):
                 path = cell.get_path()
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
-                field.input = field.iommi_namespace.input(_name='input')
-                field.non_editable_input = field.iommi_namespace.non_editable_input(_name='non_editable_input')
-                field.bind_from_instance()
+
+                bind_field_from_instance(field, instance)
+
                 field_errors = field.get_errors()
                 if field_errors:
                     errors[path] |= set(field_errors)

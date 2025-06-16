@@ -456,13 +456,14 @@ def test_edit_table_post_row_group(small_discography):
 @pytest.mark.django_db
 def test_non_editable():
     TFoo(pk=123, a=1, b='asd').save()
+    TFoo(pk=456, a=2, b='fgh').save()
+
     table = EditTable(
         auto__model=TFoo,
-        # create_form=None,
         columns__b__field=dict(
             include=True,
-            editable=False,
-        )
+            editable=lambda instance, form, **_: instance and instance.pk == 456,
+        ),
     )
 
     # language=html
@@ -475,6 +476,10 @@ def test_non_editable():
                 <tr data-pk="123">
                     <td class="rj"> 1 </td>
                     <td> <input disabled="" id="id_columns__b__123" name="columns/b/123" type="text" value="asd"/> </td>
+                </tr>
+                <tr data-pk="456">
+                    <td class="rj"> 2 </td>
+                    <td> <input id="id_columns__b__456" name="columns/b/456" type="text" value="fgh"/> </td>
                 </tr>
             </tbody>
         ''',
