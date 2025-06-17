@@ -382,14 +382,14 @@ def test_edit_table_post_delete():
 def test_edit_table_delete_new_row_and_existing_row():
     existing_foo = TFoo.objects.create(a=1, b='existing')
     another_foo = TFoo.objects.create(a=2, b='another')
-    
+
     edit_table = EditTable(
         auto__model=TFoo,
         columns__a__field__include=True,
         columns__b__field__include=True,
         columns__delete=EditColumn.delete(),
     ).refine_done()
-    
+
     response = edit_table.bind(
         request=req(
             'POST',
@@ -398,16 +398,16 @@ def test_edit_table_delete_new_row_and_existing_row():
                 'columns/a/-1': '99',
                 'columns/b/-1': 'new row to delete',
                 'pk_delete_-1': '',
-                
+
                 # Second new row data (to be kept)
                 'columns/a/-2': '88',
                 'columns/b/-2': 'new row to keep',
-                
+
                 # Mark existing row for deletion
                 f'pk_delete_{existing_foo.pk}': '',
                 f'columns/a/{existing_foo.pk}': str(existing_foo.a),
                 f'columns/b/{existing_foo.pk}': existing_foo.b,
-                
+
                 # Data for the other existing row (unchanged)
                 f'columns/a/{another_foo.pk}': str(another_foo.a),
                 f'columns/b/{another_foo.pk}': another_foo.b,
@@ -415,7 +415,7 @@ def test_edit_table_delete_new_row_and_existing_row():
             },
         )
     ).render_to_response()
-    
+
     assert response.status_code == 302
     assert not TFoo.objects.filter(pk=existing_foo.pk).exists()
     assert TFoo.objects.filter(pk=another_foo.pk).exists()
@@ -462,11 +462,10 @@ def test_non_editable():
         auto__model=TFoo,
         columns__b__field=dict(
             include=True,
-            editable=lambda instance, form, **_: instance and instance.pk == 456,
+            editable=lambda instance, form, **_: instance and instance.pk == 123,
         ),
     )
 
-    # language=html
     verify_table_html(
         table=table,
         find=dict(name='tbody'),
@@ -475,15 +474,32 @@ def test_non_editable():
             <tbody>
                 <tr data-pk="123">
                     <td class="rj"> 1 </td>
-                    <td> <input disabled="" id="id_columns__b__123" name="columns/b/123" type="text" value="asd"/> </td>
+                    <td> <input id="id_columns__b__123" name="columns/b/123" type="text" value="asd"/> </td>
                 </tr>
                 <tr data-pk="456">
                     <td class="rj"> 2 </td>
-                    <td> <input id="id_columns__b__456" name="columns/b/456" type="text" value="fgh"/> </td>
+                    <td> <input disabled="" id="id_columns__b__456" name="columns/b/456" type="text" value="fgh"/> </td>
                 </tr>
             </tbody>
         ''',
     )
+
+    edit_table = table.bind(
+        request=req(
+            'POST',
+            **{
+                'columns/b/123': 'banana',
+                'columns/b/456': 'orange',
+                '-save': '',
+            },
+        )
+    )
+    assert not edit_table.get_errors()
+    response = edit_table.render_to_response()
+    assert response.status_code == 302
+    assert TFoo.objects.get(pk=123).b == 'banana'
+    assert TFoo.objects.get(pk=456).b == 'fgh'
+
 
 @pytest.mark.django_db
 def test_edit_table__auto__rows_1(small_discography):
@@ -516,7 +532,7 @@ def test_edit_table_multiple_new_rows_validation_errors_preserved():
         columns__artist__field__include=True,
         columns__year__field__include=True,
     )
-    
+
     bound_table = edit_table.bind(
         request=req(
             'POST',
@@ -537,26 +553,26 @@ def test_edit_table_multiple_new_rows_validation_errors_preserved():
             }
         )
     )
-    
+
     response = bound_table.render_to_response()
     assert response.status_code == 200
     assert bound_table.create_errors
     assert not bound_table.is_valid()
-    
+
     html = response.content.decode()
-    
+
     # All 3 new rows should still be displayed
     assert 'value="2023"' in html
     assert 'value="2024"' in html
     assert 'value="2025"' in html
     assert 'value="Valid Album"' in html
     assert html.count('This field is required') == 2
-    
+
     # Verify row order is preserved
     pos_2023 = html.find('value="2023"')
     pos_2024 = html.find('value="2024"')
     pos_2025 = html.find('value="2025"')
     assert pos_2023 < pos_2024 < pos_2025
-    
+
     assert 'data-next-virtual-pk="-4"' in html
     assert Album.objects.count() == 0

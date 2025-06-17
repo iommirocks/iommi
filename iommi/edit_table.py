@@ -235,6 +235,8 @@ def edit_table__post_handler(table, request, **_):
                 field._iommi_path_override = path
 
                 bind_field_from_instance(field, instance)
+                if not field.editable:
+                    continue
 
                 field_errors = field.get_errors()
                 if field_errors:
@@ -262,6 +264,8 @@ def edit_table__post_handler(table, request, **_):
             attrs_to_save = []
             for cell in cells.iter_editable_cells():
                 path = cell.get_path()
+                if path not in parsed_data:
+                    continue
                 value = parsed_data[path]
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
