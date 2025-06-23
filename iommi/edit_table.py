@@ -119,6 +119,7 @@ def bind_field_from_instance(field, instance):
     field.input = field.iommi_namespace.input(_name='input')
     field.non_editable_input = field.iommi_namespace.non_editable_input(_name='non_editable_input')
     field.editable = field.iommi_namespace.editable
+    field.initial = field.iommi_namespace.initial
     field._evaluate_parameters['instance'] = instance
 
     field.bind_from_instance()
@@ -236,7 +237,7 @@ def edit_table__post_handler(table, request, **_):
 
                 bind_field_from_instance(field, instance)
                 if not field.editable:
-                    continue
+                    field.value = field.initial
 
                 field_errors = field.get_errors()
                 if field_errors:

@@ -488,6 +488,8 @@ def test_non_editable():
         request=req(
             'POST',
             **{
+                'columns/a/123': '30',
+                'columns/a/456': '40',
                 'columns/b/123': 'banana',
                 'columns/b/456': 'orange',
                 '-save': '',
@@ -497,8 +499,60 @@ def test_non_editable():
     assert not edit_table.get_errors()
     response = edit_table.render_to_response()
     assert response.status_code == 302
+    assert TFoo.objects.get(pk=123).a == 1
+    assert TFoo.objects.get(pk=456).a == 2
     assert TFoo.objects.get(pk=123).b == 'banana'
     assert TFoo.objects.get(pk=456).b == 'fgh'
+
+
+@pytest.mark.django_db
+def test_non_rendered():
+    TFoo(pk=321, a=1, b='asd').save()
+    TFoo(pk=654, a=2, b='fgh').save()
+
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a__field=Field.non_rendered(
+            initial=lambda instance, **_: 10 if instance and instance.pk == 321 else 20,
+        ),
+        columns__a__render_column=False,
+        columns__b__field__include=True,
+    )
+
+    verify_table_html(
+        table=table,
+        find=dict(name='tbody'),
+        # language=html
+        expected_html='''
+            <tbody>
+                <tr data-pk="321">
+                    <td> <input id="id_columns__b__321" name="columns/b/321" type="text" value="asd"/> </td>
+                </tr>
+                <tr data-pk="654">
+                    <td> <input id="id_columns__b__654" name="columns/b/654" type="text" value="fgh"/> </td>
+                </tr>
+            </tbody>
+        ''',
+    )
+
+    edit_table = table.bind(
+        request=req(
+            'POST',
+            **{
+                'columns/a/321': '30',
+                'columns/a/654': '40',
+                'columns/b/321': 'banana',
+                'columns/b/654': 'orange',
+                '-save': '',
+            },
+        )
+    )
+    assert not edit_table.get_errors()
+    response = edit_table.render_to_response()
+    assert TFoo.objects.get(pk=321).a == 10
+    assert TFoo.objects.get(pk=654).a == 20
+    assert TFoo.objects.get(pk=321).b == 'banana'
+    assert TFoo.objects.get(pk=654).b == 'orange'
 
 
 @pytest.mark.django_db
