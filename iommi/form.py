@@ -1037,7 +1037,11 @@ class Field(Part, Tag):
         form = self.form
         if self.initial is MISSING and self.include and self.attr:
             if form.instance is not None:
-                self.initial = self.invoke_callback(self.read_from_instance, instance=form.instance)
+                try:
+                    self.initial = self.invoke_callback(self.read_from_instance, instance=form.instance)
+                except (ObjectDoesNotExist, AttributeError, ValueError):
+                    if not form.instance._state.adding:
+                        raise
             elif form.model is not None:
                 try:
                     self.initial = self.invoke_callback(self.read_from_instance, instance=form.model())
