@@ -446,6 +446,8 @@ class IommiBase {
                     '[data-iommi-edit-table-delete-row-checkbox]'
                 );
                 checkbox.checked = !checkbox.checked;
+                event.preventDefault();
+                return false;
             }
         );
     }
