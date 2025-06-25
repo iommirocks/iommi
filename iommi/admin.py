@@ -450,7 +450,6 @@ class Admin(Page):
                 delete=dict(
                     call_target__attribute='delete',
                     after=LAST,
-                    cell__url=lambda row, **_: '%s/delete/' % row.pk,
                     include=lambda request, table, **_: (
                         cls.has_permission(request, instance=None, model=table.model, operation='delete')
                     ),
