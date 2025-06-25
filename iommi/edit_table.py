@@ -100,7 +100,7 @@ class EditCell(Cell):
                 errors = self.table.edit_errors.get(path)
             if not errors and self.table.create_errors:
                 errors = self.table.create_errors.get(path)
-            
+
             if errors:
                 return Template(
                     '{{ input_html }}<br><span class="text-danger"><ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></span>'
@@ -312,14 +312,14 @@ class _EditTable_Lazy_tbody:
 
     def __html__(self):
         rows = []
-        
+
         for cells in self.table.cells_for_rows():
             rows.append(cells.__html__())
-        
+
         if (self.table.create_errors or self.table.edit_errors) and self.table._has_new_rows():
             for cells in self.table.cells_for_rows_for_create():
                 rows.append(cells.__html__())
-        
+
         return mark_safe('\n'.join(rows))
 
 
@@ -333,6 +333,7 @@ class EditTable(Table):
         table = EditTable(
             auto__model=Album,
             columns__name__field__include=True,
+            columns__delete=EditColumn.delete(),
         )
 
         # @test
@@ -525,26 +526,26 @@ class EditTable(Table):
                 .bind(parent=self.create_form)
                 .__html__()
             )
-            
+
             # Set next virtual PK to avoid conflicts with existing virtual rows
             virtual_pks = self._get_virtual_pks_from_post()
             if virtual_pks:
                 self.attrs['data-next-virtual-pk'] = str(min(virtual_pks) - 1)
-        
+
         self.tbody.children.text = _EditTable_Lazy_tbody(self)
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
-    
+
     def _get_virtual_pks_from_post(self):
         """Extract virtual PKs from POST data."""
         request = self.get_request()
         if not request or request.method != 'POST':
             return []
-        
+
         prefix = self.iommi_path + DISPATCH_PATH_SEPARATOR if self.iommi_path else ''
         delete_prefix = prefix + 'pk_delete_'
-        
+
         def parse_virtual_pk(k):
             if not k.startswith(prefix) or k.startswith(delete_prefix):
                 return None
@@ -555,14 +556,14 @@ class EditTable(Table):
                 return int(parts[-1])
             except ValueError:
                 return None
-        
+
         post_data = self.get_request().POST
         pks = {parse_virtual_pk(k) for k in keys(post_data)}
         virtual_pks = [
-            k for k in pks 
+            k for k in pks
             if k is not None and k < 0 and f'{delete_prefix}{k}' not in post_data
         ]
-        
+
         return sorted(virtual_pks, reverse=True)
 
     def _has_new_rows(self):
