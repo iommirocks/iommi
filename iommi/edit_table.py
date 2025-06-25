@@ -185,7 +185,6 @@ class EditColumn(Column):
                 display_name=column.display_name,
                 attrs__type="button",
                 attrs__accesskey=None,
-                attrs__class__edit_table_delete=True,  # deprecated  # TODO boxed/jlubcke do we need this? not used for JS anymore
                 **{
                     "attrs__data-iommi-edit-table-delete-row-button": True,
                 },
