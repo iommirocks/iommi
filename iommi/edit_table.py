@@ -169,23 +169,9 @@ class EditColumn(Column):
         attr=None,
         display_name=gettext_lazy('Delete'),
         cell__attrs__class__delete=True,
-        # language=js
-        assets__fancy_delete=Asset(
-            mark_safe(
-                '''
-                    $(document).ready(() => {
-                        $(document).on('click', '.edit_table_delete', (event) => {
-                            const checked = $(event.target).closest('tr').find('input')[0].checked;
-                            $(event.target).closest('tr').find('input').prop("checked", !checked);
-                            $(event.target).closest('tr')[0].style.opacity = checked ? "1.0" : "0.3";
-                            event.preventDefault();
-                            return false;
-                        });
-                    });
-                '''
-            ),
-            tag='script',
-        ),
+        **{
+            "cell__attrs__data-iommi-edit-table-delete-row-cell": True,
+        },
     )
     def delete(cls, **kwargs):
         def cell__value(row, table, cells, column, **_):
@@ -195,9 +181,21 @@ class EditColumn(Column):
                 # row_index is the visible row number
                 # See selection() for the code that does the lookup
                 row_id = cells.row_index
-            button = Action.delete(display_name=column.display_name, attrs__class__edit_table_delete=True).bind()
+            button = Action.delete(
+                display_name=column.display_name,
+                attrs__type="button",
+                attrs__accesskey=None,
+                attrs__class__edit_table_delete=True,  # deprecated  # TODO boxed/jlubcke do we need this? not used for JS anymore
+                **{
+                    "attrs__data-iommi-edit-table-delete-row-button": True,
+                },
+            ).bind()
             path = path_join(table.iommi_path, f'pk_delete_{row_id}')
-            return mark_safe(f'{button.__html__()}<input style="display: none" type="checkbox" name="{path}" />')
+            checkbox = (
+                f'<input type="checkbox" name="{path}" id="id_{path}" data-iommi-edit-table-delete-row-checkbox="" />'
+                f'<label for="id_{path}"> {column.display_name}</label>'
+            )
+            return mark_safe(f'{button.__html__()}{checkbox}')
 
         setdefaults_path(kwargs, dict(cell__value=cell__value))
         return cls(**kwargs)
@@ -363,7 +361,11 @@ class EditTable(Table):
         )
         edit_actions__add_row = Action.button(
             display_name=gettext_lazy('Add row'),
-            attrs__onclick='iommi_add_row(this); return false',
+            attrs__type="button",
+            **{
+                "attrs__data-iommi-edit-table-add-row-button": True,
+                "attrs__data-iommi-edit-table-path": lambda table, **_: table.iommi_dunder_path,
+            }
         )
         edit_form = EMPTY
         create_form = EMPTY
@@ -373,55 +375,23 @@ class EditTable(Table):
 
         attrs = {
             'data-next-virtual-pk': '-1',
+            'data-new-row-endpoint': lambda table, **_: table.endpoints.new_row.endpoint_path,
         }
 
-        # language=js
-        assets__edit_table_js = Asset.js(
-            mark_safe(
-                '''
-                    function iommi_add_row(element) {
-                        function find_for_siblings(s) {
-                            while (s) {
-                                let t = s.querySelector('table');
-                                if (t) {
-                                    return t;
-                                }
-                                s = s.previousElementSibling;
-                            }
-                            return null;
-                        }
-
-                        let table = null;
-                        while (element.tagName !== 'FORM') {
-                            element = element.parentNode;
-                            let s = find_for_siblings(element);
-                            if (s) {
-                                table = s;
-                                break;
-                            }
-                        }
-                        if (!table) {
-                            console.error('iommi: failed to find table!');
-                            return;
-                        }
-
-                        let virtual_pk = parseInt(table.getAttribute('data-next-virtual-pk'), 10);
-                        virtual_pk -= 1;
-                        virtual_pk = virtual_pk.toString();
-                        table.setAttribute('data-next-virtual-pk', virtual_pk);
-
-                        let tmp = document.createElement('table');
-                        tmp.innerHTML = table.getAttribute('data-add-template').replaceAll('#sentinel#', virtual_pk);
-                        let y = tmp.querySelector('tr');
-                        y.setAttribute('data-pk', virtual_pk)
-                        table.querySelector('tbody').appendChild(y);
-                        if (y.querySelector('.select2_enhance')) {
-                            window.iommi.select2.initAll(y);
-                        }
-                    }
-                '''
-            )
-        )
+        @staticmethod
+        def endpoints__new_row__func(table, **kwargs):
+            if table.model is not None:
+                sentinel_row = table.model(pk='#sentinel#')
+            else:
+                sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(table.create_form.fields)})
+            return {
+                'html': table.cells_class(
+                    row=sentinel_row,
+                    row_index=-1,
+                    is_create_template=True,
+                    **table.row.as_dict()
+                ).bind(parent=table.create_form).__html__()
+            }
 
     def on_refine_done(self):
         super(EditTable, self).on_refine_done()
@@ -518,16 +488,6 @@ class EditTable(Table):
                 self.outer.tag = None
 
         if self.create_form is not None:
-            if self.model is not None:
-                sentinel_row = self.model(pk='#sentinel#')
-            else:
-                sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.create_form.fields)})
-            self.attrs['data-add-template'] = (
-                self.cells_class(row=sentinel_row, row_index=-1, is_create_template=True, **self.row.as_dict())
-                .bind(parent=self.create_form)
-                .__html__()
-            )
-
             # Set next virtual PK to avoid conflicts with existing virtual rows
             virtual_pks = self._get_virtual_pks_from_post()
             if virtual_pks:

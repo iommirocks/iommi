@@ -68,3 +68,27 @@ def test_how_do_you_edit_one_to_one_in_a_table(black_sabbath):
     assert response.status_code == 302, response.content.decode()
     assert Artist.objects.get(pk=black_sabbath.pk).name == 'new name'
     # @end
+
+    # language=rst
+    """
+    .. _edit-table-delete-as-checkbox:
+
+    How to have a delete column as checkboxes?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Just add `data-iommi-edit-table-delete-with="checkbox"`:
+    """
+
+    edit_table = EditTable(
+        auto__model=Profile,
+        auto__include=['artist__name'],
+        columns__artist_name__field__include=True,
+        columns__delete=EditColumn.delete(),
+        **{
+            'attrs__data-iommi-edit-table-delete-with': 'checkbox',
+        }
+    )
+
+    # @test
+    show_output(edit_table)
+    # @end
