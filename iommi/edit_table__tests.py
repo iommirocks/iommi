@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from docs.models import (
@@ -61,8 +62,7 @@ def test_edit_table_rendering():
         expected_html="""
             <form action="" enctype="multipart/form-data" method="post">
                 <div class="iommi-table-plus-paginator">
-                    <table class="table" data-add-template=\'&lt;tr data-pk="#sentinel#"&gt;&lt;td&gt;&lt;input id="id_editable_thing__#sentinel#" name="editable_thing/#sentinel#" type="text" value=""&gt;&lt;/td&gt;
-&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;\' data-next-virtual-pk="-1">
+                    <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
                         <thead>
                             <tr>
                                 <th class="first_column subheader"> Editable thing </th>
@@ -83,7 +83,7 @@ def test_edit_table_rendering():
                 </div>
                 <div class="links">
                     <button accesskey="s" name="-save"> Save </button>
-                    <button onclick="iommi_add_row(this); return false"> Add row </button>
+                    <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="" type="button"> Add row </button>
                 </div>
             </form>
         """,
@@ -281,9 +281,12 @@ def test_edit_table_auto_rows():
 def test_edit_table_post_create():
     foo_pk = TFoo.objects.create(a=1, b='asd').pk
     edit_table = EditTable(auto__model=TBar).refine_done()
+
     # language=html
     verify_html(
-        actual_html=edit_table.bind().attrs['data-add-template'],
+        actual_html=json.loads(
+            edit_table.bind(request=req('get', **{'/new_row': ''})).render_to_response().content
+        )['html'],
         # language=html
         expected_html='''
             <tr data-pk="#sentinel#">

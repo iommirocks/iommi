@@ -11,6 +11,9 @@ class IommiBase {
                 this[k] = options[k];
             }
         }
+
+        this.initEditTableDeleteRowButton();
+        this.initEditTableAddRowButton();
     }
 
     onDOMLoad() {
@@ -429,6 +432,59 @@ class IommiBase {
             },
         };
     }
+
+    initEditTableDeleteRowButton() {
+        IommiBase.addLiveEventListener(
+            'click',
+            '[data-iommi-edit-table-delete-row-button]',
+            function (event) {
+                let cell = this.closest('[data-iommi-edit-table-delete-row-cell]');
+                if(!cell) {
+                    cell = this.parentElement;
+                }
+                const checkbox = cell.querySelector(
+                    '[data-iommi-edit-table-delete-row-checkbox]'
+                );
+                checkbox.checked = !checkbox.checked;
+            }
+        );
+    }
+
+    initEditTableAddRowButton() {
+        const SELF = this;
+        IommiBase.addLiveEventListener(
+            'click',
+            '[data-iommi-edit-table-add-row-button]',
+            async function (event) {
+                const table = this.closest('form').querySelector(`[data-iommi-path="${this.dataset.iommiEditTablePath}"]`);
+                const endpoint = table.dataset.newRowEndpoint;
+                let url = `?${endpoint}=`;
+                if(SELF.select2) {
+                    // use the same data we send to select2 choices endpoint
+                    const queryString = SELF.select2.serializeFormDataForSelect2Endpoint(this);
+                    if(queryString) {
+                        url += `&${queryString}`
+                    }
+                }
+                const {html} = await SELF.fetchJson(url);
+
+                let virtual_pk = parseInt(table.getAttribute('data-next-virtual-pk'), 10);
+                virtual_pk -= 1;
+                virtual_pk = virtual_pk.toString();
+                table.setAttribute('data-next-virtual-pk', virtual_pk);
+
+                let tpl = document.createElement('template');
+                tpl.innerHTML = html.trim().replaceAll('#sentinel#', virtual_pk);
+                const tbody = table.querySelector(`[data-iommi-path="${this.dataset.iommiEditTablePath}__tbody"]`);
+                tpl.content.childNodes.forEach((el) => {
+                    const appendedElement = tbody.appendChild(el);
+                    if (SELF.select2 && appendedElement.querySelector('.select2_enhance')) {
+                        SELF.select2.initAll(appendedElement);
+                    }
+                });
+            }
+        );
+    }
 }
 
 class IommiSelect2 {
@@ -460,6 +516,36 @@ class IommiSelect2 {
         });
     }
 
+    serializeFormDataForSelect2Endpoint(field) {
+        // TODO one day we should replace this with data-iommi-skip-for-endpoints on fields
+        //      because we use it also for EditTable new row endpoint
+        //      and data-select2-partial-state is useless for EditTables anyway, because of virtual pk postfixes
+        //      although then it could not be used per field
+        const $field = $(field)
+        const $form = $field.closest('form');
+        // Url with query string can usually be max 4kB.
+        // If you have big forms, then your select2's can stop working, so you have to
+        // turn off sending form data to the server with:
+        // $form.attrs={'data-select2-full-state': ''}
+        let fullState = $form.attr('data-select2-full-state');
+        // but if you need some values for some field.choices, you can specify the names of the fields,
+        // that you need to be sent to the server, with:
+        // field.input__attrs={'data-select2-partial-state': json.dumps(['artist', 'year'])}
+        const partialState = $field.data('select2-partial-state');
+        if (fullState === undefined) {
+            fullState = 'true';
+        }
+        if (partialState) {
+            return $(partialState.map(function (value) {
+                return `[name="${value}"]`
+            }).join(', '), $form).serialize();
+        } else if (fullState === 'true') {
+            return $form.serialize();
+        } else {
+            return '';
+        }
+    }
+
     initOne(elem, extra_options) {
         let f = $(elem);
         let endpointPath = f.attr('data-choices-endpoint');
@@ -469,32 +555,15 @@ class IommiSelect2 {
             allowClear: true,
             multiple: multiple
         };
+        const SELF = this;
         if (endpointPath) {
             options.ajax = {
                 url: function () {
-                    let form = this.closest('form');
-
-                    // Url with query string can usually be max 4kB.
-                    // If you have big forms, then your select2's can stop working, so you have to
-                    // turn off sending form data to the server with:
-                    // form.attrs={'data-select2-full-state': ''}
-                    let fullState = form.attr('data-select2-full-state');
-                    // but if you need some values for some field.choices, you can specify the names of the fields,
-                    // that you need to be sent to the server, with:
-                    // field.input__attrs={'data-select2-partial-state': json.dumps(['artist', 'year'])}
-                    let partialState = f.data('select2-partial-state');
-                    if (fullState === undefined) {
-                        fullState = 'true';
+                    let queryString = SELF.serializeFormDataForSelect2Endpoint(f);
+                    if(queryString) {
+                        return '?' + queryString;
                     }
-                    if (partialState) {
-                        return '?' + $(partialState.map(function (value) {
-                            return `[name="${value}"]`
-                        }).join(', '), form).serialize();
-                    } else if (fullState === 'true') {
-                        return '?' + form.serialize();
-                    } else {
-                        return '';
-                    }
+                    return '';
                 },
                 dataType: 'json',
                 data: function (params) {
@@ -502,7 +571,7 @@ class IommiSelect2 {
                         page: params.page || 1
                     }
                     result[endpointPath] = params.term || '';
-
+                    result['_choices_for_field'] = f.attr('name');
                     return result;
                 }
             }
