@@ -69,12 +69,14 @@ def test_how_do_you_edit_one_to_one_in_a_table(black_sabbath):
     assert Artist.objects.get(pk=black_sabbath.pk).name == 'new name'
     # @end
 
+
+def test_how_do_I_change_delete_to_checkboxes():
     # language=rst
     """
     .. _edit-table-delete-as-checkbox:
 
-    How to have a delete column as checkboxes?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    How do I change the delete buttons to checkboxes?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Just add `data-iommi-edit-table-delete-with="checkbox"`:
     """
