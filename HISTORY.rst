@@ -1,12 +1,28 @@
 Changelog
 ---------
 
+7.14.4 (2025-06-27)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed issue with `Table` crashing in some cases when pagination is turned off
+
+* `EditTable` handling of adding rows is now done via ajax, improving flexibility
+
+* `EditTable` delete button fixes
+
+* `EditTable` fix `Field.non_rendered` and `Field.initial`
+
+* `EditTable` should not try to save non-editable fields
+
+* `Form`: Support overriding `model_object.save()` to be able to pass kwargs
+
+
 7.14.3 (2025-06-10)
 ~~~~~~~~~~~~~~~~~~~
 
-* Enable filtering on a table on itself by handling attr=None, and document the behavior
+* Enable filtering on a table on itself by handling `attr=None`, and document the behavior
 
-* Don't fail with EditTable having Field.editable=False
+* Don't fail with `EditTable` having `Field.editable=False`
 
 * Minor fix to error messages for `InvalidEndpointPathException`
 
