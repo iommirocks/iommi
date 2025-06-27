@@ -1642,6 +1642,7 @@ class TableAutoConfig(AutoConfig):
 
     rows = Refinable()
 
+
 def endpoint__tbody(table, **_):
     return {
         'html': table.container.__html__(
@@ -2225,7 +2226,12 @@ class Table(Part, Tag):
 
     def get_visible_rows(self):
         if self.visible_rows is None:
+            # Grab the rows from the paginator
             self.visible_rows = self.parts.page.rows
+
+        if self.visible_rows is None:
+            self.visible_rows = self.sorted_and_filtered_rows
+
         return self.visible_rows
 
     def _bind_query(self):
