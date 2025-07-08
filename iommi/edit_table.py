@@ -358,7 +358,8 @@ class EditTable(Table):
             post_handler=edit_table__post_handler,
             template=lambda table, **_: 'iommi/blank.html' if table.parent_form is not None else None,
         )
-        edit_actions__add_row = Action.button(
+        edit_actions__add_row = dict(
+            call_target__attribute='button',
             display_name=gettext_lazy('Add row'),
             attrs__type="button",
             **{
