@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+
+7.14.5 (2025-08-02)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed `EditTable` "Add row" button when it was the single `Part` on a page.
+
+
 7.14.4 (2025-06-27)
 ~~~~~~~~~~~~~~~~~~~
 
