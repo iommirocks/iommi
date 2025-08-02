@@ -477,7 +477,8 @@ class IommiBase {
 
                 let tpl = document.createElement('template');
                 tpl.innerHTML = html.trim().replaceAll('#sentinel#', virtual_pk);
-                const tbody = table.querySelector(`[data-iommi-path="${this.dataset.iommiEditTablePath}__tbody"]`);
+                let tbody_path = this.dataset.iommiEditTablePath === "" ? 'tbody' :  `${this.dataset.iommiEditTablePath}__tbody`;
+                const tbody = table.querySelector(`[data-iommi-path=${tbody_path}`);
                 tpl.content.childNodes.forEach((el) => {
                     const appendedElement = tbody.appendChild(el);
                     if (SELF.select2 && appendedElement.querySelector('.select2_enhance')) {
