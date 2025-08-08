@@ -101,6 +101,7 @@ bootstrap5_base = Style(
                 input__attrs__class={
                     'form-check-input': True,
                     'form-control': False,
+                    'form-select': False,
                 },
             ),
             choice__input__attrs__class={'form-select': True},
