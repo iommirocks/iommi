@@ -498,10 +498,11 @@ class EditTable(Table):
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
 
-    def _get_virtual_pks_from_post(self):
+    def _get_virtual_pks_from_post(self, method='POST'):
         """Extract virtual PKs from POST data."""
+        assert method in ('GET', 'POST')
         request = self.get_request()
-        if not request or request.method != 'POST':
+        if not request or request.method != method:
             return []
 
         prefix = self.iommi_path + DISPATCH_PATH_SEPARATOR if self.iommi_path else ''
@@ -518,11 +519,11 @@ class EditTable(Table):
             except ValueError:
                 return None
 
-        post_data = self.get_request().POST
-        pks = {parse_virtual_pk(k) for k in keys(post_data)}
+        request_data = getattr(self.get_request(), method)
+        pks = {parse_virtual_pk(k) for k in keys(request_data)}
         virtual_pks = [
             k for k in pks
-            if k is not None and k < 0 and f'{delete_prefix}{k}' not in post_data
+            if k is not None and k < 0 and f'{delete_prefix}{k}' not in request_data
         ]
 
         return sorted(virtual_pks, reverse=True)
@@ -531,11 +532,11 @@ class EditTable(Table):
         virtual_pks = self._get_virtual_pks_from_post()
         return bool(virtual_pks)
 
-    def cells_for_rows_for_create(self):
+    def cells_for_rows_for_create(self, method='POST'):
         """Yield a Cells instance for each create row sent from the client."""
         assert self._is_bound, NOT_BOUND_MESSAGE
 
-        virtual_pks = self._get_virtual_pks_from_post()
+        virtual_pks = self._get_virtual_pks_from_post(method=method)
         if not virtual_pks:
             return
 
@@ -576,3 +577,57 @@ class EditTable(Table):
 
     def should_render_form_tag(self):
         return self.parent_form is None
+
+    def get_received_rows_data(self, method='POST'):
+        assert method in ('POST', 'GET')
+
+        sent_data = []
+
+        def get_row_data(cells, form):
+            sent_row_data = {
+                "pk": cells.row.pk,
+                self.model._meta.pk.name: cells.row.pk,
+            }
+
+            _instance = cells.row
+            form.instance = _instance
+            for cell in cells.iter_editable_cells():
+                path = cell.get_path()
+                _field = form.fields[cell.column.iommi_name()]
+                if not isinstance(_field, Field):
+                    raise TypeError('Field has to be an instance of iommi.Field')
+                _field._iommi_path_override = path
+                _field.raw_data = ''
+                _field.value = None
+                _field.parsed_data = None
+                bind_field_from_instance(_field, _instance)
+                sent_row_data[cell.column.iommi_name()] = _field.value
+
+            return sent_row_data
+
+
+        for cells in self.cells_for_rows():
+            if not isinstance(cells, EditCells):
+                continue
+
+            try:
+                sent_data.append(get_row_data(cells, self.edit_form))
+            except TypeError:
+                pass
+
+        for cells in self.cells_for_rows_for_create(method=method):
+            if not isinstance(cells, EditCells):
+                continue
+
+            try:
+                sent_data.append(get_row_data(cells, self.edit_form))
+            except TypeError:
+                pass
+
+        return sent_data
+
+    def get_row_pk_for_choices(self):
+        try:
+            return int(self.get_request().GET['_choices_for_field'].split('/')[-1])
+        except (KeyError, TypeError):
+            return None
