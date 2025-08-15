@@ -820,7 +820,7 @@ class Field(Part, Tag):
 
         if 'choice' in getattr(self, 'iommi_shortcut_stack', []):
             assert (
-                self.choices
+                self.iommi_namespace.get('choices') is not None
             ), 'To use Field.choice, you must pass the choices list'
 
     @property
