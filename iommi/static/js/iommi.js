@@ -611,3 +611,93 @@ document.addEventListener('readystatechange', () => {
         window.iommi.select2.onCompleteReadyState();
     }
 });
+
+
+function insert_iommi_code_finder_links() {
+    remove_iommi_code_finder_links();
+
+    // Find all matching comments
+    const walker = document.createTreeWalker(
+        document.documentElement,
+        NodeFilter.SHOW_COMMENT,
+        {
+            acceptNode: function (node) {
+                return node.textContent.includes('## iommi-code-finder-URL ##')
+                    ? NodeFilter.FILTER_ACCEPT
+                    : NodeFilter.FILTER_SKIP;
+            }
+        },
+        false
+    );
+
+    const comments = [];
+    let comment;
+    while (comment = walker.nextNode()) {
+        comments.push(comment);
+    }
+
+    // Process each comment
+    comments.forEach(comment => {
+        // Extract content between the markers
+        // Format: "## iommi-code-finder-URL ## short name ## https://example.com/path"
+        const match = comment.textContent.match(/## iommi-code-finder-URL ##\s*(.+?)\s*##\s*(.+?)$/);
+        if (!match || !match[1] || !match[2]) return;
+
+        const shortName = match[1].trim();
+        const url = match[2].trim();
+
+        // Find the next element node after the comment
+        let nextNode = comment.nextSibling;
+        while (nextNode && nextNode.nodeType !== 1) {
+            nextNode = nextNode.nextSibling;
+        }
+
+        if (!nextNode) {
+            // No next sibling, try parent's next sibling
+            nextNode = comment.parentNode;
+            while (nextNode && !nextNode.nextElementSibling && nextNode.parentNode) {
+                nextNode = nextNode.parentNode;
+            }
+            if (nextNode && nextNode.nextElementSibling) {
+                nextNode = nextNode.nextElementSibling;
+            }
+        }
+
+        if (!nextNode || nextNode.nodeType !== 1) return;
+
+        // Create the link element
+        const link = document.createElement('a');
+        link.href = url;
+        link.textContent = shortName;  // Use short name as link text
+        link.title = url;  // Show full URL on hover
+        link.target = '_blank';
+        link.style.cssText = `
+      position: absolute;
+      background: #ffeb3b;
+      padding: 4px 8px;
+      border: 1px solid #f57c00;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 12px;
+      z-index: 10000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      color: #333;
+      text-decoration: none;
+    `;
+
+        // Position the link at the next element's position
+        document.body.appendChild(link);
+
+        // Get position of the next element
+        const rect = nextNode.getBoundingClientRect();
+        link.style.left = rect.left + window.scrollX + 'px';
+        link.style.top = rect.top + window.scrollY + 'px';
+        link.className = 'iommi-code-finder-URL-link';
+    });
+}
+
+function remove_iommi_code_finder_links() {
+    document.querySelectorAll('.iommi-code-finder-URL-link').forEach(link => {
+        link.remove();
+    });
+}

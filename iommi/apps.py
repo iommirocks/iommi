@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
+from iommi.code_finder import setup_code_finder
 from iommi.from_model import register_search_fields
 from iommi.style_bootstrap_docs import bootstrap_docs
 
@@ -56,3 +57,5 @@ class IommiConfig(AppConfig):
 
         register_factory(GenericRelation, factory=None)
         register_factory(GenericForeignKey, factory=None)
+
+        setup_code_finder()
