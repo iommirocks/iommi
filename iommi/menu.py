@@ -307,6 +307,11 @@ def get_debug_menu(**kwargs):
             attrs__onclick='window.iommi_start_pick()',
             tag='li',
         )
+        code_finder = MenuItem(
+            url='#',
+            attrs__onclick='window.insert_iommi_code_finder_links()',
+            tag='li',
+        )
         edit = MenuItem(
             display_name=lambda request, **_: (
                 'Edit vertical'
