@@ -308,8 +308,7 @@ def get_debug_menu(**kwargs):
             tag='li',
         )
         code_finder = MenuItem(
-            url='#',
-            attrs__onclick='window.insert_iommi_code_finder_links()',
+            url='?_iommi_code_finder',
             tag='li',
         )
         edit = MenuItem(
