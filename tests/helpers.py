@@ -30,6 +30,7 @@ from iommi.refinable import (
     RefinableMembers,
 )
 from iommi.struct import Struct
+from iommi.thread_locals import set_current_request
 from iommi.traversable import (
     Traversable,
 )
@@ -242,6 +243,8 @@ def show_output(part, url='/', user=None, request=None):
 
     if user:
         request.user = user
+
+    set_current_request(request)
 
     if isinstance(part, URLPattern):
         if url.startswith('/'):

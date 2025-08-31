@@ -1,4 +1,12 @@
-from iommi import Page
+from pathlib import Path
+
+from django.shortcuts import render
+
+from iommi import (
+    html,
+    Page,
+)
+from iommi.code_finder import setup_code_finder
 from tests.helpers import (
     req,
     show_output,
@@ -67,6 +75,43 @@ def test_pick():
     part with the type shown (with a link to the documentation). You will also
     get the paths and types of all the parent components up the tree.
     """
+
+
+def test_code_finder(settings):
+    # language=rst
+    """
+    Code finder
+    -----------
+
+    For complex pages that use a lot of templates with loops, translations, and
+    includes, it can be hard to find where the code is. For this use case, "Code
+    finder" is useful. Start the tool and then click on what you want to modify
+    to jump to your IDE at the right place or close to the right place. This
+    relies on the `IOMMI_DEBUG_URL_BUILDER` setting. By default this is
+    configured for PyCharm.
+    """
+
+    class MyPage(Page):
+        foo = html.div(template='docs/code_finder_test.html')
+
+    # language=rst
+    """
+    Mouse over the interactive example below for a demo:
+    """
+
+    # @test
+    settings.DEBUG = True
+
+    def fix_filename(filename):
+        return filename.replace(str(Path(__file__).parent.parent), 'https://github.com/iommirocks/iommi/blob/master/')
+
+    settings.IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: f'{fix_filename(filename)}#L{lineno}'
+    setup_code_finder()
+    content = (
+    show_output(MyPage(), request=req('get', _iommi_code_finder=''))
+    )
+    assert '<!-- ## iommi-code-finder' in content.decode()
+    # @end
 
 
 def test_edit():

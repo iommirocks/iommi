@@ -82,6 +82,12 @@ base = Style(
                     src=lambda **_: static('js/iommi.js'),
                 ),
             ),
+            iommi_code_finder_js=Asset.js(
+                attrs=dict(
+                    src=lambda **_: static('js/iommi_code_finder.js'),
+                ),
+                include=lambda request, **_: '_iommi_code_finder' in request.GET if request else False,
+            ),
             iommi_js_init=iommi_js_init,
             iommi_scroll_js=Asset.js(
                 attrs=dict(

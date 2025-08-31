@@ -9,6 +9,10 @@ bootstrap_docs = Style(
     root__assets__doc_style=Asset.css(attrs__href='/_static/iframe_custom.css'),
     root__assets__doc_js=Asset.js(attrs__src='/_static/iframe_custom.js'),
     root__assets__iommi_js=Asset.js(attrs=dict(src='/_static/js/iommi.js')),
+    root__assets__iommi_code_finder_js=Asset.js(
+        attrs=dict(src='/_static/js/iommi_code_finder.js'),
+        include=lambda request, **_: '_iommi_code_finder' in request.GET if request else False,
+    ),
     root__assets__iommi_css=Asset.css(attrs__href='/_static/css/iommi.css'),
     root__assets__iommi_scroll_js=Asset.js(attrs__src='/_static/js/iommi-scroll.js'),
     root__assets__iommi_menu_css=Asset.css(attrs__href='/_static/css/iommi_main_menu.css'),
