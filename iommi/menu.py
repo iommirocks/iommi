@@ -42,6 +42,7 @@ from iommi.refinable import (
 )
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
+from iommi.table import params_of_request
 
 
 class MenuBase(Part, Tag):
@@ -288,6 +289,13 @@ class Menu(MenuBase):
             current._active = True
 
 
+def add_get_parameter_to_current_url(request, **new_params):
+    params = params_of_request(request)
+    for k, v in new_params.items():
+        params[k] = v
+    return '?' + params.urlencode()
+
+
 def get_debug_menu(**kwargs):
     class DebugMenu(Menu):
         code = MenuItem(
@@ -308,7 +316,7 @@ def get_debug_menu(**kwargs):
             tag='li',
         )
         code_finder = MenuItem(
-            url='?_iommi_code_finder',
+            url=lambda request, **_: add_get_parameter_to_current_url(request, _iommi_code_finder=''),
             tag='li',
         )
         edit = MenuItem(
@@ -337,7 +345,7 @@ def get_debug_menu(**kwargs):
             include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE,
         )
         profile = MenuItem(
-            url='?_iommi_prof',
+            url=lambda request, **_: add_get_parameter_to_current_url(request, _iommi_prof=''),
             tag='li',
             include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE,
         )
@@ -358,7 +366,7 @@ def get_debug_menu(**kwargs):
         )
         sql_trace = MenuItem(
             display_name='SQL trace',
-            url='?_iommi_sql_trace',
+            url=lambda request, **_: add_get_parameter_to_current_url(request, _iommi_sql_trace=''),
             tag='li',
             include=lambda **_: 'iommi.sql_trace.Middleware' in settings.MIDDLEWARE,
         )

@@ -119,7 +119,6 @@ def test_code_finder(settings):
     """
 
 
-
 def test_edit():
     # language=rst
     """
