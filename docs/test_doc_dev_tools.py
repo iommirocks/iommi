@@ -113,6 +113,12 @@ def test_code_finder(settings):
     assert '<!-- ## iommi-code-finder' in content.decode()
     # @end
 
+    # language=rst
+    """
+    You might note that there's a `>` at the start of this example. This is because the way this works is that an HTML comment is inserted before each `{% if %}`/`{% for %}`/`{% include %}` tag, but HTML comments are not allowed inside HTML tags, causing some broken HTML. This is mostly fine for this use case, but it will sometimes lead to some artifacts as seen here.
+    """
+
+
 
 def test_edit():
     # language=rst
