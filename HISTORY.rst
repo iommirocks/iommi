@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.15.1 (2025-09-02)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed issue with code finder when there is no current request
+
+
 7.15.0 (2025-09-02)
 ~~~~~~~~~~~~~~~~~~~
 
