@@ -24,7 +24,7 @@ def setup_code_finder():
         def debug_url_render(self, context, orig_render=node_class.render):
             orig_result = orig_render(self, context)
             request = get_current_request()
-            if request and '_iommi_code_finder' not in request.GET:
+            if not request or '_iommi_code_finder' not in request.GET:
                 return orig_result
 
             # Get the file path and line number from the node's origin and token
