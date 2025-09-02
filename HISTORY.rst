@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.15.0 (2025-09-02)
+~~~~~~~~~~~~~~~~~~~
+
+* New debug tool: Code finder. Use this tool to jump to a place in your template close to the html element you click on.
+
+* Removed an incorrect `form-select` CSS class on `<select>` elements for bootstrap5.
 
 7.14.5 (2025-08-02)
 ~~~~~~~~~~~~~~~~~~~
