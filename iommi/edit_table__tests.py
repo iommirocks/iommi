@@ -633,3 +633,33 @@ def test_edit_table_multiple_new_rows_validation_errors_preserved():
 
     assert 'data-next-virtual-pk="-4"' in html
     assert Album.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_edit_table_create_object_callbacks():
+    invoked = []
+
+    def new_instance(form, **_):
+        invoked.append('new_instance')
+        return form.model()
+
+    edit_table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        columns__b__field__include=True,
+        create_form__extra__new_instance=new_instance,
+    ).refine_done()
+
+    edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                # create
+                'columns/a/-1': '3',
+                'columns/b/-1': 'hardcoded column should be ignored',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+
+    assert 'new_instance' in invoked

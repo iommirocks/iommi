@@ -295,7 +295,7 @@ def edit_table__post_handler(table, request, **_):
                     model_object.save(update_fields=[strip_prefix(x, prefix=f'{prefix}__') for x in attrs_to_save if x.startswith(prefix)])
 
     save(table.cells_for_rows(), table.edit_form)
-    save(table.cells_for_rows_for_create(), table.create_form)
+    save(table.cells_for_rows_for_create(save=True), table.create_form)
 
     if 'post_save' in table.extra:
         table.invoke_callback(table.extra.post_save)
@@ -443,6 +443,7 @@ class EditTable(Table):
                 fields=fields,
                 _name='create_form',
                 auto=auto,
+                extra__new_instance=lambda form, **_: form.model(),
             )
             self.create_form = self.form_class(**form_params)
 
@@ -531,7 +532,7 @@ class EditTable(Table):
         virtual_pks = self._get_virtual_pks_from_post()
         return bool(virtual_pks)
 
-    def cells_for_rows_for_create(self):
+    def cells_for_rows_for_create(self, save=False):
         """Yield a Cells instance for each create row sent from the client."""
         assert self._is_bound, NOT_BOUND_MESSAGE
 
@@ -539,7 +540,15 @@ class EditTable(Table):
         if not virtual_pks:
             return
 
-        rows = [self.model(pk=pk) for pk in virtual_pks]
+        rows = []
+        for pk in virtual_pks:
+            if save:
+                instance = self.create_form.invoke_callback(self.create_form.extra.new_instance)
+                if instance.pk is None:
+                    instance.pk = pk
+            else:
+                instance = self.model(pk=pk)
+            rows.append(instance)
 
         for i, row in enumerate(rows):
             row = self.preprocess_row_for_create(table=self, row=row)
