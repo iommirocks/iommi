@@ -656,7 +656,7 @@ def test_edit_table_create_object_callbacks():
             **{
                 # create
                 'columns/a/-1': '3',
-                'columns/b/-1': 'hardcoded column should be ignored',
+                'columns/b/-1': 'foo bar baz',
                 '-save': '',
             },
         )
