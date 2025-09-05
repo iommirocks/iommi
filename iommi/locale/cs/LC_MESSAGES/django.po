@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-22 09:51+0100\n"
+"POT-Creation-Date: 2025-09-05 12:07+0200\n"
 "Last-Translator: Martin Beran <info@berycz.net>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -9,213 +9,193 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n>=2 && n<=4 ? 1 : 2);\n"
 
-#: action.py:164
+#: action.py:170
 msgid "Submit"
 msgstr "Odeslat"
 
-#: admin.py:143
+#: admin.py:140
 msgid "iommi administration"
 msgstr "iommi administrace"
 
-#: admin.py:147 admin.py:627
+#: admin.py:144 views.py:159
 msgid "Change password"
 msgstr "Změnit heslo"
 
-#: admin.py:151
+#: admin.py:148
 msgid "Logout"
-msgstr "Odhlásit se"
+msgstr "Odhlásit"
 
-#: admin.py:351
-msgid "All models"
-msgstr "Všechny modely"
-
-#: admin.py:403
+#: admin.py:419
 msgid "Add models to admin"
 msgstr "Přidat modely do administrace"
 
-#: admin.py:447
+#: admin.py:461
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "Vytvořit %(model_name)s"
 
-#: admin.py:570
-msgid "Username"
-msgstr "Uživatelské jméno"
+#: admin.py:559
+msgid "admin"
+msgstr ""
 
-#: admin.py:571
-msgid "Password"
-msgstr "Heslo"
-
-#: admin.py:574
-msgid "Login"
-msgstr "Přihlášení"
-
-#: admin.py:589
-msgid "Unknown username or password"
-msgstr "Neznámé uživatelské jméno či heslo"
-
-#: admin.py:605
-msgid "Incorrect password"
-msgstr "Nesprávné heslo"
-
-#: admin.py:621
-msgid "New passwords do not match"
-msgstr "Nová hesla se neshodují"
-
-#: admin.py:637
-msgid "Current password"
-msgstr "Současné heslo"
-
-#: admin.py:638
-msgid "New password"
-msgstr "Nové heslo"
-
-#: admin.py:639
-msgid "Confirm password"
-msgstr "Potvrdit heslo"
-
-#: base__tests.py:67 form.py:1495
+#: base__tests.py:68 form.py:1583
 msgid "edit"
 msgstr "editace"
 
-#: edit_table.py:145 style_base.py:87 table.py:586
+#: edit_table.py:170 style_base.py:108 table.py:599
 msgid "Delete"
 msgstr "Smazat"
 
-#: edit_table.py:302 form.py:1661 style_base.py:85
+#: edit_table.py:357 form.py:1756 style_base.py:106
 msgid "Save"
 msgstr "Uložit"
 
-#: edit_table.py:314
+#: edit_table.py:363
 msgid "Add row"
 msgstr "Přidat řádek"
 
-#: form.py:152
+#: form.py:161
 msgid "{} is not a valid boolean value"
-msgstr ""
+msgstr "{} není validní boolean"
 
-#: form.py:285
+#: form.py:306
 msgid "Could not convert string to float: {}"
-msgstr ""
+msgstr "Nepodařilo se konvertovat řetězec na desetinné číslo: {}"
 
-#: form.py:296 form.py:314
+#: form.py:317 form.py:335
 msgid "{} not in available choices"
-msgstr ""
+msgstr "{} není dostupnou volbou"
 
-#: form.py:410
+#: form.py:434
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
 "{formats}, and is not a relative date like \"2d\" or \"2 weeks ago\""
 msgstr ""
+"Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\", "
+"{formats}, a nejedná se o relativní datum jako \"2d\" nebo \"2 weeks ago\""
 
-#: form.py:445
+#: form.py:469
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
 "{formats}, and is not a relative date like \"2d\" or \"2 weeks "
 "ago\"{extra_information}"
 msgstr ""
+"Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\", "
+"{formats}, a nejedná se o relativní datum jako \"2d\" nebo \"2 weeks "
+"ago\"{extra_information}"
 
-#: form.py:477
+#: form.py:501
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\" or "
 "{formats}"
 msgstr ""
+"Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\" nebo "
+"{formats}"
 
-#: form.py:493
+#: form.py:517
 #, python-brace-format
 msgid "Invalid literal for Decimal: '{string_value}'"
-msgstr ""
+msgstr "Neplatný literál pro desetinné číslo: '{string_value}'"
 
-#: form.py:518
+#: form.py:543
 msgid ""
 "Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
 "123 4567 or +1 212 123 4567"
 msgstr ""
+"Použijte prosím formát +<kód země> (XX) XX XX. Příklad čísla v USA: +1 (212) "
+"123 4567 nebo +1 212 123 4567"
 
-#: form.py:942
+#: form.py:1018
 msgid "This field is required"
 msgstr "Toto pole je povinné"
 
-#: form.py:1186 table.py:250
+#: form.py:1268 table.py:254
 msgid "Yes"
 msgstr "Ano"
 
-#: form.py:1186 table.py:252
+#: form.py:1268 table.py:256
 msgid "No"
 msgstr "Ne"
 
-#: form.py:1448
-#, fuzzy, python-format
-#| msgid "Create %(model_name)s"
+#: form.py:1536
+#, python-format
 msgid "Cannot delete %(name)s"
-msgstr "Vytvořit %(model_name)s"
+msgstr "Nelze smazat %(name)s"
 
-#: form.py:1494
+#: form.py:1582
 msgid "create"
 msgstr "vytvořit"
 
-#: form.py:1496
+#: form.py:1584
 msgid "delete"
 msgstr "smazat"
 
-#: form.py:1653
+#: form.py:1748
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:2041
+#: form.py:2162
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Jste si jisti, že chcete smazat %(model_name)s \"%(instance)s\"?"
 
-#: query.py:609 templates/iommi/query/form_toggle_script.html:26
+#: form__tests.py:3907
+msgid "yes"
+msgstr "Ano"
+
+#: query.py:619 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Přepnout do rozšířeného hledání"
 
-#: query.py:740
+#: query.py:751
 msgid "Search"
 msgstr "Hledané slovo"
 
-#: query.py:790
-#, fuzzy
-#| msgid "Filter"
+#: query.py:800
 msgctxt "verb"
 msgid "Filter"
 msgstr "Filtrovat"
 
-#: style_base.py:86
+#: style_98.py:136 style_base.py:141 style_bootstrap.py:141
+#: style_bootstrap5.py:154 style_bulma.py:126 style_semantic_ui.py:87
+#: style_us_web_design_system.py:138 style_vanilla_css.py:94
+msgid "Select all"
+msgstr "Vybrat vše"
+
+#: style_base.py:107
 msgid "Create"
 msgstr "Vytvořit"
 
-#: table.py:563
+#: table.py:576
 msgid "Edit"
 msgstr "Editovat"
 
-#: table.py:611
+#: table.py:624
 msgid "Download"
 msgstr "Stáhnout"
 
-#: table.py:635
+#: table.py:648
 msgid "Run"
 msgstr "Spustit"
 
-#: table.py:1324
+#: table.py:1406
 #, python-brace-format
 msgid "Are you sure you want to delete these {count} items?"
 msgstr "Jste si jisti, že chcete smazat těchto {count} položek?"
 
-#: table.py:1339
+#: table.py:1422
 msgid "Yes, delete all!"
 msgstr "Ano, smazat vše!"
 
-#: table.py:1767 table.py:1979
+#: table.py:1859 table.py:2084
 msgid "Bulk change"
 msgstr "Hromadné úpravy"
 
-#: table.py:1985
+#: table.py:2090
 msgid "Bulk delete"
 msgstr "Hromadné mazání"
 
@@ -294,3 +274,62 @@ msgstr "Přepnout do základního hledání"
 #: templates/iommi/query/form_toggle_script.html:42
 msgid "Hide help"
 msgstr "Skrýt nápovědu"
+
+#: templates/iommi/table/js_select_all.html:15
+msgid "All items on this page are selected."
+msgstr "Jsou vybrány všechny položky na této stránce."
+
+#: templates/iommi/table/js_select_all.html:15
+msgid "Select all items"
+msgstr "Vybrat všechny položky"
+
+#: templates/iommi/table/js_select_all.html:32
+msgid "All items selected"
+msgstr "Všechny položky jsou vybrány"
+
+#: views.py:90
+msgid "Confirm log out"
+msgstr "Potvrdit odhlášení"
+
+#: views.py:92
+msgid "Log out"
+msgstr "Odhlásit"
+
+#: views.py:104
+msgid "Username"
+msgstr "Uživatelské jméno"
+
+#: views.py:105
+msgid "Password"
+msgstr "Heslo"
+
+#: views.py:108
+msgid "Login"
+msgstr "Přihlášení"
+
+#: views.py:123
+msgid "Unknown username or password"
+msgstr "Neznámé uživatelské jméno či heslo"
+
+#: views.py:137
+msgid "Incorrect password"
+msgstr "Nesprávné heslo"
+
+#: views.py:153
+msgid "New passwords do not match"
+msgstr "Nová hesla se neshodují"
+
+#: views.py:171
+msgid "Current password"
+msgstr "Současné heslo"
+
+#: views.py:177
+msgid "New password"
+msgstr "Nové heslo"
+
+#: views.py:182
+msgid "Confirm password"
+msgstr "Potvrdit heslo"
+
+#~ msgid "All models"
+#~ msgstr "Všechny modely"
