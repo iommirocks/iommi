@@ -3927,6 +3927,59 @@ def test_save_nested_forms():
     assert not form.get_errors()
 
 
+@pytest.mark.django_db
+def test_nested_forms_abort_save_on_fail():
+    dark_funeral = Artist.objects.create(name='Dark Funeral')
+    album_2016 = Album.objects.create(name='Where Shadows Forever Reign', artist=dark_funeral, year=2016)
+
+    class ArtistForm(Form):
+        class Meta:
+            auto__instance = dark_funeral
+            auto__include = ['id', 'name']
+            actions__submit__post_handler = lambda **_: None  # return None, so save_nested_forms takes it as a fail
+
+    class AlbumsEditTable(EditTable):
+        class Meta:
+            auto__model = Album
+            auto__include = ['name', 'artist', 'year']
+            columns__name__field__include = True
+            columns__year__field__include = True
+            columns__artist__field = Field.non_rendered(initial=dark_funeral)
+            columns__artist__render_column = False
+
+    class ParentForm(Form):
+        artist = ArtistForm.edit()
+        albums = AlbumsEditTable()
+        class Meta:
+            actions__submit__post_handler = save_nested_forms
+
+    def test_parent_form_save(abort_on_fail):
+        parent_form = ParentForm(extra_evaluated__nested_forms_abort_save_on_fail=abort_on_fail).refine_done()
+        parent_form = parent_form.bind(
+            request=req(
+                'POST',
+                **{
+                    # existing objects
+                    'name': dark_funeral.name,
+                    f'albums/name/{album_2016.pk}': album_2016.name,
+                    f'albums/year/{album_2016.pk}': album_2016.year,
+                    # create new
+                    'albums/name/-1': 'We Are the Apocalypse',
+                    'albums/year/-1': 2021,
+                    '-submit': '',
+                },
+            )
+        )
+        assert not parent_form.nested_forms.artist.get_errors()
+        parent_form.render_to_response()
+
+    test_parent_form_save(abort_on_fail=lambda **_: True)
+    assert Album.objects.filter(artist=dark_funeral).count() == 1
+
+    test_parent_form_save(abort_on_fail=lambda **_: False)
+    assert Album.objects.filter(artist=dark_funeral).count() == 2
+
+
 def test_hardcoded():
     form = Form(
         fields__foo=Field.hardcoded(parsed_data='banana'),

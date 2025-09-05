@@ -28,6 +28,7 @@ from django.core.validators import EMPTY_VALUES
 from django.db import (
     IntegrityError,
     models,
+    transaction,
 )
 from django.db.models import (
     Case,
@@ -202,19 +203,34 @@ def find_unique_prefixes(attributes):
 
 def save_nested_forms(form, request, **_):
     did_fail = False
-    for nested_form in form.nested_forms.values():
-        for action in nested_form.actions.values():
-            if action.post_handler is None:
-                continue
-            if action.post_handler and action.invoke_callback(action.post_handler) is None:
-                did_fail = True
 
-        # Handle EditTables
-        for action in getattr(nested_form, 'edit_actions', {}).values():
-            if action.post_handler is None:
-                continue
-            if action.post_handler and action.invoke_callback(action.post_handler) is None:
-                did_fail = True
+    abort_on_fail = getattr(form.extra_evaluated, "nested_forms_abort_save_on_fail", False)
+
+    class CallbackInvokingFailed(Exception):
+        pass
+
+    try:
+        with transaction.atomic():
+            for nested_form in form.nested_forms.values():
+                for action in nested_form.actions.values():
+                    if action.post_handler is None:
+                        continue
+                    if action.post_handler and action.invoke_callback(action.post_handler) is None:
+                        did_fail = True
+                        if abort_on_fail:
+                            raise CallbackInvokingFailed()
+
+                # Handle EditTables
+                for action in getattr(nested_form, 'edit_actions', {}).values():
+                    if action.post_handler is None:
+                        continue
+                    if action.post_handler and action.invoke_callback(action.post_handler) is None:
+                        did_fail = True
+                        if abort_on_fail:
+                            raise CallbackInvokingFailed()
+
+    except CallbackInvokingFailed:
+        pass
 
     if not did_fail:
         if 'post_save' in form.extra:
