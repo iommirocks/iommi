@@ -272,9 +272,10 @@ def test_how_do_i_supply_a_custom_validator():
     You can also raise `ValidationError`:
     """
 
-    def name_is_valid(form, field, parsed_data, **_):
+    def name_is_valid(parsed_data, **_):
         if parsed_data != 'only this value is valid':
             raise ValidationError('invalid!')
+        return True, ''
 
     form = Form.create(
         auto__model=Album,
@@ -283,9 +284,10 @@ def test_how_do_i_supply_a_custom_validator():
     )
 
     # @test
-    form = form.bind(request=req('post', name='foo', **{'-submit': ''}))
-    assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
-    show_output(form)
+    form1 = form.bind(request=req('post', name='foo', **{'-submit': ''}))
+    assert form1.get_errors() == {'fields': {'name': {'invalid!'}}}
+    show_output(form1)
+    form.bind(request=req('post', name='only this value is valid', **{'-submit': ''}))
     # @end
 
 
