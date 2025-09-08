@@ -314,7 +314,20 @@ class _EditTable_Lazy_tbody:
         for cells in self.table.cells_for_rows():
             rows.append(cells.__html__())
 
-        if (self.table.create_errors or self.table.edit_errors) and self.table._has_new_rows():
+        has_errors = bool(self.table.create_errors or self.table.edit_errors)
+        if not has_errors and self.table.parent_form:
+            if getattr(self.table.parent_form.extra_evaluated, "nested_forms_abort_save_on_fail", False):
+                # check for errors in all forms
+                for _form in values(self.table.parent_form.nested_forms):
+                    if isinstance(_form, EditTable):
+                        if _form.create_errors or _form.edit_errors:
+                            has_errors = True
+                            break
+                    elif not _form.is_valid():
+                        has_errors = True
+                        break
+
+        if has_errors and self.table._has_new_rows():
             for cells in self.table.cells_for_rows_for_create():
                 rows.append(cells.__html__())
 
