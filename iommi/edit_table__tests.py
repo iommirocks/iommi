@@ -728,7 +728,7 @@ def test_lazy_tbody_on_fail():
     verify_part_html(
         part=_form,
         # language=HTML
-        expected_html="""
+        expected_html=f"""
             <form action="" enctype="multipart/form-data" method="post">
                 <div action="" enctype="multipart/form-data" method="post">
                     <h1>Edit artist</h1>
@@ -748,9 +748,9 @@ def test_lazy_tbody_on_fail():
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr data-pk="1">
-                                        <td><input id="id_albums__name__1" name="albums/name/1" type="text" value="Where Shadows Forever Reign"></td>
-                                        <td class="rj"><input id="id_albums__year__1" name="albums/year/1" type="text" value="2016"></td>
+                                    <tr data-pk="{album_2016.pk}">
+                                        <td><input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value="Where Shadows Forever Reign"></td>
+                                        <td class="rj"><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"></td>
                                     </tr>
                                     <tr data-pk="-1">
                                         <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"></td>
@@ -779,7 +779,7 @@ def test_lazy_tbody_on_fail():
     verify_part_html(
         part=_form,
         # language=HTML
-        expected_html="""
+        expected_html=f"""
             <form action="" enctype="multipart/form-data" method="post">
                 <div action="" enctype="multipart/form-data" method="post">
                     <h1>Edit artist</h1>
@@ -798,9 +798,9 @@ def test_lazy_tbody_on_fail():
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr data-pk="1">
+                                    <tr data-pk="{album_2016.pk}">
                                         <td>
-                                            <input id="id_albums__name__1" name="albums/name/1" type="text" value=""/>
+                                            <input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value=""/>
                                             <br/>
                                             <span class="text-danger">
                                                 <ul class="errors">
@@ -808,7 +808,7 @@ def test_lazy_tbody_on_fail():
                                                 </ul>
                                             </span>
                                         </td>
-                                        <td class="rj"><input id="id_albums__year__1" name="albums/year/1" type="text" value="2016"/></td>
+                                        <td class="rj"><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"/></td>
                                     </tr>
                                     <tr data-pk="-1">
                                         <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"/></td>
