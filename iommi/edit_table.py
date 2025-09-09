@@ -319,11 +319,7 @@ class _EditTable_Lazy_tbody:
             if getattr(self.table.parent_form.extra_evaluated, "nested_forms_abort_save_on_fail", False):
                 # check for errors in all forms
                 for _form in values(self.table.parent_form.nested_forms):
-                    if isinstance(_form, EditTable):
-                        if _form.create_errors or _form.edit_errors:
-                            has_errors = True
-                            break
-                    elif not _form.is_valid():
+                    if not _form.is_valid():
                         has_errors = True
                         break
 
