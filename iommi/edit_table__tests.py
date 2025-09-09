@@ -13,6 +13,7 @@ from iommi.edit_table import (
 from iommi.form import (
     Field,
     Form,
+    save_nested_forms,
 )
 from iommi.struct import Struct
 from iommi.table import (
@@ -22,6 +23,7 @@ from tests.helpers import (
     req,
     verify_html,
     verify_table_html,
+    verify_part_html,
 )
 from tests.models import (
     TBar,
@@ -663,3 +665,178 @@ def test_edit_table_create_object_callbacks():
     ).render_to_response()
 
     assert 'new_instance' in invoked
+
+
+@pytest.mark.django_db
+def test_lazy_tbody_on_fail():
+    dark_funeral = Artist.objects.create(name='Dark Funeral')
+    album_2016 = Album.objects.create(name='Where Shadows Forever Reign', artist=dark_funeral, year=2016)
+
+    class ArtistForm(Form):
+        class Meta:
+            auto__instance = dark_funeral
+            auto__include = ['id', 'name']
+            fields__name__required = True
+
+    class AlbumsEditTable(EditTable):
+        class Meta:
+            auto__model = Album
+            auto__include = ['name', 'artist', 'year']
+            columns__name__field__include = True
+            columns__name__field__required = True
+            columns__year__field__include = True
+            columns__artist__field = Field.non_rendered(initial=dark_funeral)
+            columns__artist__render_column = False
+
+    class ParentForm(Form):
+        artist = ArtistForm.edit()
+        albums = AlbumsEditTable()
+        class Meta:
+            actions__submit__post_handler = save_nested_forms
+
+    def test_parent_form_save(abort_on_fail):
+        parent_form = ParentForm(extra_evaluated__nested_forms_abort_save_on_fail=abort_on_fail).refine_done()
+        parent_form = parent_form.bind(
+            request=req(
+                'POST',
+                **{
+                    # existing objects
+                    'name': dark_funeral.name if not abort_on_fail else '',
+                    f'albums/name/{album_2016.pk}': album_2016.name if abort_on_fail else '',
+                    f'albums/year/{album_2016.pk}': album_2016.year,
+                    # create new
+                    'albums/name/-1': 'We Are the Apocalypse',
+                    'albums/year/-1': 2021,
+                    'albums/name/-2': 'Angelus Exuro pro Eternus' if abort_on_fail else '',
+                    'albums/year/-2': 2009,
+                    '-submit': '',
+                },
+            )
+        )
+        assert not abort_on_fail or parent_form.nested_forms.artist.get_errors()
+
+        parent_form.render_to_response()
+
+        # edit_errors and create_errors are None before render_to_response(),
+        # because they get checked in edit_table__post_handler
+        assert abort_on_fail or parent_form.nested_forms.albums.edit_errors
+        assert abort_on_fail or parent_form.nested_forms.albums.create_errors
+
+        return parent_form
+
+    _form = test_parent_form_save(abort_on_fail=True)
+    verify_part_html(
+        part=_form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div action="" enctype="multipart/form-data" method="post">
+                    <h1>Edit artist</h1>
+                    <div><label for="id_id">ID</label><input id="id_id" name="id" type="text" value=""></div>
+                    <div><label for="id_name">Name</label><input id="id_name" name="name" type="text" value=""><ul><li>This field is required</li></ul></div>
+                </div>
+            
+                <h1>Albums</h1>
+                <div class="iommi-table-container" data-endpoint="/albums/tbody" data-iommi-id="albums">
+                    <div action="" enctype="multipart/form-data" method="post">
+                        <div class="iommi-table-plus-paginator">
+                            <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-3">
+                                <thead>
+                                    <tr>
+                                        <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=name">Name</a></th>
+                                        <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=year">Year</a></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-pk="1">
+                                        <td><input id="id_albums__name__1" name="albums/name/1" type="text" value="Where Shadows Forever Reign"></td>
+                                        <td class="rj"><input id="id_albums__year__1" name="albums/year/1" type="text" value="2016"></td>
+                                    </tr>
+                                    <tr data-pk="-1">
+                                        <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"></td>
+                                        <td class="rj"><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"></td>
+                                    </tr>
+                                    <tr data-pk="-2">
+                                        <td><input id="id_albums__name__-2" name="albums/name/-2" type="text" value="Angelus Exuro pro Eternus"></td>
+                                        <td class="rj"><input id="id_albums__year__-2" name="albums/year/-2" type="text" value="2009"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="links">
+                            <button data-iommi-edit-table-add-row-button data-iommi-edit-table-path="fields__albums" type="button">Add row</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="links">
+                        <button accesskey="s" name="-submit">Submit</button>
+                </div>
+            </form>
+        """,
+    )
+
+    _form = test_parent_form_save(abort_on_fail=False)
+    verify_part_html(
+        part=_form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div action="" enctype="multipart/form-data" method="post">
+                    <h1>Edit artist</h1>
+                    <div><label for="id_id">ID</label><input id="id_id" name="id" type="text" value=""/></div>
+                    <div><label for="id_name">Name</label><input id="id_name" name="name" type="text" value="Dark Funeral"/></div>
+                </div>
+                <h1>Albums</h1>
+                <div class="iommi-table-container" data-endpoint="/albums/tbody" data-iommi-id="albums">
+                    <div action="" enctype="multipart/form-data" method="post">
+                        <div class="iommi-table-plus-paginator">
+                            <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-3">
+                                <thead>
+                                    <tr>
+                                        <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=name">Name</a></th>
+                                        <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=year">Year</a></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-pk="1">
+                                        <td>
+                                            <input id="id_albums__name__1" name="albums/name/1" type="text" value=""/>
+                                            <br/>
+                                            <span class="text-danger">
+                                                <ul class="errors">
+                                                    <li>This field is required</li>
+                                                </ul>
+                                            </span>
+                                        </td>
+                                        <td class="rj"><input id="id_albums__year__1" name="albums/year/1" type="text" value="2016"/></td>
+                                    </tr>
+                                    <tr data-pk="-1">
+                                        <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"/></td>
+                                        <td class="rj"><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"/></td>
+                                    </tr>
+                                    <tr data-pk="-2">
+                                        <td>
+                                            <input id="id_albums__name__-2" name="albums/name/-2" type="text" value=""/>
+                                            <br/>
+                                            <span class="text-danger">
+                                                <ul class="errors">
+                                                    <li>This field is required</li>
+                                                </ul>
+                                            </span>
+                                        </td>
+                                        <td class="rj"><input id="id_albums__year__-2" name="albums/year/-2" type="text" value="2009"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="links">
+                            <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="fields__albums" type="button">Add row</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit">Submit</button>
+                </div>
+            </form>
+        """,
+    )
