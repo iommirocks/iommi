@@ -198,6 +198,12 @@ base = Style(
             iommi_main_menu_css=Asset.css(attrs__href='/static/css/iommi_main_menu.css')
         ),
     ),
+    EditTable=dict(
+        assets__sortable_js = Asset.js(
+            attrs__src='https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
+            include=lambda table, **_: table.reorderable,
+        )
+    )
 )
 
 base_enhanced_forms = Style(

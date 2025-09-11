@@ -55,4 +55,8 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 [data-iommi-type="EditCells"]:has(input[data-iommi-edit-table-delete-row-checkbox]:checked) {
     opacity: 0.3;
 }
+.reordering-handle-cell {
+	cursor: move;
+	cursor: -webkit-grabbing;
+}
 /* /EditTable */
