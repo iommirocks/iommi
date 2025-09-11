@@ -508,9 +508,6 @@ class EditTable(Table):
         if self.create_form is not None:
             self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
 
-        if self.sortable and self.reorderable:
-            raise ValueError("sortable and reorderable cannot be used simultaneously")
-
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
         bind_members(self, name='edit_actions')
@@ -542,6 +539,10 @@ class EditTable(Table):
         if reorder_handles:
             assert len(reorder_handles) == 1, "You cannot have multiple EditColumn.reorder_handle in an EditTable!"
             self.reorderable = True
+            self.sortable = False
+
+        if self.sortable and self.reorderable:
+            raise ValueError("sortable and reorderable cannot be used simultaneously")
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
