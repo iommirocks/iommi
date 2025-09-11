@@ -58,5 +58,9 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 .reordering-handle-cell {
 	cursor: move;
 	cursor: -webkit-grabbing;
+    width: 30px;
+}
+.reordering-handle-cell::after {
+    content: "||";
 }
 /* /EditTable */
