@@ -1,26 +1,29 @@
 from collections import defaultdict
+import json
 from typing import (
+    Any,
     Dict,
     Optional,
     Type,
+    Union,
 )
 
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
-from django.template import (
-    Context,
-    Template,
-)
+from django.template import Context
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
-from iommi._web_compat import render_template
+from iommi._web_compat import (
+    render_template,
+    Template,
+)
 from iommi.action import (
     Action,
     Actions,
     group_actions,
 )
-from iommi.asset import Asset
+from iommi.sort_after import LAST
 from iommi.base import (
     MISSING,
     NOT_BOUND_MESSAGE,
@@ -46,6 +49,7 @@ from iommi.form import (
     Field,
     Form,
 )
+from iommi.from_model import member_from_model
 from iommi.member import (
     bind_member,
     bind_members,
@@ -57,15 +61,31 @@ from iommi.refinable import (
     refinable,
     EvaluatedRefinable,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import (
+    Shortcut,
+    with_defaults,
+)
 from iommi.struct import Struct
 from iommi.table import (
+    _column_factory_by_field_type,
     Cell,
     Cells,
     Column,
     Table,
 )
 from iommi.evaluate import evaluate
+
+from ._db_compat import base_defaults_factory
+
+_edit_column_factory_by_field_type = {}
+
+
+def register_edit_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _edit_column_factory_by_field_type[django_field_class] = factory
 
 
 class EditCell(Cell):
@@ -158,6 +178,23 @@ class EditColumn(Column):
 
     field: Field = Refinable()
 
+    @classmethod
+    @dispatch(
+        filter__call_target__attribute='from_model',
+        bulk__call_target__attribute='from_model',
+    )
+    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
+        return member_from_model(
+            cls=cls,
+            model=model,
+            factory_lookup={**_column_factory_by_field_type, **_edit_column_factory_by_field_type},
+            factory_lookup_register_function=register_edit_column_factory,
+            model_field_name=model_field_name,
+            model_field=model_field,
+            defaults_factory=base_defaults_factory,
+            **kwargs,
+        )
+
     def on_refine_done(self):
         super(EditColumn, self).on_refine_done()
         self.field = None
@@ -220,10 +257,17 @@ class EditColumn(Column):
 
     @classmethod
     @with_defaults(
+        # TODO this would be better, but it doesn't work and idk why
+        #  header__template=Template('<th{{ header.attrs }}></th>'),
         sortable=False,
-        # field__call_target__attribute='hidden',  # TODO TypeError(Field object has no refinable attribute(s): "call_target".)
+        # TODO
+        #  field__call_target__attribute='hidden',
+        #  call_target raises TypeError(Field object has no refinable attribute(s): "call_target".)
+        #  so "temporary" fix to set attrs__type=hidden (works for inputs only):
+        field__input__attrs__type='hidden',
         field__include=True,
-        display_name=gettext_lazy('Reorder'),
+        cell__attrs__title=gettext_lazy('Drag and drop to reorder'),
+        after=LAST,
         **{
             'cell__attrs__class__reordering-handle-cell': True,
             'field__input__attrs__data-reordering-value': True,
@@ -378,7 +422,7 @@ class EditTable(Table):
     form_class: Type[Form] = Refinable()
     parent_form: Optional[Form] = Refinable()
     edit_actions: Dict[str, Action] = RefinableMembers()
-    reorderable: bool = EvaluatedRefinable()
+    reorderable: Union[bool, Dict[str, Any], None] = EvaluatedRefinable()
 
     class Meta:
         form_class = Form
@@ -404,8 +448,7 @@ class EditTable(Table):
         create_form = EMPTY
         container__children__text__template = 'iommi/table/edit_table_container.html'
 
-        reorderable = lambda table, **_: not table.sortable
-        tbody__attrs = {'data-reorderable': lambda table, **_: evaluate(table.reorderable, **table.iommi_evaluate_parameters()) or None}
+        reorderable = False
 
         bulk__include = True
 
@@ -508,6 +551,29 @@ class EditTable(Table):
         if self.create_form is not None:
             self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
 
+    def bind(self, *, parent=None, request=None):
+        result = super(EditTable, self).bind(parent=parent, request=request)
+
+        if result is None:
+            return result
+
+        reorder_handles = []
+        for column_name, column in items(result.columns):
+            if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', []):
+                reorder_handles.append(column_name)
+        if reorder_handles:
+            assert len(reorder_handles) == 1, "You cannot have multiple EditColumn.reorder_handle in an EditTable!"
+            if not result.reorderable:
+                result.reorderable = True
+            result.sortable = False
+        if result.reorderable:
+            result.tbody.attrs['data-reorderable'] = json.dumps(result.reorderable) if isinstance(result.reorderable, dict) else result.reorderable
+
+        if result.sortable and result.reorderable:
+            raise NotImplementedError("sortable and reorderable cannot be used simultaneously")
+
+        return result
+
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
         bind_members(self, name='edit_actions')
@@ -531,18 +597,6 @@ class EditTable(Table):
                 self.attrs['data-next-virtual-pk'] = str(min(virtual_pks) - 1)
 
         self.tbody.children.text = _EditTable_Lazy_tbody(self)
-
-        reorder_handles = []
-        for column_name, column in items(self.columns):
-            if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', []):
-                reorder_handles.append(column_name)
-        if reorder_handles:
-            assert len(reorder_handles) == 1, "You cannot have multiple EditColumn.reorder_handle in an EditTable!"
-            self.reorderable = True
-            self.sortable = False
-
-        if self.sortable and self.reorderable:
-            raise ValueError("sortable and reorderable cannot be used simultaneously")
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors

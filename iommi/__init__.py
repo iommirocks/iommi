@@ -15,6 +15,7 @@ from iommi.base import MISSING
 from iommi.edit_table import (
     EditColumn,
     EditTable,
+    register_edit_column_factory,
 )
 from iommi.form import (
     Field,
@@ -140,6 +141,7 @@ __all__ = [
     'LAST',
     'MISSING',
     'register_factory',
+    'register_edit_column_factory',
     'register_field_factory',
     'register_filter_factory',
     'register_column_factory',
