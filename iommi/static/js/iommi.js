@@ -627,11 +627,13 @@ class IommiReorderable {
         if(elem.dataset.reorderable.startsWith("{")) {
             required_options = JSON.parse(elem.dataset.reorderable);
         }
-        options.onUpdate = function(event) {
-            let index = 0;
-            for(let item of event.target.children) {
-                item.querySelector(elem.dataset.reorderableFieldSelector).value = index;
-                index += 1;
+        if(elem.dataset.reorderableFieldSelector) {
+            options.onUpdate = function (event) {
+                let index = 0;
+                for (let item of event.target.children) {
+                    item.querySelector(elem.dataset.reorderableFieldSelector).value = index;
+                    index += 1;
+                }
             }
         }
 
