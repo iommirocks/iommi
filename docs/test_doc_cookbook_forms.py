@@ -501,7 +501,7 @@ def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use
     .. uses Field.search_fields
 
     `Form.choice_queryset` uses the registered search fields for filtering and ordering.
-    See `Registrations <registrations>`_ for how to register one. If present it will default
+    See `Registrations <registrations.html>`_ for how to register one. If present it will default
     to a model field `name`.
 
 
