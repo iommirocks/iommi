@@ -593,9 +593,59 @@ class IommiSelect2 {
     }
 }
 
+class IommiReorderable {
+    constructor() {
+        const SELF = this;
+        document.addEventListener('iommi.element.populated', (event) => {
+            SELF.initAll(event.target);
+        });
+    }
+
+    onCompleteReadyState() {
+        this.initAll();
+    }
+
+    initAll(parent, selector, extra_options) {
+        const SELF = this;
+        if (!parent) {
+            parent = document;
+        }
+        if (!selector) {
+            selector = '[data-reorderable]';
+        }
+        parent.querySelectorAll(selector).forEach((el) => {this.initOne(el, extra_options)});
+    }
+
+    initOne(elem, extra_options) {
+        const options = {
+            animation: 150
+        };
+        if(elem.dataset.reorderableHandleSelector) {
+            options.handle = elem.dataset.reorderableHandleSelector;
+        }
+        let required_options = {}
+        if(elem.dataset.reorderable.startsWith("{")) {
+            required_options = JSON.parse(elem.dataset.reorderable);
+        }
+        options.onUpdate = function(event) {
+            let index = 0;
+            for(let item of event.target.children) {
+                item.querySelector(elem.dataset.reorderableFieldSelector).value = index;
+                index += 1;
+            }
+        }
+
+        if (!elem.iommi) {
+            elem.iommi = {};
+        }
+        elem.iommi.reorderable = new Sortable(elem, Object.assign(options, required_options, extra_options));
+    }
+}
+
 // TODO should this be somehow conditioned? so people can create their own extended instance?
 window.iommi = new IommiBase({
-    select2: new IommiSelect2()
+    select2: new IommiSelect2(),
+    reorderable: new IommiReorderable()
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -609,5 +659,6 @@ window.addEventListener('popstate', function (event) {
 document.addEventListener('readystatechange', () => {
     if (document.readyState === 'complete') {
         window.iommi.select2.onCompleteReadyState();
+        window.iommi.reorderable.onCompleteReadyState();
     }
 });

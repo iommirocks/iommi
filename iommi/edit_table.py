@@ -55,6 +55,7 @@ from iommi.refinable import (
     Refinable,
     RefinableMembers,
     refinable,
+    EvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
@@ -64,6 +65,7 @@ from iommi.table import (
     Column,
     Table,
 )
+from iommi.evaluate import evaluate
 
 
 class EditCell(Cell):
@@ -160,6 +162,13 @@ class EditColumn(Column):
         super(EditColumn, self).on_refine_done()
         self.field = None
 
+    def on_bind(self) -> None:
+        super(EditColumn, self).on_bind()
+        if 'reorder_handle' in getattr(self, 'iommi_shortcut_stack', []):
+            edit_table = self.iommi_parent().iommi_parent()
+            edit_table.tbody.attrs['data-reorderable-handle-selector'] = f'[data-iommi-path="{self.iommi_dunder_path}__cell"]'
+            edit_table.tbody.attrs['data-reorderable-field-selector'] = '[data-reordering-value]'
+
     @classmethod
     @with_defaults(
         header__template='iommi/table/header.html',
@@ -207,6 +216,20 @@ class EditColumn(Column):
         assert (
             'parsed_data' in kwargs['field']
         ), 'Specify a hardcoded value by specifying `field__parsed_data` as a callable'
+        return cls(**kwargs)
+
+    @classmethod
+    @with_defaults(
+        sortable=False,
+        # field__call_target__attribute='hidden',  # TODO TypeError(Field object has no refinable attribute(s): "call_target".)
+        field__include=True,
+        display_name=gettext_lazy('Reorder'),
+        **{
+            'cell__attrs__class__reordering-handle-cell': True,
+            'field__input__attrs__data-reordering-value': True,
+        }
+    )
+    def reorder_handle(cls, **kwargs):
         return cls(**kwargs)
 
 
@@ -355,6 +378,7 @@ class EditTable(Table):
     form_class: Type[Form] = Refinable()
     parent_form: Optional[Form] = Refinable()
     edit_actions: Dict[str, Action] = RefinableMembers()
+    reorderable: bool = EvaluatedRefinable()
 
     class Meta:
         form_class = Form
@@ -379,6 +403,9 @@ class EditTable(Table):
         edit_form = EMPTY
         create_form = EMPTY
         container__children__text__template = 'iommi/table/edit_table_container.html'
+
+        reorderable = lambda table, **_: not table.sortable
+        tbody__attrs = {'data-reorderable': lambda table, **_: evaluate(table.reorderable, **table.iommi_evaluate_parameters()) or None}
 
         bulk__include = True
 
@@ -481,6 +508,9 @@ class EditTable(Table):
         if self.create_form is not None:
             self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
 
+        if self.sortable and self.reorderable:
+            raise ValueError("sortable and reorderable cannot be used simultaneously")
+
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
         bind_members(self, name='edit_actions')
@@ -504,6 +534,14 @@ class EditTable(Table):
                 self.attrs['data-next-virtual-pk'] = str(min(virtual_pks) - 1)
 
         self.tbody.children.text = _EditTable_Lazy_tbody(self)
+
+        reorder_handles = []
+        for column_name, column in items(self.columns):
+            if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', []):
+                reorder_handles.append(column_name)
+        if reorder_handles:
+            assert len(reorder_handles) == 1, "You cannot have multiple EditColumn.reorder_handle in an EditTable!"
+            self.reorderable = True
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
