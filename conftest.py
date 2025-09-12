@@ -8,6 +8,7 @@ from docs.models import (
     Album,
     Artist,
     Track,
+    FavoriteArtist,
 )
 
 
@@ -253,3 +254,20 @@ def really_big_discography():
 @pytest.fixture
 def staff_user():
     return User.objects.create(username='staff_user', is_staff=True)
+
+
+@pytest.fixture
+def john_doe_user(transactional_db):
+    return User.objects.create(username='john.doe', email='john.doe@example.com')
+
+
+@pytest.fixture
+def damnation(transactional_db):
+    return Artist.objects.create(name='Damnation')
+
+
+@pytest.fixture
+def fav_artists(john_doe_user, black_sabbath, damnation, ozzy):
+    FavoriteArtist.objects.create(user=john_doe_user, artist=black_sabbath, comment='Love it!', sort_order=0)
+    FavoriteArtist.objects.create(user=john_doe_user, artist=ozzy, comment='I love this too!', sort_order=1)
+    FavoriteArtist.objects.create(user=john_doe_user, artist=damnation, comment='And this as well', sort_order=2)
