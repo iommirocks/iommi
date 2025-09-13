@@ -203,8 +203,8 @@ class EditColumn(Column):
         super(EditColumn, self).on_bind()
         if 'reorder_handle' in getattr(self, 'iommi_shortcut_stack', []):
             edit_table = self.iommi_parent().iommi_parent()
-            edit_table.tbody.attrs['data-reorderable-handle-selector'] = f'[data-iommi-path="{self.iommi_dunder_path}__cell"]'
-            edit_table.tbody.attrs['data-reorderable-field-selector'] = '[data-reordering-value]'
+            edit_table.tbody.attrs['data-iommi-reorderable-handle-selector'] = f'[data-iommi-path="{self.iommi_dunder_path}__cell"]'
+            edit_table.tbody.attrs['data-iommi-reorderable-field-selector'] = '[data-reordering-value]'
 
     @classmethod
     @with_defaults(
@@ -558,19 +558,32 @@ class EditTable(Table):
             return result
 
         reorder_handles = []
-        for column_name, column in items(result.columns):
+        is_sorting_on = None
+        for column in values(result.columns):
             if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', []):
-                reorder_handles.append(column_name)
+                reorder_handles.append(column)
+            if column.is_sorting:
+                is_sorting_on = column
+
+        # TODO when needed
+        #  instead of is_sorting_on we should rather check `result.rows.query.order_by != (reorder_handles.attr,)`
+        #  but query.order_by can be an empty tuple, or rows doesn't have to be a queryset etc.
+
         if reorder_handles:
             assert len(reorder_handles) == 1, "You cannot have multiple EditColumn.reorder_handle in an EditTable!"
-            if not result.reorderable:
+            if is_sorting_on:
+                # disable reordering when table is sorted by another column
+                result.reorderable = False
+                result.tbody.attrs['data-iommi-reorderable-handle-selector'] = None
+                result.tbody.attrs['data-iommi-reorderable-field-selector'] = None
+                reorder_handles[0].cell.attrs['class']['reordering-handle-cell'] = False
+                reorder_handles[0].render_column = False
+                result._bind_headers()
+            elif not result.reorderable:
                 result.reorderable = True
-            result.sortable = False
-        if result.reorderable:
-            result.tbody.attrs['data-reorderable'] = json.dumps(result.reorderable) if isinstance(result.reorderable, dict) else result.reorderable
 
-        if result.sortable and result.reorderable:
-            raise NotImplementedError("sortable and reorderable cannot be used simultaneously")
+        if result.reorderable:
+            result.tbody.attrs['data-iommi-reorderable'] = json.dumps(result.reorderable, separators=(',', ':')) if isinstance(result.reorderable, dict) else result.reorderable
 
         return result
 

@@ -68,8 +68,14 @@ def test_orderable_edit_tables(fav_artists):
 
     .. code-block:: python
 
+           from iommi.models import Orderable
+
            class FavoriteArtist(Orderable):
-               user = ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favorite_artists')
+               user = ForeignKey(
+                   settings.AUTH_USER_MODEL,
+                   on_delete=models.CASCADE,
+                   related_name='favorite_artists',
+               )
                artist = ForeignKey(Artist, on_delete=CASCADE, related_name='+')
                comment = CharField(max_length=255)
 
@@ -88,6 +94,7 @@ def test_orderable_edit_tables(fav_artists):
             auto__model = FavoriteArtist
             auto__include = ['artist__name', 'comment', 'sort_order']
             columns__comment__field__include = True
+            sortable = False
 
     user = get_user_model().objects.get(username='john.doe')
 
@@ -112,7 +119,7 @@ def test_orderable_edit_tables(fav_artists):
 
     # language=rst
     """
-    If you already have a custom model field for ordering, you can register it as a reorderderin column:
+    If you already have a custom model field for ordering, you can register it as a `reorder_handle` column:
 
     .. code-block:: python
 
@@ -131,6 +138,7 @@ def test_orderable_edit_tables(fav_artists):
                    class Meta:
                        auto__model = Foo
                        columns__bar = EditColumn.reorder_handle()
+                       sortable = False
     """
 
     # language=rst
@@ -149,4 +157,11 @@ def test_orderable_edit_tables(fav_artists):
                            "selectedClass": 'selected',  # The class applied to the selected items
                            "fallbackTolerance": 3,  # So that we can select items on mobile
                        }
+                       sortable = False
+    """
+
+    # language=rst
+    """
+    Note: We recommend using `sortable=False` on orderable EditTables, because it doesn't really make sense to have both. 
+    And if you sort table by another column, the `reorder_handle` column gets `render_column=False`.
     """

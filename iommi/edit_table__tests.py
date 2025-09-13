@@ -1,9 +1,11 @@
+import html
 import json
 import pytest
 
 from docs.models import (
     Album,
     Artist,
+    FavoriteArtist,
 )
 from iommi.declarative.namespace import Namespace
 from iommi.edit_table import (
@@ -838,5 +840,183 @@ def test_lazy_tbody_on_fail():
                     <button accesskey="s" name="-submit">Submit</button>
                 </div>
             </form>
+        """,
+    )
+
+
+@pytest.mark.django_db
+def test_orderable_edit_table(fav_artists):
+    class FavoriteArtists(EditTable):
+        class Meta:
+            auto__model = FavoriteArtist
+            auto__include = ['artist__name', 'comment', 'sort_order']
+            columns__comment__field__include = True
+            sortable = False
+
+    verify_table_html(
+        table=FavoriteArtists().bind(request=req('get')),
+        # language=html
+        expected_html=f"""
+            <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                <thead>
+                    <tr>
+                        <th class="first_column subheader">Name</th>
+                        <th class="first_column subheader">Comment</th>
+                        <th class="first_column subheader">Sort order</th>
+                    </tr>
+                </thead>
+                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__sort_order__cell&quot;]">
+                    <tr data-pk="{fav_artists[0].pk}">
+                        <td>Black Sabbath</td>
+                        <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
+                    </tr>
+                    <tr data-pk="{fav_artists[1].pk}">
+                        <td>Ozzy Osbourne</td>
+                        <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
+                    </tr>
+                    <tr data-pk="{fav_artists[2].pk}">
+                        <td>Damnation</td>
+                        <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
+                    </tr>
+                </tbody>
+            </table>
+        """,
+    )
+
+
+@pytest.mark.django_db
+def test_orderable_edit_table_sortablejs_options(fav_artists):
+    sortablejs_options = {
+        "multiDrag": True,  # Enable multi-drag
+        "selectedClass": 'selected',  # The class applied to the selected items
+        "fallbackTolerance": 3,  # So that we can select items on mobile
+    }
+    class FavoriteArtists(EditTable):
+        class Meta:
+            auto__model = FavoriteArtist
+            auto__include = ['artist__name', 'comment', 'sort_order']
+            columns__comment__field__include = True
+            reorderable = sortablejs_options
+            sortable = False
+
+    verify_table_html(
+        table=FavoriteArtists().bind(request=req('get')),
+        # language=html
+        expected_html=f"""
+            <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                <thead>
+                    <tr>
+                        <th class="first_column subheader">Name</th>
+                        <th class="first_column subheader">Comment</th>
+                        <th class="first_column subheader">Sort order</th>
+                    </tr>
+                </thead>
+                <tbody data-iommi-reorderable="{html.escape(json.dumps(sortablejs_options, separators=(',', ':')))}" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__sort_order__cell&quot;]">
+                    <tr data-pk="{fav_artists[0].pk}">
+                        <td>Black Sabbath</td>
+                        <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
+                    </tr>
+                    <tr data-pk="{fav_artists[1].pk}">
+                        <td>Ozzy Osbourne</td>
+                        <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
+                    </tr>
+                    <tr data-pk="{fav_artists[2].pk}">
+                        <td>Damnation</td>
+                        <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
+                    </tr>
+                </tbody>
+            </table>
+        """,
+    )
+
+
+@pytest.mark.django_db
+def test_orderable_edit_table_reorder_handle():
+    obj1 = TFoo.objects.create(a=1, b='test_reorder_handle')
+    obj2 = TFoo.objects.create(a=2, b='test_reorder_handle')
+
+    class MyEditTable(EditTable):
+        class Meta:
+            auto__model = TFoo
+            rows = TFoo.objects.filter(b='test_reorder_handle')
+            auto__include = ['a', 'b']
+            columns__a = EditColumn.reorder_handle()
+            sortable = False
+
+    verify_table_html(
+        table=MyEditTable().bind(request=req('get')),
+        # language=html
+        expected_html=f"""
+            <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                <thead>
+                    <tr>
+                        <th class="first_column subheader">B</th>
+                        <th class="first_column subheader">A</th>
+                    </tr>
+                </thead>
+                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__a__cell&quot;]">
+                    <tr data-pk="{obj1.pk}">
+                        <td>test_reorder_handle</td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj1.pk}" name="columns/a/{obj1.pk}" type="hidden" value="1"></td>
+                    </tr>
+                    <tr data-pk="{obj2.pk}">
+                        <td>test_reorder_handle</td>
+                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj2.pk}" name="columns/a/{obj2.pk}" type="hidden" value="2"></td>
+                    </tr>
+                </tbody>
+            </table>
+        """,
+    )
+
+
+@pytest.mark.django_db
+def test_orderable_sortable_edit_table(fav_artists):
+    """
+    when sorted by any column, the reordering turns off
+    """
+    class FavoriteArtists(EditTable):
+        class Meta:
+            auto__model = FavoriteArtist
+            auto__include = ['artist__name', 'comment', 'sort_order']
+            columns__comment__field__include = True
+
+    fav_artists_data = FavoriteArtist.objects.order_by('artist__name')
+
+    verify_table_html(
+        table=FavoriteArtists().bind(request=req('get', order='artist_name')),
+        # language=html
+        expected_html=f"""
+            <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                <thead>
+                    <tr>
+                        <th class="ascending first_column iommi_sort_header sorted subheader">
+                            <a href="?order=-artist_name">Name</a>
+                        </th>
+                        <th class="first_column iommi_sort_header subheader">
+                            <a href="?order=comment">Comment</a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-pk="{fav_artists_data[0].pk}">
+                        <td>{fav_artists_data[0].artist.name}</td>
+                        <td><input id="id_columns__comment__{fav_artists_data[0].pk}" name="columns/comment/{fav_artists_data[0].pk}" type="text" value="{fav_artists_data[0].comment}"></td>
+                    </tr>
+                    <tr data-pk="{fav_artists_data[1].pk}">
+                        <td>{fav_artists_data[1].artist.name}</td>
+                        <td><input id="id_columns__comment__{fav_artists_data[1].pk}" name="columns/comment/{fav_artists_data[1].pk}" type="text" value="{fav_artists_data[1].comment}"></td>
+                    </tr>
+                    <tr data-pk="{fav_artists_data[2].pk}">
+                        <td>{fav_artists_data[2].artist.name}</td>
+                        <td><input id="id_columns__comment__{fav_artists_data[2].pk}" name="columns/comment/{fav_artists_data[2].pk}" type="text" value="{fav_artists_data[2].comment}"></td>
+                    </tr>
+                </tbody>
+            </table>
         """,
     )
