@@ -605,7 +605,7 @@ class IommiSelect2 {
 }
 
 class IommiReorderable {
-    defaultSelector = '[data-reorderable]';
+    defaultSelector = '[data-iommi-reorderable]';
 
     constructor() {
         const SELF = this;
@@ -628,7 +628,7 @@ class IommiReorderable {
     recalculate(tbody) {
         let index = 0;
         for (let item of tbody.children) {
-            item.querySelector(tbody.dataset.reorderableFieldSelector).value = index;
+            item.querySelector(tbody.dataset.iommiReorderableFieldSelector).value = index;
             index += 1;
         }
     }
@@ -647,15 +647,15 @@ class IommiReorderable {
         const options = {
             animation: 150
         };
-        if(elem.dataset.reorderableHandleSelector) {
-            options.handle = elem.dataset.reorderableHandleSelector;
+        if(elem.dataset.iommiReorderableHandleSelector) {
+            options.handle = elem.dataset.iommiReorderableHandleSelector;
         }
         let requiredOptions = {}
-        if(elem.dataset.reorderable.startsWith("{")) {
-            requiredOptions = JSON.parse(elem.dataset.reorderable);
+        if(elem.dataset.iommiReorderable.startsWith("{")) {
+            requiredOptions = JSON.parse(elem.dataset.iommiReorderable);
         }
         const SELF = this;
-        if(elem.dataset.reorderableFieldSelector) {
+        if(elem.dataset.iommiReorderableFieldSelector) {
             options.onUpdate = function(event) {
                 SELF.recalculate(elem);
             }

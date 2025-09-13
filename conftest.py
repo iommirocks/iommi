@@ -268,6 +268,8 @@ def damnation(transactional_db):
 
 @pytest.fixture
 def fav_artists(john_doe_user, black_sabbath, damnation, ozzy):
-    FavoriteArtist.objects.create(user=john_doe_user, artist=black_sabbath, comment='Love it!', sort_order=0)
-    FavoriteArtist.objects.create(user=john_doe_user, artist=ozzy, comment='I love this too!', sort_order=1)
-    FavoriteArtist.objects.create(user=john_doe_user, artist=damnation, comment='And this as well', sort_order=2)
+    return [
+        FavoriteArtist.objects.create(user=john_doe_user, artist=black_sabbath, comment='Love it!', sort_order=0),
+        FavoriteArtist.objects.create(user=john_doe_user, artist=ozzy, comment='I love this too!', sort_order=1),
+        FavoriteArtist.objects.create(user=john_doe_user, artist=damnation, comment='And this as well', sort_order=2),
+    ]
