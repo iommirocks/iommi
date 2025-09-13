@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+7.16.0 (2025-09-12)
+~~~~~~~~~~~~~~~~~~~
+
+* `EditTable` support for `create_form.extra.new_instance`
+
+* Fixes for `EditTable` nesting inside `Form`
+
+* New setting for `Form`: `nested_forms_abort_save_on_fail` which will early abort instead of late abort on error.
+
+* `M.render` option to control if a menu item should be rendered
+
+
 7.15.1 (2025-09-02)
 ~~~~~~~~~~~~~~~~~~~
 

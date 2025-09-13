@@ -211,12 +211,13 @@ class M:
         extra=EMPTY,
         extra_evaluated=EMPTY,
     )
-    def __init__(self, *, icon=None, view=None, view_kwargs=None, path=MISSING, url=None, open=None, params=None, display_name=None, items=None, include=None, attrs, template=MISSING, paths=None, extra, extra_evaluated):
+    def __init__(self, *, icon=None, view=None, view_kwargs=None, path=MISSING, url=None, open=None, params=None, display_name=None, items=None, include=None, attrs, template=MISSING, paths=None, extra, extra_evaluated, render=True):
 
         assert view is not None or view is EXTERNAL, f'Items should either have a view function specified, or supply EXTERNAL to mark the item as having an external URL and thus not needing access control. Got {view!r}'
 
         self.name = None
         self.icon = icon
+        self.render = render
         self.url = url
         assert url is None or isinstance(url, str) or callable(url)
         self.path = path
@@ -318,6 +319,8 @@ class BoundM:
 
         self._own_evaluate_parameters = self.own_evaluate_parameters()
 
+        self.render_item = evaluate_strict(self.m.render, **self._own_evaluate_parameters)
+
         if self.include:
             self.display_name = self._display_name()
             items = self.m.items
@@ -346,6 +349,8 @@ class BoundM:
         return self.__html__()
 
     def __html__(self):
+        if not self.render_item:
+            return ''
         return self.render()
 
     def render(self):

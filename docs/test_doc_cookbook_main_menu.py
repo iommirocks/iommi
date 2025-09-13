@@ -318,3 +318,33 @@ def test_dynamic_submenu(medium_discography):
 
     show_output(menu, request=request)
     # @end
+
+
+def test_non_rendered_menu_item(medium_discography):
+    # language=rst
+    """
+    How do I use the menu for access control and path mapping without rendering into the menu?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses M.render
+
+    The access control and path mapping of `M` items is very handy, but sometimes you don't want
+    to show some URL in the sidebar menu. Use `render` to accomplish this:
+
+    """
+
+    menu = MainMenu(
+        items=dict(
+            albums=M(
+                view=albums_view,
+                render=False,
+            )
+        ),
+    )
+
+    # @test
+    request = req('get', url=f'/albums/')
+
+    response = show_output(menu, request=request)
+
+    assert '<a href="/albums/"' not in response.decode()
+    # @end
