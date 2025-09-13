@@ -1,26 +1,29 @@
 from collections import defaultdict
+import json
 from typing import (
+    Any,
     Dict,
     Optional,
     Type,
+    Union,
 )
 
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
-from django.template import (
-    Context,
-    Template,
-)
+from django.template import Context
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
-from iommi._web_compat import render_template
+from iommi._web_compat import (
+    render_template,
+    Template,
+)
 from iommi.action import (
     Action,
     Actions,
     group_actions,
 )
-from iommi.asset import Asset
+from iommi.sort_after import LAST
 from iommi.base import (
     MISSING,
     NOT_BOUND_MESSAGE,
@@ -46,6 +49,7 @@ from iommi.form import (
     Field,
     Form,
 )
+from iommi.from_model import member_from_model
 from iommi.member import (
     bind_member,
     bind_members,
@@ -55,15 +59,33 @@ from iommi.refinable import (
     Refinable,
     RefinableMembers,
     refinable,
+    EvaluatedRefinable,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import (
+    Shortcut,
+    with_defaults,
+)
 from iommi.struct import Struct
 from iommi.table import (
+    _column_factory_by_field_type,
     Cell,
     Cells,
     Column,
     Table,
 )
+from iommi.evaluate import evaluate
+
+from ._db_compat import base_defaults_factory
+
+_edit_column_factory_by_field_type = {}
+
+
+def register_edit_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+
+    _edit_column_factory_by_field_type[django_field_class] = factory
 
 
 class EditCell(Cell):
@@ -156,9 +178,33 @@ class EditColumn(Column):
 
     field: Field = Refinable()
 
+    @classmethod
+    @dispatch(
+        filter__call_target__attribute='from_model',
+        bulk__call_target__attribute='from_model',
+    )
+    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
+        return member_from_model(
+            cls=cls,
+            model=model,
+            factory_lookup={**_column_factory_by_field_type, **_edit_column_factory_by_field_type},
+            factory_lookup_register_function=register_edit_column_factory,
+            model_field_name=model_field_name,
+            model_field=model_field,
+            defaults_factory=base_defaults_factory,
+            **kwargs,
+        )
+
     def on_refine_done(self):
         super(EditColumn, self).on_refine_done()
         self.field = None
+
+    def on_bind(self) -> None:
+        super(EditColumn, self).on_bind()
+        if 'reorder_handle' in getattr(self, 'iommi_shortcut_stack', []):
+            edit_table = self.iommi_parent().iommi_parent()
+            edit_table.tbody.attrs['data-iommi-reorderable-handle-selector'] = f'[data-iommi-path="{self.iommi_dunder_path}__cell"]'
+            edit_table.tbody.attrs['data-iommi-reorderable-field-selector'] = '[data-reordering-value]'
 
     @classmethod
     @with_defaults(
@@ -207,6 +253,27 @@ class EditColumn(Column):
         assert (
             'parsed_data' in kwargs['field']
         ), 'Specify a hardcoded value by specifying `field__parsed_data` as a callable'
+        return cls(**kwargs)
+
+    @classmethod
+    @with_defaults(
+        # TODO this would be better, but it doesn't work and idk why
+        #  header__template=Template('<th{{ header.attrs }}></th>'),
+        sortable=False,
+        # TODO
+        #  field__call_target__attribute='hidden',
+        #  call_target raises TypeError(Field object has no refinable attribute(s): "call_target".)
+        #  so "temporary" fix to set attrs__type=hidden (works for inputs only):
+        field__input__attrs__type='hidden',
+        field__include=True,
+        cell__attrs__title=gettext_lazy('Drag and drop to reorder'),
+        after=LAST,
+        **{
+            'cell__attrs__class__reordering-handle-cell': True,
+            'field__input__attrs__data-reordering-value': True,
+        }
+    )
+    def reorder_handle(cls, **kwargs):
         return cls(**kwargs)
 
 
@@ -355,6 +422,7 @@ class EditTable(Table):
     form_class: Type[Form] = Refinable()
     parent_form: Optional[Form] = Refinable()
     edit_actions: Dict[str, Action] = RefinableMembers()
+    reorderable: Union[bool, Dict[str, Any], None] = EvaluatedRefinable()
 
     class Meta:
         form_class = Form
@@ -379,6 +447,8 @@ class EditTable(Table):
         edit_form = EMPTY
         create_form = EMPTY
         container__children__text__template = 'iommi/table/edit_table_container.html'
+
+        reorderable = False
 
         bulk__include = True
 
@@ -480,6 +550,42 @@ class EditTable(Table):
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
         if self.create_form is not None:
             self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
+
+    def bind(self, *, parent=None, request=None):
+        result = super(EditTable, self).bind(parent=parent, request=request)
+
+        if result is None:
+            return result
+
+        reorder_handles = []
+        is_sorting_on = None
+        for column in values(result.columns):
+            if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', []):
+                reorder_handles.append(column)
+            if column.is_sorting:
+                is_sorting_on = column
+
+        # TODO when needed
+        #  instead of is_sorting_on we should rather check `result.rows.query.order_by != (reorder_handles.attr,)`
+        #  but query.order_by can be an empty tuple, or rows doesn't have to be a queryset etc.
+
+        if reorder_handles:
+            assert len(reorder_handles) == 1, "You cannot have multiple EditColumn.reorder_handle in an EditTable!"
+            if is_sorting_on:
+                # disable reordering when table is sorted by another column
+                result.reorderable = False
+                result.tbody.attrs['data-iommi-reorderable-handle-selector'] = None
+                result.tbody.attrs['data-iommi-reorderable-field-selector'] = None
+                reorder_handles[0].cell.attrs['class']['reordering-handle-cell'] = False
+                reorder_handles[0].render_column = False
+                result._bind_headers()
+            elif not result.reorderable:
+                result.reorderable = True
+
+        if result.reorderable:
+            result.tbody.attrs['data-iommi-reorderable'] = json.dumps(result.reorderable, separators=(',', ':')) if isinstance(result.reorderable, dict) else result.reorderable
+
+        return result
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()

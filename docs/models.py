@@ -8,6 +8,9 @@ from django.db.models import (
     OneToOneField,
     TextField,
 )
+from django.conf import settings
+
+from iommi.models import Orderable
 
 
 class Genre(Model):
@@ -90,4 +93,16 @@ class Profile(Model):
 
     class Meta:
         ordering = ('artist__name',)
+        app_label = 'docs'
+
+
+class FavoriteArtist(Orderable):
+    user = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='favorite_artists')
+    artist = ForeignKey(Artist, on_delete=CASCADE, related_name='+')
+    comment = CharField(max_length=255)
+
+    def __str__(self):
+        return self.artist.name
+
+    class Meta(Orderable.Meta):
         app_label = 'docs'

@@ -470,20 +470,23 @@ class IommiBase {
                 }
                 const {html} = await SELF.fetchJson(url);
 
-                let virtual_pk = parseInt(table.getAttribute('data-next-virtual-pk'), 10);
-                virtual_pk -= 1;
-                virtual_pk = virtual_pk.toString();
-                table.setAttribute('data-next-virtual-pk', virtual_pk);
+                let virtualPK = parseInt(table.getAttribute('data-next-virtual-pk'), 10);
+                virtualPK -= 1;
+                virtualPK = virtualPK.toString();
+                table.setAttribute('data-next-virtual-pk', virtualPK);
 
                 let tpl = document.createElement('template');
-                tpl.innerHTML = html.trim().replaceAll('#sentinel#', virtual_pk);
-                let tbody_path = this.dataset.iommiEditTablePath === "" ? 'tbody' :  `${this.dataset.iommiEditTablePath}__tbody`;
-                const tbody = table.querySelector(`[data-iommi-path=${tbody_path}`);
+                tpl.innerHTML = html.trim().replaceAll('#sentinel#', virtualPK);
+                let tbodyPath = this.dataset.iommiEditTablePath === "" ? 'tbody' :  `${this.dataset.iommiEditTablePath}__tbody`;
+                const tbody = table.querySelector(`[data-iommi-path=${tbodyPath}`);
                 tpl.content.childNodes.forEach((el) => {
                     const appendedElement = tbody.appendChild(el);
-                    if (SELF.select2 && appendedElement.querySelector('.select2_enhance')) {
-                        SELF.select2.initAll(appendedElement);
-                    }
+                    appendedElement.dispatchEvent(
+                        new CustomEvent('iommi.editTable.newElement', {
+                            bubbles: true,
+                            detail: {tbody: tbody, virtualPK: virtualPK}
+                        })
+                    );
                 });
             }
         );
@@ -491,10 +494,18 @@ class IommiBase {
 }
 
 class IommiSelect2 {
+    defaultSelector = '.select2_enhance';
+
     constructor() {
         const SELF = this;
         document.addEventListener('iommi.element.populated', (event) => {
             SELF.initAll(event.target);
+        });
+
+        document.addEventListener('iommi.editTable.newElement', (event) => {
+            if(event.target.querySelector(this.defaultSelector)) {
+                SELF.initAll(event.target);
+            }
         });
     }
 
@@ -502,20 +513,20 @@ class IommiSelect2 {
         this.initAll();
     }
 
-    initAll(parent, selector, extra_options) {
+    initAll(parent, selector, extraOptions) {
         const SELF = this;
         if (!parent) {
             parent = document;
         }
         if (!selector) {
-            selector = '.select2_enhance';
+            selector = this.defaultSelector;
         }
         $(selector, parent).each(function (_, x) {
-            SELF.initOne(x, extra_options);
+            SELF.initOne(x, extraOptions);
         });
         // Second time is a workaround because the table might resize on select2-ification
         $(selector, parent).each(function (_, x) {
-            SELF.initOne(x, extra_options);
+            SELF.initOne(x, extraOptions);
         });
     }
 
@@ -549,7 +560,7 @@ class IommiSelect2 {
         }
     }
 
-    initOne(elem, extra_options) {
+    initOne(elem, extraOptions) {
         let f = $(elem);
         let endpointPath = f.attr('data-choices-endpoint');
         let multiple = f.attr('multiple') !== undefined;
@@ -579,8 +590,8 @@ class IommiSelect2 {
                 }
             }
         }
-        if (extra_options) {
-            $.extend(options, extra_options);
+        if (extraOptions) {
+            $.extend(options, extraOptions);
         }
         f.select2(options);
         f.on('change', function (e) {
@@ -593,9 +604,74 @@ class IommiSelect2 {
     }
 }
 
+class IommiReorderable {
+    defaultSelector = '[data-iommi-reorderable]';
+
+    constructor() {
+        const SELF = this;
+        document.addEventListener('iommi.element.populated', (event) => {
+            SELF.initAll(event.target);
+        });
+
+        document.addEventListener('iommi.editTable.newElement', (event) => {
+            const tbody = event.target.closest(this.defaultSelector);
+            if(tbody) {
+                SELF.recalculate(tbody);
+            }
+        });
+    }
+
+    onCompleteReadyState() {
+        this.initAll();
+    }
+
+    recalculate(tbody) {
+        let index = 0;
+        for (let item of tbody.children) {
+            item.querySelector(tbody.dataset.iommiReorderableFieldSelector).value = index;
+            index += 1;
+        }
+    }
+
+    initAll(parent, selector, extraOptions) {
+        if (!parent) {
+            parent = document;
+        }
+        if (!selector) {
+            selector = this.defaultSelector;
+        }
+        parent.querySelectorAll(selector).forEach((el) => {this.initOne(el, extraOptions)});
+    }
+
+    initOne(elem, extraOptions) {
+        const options = {
+            animation: 150
+        };
+        if(elem.dataset.iommiReorderableHandleSelector) {
+            options.handle = elem.dataset.iommiReorderableHandleSelector;
+        }
+        let requiredOptions = {}
+        if(elem.dataset.iommiReorderable.startsWith("{")) {
+            requiredOptions = JSON.parse(elem.dataset.iommiReorderable);
+        }
+        const SELF = this;
+        if(elem.dataset.iommiReorderableFieldSelector) {
+            options.onUpdate = function(event) {
+                SELF.recalculate(elem);
+            }
+        }
+
+        if (!elem.iommi) {
+            elem.iommi = {};
+        }
+        elem.iommi.reorderable = new Sortable(elem, Object.assign(options, requiredOptions, extraOptions));
+    }
+}
+
 // TODO should this be somehow conditioned? so people can create their own extended instance?
 window.iommi = new IommiBase({
-    select2: new IommiSelect2()
+    select2: new IommiSelect2(),
+    reorderable: new IommiReorderable()
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -609,5 +685,6 @@ window.addEventListener('popstate', function (event) {
 document.addEventListener('readystatechange', () => {
     if (document.readyState === 'complete') {
         window.iommi.select2.onCompleteReadyState();
+        window.iommi.reorderable.onCompleteReadyState();
     }
 });

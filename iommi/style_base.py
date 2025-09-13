@@ -198,6 +198,15 @@ base = Style(
             iommi_main_menu_css=Asset.css(attrs__href='/static/css/iommi_main_menu.css')
         ),
     ),
+    EditColumn=dict(
+        shortcuts=dict(
+            reorder_handle=dict(
+                assets__sortable_js = Asset.js(
+                    attrs__src='https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
+                )
+            ),
+        ),
+    )
 )
 
 base_enhanced_forms = Style(

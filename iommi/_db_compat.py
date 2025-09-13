@@ -4,6 +4,7 @@ from iommi.shortcut import Shortcut
 
 def setup_db_compat():
     setup_db_compat_django()
+    setup_db_compat_iommi()
 
 
 def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
@@ -166,6 +167,13 @@ def setup_db_compat_django():
     )
     register_field_factory(TextField, shortcut_name='textarea')
     register_field_factory(FileField, shortcut_name='file')
+
+
+def setup_db_compat_iommi():
+    from iommi.model_fields import SortOrderField
+    from iommi.edit_table import register_edit_column_factory
+
+    register_edit_column_factory(SortOrderField, shortcut_name='reorder_handle')
 
 
 def base_defaults_factory(model_field):
