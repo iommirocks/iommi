@@ -57,14 +57,14 @@ def test_orderable_edit_tables(fav_artists):
     .. _orderable-edit-tables:
 
     Orderable edit tables
-    =====================
+    ~~~~~~~~~~~~~~~~~~~~~
 
-    iommi edit tables also support ordering. That can be especially useful for editing reverse FK's in nested forms.
+    iommi edit tables also support manual ordering. That can be especially useful for editing reverse FK's in nested forms.
     """
 
     # language=rst
     """
-    The easiest way to make an EditTable orderable is to inherit your model from `iommi.models.Orderable`:
+    The easiest way to make an `EditTable` orderable is to inherit your model from `iommi.models.Orderable`:
 
     .. code-block:: python
 
