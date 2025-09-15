@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.17.0 (2025-09-15)
+~~~~~~~~~~~~~~~~~~~
+
+* Manually reorderable `EditTable`
+
+* `MainMenu`: don't render disclosure triangle for menu items where all subitems are non-rendered
+
+
 7.16.0 (2025-09-12)
 ~~~~~~~~~~~~~~~~~~~
 
