@@ -345,6 +345,8 @@ class BoundM:
 
         self.attrs = evaluate_attrs(self, **self._own_evaluate_parameters)
 
+        self.has_rendered_items = len([x for x in self.items.values() if x.render_item]) > 0
+
     def __str__(self):
         return self.__html__()
 

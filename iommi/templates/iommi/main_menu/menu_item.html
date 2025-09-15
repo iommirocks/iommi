@@ -1,6 +1,6 @@
 {% if item.include %}
     <li{{ item.rendered_attrs }}>
-        {% if item.items %}
+        {% if item.has_rendered_items %}
             <details {% if item.open %}open{% endif %}>
 
                 <summary>
