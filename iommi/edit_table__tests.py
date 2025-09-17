@@ -677,7 +677,7 @@ def test_lazy_tbody_on_fail():
     class ArtistForm(Form):
         class Meta:
             auto__instance = dark_funeral
-            auto__include = ['id', 'name']
+            auto__include = ['name']
             fields__name__required = True
 
     class AlbumsEditTable(EditTable):
@@ -693,10 +693,11 @@ def test_lazy_tbody_on_fail():
     class ParentForm(Form):
         artist = ArtistForm.edit()
         albums = AlbumsEditTable()
+
         class Meta:
             actions__submit__post_handler = save_nested_forms
 
-    def test_parent_form_save(abort_on_fail):
+    def parent_form_save_test(abort_on_fail):
         parent_form = ParentForm(extra_evaluated__nested_forms_abort_save_on_fail=abort_on_fail).refine_done()
         parent_form = parent_form.bind(
             request=req(
@@ -726,7 +727,7 @@ def test_lazy_tbody_on_fail():
 
         return parent_form
 
-    _form = test_parent_form_save(abort_on_fail=True)
+    _form = parent_form_save_test(abort_on_fail=True)
     verify_part_html(
         part=_form,
         # language=HTML
@@ -734,7 +735,6 @@ def test_lazy_tbody_on_fail():
             <form action="" enctype="multipart/form-data" method="post">
                 <div action="" enctype="multipart/form-data" method="post">
                     <h1>Edit artist</h1>
-                    <div><label for="id_id">ID</label><input id="id_id" name="id" type="text" value=""></div>
                     <div><label for="id_name">Name</label><input id="id_name" name="name" type="text" value=""><ul><li>This field is required</li></ul></div>
                 </div>
             
@@ -777,7 +777,7 @@ def test_lazy_tbody_on_fail():
         """,
     )
 
-    _form = test_parent_form_save(abort_on_fail=False)
+    _form = parent_form_save_test(abort_on_fail=False)
     verify_part_html(
         part=_form,
         # language=HTML
@@ -785,7 +785,6 @@ def test_lazy_tbody_on_fail():
             <form action="" enctype="multipart/form-data" method="post">
                 <div action="" enctype="multipart/form-data" method="post">
                     <h1>Edit artist</h1>
-                    <div><label for="id_id">ID</label><input id="id_id" name="id" type="text" value=""/></div>
                     <div><label for="id_name">Name</label><input id="id_name" name="name" type="text" value="Dark Funeral"/></div>
                 </div>
                 <h1>Albums</h1>
