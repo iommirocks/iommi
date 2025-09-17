@@ -22,6 +22,7 @@ from iommi.table import (
     Column,
 )
 from tests.helpers import (
+    do_post,
     req,
     verify_html,
     verify_table_html,

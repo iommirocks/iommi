@@ -7,6 +7,7 @@ from os import (
 from pathlib import Path
 from uuid import uuid4
 
+from bs4 import BeautifulSoup
 from django.template import Template
 from django.test import RequestFactory
 from django.urls import URLPattern
@@ -149,6 +150,30 @@ def staff_req(method, **data):
     request = req(method, **data)
     request.user = Struct(is_staff=True, is_authenticated=True, is_superuser=True)
     return request
+
+
+def do_post(form, do_post_key_validation=True, **user_data):
+    foo = form.bind(request=req('get')).render_to_response()
+    soup = BeautifulSoup(foo.content.decode())
+
+    default_data = {}
+    for input in soup.find_all('input'):
+        default_data[input.get('name')] = input.get('value')
+
+    for select in soup.find_all('select'):
+        default_data[select.get('name')] = select.find('option', selected='selected').get('value')
+
+    assert 'do_post_key_validation' not in default_data, 'Name collision.'
+
+    if do_post_key_validation:
+        for key in user_data.keys():
+            assert (
+                key in default_data,
+                f'{key} is not a valid key. Valid keys are: {user_data.keys()}'
+            )
+
+    post_data = {**default_data, **user_data}
+    return form.bind(request=req('post', **post_data))
 
 
 def get_attrs(x, attrs):
