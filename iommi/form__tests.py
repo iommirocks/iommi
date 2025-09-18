@@ -3928,6 +3928,25 @@ def test_save_nested_forms():
 
 
 @pytest.mark.django_db
+def test_save_nested_forms_redirect():
+    black_sabbath = Artist.objects.create(name='Black Sabbath')
+    Album.objects.create(name='Heaven & Hell', artist=black_sabbath, year=1980)
+
+    form = Form(
+        fields=dict(
+            create_form=Form.create(auto__model=Artist),
+            edit_table=EditTable(auto__model=Album),
+        ),
+        actions__submit__post_handler = save_nested_forms,
+        extra__redirect_to=lambda **_: '../foo',
+    )
+
+    response = form.bind(request=req('POST', **{'-submit': ''})).render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == '../foo'
+
+
+@pytest.mark.django_db
 def test_nested_forms_abort_save_on_fail():
     dark_funeral = Artist.objects.create(name='Dark Funeral')
     album_2016 = Album.objects.create(name='Where Shadows Forever Reign', artist=dark_funeral, year=2016)

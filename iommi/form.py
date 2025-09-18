@@ -238,10 +238,12 @@ def save_nested_forms(form, request, **_):
 
         request.method = 'GET'
 
-        redirect_to = form.extra.get('redirect_to', lambda **_: request.POST.get('next', '.'))
-        target = form.invoke_callback(redirect_to)
-        assert isinstance(target, str), 'redirect_to must return a str'
-        return HttpResponseRedirect(target)
+        return create_or_edit_object_redirect(
+            is_create=False,
+            redirect_to=form.extra.get('redirect_to', lambda **_: request.POST.get('next', '.')),
+            redirect=form.extra.get('redirect', lambda redirect_to, **_: HttpResponseRedirect(redirect_to)),
+            form=form,
+        )
 
 
 def create_or_edit_object__post_handler(*, form, is_create=None, **_):
@@ -1522,9 +1524,11 @@ def is_django_promise_with_string_proxy(redirect_to):
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, redirect, form):
+    if callable(redirect_to):
+        redirect_to = form.invoke_callback(redirect_to)
     assert (
         redirect_to is None or isinstance(redirect_to, str) or is_django_promise_with_string_proxy(redirect_to)
-    ), 'redirect_to must be a str'
+    ), 'redirect_to must be a str or callable'
     if redirect_to is None:
         if is_create:
             redirect_to = "../"
