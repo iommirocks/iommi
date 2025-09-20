@@ -171,7 +171,8 @@ def do_post(form, do_post_key_validation=True, **user_data):
 
     if do_post_key_validation:
         for key in user_data.keys():
-            assert key in default_data, f'{key} is not a valid key. Valid keys are: {user_data.keys()}'
+            virtual_key_for_edit_table_insert = '/-' in key  # keys like "foo/-1"
+            assert key in default_data or virtual_key_for_edit_table_insert, f'{key} is not a valid key. Valid keys are: {user_data.keys()}'
 
     post_data = {**default_data, **user_data}
     return form.bind(request=req('post', **post_data))
