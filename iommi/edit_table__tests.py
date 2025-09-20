@@ -700,24 +700,22 @@ def test_lazy_tbody_on_fail():
 
     def parent_form_save_test(abort_on_fail):
         parent_form = ParentForm(extra_evaluated__nested_forms_abort_save_on_fail=abort_on_fail).refine_done()
-        parent_form = parent_form.bind(
-            request=req(
-                'POST',
-                **{
-                    # existing objects
-                    'name': dark_funeral.name if not abort_on_fail else '',
-                    f'albums/name/{album_2016.pk}': album_2016.name if abort_on_fail else '',
-                    f'albums/year/{album_2016.pk}': album_2016.year,
-                    # create new
-                    'albums/name/-1': 'We Are the Apocalypse',
-                    'albums/year/-1': 2021,
-                    'albums/name/-2': 'Angelus Exuro pro Eternus' if abort_on_fail else '',
-                    'albums/year/-2': 2009,
-                    '-submit': '',
-                },
-            )
+        parent_form = do_post(
+            parent_form,
+            **{
+                # existing objects
+                'name': dark_funeral.name if not abort_on_fail else '',
+                f'albums/name/{album_2016.pk}': album_2016.name if abort_on_fail else '',
+                f'albums/year/{album_2016.pk}': album_2016.year,
+                # create new
+                'albums/name/-1': 'We Are the Apocalypse',
+                'albums/year/-1': 2021,
+                'albums/name/-2': 'Angelus Exuro pro Eternus' if abort_on_fail else '',
+                'albums/year/-2': 2009,
+            },
         )
-        assert not abort_on_fail or parent_form.nested_forms.artist.get_errors()
+
+        assert not abort_on_fail or parent_form.nested_forms.artist.get_errors(), parent_form.nested_forms.artist.get_errors()
 
         parent_form.render_to_response()
 

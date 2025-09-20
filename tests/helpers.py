@@ -158,10 +158,14 @@ def do_post(form, do_post_key_validation=True, **user_data):
 
     default_data = {}
     for input in soup.find_all('input'):
-        default_data[input.get('name')] = input.get('value')
+        default_data[input.get('name')] = input.get('value', '')
 
     for select in soup.find_all('select'):
-        default_data[select.get('name')] = select.find('option', selected='selected').get('value')
+        default_data[select.get('name')] = select.find('option', selected='selected').get('value', '')
+
+    for button in soup.find_all('button'):
+        if button.get('name'):
+            default_data[button.get('name')] = button.get('value', '')
 
     assert 'do_post_key_validation' not in default_data, 'Name collision.'
 
