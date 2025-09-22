@@ -152,20 +152,33 @@ def staff_req(method, **data):
     return request
 
 
-def do_post(form, do_post_key_validation=True, **user_data):
-    foo = form.bind(request=req('get')).render_to_response()
-    soup = BeautifulSoup(foo.content.decode())
+def extract_form_data(content):
+    soup = BeautifulSoup(content)
 
-    default_data = {}
+    r = {}
     for input in soup.find_all('input'):
-        default_data[input.get('name')] = input.get('value', '')
+        r[input.get('name')] = input.get('value', '')
 
     for select in soup.find_all('select'):
-        default_data[select.get('name')] = select.find('option', selected='selected').get('value', '')
+        selected = select.find('option', selected='selected')
+        if not selected:
+            r[select.get('name')] = ''
+        else:
+            r[select.get('name')] = selected.get('value', '')
+
+    for textarea in soup.find_all('textarea'):
+        r[textarea.get('name')] = ''.join(textarea.contents)
 
     for button in soup.find_all('button'):
         if button.get('name'):
-            default_data[button.get('name')] = button.get('value', '')
+            r[button.get('name')] = button.get('value', '')
+
+    return r
+
+
+def do_post(form, do_post_key_validation=True, **user_data):
+    foo = form.bind(request=req('get')).render_to_response()
+    default_data = extract_form_data(foo.content.decode())
 
     assert 'do_post_key_validation' not in default_data, 'Name collision.'
 
