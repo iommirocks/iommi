@@ -16,6 +16,7 @@ def test_equivalence():
     ===========
 
     In iommi there are two equivalence principles that are important to grasp:
+
     - declarative/programmatic hybrid API
     - double underscore as a short hand syntax for nesting dicts
 
