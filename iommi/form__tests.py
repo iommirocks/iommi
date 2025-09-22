@@ -1065,7 +1065,10 @@ def test_choice_not_required():
     assert do_post(MyForm(), foo='bar').fields.foo.value == 'bar'
     form = do_post(MyForm(), do_post_key_validation=False, baz='bar')
     assert form.fields.foo.value is None
-    assert form.get_errors() != {}
+
+    form = do_post(MyForm(), foo='baz')
+    assert form.fields.foo.value is None
+    assert form.get_errors() == {'fields': {'foo': {'baz not in available choices'}}}
 
 
 def test_assert_on_bad_key():
