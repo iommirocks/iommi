@@ -7,6 +7,7 @@ from os import (
 from pathlib import Path
 from uuid import uuid4
 
+from bs4 import BeautifulSoup
 from django.template import Template
 from django.test import RequestFactory
 from django.urls import URLPattern
@@ -149,6 +150,45 @@ def staff_req(method, **data):
     request = req(method, **data)
     request.user = Struct(is_staff=True, is_authenticated=True, is_superuser=True)
     return request
+
+
+def extract_form_data(content):
+    soup = BeautifulSoup(content)
+
+    r = {}
+    for input in soup.find_all('input'):
+        r[input.get('name')] = input.get('value', '')
+
+    for select in soup.find_all('select'):
+        selected = select.find('option', selected='selected')
+        if not selected:
+            r[select.get('name')] = ''
+        else:
+            r[select.get('name')] = selected.get('value', '')
+
+    for textarea in soup.find_all('textarea'):
+        r[textarea.get('name')] = ''.join(textarea.contents)
+
+    for button in soup.find_all('button'):
+        if button.get('name'):
+            r[button.get('name')] = button.get('value', '')
+
+    return r
+
+
+def do_post(form, do_post_key_validation=True, **user_data):
+    foo = form.bind(request=req('get')).render_to_response()
+    default_data = extract_form_data(foo.content.decode())
+
+    assert 'do_post_key_validation' not in default_data, 'Name collision.'
+
+    if do_post_key_validation:
+        for key in user_data.keys():
+            virtual_key_for_edit_table_insert = '/-' in key  # keys like "foo/-1"
+            assert key in default_data or virtual_key_for_edit_table_insert, f'{key} is not a valid key. Valid keys are: {user_data.keys()}'
+
+    post_data = {**default_data, **user_data}
+    return form.bind(request=req('post', **post_data))
 
 
 def get_attrs(x, attrs):

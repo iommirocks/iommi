@@ -101,6 +101,7 @@ from iommi.struct import (
 )
 from tests.compat import RequestFactory
 from tests.helpers import (
+    do_post,
     get_attrs,
     remove_csrf,
     req,
@@ -1060,8 +1061,22 @@ def test_choice_not_required():
     class MyForm(Form):
         foo = Field.choice(required=False, choices=['bar'])
 
-    assert MyForm().bind(request=req('post', **{'foo': 'bar', '-': ''})).fields.foo.value == 'bar'
-    assert MyForm().bind(request=req('post', **{'foo': '', '-': ''})).fields.foo.value is None
+    assert do_post(MyForm()).fields.foo.value is None
+    assert do_post(MyForm(), foo='bar').fields.foo.value == 'bar'
+    form = do_post(MyForm(), do_post_key_validation=False, baz='bar')
+    assert form.fields.foo.value is None
+
+    form = do_post(MyForm(), foo='baz')
+    assert form.fields.foo.value is None
+    assert form.get_errors() == {'fields': {'foo': {'baz not in available choices'}}}
+
+
+def test_assert_on_bad_key():
+    class MyForm(Form):
+        foo = Field.choice(required=False, choices=['bar'])
+
+    with pytest.raises(AssertionError):
+        do_post(MyForm(), baz='bar')
 
 
 def test_multi_choice():
