@@ -1,0 +1,11 @@
+{{ panel.iommi_open_tag }}
+    {% if panel.children.panel_card_header %}{{ panel.children.panel_card_header }}{% endif %}
+    <div class="card-body">
+        {% for child_name, child in panel.children.items %}
+            {% if child_name != "panel_card_header" and child_name != "panel_card_footer" %}
+                {{ child }}
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% if panel.children.panel_card_footer %}{{ panel.children.panel_card_footer }}{% endif %}
+{{ panel.iommi_close_tag }}

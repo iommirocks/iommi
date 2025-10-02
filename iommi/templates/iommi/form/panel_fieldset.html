@@ -1,0 +1,4 @@
+{{ panel.iommi_open_tag }}
+    {% if panel.fieldset_legend %}<legend>{{ panel.fieldset_legend }}</legend>{% endif %}
+    {% for field in panel.children.values %}{{ field }}{% endfor %}
+{{ panel.iommi_close_tag }}
