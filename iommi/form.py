@@ -23,7 +23,7 @@ from typing import (
 )
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.validators import EMPTY_VALUES
 from django.db import (
     IntegrityError,
@@ -116,6 +116,7 @@ from iommi.member import (
 from iommi.page import (
     Page,
 )
+from iommi.panel import Panel
 from iommi.part import (
     Part,
     request_data,
@@ -142,6 +143,14 @@ Namespace.do_not_call_in_templates = True
 
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
+
+
+class FieldNameError(KeyError):
+    pass
+
+
+class NestedFormNameError(KeyError):
+    pass
 
 
 @contextmanager
@@ -1696,6 +1705,38 @@ class Form(Part, Tag):
 
         post_handler(form.bind(request=req('post')))
         # @end
+
+    Use of Form.layout:
+
+    .. code-block:: python
+        from django.contrib.auth import get_user_model
+        from django.utils.translation import gettext_lazy
+        from iommi._web_compat import Template
+
+        class UserForm(Form):
+            class Meta:
+                auto__model = get_user_model()
+                layout = Panel(dict(
+                    p_main=Panel.fieldset(dict(
+                        username=Panel.field(),
+                        p_fullname=Panel.row(dict(
+                            first_name=Panel.field(col__attrs__class__firstname=True),
+                            last_name=Panel.field(),
+                        )),
+                        # examples of custom html parts:
+                        p_foo=Panel.row(dict(
+                            p_bar=gettext_lazy('Some plain text'),
+                            p_baz=Template('{% load i18n %}<span>{% translate "Foobar!" %}</span>'),
+                        )),
+                        p_qux=Fragment(template='path/to/template.html'),
+                        p_quux=html.h3('Quux'),
+                        p_corge__template='path/to/another_template.html',
+                    )),
+                    p_permissions=Panel.fieldset(dict(
+                        # ...
+                    )),
+                    p_error=Panel.alert('Error!', level='error'),
+                ))
     """
 
     actions: Namespace = RefinableMembers()
@@ -1718,6 +1759,16 @@ class Form(Part, Tag):
     instance: Any = Refinable()
     field_group: Namespace = Refinable()
     fields_template: Union[str, Template] = EvaluatedRefinable()
+
+    layout_unused_fields: dict = None
+    layout_render_unused_fields: bool = EvaluatedRefinable()
+    layout: Union[None, Panel] = EvaluatedRefinable()
+    layout_template: Union[None, str, Template] = EvaluatedRefinable()
+
+    # TODO how to be able to set descendants like this?
+    #  layout__children__p_main__attrs__class__test = True
+    #  it doesn't work because of iommi bug https://github.com/iommirocks/iommi/issues/640
+    #  and idk how to fix that
 
     class Meta:
         member_class = Field
@@ -1742,6 +1793,9 @@ class Form(Part, Tag):
         attr=MISSING,
         fields_template=None,
         extra__save=lambda model_object, **_: model_object.save(),
+        layout__call_target=Panel,
+        layout_template=lambda form, **_: 'iommi/form/layout.html' if form.layout is not None else None,
+        layout_render_unused_fields=False,
     )
     def __init__(self, **kwargs):
         super(Form, self).__init__(
@@ -1834,6 +1888,15 @@ class Form(Part, Tag):
 
         super(Form, self).on_refine_done()
 
+        if isinstance(self.layout, Panel):
+            self.layout._name = 'layout'
+            self.layout = self.layout.refine_done(parent=self)
+        elif isinstance(self.layout, Namespace):
+            if getattr(self.layout, 'children', None) is not None:
+                self.layout = self.layout.call_target(_name='layout', **{k:v for k,v in self.layout.items() if k != 'call_target'}).refine_done(parent=self)
+            else:
+                self.layout = None
+
     def on_bind(self) -> None:
         self._errors: Set[str] = set()
         self._valid = None
@@ -1891,6 +1954,39 @@ class Form(Part, Tag):
         self.errors = Errors(parent=self, **self.errors)
 
         self.validate()
+
+        if self.layout is not None:
+            bind_member(self, name='layout')
+
+            self.layout_unused_fields = {}
+
+            layout_used_fields = self.layout.get_fields()
+
+            from iommi.edit_table import EditTable
+
+            form_fields = items(self.fields)
+            if self.nested_forms:
+                for nested_form in values(self.nested_forms):
+                    if isinstance(nested_form, EditTable) or isinstance(nested_form.iommi_parent(), EditTable):
+                        # nested_form.iommi_parent() because there are 'bulk', 'create_form', 'edit_form'
+                        # idk how to validate these, because they can be rendered automatically via Panel.nested_form()
+                        # form_fields |= items(nested_form.edit_form.fields)
+                        pass
+                    else:
+                        form_fields |= items(nested_form.fields)
+
+            for field_name, field in form_fields:
+                if field_name not in layout_used_fields and 'non_rendered' not in getattr(field, 'iommi_shortcut_stack', []):
+                    self.layout_unused_fields[field_name] = field
+
+            if self.layout_unused_fields:
+                if not self.layout_render_unused_fields:
+                    raise ImproperlyConfigured(
+                        'Some fields are missing in self.layout. '
+                        'Either add them, exclude them, or set self.layout_render_unused_fields=True.\n'
+                        'Missing fields:\n'
+                        f'{",\n".join(sorted(self.layout_unused_fields.keys()))}'
+                    )
 
     def own_evaluate_parameters(self):
         return dict(form=self, instance=self.instance)
@@ -2020,29 +2116,31 @@ class Form(Part, Tag):
     def render_fields(self):
         assert self._is_bound, NOT_BOUND_MESSAGE
 
-        if self.fields_template is None:
+        if self.fields_template is None and self.layout is None:
             r = []
         else:
             context = self.iommi_evaluate_parameters().copy()
-            context['fields'] = {}
+            if self.layout is None:
+                context['fields'] = {}
 
-        for group, parts in groupby(values(self.parts), key=lambda x: getattr(x, 'group', MISSING)):
-            if group is not MISSING:
-                # using groups with fields_template doesn't really make sense
-                assert self.fields_template is None
+        if self.layout is None:
+            for group, parts in groupby(values(self.parts), key=lambda x: getattr(x, 'group', MISSING)):
+                if group is not MISSING:
+                    # using groups with fields_template doesn't really make sense
+                    assert self.fields_template is None
 
-                current_group = self.field_group(_name=f'iommi_field_group_{group}', group=group).bind(parent=self)
-                r.append(current_group.iommi_open_tag())
+                    current_group = self.field_group(_name=f'iommi_field_group_{group}', group=group).bind(parent=self)
+                    r.append(current_group.iommi_open_tag())
 
-                r.extend([part.__html__() for part in parts])
-
-                r.append(current_group.iommi_close_tag())
-            else:
-                if self.fields_template is None:
                     r.extend([part.__html__() for part in parts])
+
+                    r.append(current_group.iommi_close_tag())
                 else:
-                    for part in parts:
-                        context['fields'][part._name] = part
+                    if self.fields_template is None:
+                        r.extend([part.__html__() for part in parts])
+                    else:
+                        for part in parts:
+                            context['fields'][part._name] = part
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.iommi_path for f in values(self.fields)}
@@ -2051,7 +2149,9 @@ class Form(Part, Tag):
             if k not in own_field_paths and not k.startswith('-') and not k.startswith(DISPATCH_PREFIX):
                 hidden_fields.append(format_html('<input type="hidden" name="{}" value="{}">', k, v))
 
-        if self.fields_template is None:
+        if self.layout is not None:
+            html = render_template(request=self.get_request(), template=self.layout_template, context=context)
+        elif self.fields_template is None:
             html = format_html('{}\n' * len(r), *r)
         else:
             html = render_template(request=self.get_request(), template=self.fields_template, context=context)
@@ -2203,3 +2303,28 @@ class Form(Part, Tag):
 
     def as_view(self):
         return build_as_view_wrapper(self)
+
+    def get_field(self, name):
+        if name in self.fields:
+            return self.fields[name]
+
+        elif self.nested_forms:
+            if '__' in name:
+                nested_form_name, field_name = name.split('__', 1)
+                return self.get_nested_form(nested_form_name).get_field(field_name)
+
+            for nested_form in values(self.nested_forms):  # find the first field with the name in nested forms
+                try:
+                    return nested_form.get_field(name)
+                except FieldNameError:
+                    pass
+
+        raise FieldNameError(f'Field {name} not found in the form')
+
+    def get_nested_form(self, name):
+        if name in self.nested_forms:
+            return self.nested_forms[name]
+        elif self.parent_form is not None:
+            return self.parent_form.get_nested_form(name)
+        else:
+            raise NestedFormNameError(f'Nested form {name} not found')
