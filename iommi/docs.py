@@ -115,6 +115,8 @@ def get_default_classes():
         iommi.fragment.Header,
         iommi.Asset,
         iommi.middleware,
+        iommi.Panel,
+        iommi.PanelCol,
         # Private-ish APIs
         iommi.endpoint.Endpoint,
         iommi.part.Part,

@@ -228,6 +228,8 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Form,
             Menu,
             MenuItem,
+            Panel,
+            PanelCol,
             Query,
             Table,
         )
@@ -268,6 +270,8 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             MenuBase,
             MenuItem,
             Paginator,
+            Panel,
+            PanelCol,
             Query,
             Table,
             get_debug_menu().__class__,
