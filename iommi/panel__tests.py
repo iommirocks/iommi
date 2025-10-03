@@ -255,21 +255,19 @@ def test_nested_forms(john_doe_user, fav_artists):
             columns__comment__field__include = True
             sortable = False
 
-    nested_layout = Panel(dict(
-        p_main=Panel.card(dict(
-            username=Panel.field(),
-            favorite_artists=Panel.nested_form(),
-            email=Panel.field(),
-            last_login=Panel.field(include=lambda form, **_: form.nested_forms.user_edit.instance is not None),
-        )),
-    ))
-
     class NestedEditForm(Form):
         user_edit = UserForm(instance=john_doe_user)
         favorite_artists = FavoriteArtists(rows=john_doe_user.favorite_artists.all())
 
         class Meta:
-            layout = nested_layout
+            layout = Panel(dict(
+                p_main=Panel.card(dict(
+                    username=Panel.field(),
+                    favorite_artists=Panel.nested_form(),
+                    email=Panel.field(),
+                    last_login=Panel.field(include=lambda form, **_: form.nested_forms.user_edit.instance is not None),
+                )),
+            ))
 
     verify_part_html(
         part=NestedEditForm(),
@@ -344,14 +342,31 @@ def test_nested_forms(john_doe_user, fav_artists):
         favorite_artists = FavoriteArtists(rows=[])
 
         class Meta:
-            layout = nested_layout
+            layout = {
+                'children': {
+                    'p_main': {
+                        'children': {
+                            'username': {'call_target': Panel.field},
+                            'favorite_artists': {'call_target': Panel.nested_form},
+                            'email': {'call_target': Panel.field},
+                            'last_login': {
+                                'call_target': Panel.field,
+                                'include': lambda form, **_: form.nested_forms.user_edit.instance is not None,
+                            },
+                        },
+                        'call_target': Panel.card,
+                    },
+                },
+                'call_target': Panel,
+            }
+            layout__children__p_main__attrs__class__test = True
 
     verify_part_html(
         part=NestedCreateForm(),
         # language=HTML
         expected_html='''
             <form action="" enctype="multipart/form-data" method="post">
-                <div class="card">
+                <div class="card test">
                     <div class="card-body">
                         <div>
                             <label for="id_username">Username</label>

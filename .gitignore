@@ -141,6 +141,8 @@ docs/Menu.rst
 docs/MenuItem.rst
 docs/Part.rst
 docs/Page.rst
+docs/Panel.rst
+docs/PanelCol.rst
 docs/Traversable.rst
 docs/Fragment.rst
 docs/Attrs.rst
