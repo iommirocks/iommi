@@ -268,6 +268,7 @@ def test_nested_forms(john_doe_user, fav_artists):
                     last_login=Panel.field(include=lambda form, **_: form.nested_forms.user_edit.instance is not None),
                 )),
             ))
+            # layout__children__p_main__attrs__class__test = True
 
     verify_part_html(
         part=NestedEditForm(),
