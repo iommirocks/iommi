@@ -1757,11 +1757,6 @@ class Form(Part, Tag):
     layout: Union[None, Panel] = EvaluatedRefinable()
     layout_template: Union[None, str, Template] = EvaluatedRefinable()
 
-    # TODO how to be able to set descendants like this?
-    #  layout__children__p_main__attrs__class__test = True
-    #  it doesn't work because of iommi bug https://github.com/iommirocks/iommi/issues/640
-    #  and idk how to fix that
-
     class Meta:
         member_class = Field
         action_class = Action

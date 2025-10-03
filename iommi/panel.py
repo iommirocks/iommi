@@ -6,6 +6,7 @@ from iommi.fragment import Fragment
 from iommi.part import Part
 from iommi.evaluate import evaluate_member
 from iommi.refinable import EvaluatedRefinable, Refinable
+from iommi.declarative.namespace import Namespace
 from iommi._web_compat import Template
 from iommi.shortcut import with_defaults
 
@@ -36,12 +37,6 @@ class Panel(Fragment):
     col_class: Type[PanelCol] = Refinable()
     col = Refinable()
     nested_path: str = EvaluatedRefinable()  # path of a field in nested forms
-
-    # TODO Panel.include and Panel.editable which would somehow got set to descendants including fields
-    #      because else fields would receive empty values
-    #      include is a problem, because on_bind is not called
-    #      add Panel.editable: bool = EvaluatedRefinable()
-    #          the problem is that field needs to have editable already in on_refine_done (because of non_editable_input)
 
     class Meta:
         col_class = PanelCol
@@ -167,7 +162,7 @@ class Panel(Fragment):
     def _get_children_as_panels(cls, children: dict):
         children_as_panels = {}
         for name, child in children.items():
-            if isinstance(child, cls):
+            if isinstance(child, (cls, dict, Namespace)):
                 assert '__' not in name
                 children_as_panels[name] = child
             elif isinstance(child, Part):
@@ -257,10 +252,6 @@ class Panel(Fragment):
         **{'attrs__class__alert': True}
     )
     def alert(cls, child=None, level='info', **kwargs):
-        # TODO ?bootstrap options when needed:
-        #      - h4.alert-heading
-        #      - icons
-        #      - .btn-close
         children = kwargs.pop('children', {})
         if child is not None:
             children['footer'] = child
