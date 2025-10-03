@@ -37,9 +37,10 @@ def pytest_collection_modifyitems(session, config, items):
 def pytest_sessionstart(session):
     from iommi.docs import generate_api_docs_tests, write_rst_from_pytest
 
-    write_rst_from_pytest()
-    generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
-    write_rst_from_pytest()
+    if not session.config.args:
+        write_rst_from_pytest()
+        generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
+        write_rst_from_pytest()
 
 
 @pytest.fixture(autouse=True)

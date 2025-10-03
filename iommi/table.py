@@ -114,6 +114,7 @@ from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
+    reify_conf,
 )
 from iommi.page import (
     Page,
@@ -515,11 +516,16 @@ class Column(Part):
         return dict(column=self)
 
     @classmethod
+    @dispatch
+    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
+        return reify_conf(cls._from_model(model=model, model_field_name=model_field_name, model_field=model_field, **kwargs))
+
+    @classmethod
     @dispatch(
         filter__call_target__attribute='from_model',
         bulk__call_target__attribute='from_model',
     )
-    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
+    def _from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,

@@ -118,6 +118,14 @@ def test_how_do_I_set_the_name_for_a_filter(big_discography):
     )
 
     # @test
+    t = track_table.bind(request=req('get', **{'-query/query': 'artist="black sabbath"'}))
+    assert t.query.get_advanced_query_param() == '-query/query'
+    assert t.query.filters.album_artist_name.attr == 'album__artist__name'
+    assert t.query.filters.album_artist_name.query_name == 'artist'
+    assert not t.query.form.get_errors(), t.query.form.get_errors()
+    assert repr(t.query.get_q()) == repr(Q(album__artist__name__iexact='black sabbath'))
+    assert {row.album.artist.name for row in t.rows} == {'Black Sabbath'}, [row.album.artist.name for row in t.rows]
+
     show_output(track_table, '?-query%2Fquery=artist%3D"black+sabbath"')
     # @end
 

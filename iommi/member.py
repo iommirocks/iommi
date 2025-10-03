@@ -16,6 +16,7 @@ from iommi.declarative.namespace import (
 from iommi.refinable import (
     Prio,
     RefinableMembers,
+    RefinableObject,
 )
 from iommi.sort_after import sort_after
 from iommi.struct import Struct
@@ -40,6 +41,18 @@ class Members(Traversable):
 
     def on_bind(self):
         self._bound_members = MemberBinder(self, self._declared_members, self._unknown_types_fall_through)
+
+
+def reify_conf(conf):
+    if isinstance(conf, Namespace):
+        missing = object()
+        iommi_shortcut_stack = conf.pop('iommi_shortcut_stack', missing)
+        r = conf()
+        if iommi_shortcut_stack is not missing:
+            assert not getattr(r, 'iommi_shortcut_stack', [])
+            r.iommi_shortcut_stack = iommi_shortcut_stack
+        return r
+    return conf
 
 
 def refine_done_members(
@@ -118,7 +131,7 @@ def refine_done_members(
                         call_target__cls=cls,
                         _name=key,
                     )
-                    member_by_name[key] = item()
+                    member_by_name[key] = reify_conf(item)
             else:
                 assert (
                     unknown_types_fall_through or item is None
@@ -126,9 +139,12 @@ def refine_done_members(
                 member_by_name[key] = item
 
     for k, v in items(Namespace(_unapplied_config)):
-        member_by_name[k] = member_by_name[k].refine(Prio.member, **v)
-        # noinspection PyProtectedMember
-        assert member_by_name[k]._name is not None
+        m = member_by_name[k]
+        if isinstance(m, Namespace):
+            member_by_name[k] = setdefaults_path(Namespace(), v, m)
+        else:
+            assert isinstance(m, RefinableObject)
+            member_by_name[k] = m.refine(Prio.member, **v)
 
     if extra_member_defaults:
         for k, v in items(Namespace(extra_member_defaults)):
@@ -141,7 +157,11 @@ def refine_done_members(
                     v,
                     call_target__cls=cls,
                     _name=k,
-                )()
+                )
+
+    for k, v in items(member_by_name):
+        member_by_name[k] = reify_conf(v)
+        if isinstance(member_by_name[k], Traversable):
             # noinspection PyProtectedMember
             assert member_by_name[k]._name is not None
 

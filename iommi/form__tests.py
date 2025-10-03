@@ -88,6 +88,7 @@ from iommi.form import (
 from iommi.from_model import (
     member_from_model,
 )
+from iommi.member import reify_conf
 from iommi.page import (
     Page,
 )
@@ -101,6 +102,7 @@ from iommi.struct import (
 )
 from tests.compat import RequestFactory
 from tests.helpers import (
+    do_post,
     get_attrs,
     remove_csrf,
     req,
@@ -1060,8 +1062,22 @@ def test_choice_not_required():
     class MyForm(Form):
         foo = Field.choice(required=False, choices=['bar'])
 
-    assert MyForm().bind(request=req('post', **{'foo': 'bar', '-': ''})).fields.foo.value == 'bar'
-    assert MyForm().bind(request=req('post', **{'foo': '', '-': ''})).fields.foo.value is None
+    assert do_post(MyForm.create()).fields.foo.value is None
+    assert do_post(MyForm.create(), foo='bar').fields.foo.value == 'bar'
+    form = do_post(MyForm.create(), do_post_key_validation=False, baz='bar')
+    assert form.fields.foo.value is None
+
+    form = do_post(MyForm.create(), foo='baz')
+    assert form.fields.foo.value is None
+    assert form.get_errors() == {'fields': {'foo': {'baz not in available choices'}}}
+
+
+def test_assert_on_bad_key():
+    class MyForm(Form):
+        foo = Field.choice(required=False, choices=['bar'])
+
+    with pytest.raises(AssertionError):
+        do_post(MyForm(), baz='bar')
 
 
 def test_multi_choice():
@@ -1385,6 +1401,10 @@ def test_field_from_model_required():
     assert not Field.from_model(FooModel, 'c').refine_done().required
     assert Field.from_model(FooModel, 'd').refine_done().required
 
+    # Conf overrides default
+    assert Field.from_model(FooModel, 'a', required=True).refine_done().required
+    assert not Field.from_model(FooModel, 'd', required=False).refine_done().required
+
 
 @pytest.mark.django
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
@@ -1534,13 +1554,15 @@ def test_overriding_parse_empty_string_as_none_in_shortcut():
         parse_empty_string_as_none='foo',
     )
     # test overriding parse_empty_string_as_none
-    x = member_from_model(
-        cls=Field,
-        model=Foo,
-        model_field=CharField(blank=True),
-        factory_lookup={CharField: s},
-        factory_lookup_register_function=register_field_factory,
-        defaults_factory=field_defaults_factory,
+    x = reify_conf(
+        member_from_model(
+            cls=Field,
+            model=Foo,
+            model_field=CharField(blank=True),
+            factory_lookup={CharField: s},
+            factory_lookup_register_function=register_field_factory,
+            defaults_factory=field_defaults_factory,
+        )
     ).refine_done()
 
     assert 'foo' == x.parse_empty_string_as_none
@@ -1628,9 +1650,23 @@ def test_field_from_model_many_to_one_foreign_key():
 def test_register_field_factory():
     from tests.models import FooField, RegisterFieldFactoryTest
 
+    f = Field()
+
+    register_field_factory(FooField, factory=lambda **kwargs: f)
+
+    assert Field.from_model(RegisterFieldFactoryTest, 'foo') is f
+
+
+@pytest.mark.django
+def test_register_field_factory_disallow_non_dict_non_field():
+    from tests.models import FooField, RegisterFieldFactoryTest
+
     register_field_factory(FooField, factory=lambda **kwargs: 7)
 
-    assert Field.from_model(RegisterFieldFactoryTest, 'foo') == 7
+    with pytest.raises(AssertionError) as e:
+        assert Field.from_model(RegisterFieldFactoryTest, 'foo')
+
+    assert str(e.value) == 'Factories must return a configuration dict or an instance of Field. Got int: "7"'
 
 
 def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_list=False):
@@ -2655,7 +2691,7 @@ def test_all_field_shortcuts():
 def test_shortcut_to_subclass():
     class MyField(Field):
         @classmethod
-        @with_defaults()
+        @with_defaults
         def my_shortcut(cls, **kwargs):
             return cls(**kwargs)  # pragma: no cover: we aren't testing that this shortcut is implemented correctly
 
@@ -3511,12 +3547,14 @@ def test_initial_is_set_to_default_of_model():
 
 
 def test_shoot_config_into_auto_dunder_field():
-    Form(
+    other_display_name = 'something else'
+    form = Form(
         auto__model=FieldFromModelOneToOneTest,
         # attr `foo_one_to_one__foo` creates a field named `foo_one_to_one_foo`. Note that the `__` is collapsed to one `_`!
         auto__include=['foo_one_to_one__foo'],
-        fields__foo_one_to_one_foo__display_name='bar',
+        fields__foo_one_to_one_foo__display_name=other_display_name,
     ).bind(request=req('get'))
+    assert form.fields.foo_one_to_one_foo.display_name == other_display_name
 
 
 @pytest.mark.django_db
@@ -3732,7 +3770,7 @@ def test_action_callbacks_should_be_lazy():
 def test_form_template_override_bug():
     class MyForm(Form):
         @classmethod
-        @with_defaults()
+        @with_defaults
         def case1(cls, **kwargs):
             kwargs['template'] = 'case1'
             return cls(**kwargs)
@@ -4075,3 +4113,42 @@ def test_parsed_data_does_not_crash_on_non_editable():
             parsed_data=lambda **_: 1,
         )
     ).bind(request=req('POST', **{'-submit': ''}))
+
+
+def test_call_target__attribute():
+    class FooForm(Form):
+        class Meta:
+            auto__model = Foo
+            auto__include = ['foo']
+            fields__foo__call_target__attribute = 'hardcoded'
+            fields__foo__parsed_data = 123
+
+    form = FooForm().bind(request=req('post', foo='456'))
+    assert form.fields.foo.value == 123
+
+
+def test_call_target__attribute_override_to_radio_button():
+    class FooForm(Form):
+        class Meta:
+            auto__model = ChoicesModel
+            fields__color__call_target__attribute = 'radio'
+
+    form = FooForm().bind(request=req('get'))
+    assert form.fields.color.iommi_shortcut_stack == [
+        'radio',
+        'choice',
+    ]
+
+
+def test_shoot_config_into_related_field():
+    class FooForm(Form):
+        class Meta:
+            auto__model = Bar
+            auto__include = ['foo__foo']
+            fields__foo_foo__call_target__attribute = 'hardcoded'
+            fields__foo_foo__parsed_data = 123
+
+    form = do_post(FooForm.create(), do_post_key_validation=False, foo='456')
+    assert form.fields.foo_foo.iommi_shortcut_stack == ['hardcoded']
+    assert form.fields.foo_foo.parsed_data == 123
+    assert form.fields.foo_foo.value == 123

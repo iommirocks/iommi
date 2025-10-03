@@ -245,7 +245,6 @@ class RefinableObject:
                 )
             result.iommi_namespace = result.iommi_namespace._refine(Prio.meta, **meta_params)
 
-
         if hasattr(result, 'apply_style'):
             is_root = parent is None
             enclosing_style = None if is_root else parent.iommi_style
@@ -255,7 +254,6 @@ class RefinableObject:
 
             iommi_style = resolve_style(iommi_style, enclosing_style=enclosing_style)
             result = result.apply_style(iommi_style, is_root=is_root)
-
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')
