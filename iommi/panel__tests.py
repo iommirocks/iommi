@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import User
 
 from django.utils.translation import gettext_lazy
 from django.contrib.auth import get_user_model
@@ -9,7 +10,10 @@ from iommi._web_compat import Template
 from iommi import html
 
 from iommi import Form, Panel, Fragment, EditTable
-from iommi.form import FieldNameError
+from iommi.form import (
+    Field,
+    FieldNameError,
+)
 from tests.helpers import req, verify_part_html
 from docs.models import FavoriteArtist
 
@@ -268,7 +272,7 @@ def test_nested_forms(john_doe_user, fav_artists):
                     last_login=Panel.field(include=lambda form, **_: form.nested_forms.user_edit.instance is not None),
                 )),
             ))
-            # layout__children__p_main__attrs__class__test = True
+            layout__children__p_main__attrs__class__test = True
 
     verify_part_html(
         part=NestedEditForm(),
@@ -404,3 +408,31 @@ def test_nested_forms(john_doe_user, fav_artists):
             </form>
         '''
     )
+
+
+def test_basic_refining():
+    class MyForm(Form):
+        class Meta:
+            auto__model = User
+            auto__include = ['username']
+
+            layout = Panel(dict(
+                p_main=Panel.card(dict(
+                    username=Panel.field(),
+                )),
+            ))
+            layout__children__p_main__attrs__class__test = True
+
+    assert MyForm().bind(request=req('get')).layout.children.p_main.attrs['class'].test
+
+
+def test_foo():
+    class MyForm(Form):
+        class Meta:
+            auto__model = User
+            auto__include = []
+
+            fields__username = Field()
+            fields__username__attrs__class__test = True
+
+    assert MyForm().bind(request=req('get')).fields.username.attrs['class'].test
