@@ -426,6 +426,21 @@ def test_basic_refining():
     assert MyForm().bind(request=req('get')).layout.children.p_main.attrs['class'].test
 
 
+def test_basic_refining2():
+    class MyForm(Form):
+        class Meta:
+            auto__model = User
+            auto__include = ['username']
+
+            layout = Panel(dict(
+                p_main=Panel.card(dict(
+                    username=Panel.field(),
+                )),
+            ))
+
+    assert MyForm(layout__children__p_main__attrs__class__test=True).bind(request=req('get')).layout.children.p_main.attrs['class'].test
+
+
 def test_foo():
     class MyForm(Form):
         class Meta:
