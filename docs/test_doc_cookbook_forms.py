@@ -1377,7 +1377,7 @@ def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath
 def test_layout_with_panels():
     # language=rst
     """
-    How to I make complex layouts for forms?
+    How do I make complex layouts for forms?
     ========================================
 
     You can have more complex layout using the `panel` system:
@@ -1387,9 +1387,6 @@ def test_layout_with_panels():
         class Meta:
             auto__model = User
             auto__exclude = ["password", "user_permissions"]
-
-            # date_joined changes with every test, because it runs new data migration
-            fields__date_joined__include = False
 
             layout = Panel(dict(
                 p_main=Panel.card(
@@ -1412,7 +1409,7 @@ def test_layout_with_panels():
                         is_active=Panel.field(),
                         p_dates=Panel.row(dict(
                             last_login=Panel.field(),
-                            # date_joined=Panel.field(),
+                            date_joined=Panel.field(),
                         )),
                         p_permissions=Panel.fieldset(
                             dict(
