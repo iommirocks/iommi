@@ -196,7 +196,7 @@ def prepare_headers(table):
         if column.sortable:
             params = params_of_request(request)
             param_path = path_join(table.iommi_path, 'order')
-            order = request.GET.get(param_path) or table.default_sort_order
+            order = table.current_sort_order
             start_sort_desc = column.sort_default_desc
             params[param_path] = name if not start_sort_desc else '-' + name
             column.is_sorting = False
@@ -1729,6 +1729,24 @@ class _Lazy_tbody:
         return mark_safe('\n'.join([cells.__html__() for cells in self.table.cells_for_rows()]))
 
 
+def get_queryset_ordering(queryset):
+    # Check if queryset has default_ordering flag set to False
+    # (This happens when .order_by() is called with no arguments)
+    if not queryset.query.default_ordering:
+        return ()
+
+    # Get explicit ordering if it exists
+    if queryset.query.order_by:
+        return queryset.query.order_by
+
+    # Fall back to model's Meta.ordering
+    model = queryset.model
+    if hasattr(model, '_meta') and model._meta.ordering:
+        return tuple(model._meta.ordering)
+
+    return ()
+
+
 @declarative(Column, '_columns_dict', add_init_kwargs=False)
 class Table(Part, Tag):
     # language=rst
@@ -2332,6 +2350,7 @@ class Table(Part, Tag):
         """
         # TODO: Sorting less values is faster then sorting more values, so we should
         # filter first and then sort.
+        self.current_sort_order = None
         self.sorted_rows = self.initial_rows
         self.rows = self.sorted_rows
         request = self.get_request()
@@ -2340,6 +2359,7 @@ class Table(Part, Tag):
 
         # `or self.default_sort_order` is on purpose here, because an empty string should go to default_sort_order too
         order = request.GET.get(path_join(self.iommi_path, 'order')) or self.default_sort_order
+
         if order is not None:
             descending = order.startswith('-')
             order_field = order[1:] if descending else order
@@ -2355,6 +2375,14 @@ class Table(Part, Tag):
                     descending=descending,
                 )
                 self.rows = self.sorted_rows
+
+        if order is None and isinstance(self.sorted_rows, QuerySet):
+            # order = self.sorted_rows
+            ordering = get_queryset_ordering(self.sorted_rows)
+            if len(ordering) == 1:
+                order = ordering[0]
+
+        self.current_sort_order = order
 
     @staticmethod
     @refinable
