@@ -4644,3 +4644,22 @@ def test_table_list_custom_query():
         query__filter=lambda rows, **_: rows,
         query__filters__foo=Filter(),
     ).bind(request=req('get'))
+
+
+def test_table_headers_pick_up_sorting_from_queryset():
+    t = Table(
+        auto__model=Album,
+        rows=Album.objects.order_by('year'),
+    ).bind(request=req('get'))
+
+    assert t.current_sort_order == 'year'
+
+
+def test_table_headers_pick_up_sorting_from_model():
+    assert Album._meta.ordering == ('name',)
+    t = Table(
+        auto__model=Album,
+        rows=Album.objects.all(),
+    ).bind(request=req('get'))
+
+    assert t.current_sort_order == 'name'
