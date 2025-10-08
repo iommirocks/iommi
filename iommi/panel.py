@@ -31,7 +31,7 @@ class Panel(Fragment):
     """
     wrappers for defining Form.layout
     """
-    _form = None  # Form|None
+    _parent_form = Refinable()  # Form|None
     parent_panel = None
     fieldset_legend: str = EvaluatedRefinable()
     col_class: Type[PanelCol] = Refinable()
@@ -40,6 +40,7 @@ class Panel(Fragment):
 
     class Meta:
         col_class = PanelCol
+        _parent_form = None
 
     @with_defaults(
         tag=None,
@@ -51,25 +52,25 @@ class Panel(Fragment):
         return self.iommi_namespace.children
 
     @property
-    def form(self):
+    def _form(self):
         # I can't do this in on_bind
         # I need to have this as @property, so I can use form in include, because include is called before on_bind
-        if self._form is not None:
-            return self._form
+        if self._parent_form is not None:
+            return self._parent_form
 
         from iommi.form import Form
 
         node = self
         while node.iommi_parent() is not None:
             node = node.iommi_parent()
-            if isinstance(node, Panel) and node.form is not None:
-                self._form = node.form
+            if isinstance(node, Panel) and node._form is not None:
+                self._parent_form = node._form
                 break
             elif isinstance(node, Form):
-                self._form = node
+                self._parent_form = node
                 break
 
-        return self._form
+        return self._parent_form
 
     def on_bind(self) -> None:
         super().on_bind()
@@ -81,13 +82,13 @@ class Panel(Fragment):
                 self.parent_panel = node
                 break
 
-        if self.form is not None:
+        if self._form is not None:
             if 'field' in getattr(self, 'iommi_shortcut_stack', []):
-                related_field = self.form.get_field(self.nested_path if self.nested_path is not None else self.iommi_name())
+                related_field = self._form.get_field(self.nested_path if self.nested_path is not None else self.iommi_name())
                 self.children['field'] = related_field
                 self._bound_members.children._bound_members['field'] = related_field
             elif 'nested_form' in getattr(self, 'iommi_shortcut_stack', []):
-                nested_form = self.form.get_nested_form(self.iommi_name())  # ? also self.nested_path or not ?
+                nested_form = self._form.get_nested_form(self.iommi_name())  # ? also self.nested_path or not ?
                 self.children['nested_form'] = nested_form
                 self._bound_members.children._bound_members['nested_form'] = nested_form
 
@@ -97,7 +98,7 @@ class Panel(Fragment):
         # pass panel, form and field to all callables + to template rendering
         return dict(
             panel=self,
-            form=self.form,
+            form=self._form,
             **super().own_evaluate_parameters()
         )
 
