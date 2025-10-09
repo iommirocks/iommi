@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 
-from iommi.style_base import base
 from iommi._web_compat import Template
 from iommi import html
 
@@ -14,7 +13,8 @@ from iommi.form import (
     Field,
     FieldNameError,
 )
-from tests.helpers import req, verify_part_html
+from iommi.table import Table
+from tests.helpers import req, verify_part_html, verify_table_html, verify_html
 from docs.models import FavoriteArtist
 
 
@@ -252,7 +252,7 @@ def test_nested_forms(john_doe_user, fav_artists):
             auto__include = ["username", "email", "last_login"]
             fields__last_login__include = lambda form, **_: form.instance is not None
 
-    class FavoriteArtists(EditTable):
+    class FavoriteArtistsEditTable(EditTable):
         class Meta:
             auto__model = FavoriteArtist
             auto__include = ['artist__name', 'comment', 'sort_order']
@@ -261,7 +261,7 @@ def test_nested_forms(john_doe_user, fav_artists):
 
     class NestedEditForm(Form):
         user_edit = UserForm(instance=john_doe_user)
-        favorite_artists = FavoriteArtists(rows=john_doe_user.favorite_artists.all())
+        favorite_artists = FavoriteArtistsEditTable(rows=john_doe_user.favorite_artists.all())
 
         class Meta:
             layout = Panel(dict(
@@ -344,7 +344,7 @@ def test_nested_forms(john_doe_user, fav_artists):
 
     class NestedCreateForm(Form):
         user_edit = UserForm.create()
-        favorite_artists = FavoriteArtists(rows=[])
+        favorite_artists = FavoriteArtistsEditTable(rows=[])
 
         class Meta:
             layout = {
@@ -451,3 +451,222 @@ def test_foo():
             fields__username__attrs__class__test = True
 
     assert MyForm().bind(request=req('get')).fields.username.attrs['class'].test
+
+
+@pytest.mark.django_db
+def test_filter_form_layout(john_doe_user, fav_artists):
+    class FavoriteArtistsTable(Table):
+        class Meta:
+            auto__model = FavoriteArtist
+            auto__include = ['user', 'artist', 'comment']
+            columns__user__filter__include = True
+            columns__artist__filter__include = True
+            columns__comment__filter__include = True
+            columns__comment__filter__freetext = True
+            query__advanced__include = False
+            query__form__layout = Panel(dict(
+                freetext_search=Panel.field(),
+                p_abc=Panel.row(dict(
+                    user=Panel.field(),
+                    artist=Panel.field(),
+                ))
+            ))
+
+    verify_part_html(
+        part=FavoriteArtistsTable().bind(request=req('get')),
+        find__class='iommi_query_form_simple',
+        # language=html
+        expected_html='''
+            <span class="iommi_query_form_simple">
+                <div>
+                    <label for="id_freetext_search">Search</label>
+                    <input id="id_freetext_search" name="freetext_search" type="text" value=""/>
+                </div>
+                <div class="row">
+                    <div class="col" data-iommi-type="PanelCol">
+                        <div style="min-width: 200px">
+                            <label for="id_user">User</label>
+                            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_user" name="user">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col" data-iommi-type="PanelCol">
+                        <div style="min-width: 200px">
+                            <label for="id_artist">Artist</label>
+                            <select class="select2_enhance" data-choices-endpoint="/artist/choices" data-placeholder="" id="id_artist" name="artist">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </span>
+        '''
+    )
+
+
+@pytest.mark.django_db
+def test_table_row_layout(john_doe_user, fav_artists):
+    class FavoriteArtistsTable(Table):
+        class Meta:
+            auto__rows = john_doe_user.favorite_artists.all()
+            auto__include = ['user__username', 'artist', 'comment']
+            columns__artist__cell__url = None
+            columns__comment__cell__url = lambda row, **_: f'/favorite_artist/{row.pk}/'
+            row__layout = Panel.div(
+                dict(
+                    artist=Panel.cell(),
+                    p_abc=Panel.row(dict(
+                        user_username=Panel.cell(),
+                        comment=Panel.cell(),
+                    )),
+                ),
+                **{
+                    # test if both attrs (panel+cells) get rendered
+                    'attrs__data-comment': lambda row, **_: row.comment,
+                    'attrs__style__border-bottom': '1px solid #6ea8fe',
+                }
+            )
+
+    verify_table_html(
+        table=FavoriteArtistsTable.div().bind(request=req('get')),
+        # language=html
+        expected_html=f'''
+            <div class="table">
+                <div>
+                    <div data-pk="{fav_artists[0].pk}" data-comment="Love it!" style="border-bottom: 1px solid #6ea8fe">
+                        Black Sabbath
+                        <div class="row">
+                            <div class="col" data-iommi-type="PanelCol">john.doe</div>
+                            <div class="col" data-iommi-type="PanelCol"><a href="/favorite_artist/{fav_artists[0].pk}/">Love it!</a></div>
+                        </div>
+                    </div>
+                    <div data-pk="{fav_artists[1].pk}" data-comment="I love this too!" style="border-bottom: 1px solid #6ea8fe">
+                        Ozzy Osbourne
+                        <div class="row">
+                            <div class="col" data-iommi-type="PanelCol">john.doe</div>
+                            <div class="col" data-iommi-type="PanelCol"><a href="/favorite_artist/{fav_artists[1].pk}/">I love this too!</a></div>
+                        </div>
+                    </div>
+                    <div data-pk="{fav_artists[2].pk}" data-comment="And this as well" style="border-bottom: 1px solid #6ea8fe">
+                        Damnation
+                        <div class="row">
+                            <div class="col" data-iommi-type="PanelCol">john.doe</div>
+                            <div class="col" data-iommi-type="PanelCol"><a href="/favorite_artist/{fav_artists[2].pk}/">And this as well</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ''',
+    )
+
+
+@pytest.mark.django_db
+def test_edit_table_row_layout(john_doe_user, fav_artists):
+    class FavoriteArtistsEditTable(EditTable):
+        class Meta:
+            auto__model = FavoriteArtist
+            auto__rows = john_doe_user.favorite_artists.all()
+            auto__include = ['user', 'artist__name', 'comment', 'sort_order']
+            columns__comment__field__include = True
+            columns__user__field__include = True
+            row__layout = Panel.div(dict(
+                artist_name=Panel.cell(),
+                p_abc=Panel.row(dict(
+                    user=Panel.cell(),
+                    comment=Panel.cell(),
+                )),
+                sort_order=Panel.reorder_handle(),
+            ))
+
+    verify_part_html(
+        part=FavoriteArtistsEditTable.div().bind(request=req('get')),
+        # language=HTML
+        expected_html=f'''
+            <h1>Favorite artists</h1>
+            <div class="iommi-table-container" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <form action="" enctype="multipart/form-data" method="post">
+                    <div class="iommi-table-plus-paginator">
+                        <div class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                            <div data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector='[data-iommi-path="columns__sort_order__cell"]'>
+                                <div data-pk="{fav_artists[0].pk}">
+                                    Black Sabbath
+                                    <div class="row">
+                                        <div class="col" data-iommi-type="PanelCol">
+                                            <div style="min-width: 200px">
+                                                <label for="id_columns__user__{fav_artists[0].pk}">User</label>
+                                                <select class="select2_enhance" data-choices-endpoint="/user/choices" data-placeholder="" id="id_columns__user__{fav_artists[0].pk}" name="columns/user/{fav_artists[0].pk}">
+                                                    <option label="john.doe" selected="selected" value="{john_doe_user.pk}">
+                                                        john.doe
+                                                    </option>
+                                                </select>
+                                            </div>
+                                       </div>
+                                        <div class="col" data-iommi-type="PanelCol">
+                                            <div>
+                                                <label for="id_columns__comment__{fav_artists[0].pk}">Comment</label>
+                                                <input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="reordering-handle-cell" title="Drag and drop to reorder">
+                                        <input data-reordering-value="" id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"/>
+                                    </span>
+                                </div>
+                                <div data-pk="{fav_artists[1].pk}">
+                                    Ozzy Osbourne
+                                    <div class="row">
+                                        <div class="col" data-iommi-type="PanelCol">
+                                            <div style="min-width: 200px">
+                                                <label for="id_columns__user__{fav_artists[1].pk}">User</label>
+                                                <select class="select2_enhance" data-choices-endpoint="/user/choices" data-placeholder="" id="id_columns__user__{fav_artists[1].pk}" name="columns/user/{fav_artists[1].pk}">
+                                                    <option label="john.doe" selected="selected" value="{john_doe_user.pk}">
+                                                        john.doe
+                                                    </option>
+                                                </select>
+                                            </div>
+                                       </div>
+                                        <div class="col" data-iommi-type="PanelCol">
+                                            <div>
+                                                <label for="id_columns__comment__{fav_artists[1].pk}">Comment</label>
+                                                <input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="reordering-handle-cell" title="Drag and drop to reorder">
+                                        <input data-reordering-value="" id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"/>
+                                    </span>
+                                </div>
+                                <div data-pk="{fav_artists[2].pk}">
+                                    Damnation
+                                    <div class="row">
+                                        <div class="col" data-iommi-type="PanelCol">
+                                            <div style="min-width: 200px">
+                                                <label for="id_columns__user__{fav_artists[2].pk}">User</label>
+                                                <select class="select2_enhance" data-choices-endpoint="/user/choices" data-placeholder="" id="id_columns__user__{fav_artists[2].pk}" name="columns/user/{fav_artists[2].pk}">
+                                                    <option label="john.doe" selected="selected" value="{john_doe_user.pk}">
+                                                        john.doe
+                                                    </option>
+                                                </select>
+                                            </div>
+                                       </div>
+                                        <div class="col" data-iommi-type="PanelCol">
+                                            <div>
+                                                <label for="id_columns__comment__{fav_artists[2].pk}">Comment</label>
+                                                <input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="reordering-handle-cell" title="Drag and drop to reorder">
+                                        <input data-reordering-value="" id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="links">
+                        <button accesskey="s" name="-save">Save</button>
+                        <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="" type="button">Add row</button>
+                    </div>
+                </form>
+            </div>
+        ''',
+    )

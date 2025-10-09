@@ -1,8 +1,9 @@
 from typing import Type
 
 from django.utils.functional import Promise
+from django.utils.translation import gettext_lazy
 
-from iommi.fragment import Fragment
+from iommi.fragment import Fragment, html
 from iommi.part import Part
 from iommi.evaluate import evaluate_member
 from iommi.refinable import EvaluatedRefinable, Refinable
@@ -24,7 +25,7 @@ class PanelCol(Fragment):
         },
     )
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(PanelCol, self).__init__(**kwargs)
 
 
 class Panel(Fragment):
@@ -32,6 +33,8 @@ class Panel(Fragment):
     wrappers for defining Form.layout
     """
     _parent_form = Refinable()  # Form|None
+    _parent_table = Refinable()  # Table|None
+    _parent_table_cells = Refinable()  # Cells|None
     parent_panel = None
     fieldset_legend: str = EvaluatedRefinable()
     col_class: Type[PanelCol] = Refinable()
@@ -41,39 +44,58 @@ class Panel(Fragment):
     class Meta:
         col_class = PanelCol
         _parent_form = None
+        _parent_table = None
+        _parent_table_cells = None
 
     @with_defaults(
         tag=None,
     )
     def __init__(self, children: dict=None, **kwargs):
-        super().__init__(children=children, **kwargs)
+        super(Panel, self).__init__(children=children, **kwargs)
 
     def as_dict(self):
         return self.iommi_namespace.children
+
+    def _get_cached_ancestor(self, property_name, instance_of):
+        cache_property_name = f'_parent{property_name}'
+        if (cached_value := getattr(self, cache_property_name)) is not None:
+            return cached_value
+
+        node = self
+        while node.iommi_parent() is not None:
+            node = node.iommi_parent()
+            if isinstance(node, Panel) and (value := getattr(node, property_name)) is not None:
+                setattr(self, cache_property_name, value)
+                break
+            elif isinstance(node, instance_of):
+                setattr(self, cache_property_name, node)
+                break
+
+        return getattr(self, cache_property_name)
 
     @property
     def _form(self):
         # I can't do this in on_bind
         # I need to have this as @property, so I can use form in include, because include is called before on_bind
-        if self._parent_form is not None:
-            return self._parent_form
-
         from iommi.form import Form
+        return self._get_cached_ancestor('_form', Form)
 
-        node = self
-        while node.iommi_parent() is not None:
-            node = node.iommi_parent()
-            if isinstance(node, Panel) and node._form is not None:
-                self._parent_form = node._form
-                break
-            elif isinstance(node, Form):
-                self._parent_form = node
-                break
+    @property
+    def _table(self):
+        # I can't do this in on_bind
+        # I need to have this as @property, so I can use table in include, because include is called before on_bind
+        from iommi.table import Table
+        return self._get_cached_ancestor('_table', Table)
 
-        return self._parent_form
+    @property
+    def _table_cells(self):
+        # I can't do this in on_bind
+        # I need to have this as @property, so I can use cells in include, because include is called before on_bind
+        from iommi.table import Cells
+        return self._get_cached_ancestor('_table_cells', Cells)
 
     def on_bind(self) -> None:
-        super().on_bind()
+        super(Panel, self).on_bind()
 
         node = self
         while node.iommi_parent() is not None:
@@ -92,18 +114,27 @@ class Panel(Fragment):
                 self.children['nested_form'] = nested_form
                 self._bound_members.children._bound_members['nested_form'] = nested_form
 
+        if self._table is not None and 'cell' in getattr(self, 'iommi_shortcut_stack', []):
+            cells = self._table_cells
+            assert cells is not None
+
+            related_cell = cells[self.nested_path if self.nested_path is not None else self.iommi_name()]
+            self.children['cell'] = related_cell
+            self._bound_members.children._bound_members['cell'] = related_cell
+
         evaluate_member(self, 'fieldset_legend', **self.iommi_evaluate_parameters())
 
     def own_evaluate_parameters(self):
-        # pass panel, form and field to all callables + to template rendering
+        # pass panel, form and table to all callables + to template rendering
         return dict(
             panel=self,
             form=self._form,
-            **super().own_evaluate_parameters()
+            table=self._table,
+            **super(Panel, self).own_evaluate_parameters()
         )
 
     def __html__(self, *args, **kwargs):
-        r = super().__html__(*args, **kwargs)
+        r = super(Panel, self).__html__(*args, **kwargs)
         if self.col_class is None or not self.is_col:
             return r
         col_kwargs = self.col
@@ -123,6 +154,17 @@ class Panel(Fragment):
                 fields.update(child.get_fields())
 
         return fields
+
+    def get_cell_panels(self):
+        """recursively gets all cells from the panel"""
+        cells = {}
+        for child in self.children.values():
+            if isinstance(child, Panel) and 'cell' in getattr(child, 'iommi_shortcut_stack', []):
+                cells[child.iommi_name()] = child
+            elif isinstance(child, Panel):
+                cells.update(child.get_cell_panels())
+
+        return cells
 
     @classmethod
     @with_defaults(
@@ -268,3 +310,28 @@ class Panel(Fragment):
         generates nested form
         """
         return cls(**kwargs)
+
+    @classmethod
+    @with_defaults(
+        tag='div',
+    )
+    def div(cls, children: dict=None, **kwargs):
+        return cls(children=cls._get_children_as_panels(children), **kwargs)
+
+    @classmethod
+    @with_defaults(
+        tag=None,
+    )
+    def cell(cls, **kwargs):
+        return cls(**kwargs)
+
+    @classmethod
+    @with_defaults(
+        tag='span',
+        attrs__title=gettext_lazy('Drag and drop to reorder'),
+        **{
+            'attrs__class__reordering-handle-cell': True,
+        }
+    )
+    def reorder_handle(cls, **kwargs):
+        return cls.cell(**kwargs)

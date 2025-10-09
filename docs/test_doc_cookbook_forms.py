@@ -1435,5 +1435,7 @@ def test_layout_with_panels():
     # language=rst
     """
     `Panel` fields are mapped to their corresponding `Form` fields automatically, and checked. That means that 
-    if you create a complex layout and forgot a field you will get an error, and vice versa. 
+    if you create a complex layout and forget a field you will get an error, and vice versa.
+
+    The same way you can also use layouts for filter forms via `Table.query__form__layout`
     """

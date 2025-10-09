@@ -43,7 +43,9 @@ from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     path_join,
 )
+from iommi.evaluate import evaluate_strict
 from iommi.form import (
+    default_input_id,
     find_unique_prefixes,
     FULL_FORM_FROM_REQUEST,
     Field,
@@ -74,9 +76,8 @@ from iommi.table import (
     Column,
     Table,
 )
-from iommi.evaluate import evaluate
 
-from ._db_compat import base_defaults_factory
+from iommi._db_compat import base_defaults_factory
 
 _edit_column_factory_by_field_type = {}
 
@@ -113,7 +114,10 @@ class EditCell(Cell):
 
             bind_field_from_instance(field, self.row)
 
-            input_html = field.input.__html__()
+            if self.table.extra_evaluated.render_inputs_only or 'hidden' in getattr(field, 'iommi_shortcut_stack', []):
+                input_html = field.input.__html__()
+            else:
+                input_html = field.__html__()
 
             field.attr = orig_attr
 
@@ -143,6 +147,7 @@ def bind_field_from_instance(field, instance):
     field.non_editable_input = field.iommi_namespace.non_editable_input(_name='non_editable_input')
     field.editable = field.iommi_namespace.editable
     field.initial = field.iommi_namespace.initial
+    field.label.attrs['for'] = evaluate_strict(default_input_id, **field.label.iommi_evaluate_parameters())
     field._evaluate_parameters['instance'] = instance
 
     field.bind_from_instance()
@@ -266,11 +271,7 @@ class EditColumn(Column):
         # TODO this would be better, but it doesn't work and idk why
         #  header__template=Template('<th{{ header.attrs }}></th>'),
         sortable=False,
-        # TODO
-        #  field__call_target__attribute='hidden',
-        #  call_target raises TypeError(Field object has no refinable attribute(s): "call_target".)
-        #  so "temporary" fix to set attrs__type=hidden (works for inputs only):
-        field__input__attrs__type='hidden',
+        field__call_target__attribute='hidden',
         field__include=True,
         cell__attrs__title=gettext_lazy('Drag and drop to reorder'),
         after=LAST,
@@ -455,6 +456,8 @@ class EditTable(Table):
         container__children__text__template = 'iommi/table/edit_table_container.html'
 
         reorderable = False
+
+        extra_evaluated__render_inputs_only = lambda table, **_: table.row.layout is None
 
         bulk__include = True
 
