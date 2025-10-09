@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+7.18.0 (2025-10-08)
+~~~~~~~~~~~~~~~~~~~
+
+* Table headers pick up the ordering from the QuerySet/Model automatically
+
+* `call_target` handling significantly improved. This enables easier customization for `auto__model` uses.
+
+* Use `create_or_edit_object_redirect` in `save_nested_forms`
+
+* Allow `redirect_to` as a callable
+
+
 7.17.0 (2025-09-15)
 ~~~~~~~~~~~~~~~~~~~
 

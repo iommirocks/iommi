@@ -744,7 +744,7 @@ def test_lazy_tbody_on_fail():
                             <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-3">
                                 <thead>
                                     <tr>
-                                        <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=name">Name</a></th>
+                                        <th class="ascending first_column iommi_sort_header sorted subheader"><a href="?albums%2Forder=-name">Name</a></th>
                                         <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=year">Year</a></th>
                                     </tr>
                                 </thead>
@@ -793,7 +793,7 @@ def test_lazy_tbody_on_fail():
                             <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-3">
                                 <thead>
                                     <tr>
-                                        <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=name">Name</a></th>
+                                        <th class="ascending first_column iommi_sort_header sorted subheader"><a href="?albums%2Forder=-name">Name</a></th>
                                         <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=year">Year</a></th>
                                     </tr>
                                 </thead>

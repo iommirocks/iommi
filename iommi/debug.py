@@ -184,13 +184,14 @@ def endpoint__debug_templates_used(endpoint, request, **_):
 
         return local_debug_url_builder(t, 1)
 
+    unique_templates = list(dict.fromkeys(request.iommi_used_templates))
     links = [
         format_html(
             '<li><a href="{}">{}</a></li>',
             url_for_template(t),
             t,
         )
-        for t in request.iommi_used_templates
+        for t in unique_templates
     ]
     links = format_html('{}' * len(links), *links)
     return HttpResponse(
