@@ -190,7 +190,7 @@ def endpoint__debug_templates_used(endpoint, request, **_):
             url_for_template(t),
             t,
         )
-        for t in request.iommi_used_templates
+        for t in set(request.iommi_used_templates)
     ]
     links = format_html('{}' * len(links), *links)
     return HttpResponse(

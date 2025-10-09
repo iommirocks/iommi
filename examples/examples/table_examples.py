@@ -130,7 +130,6 @@ def table_kitchen_sink(request):
 
         class Meta:
             title = 'Kitchen sink'
-            _name = 'bar'
             page_size = 20
 
     return BarTable(rows=TBar.objects.all())
