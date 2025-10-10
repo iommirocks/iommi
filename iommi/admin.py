@@ -545,8 +545,8 @@ class Admin(Page):
                 path('', cls.all_models().as_view(), name='iommi.Admin.all_models'),
                 path('<app_name>/<model_name>/', cls.list().as_view(), name='iommi.Admin.list'),
                 path('<app_name>/<model_name>/create/', cls.create().as_view(), name='iommi.Admin.create'),
-                path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit().as_view(), name='iommi.Admin.edit'),
-                path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete().as_view(), name='iommi.Admin.delete'),
+                path('<app_name>/<model_name>/<pk>/edit/', cls.edit().as_view(), name='iommi.Admin.edit'),
+                path('<app_name>/<model_name>/<pk>/delete/', cls.delete().as_view(), name='iommi.Admin.delete'),
                 path('', auth_views()),
             ]
         )
