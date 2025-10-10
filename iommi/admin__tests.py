@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import uuid4
 
 import pytest
 from django.contrib.auth.models import User
@@ -23,7 +24,7 @@ from tests.helpers import (
     staff_req,
     user_req,
 )
-from tests.models import Foo
+from tests.models import Foo, UuidPKModel
 
 urlpatterns = [
     path('', include(Admin.urls())),
@@ -263,3 +264,39 @@ def test_collect_config_returns_none_on_missing():
 def test_no_config():
     a = Admin.all_models().refine_done()
     assert 'auth_user' in a.apps
+
+
+@pytest.mark.django_db
+@mock.patch('iommi.admin.messages')
+def test_create_non_int_pk(mock_messages, settings):
+    request = staff_req('post', id=str(uuid4()), foo='banana', **{'-submit': ''})
+    c = Admin.create().refine_with_params(app_name='tests', model_name='uuidpkmodel')
+    p = c.bind(request=request)
+    assert p.parts.create_tests_uuidpkmodel.is_valid()
+    p.render_to_response()
+
+    assert UuidPKModel.objects.count() == 1
+    f = UuidPKModel.objects.get()
+    assert f.foo == 'banana'
+
+    mock_messages.add_message.assert_called_with(
+        request, mock_messages.INFO, f'Uuid pk model {f} was created', fail_silently=True
+    )
+
+
+@pytest.mark.django_db
+@mock.patch('iommi.admin.messages')
+def test_edit_non_int_pk(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
+    f = UuidPKModel.objects.create(id=str(uuid4()), foo='banana')
+
+    c = Admin.edit().refine_with_params(app_name='tests', model_name='uuidpkmodel', pk=f.pk)
+    request = staff_req('post', id=f.pk, foo='orange', **{'-submit': ''})
+    p = c.bind(request=request)
+    assert p.parts.edit_tests_uuidpkmodel.is_valid(), p.parts.edit_tests_uuidpkmodel.get_errors()
+    p.render_to_response()
+    assert UuidPKModel.objects.get().foo == 'orange'
+
+    mock_messages.add_message.assert_called_with(
+        request, mock_messages.INFO, f'Uuid pk model {f} was updated', fail_silently=True
+    )
