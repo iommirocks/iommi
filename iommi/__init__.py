@@ -37,6 +37,7 @@ from iommi.menu import (
 from iommi.page import (
     Page,
 )
+from iommi.panel import Panel, PanelCol
 from iommi.part import Part
 from iommi.query import (
     Filter,
@@ -134,6 +135,8 @@ __all__ = [
     'MenuItem',
     'middleware',
     'Page',
+    'Panel',
+    'PanelCol',
     'Part',
     'Query',
     'Table',

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy
 
 from docs.models import *
 from iommi import *
@@ -1371,3 +1372,70 @@ def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath
     assert not form.get_errors()
     assert isinstance(form.render_to_response(), HttpResponseRedirect)
     # @end
+
+
+def test_layout_with_panels():
+    # language=rst
+    """
+    How do I make complex layouts for forms?
+    ========================================
+
+    You can have more complex layout using the `panel` system:
+    """
+
+    class UserForm(Form):
+        class Meta:
+            auto__model = User
+            auto__exclude = ["password", "user_permissions"]
+
+            layout = Panel(dict(
+                p_main=Panel.card(
+                    dict(
+                        p_access=Panel.row(dict(
+                            username=Panel.field(col__attrs__class__foo=True),  # test also custom col attrs
+                            change_password_btn=Panel.part(
+                                Fragment(
+                                    text="Change password form is somewhere else",
+                                    tag="div",
+                                ),
+                                include=lambda form, **_: form.editable and form.instance,
+                            ),
+                        )),
+                        p_fullname=Panel.row(dict(
+                            first_name=Panel.field(),
+                            last_name=Panel.field(),
+                        )),
+                        email=Panel.field(),
+                        is_active=Panel.field(),
+                        p_dates=Panel.row(dict(
+                            last_login=Panel.field(),
+                            date_joined=Panel.field(),
+                        )),
+                        p_permissions=Panel.fieldset(
+                            dict(
+                                p_roles=Panel.row(dict(
+                                    is_superuser=Panel.field(),
+                                    is_staff=Panel.field(),
+                                )),
+                                groups=Panel.field(),
+                            ),
+                            legend=gettext_lazy("Permissions")
+                        ),
+                        p_error=Panel.alert("Error!", level="error"),
+                    ),
+                    header=lambda form, **_: form.instance.username if form.instance is not None else "New user",
+                    footer=Template("<i>Let's put something in the footer</i>"),
+                ),
+            ))
+
+    # @test
+    show_output(UserForm())
+    # @end
+
+    # language=rst
+    """
+    `Panel` fields are mapped to their corresponding `Form` fields automatically, and checked. That means that 
+    if you create a complex layout and forget a field you will get an error, and vice versa.
+
+    The same way you can also use layouts for filter forms via `Table.query__form__layout`
+    """

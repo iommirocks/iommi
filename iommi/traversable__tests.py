@@ -177,6 +177,7 @@ def test_traverse_on_iommi():
         'query/columns': 'parts/a_table/query/filters/columns',
         'query/fusk': 'parts/a_table/query/filters/fusk',
         'query_form_toggle_script': 'parts/a_table/query/advanced/assets/query_form_toggle_script',
+        'row': 'parts/a_table/row',
         'select': 'parts/a_table/columns/select',
         'some_form': 'parts/some_form',
         'some_other_form': 'parts/some_other_form',

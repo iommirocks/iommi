@@ -23,6 +23,7 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import (
     AutoField,
     BooleanField,
@@ -38,10 +39,7 @@ from django.utils.formats import date_format
 from django.utils.html import (
     conditional_escape,
 )
-from django.utils.translation import (
-    gettext_lazy,
-    gettext_lazy,
-)
+from django.utils.translation import gettext_lazy
 
 from iommi._web_compat import (
     HttpResponse,
@@ -120,6 +118,7 @@ from iommi.page import (
     Page,
     Part,
 )
+from iommi.panel import Panel
 from iommi.part import render_root
 from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
@@ -1178,6 +1177,7 @@ class Cells(Traversable, Tag):
     # not EvaluatedRefinable because this is an evaluated container so is special
     extra_evaluated: Dict[str, Any] = Refinable()
     cell_class: Type[Cell] = Refinable()
+    layout: Union[None, Panel] = EvaluatedRefinable()
 
     class Meta:
         cell_class = Cell
@@ -1188,6 +1188,24 @@ class Cells(Traversable, Tag):
         self.row: Any = row
         self.row_index = row_index
 
+    def on_bind(self) -> None:
+        super(Cells, self).on_bind()
+        if self.layout is not None:
+            assert self.template is None, 'row.layout cannot be used together with row.template'
+            if self.attrs is not None:
+                self.layout.attrs = Attrs(self.layout, **{**flatten(self.layout.attrs), **flatten(self.attrs)})
+            bind_member(self, name='layout')
+
+            layout_unused_columns = set(keys(self.get_table().columns)).difference(set(keys(self.layout.get_cell_panels())))
+
+            if layout_unused_columns:
+                raise ImproperlyConfigured(
+                    'Some columns are missing in Table.row.layout as Panel.cell. '
+                    'Either add them or exclude them.\n'
+                    'Missing columns:\n'
+                    f'{",\n".join(sorted(layout_unused_columns))}'
+                )
+
     def own_evaluate_parameters(self):
         return dict(cells=self, row=self.row)
 
@@ -1195,7 +1213,10 @@ class Cells(Traversable, Tag):
         return self.iommi_evaluate_parameters()['table']
 
     def __html__(self):
-        if self.template:
+        if self.layout is not None:
+            return self.layout.__html__()
+
+        elif self.template:
             return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
 
         return self.render()
@@ -1288,11 +1309,20 @@ class HeaderColumnConfig(Traversable):
 
 
 class RowConfig(RefinableObject, Tag):
+    _name = 'row'
     attrs: Attrs = SpecialEvaluatedRefinable()
     tag = Refinable()
     template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
+    layout: Union[None, Panel] = SpecialEvaluatedRefinable()
+
+    def refine_done(self, parent=None):
+        result = super(RowConfig, self).refine_done(parent=parent)
+        if result.layout is not None:
+            assert 'div' in getattr(parent, 'iommi_shortcut_stack', []), 'row.layout can be used only for Table.div()'
+            result.layout = result.layout.refine_done(parent=parent)
+        return result
 
     def as_dict(self):
         return {k: getattr(self, k) for k in keys(self.get_declared('refinable'))}

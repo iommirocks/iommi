@@ -1,0 +1,6 @@
+{% block layout %}{{ form.layout }}{% endblock %}
+{% block layout_unused_fields %}
+{% for field in form.layout_unused_fields.values %}
+    {{ field }}
+{% endfor %}
+{% endblock %}
