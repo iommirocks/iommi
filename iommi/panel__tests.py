@@ -1,9 +1,10 @@
 import pytest
-from django.contrib.auth.models import User
 
 from django.utils.translation import gettext_lazy
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
+from django.test import override_settings
+from django.contrib.auth.models import User
 
 from iommi._web_compat import Template
 from iommi import html
@@ -560,6 +561,7 @@ def test_table_row_layout(john_doe_user, fav_artists):
 
 
 @pytest.mark.django_db
+@override_settings(IOMMI_DEBUG=True)
 def test_edit_table_row_layout(john_doe_user, fav_artists):
     class FavoriteArtistsEditTable(EditTable):
         class Meta:

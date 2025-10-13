@@ -3,10 +3,12 @@ from typing import Type
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy
 
+from iommi.attrs import Attrs
 from iommi.fragment import Fragment, html
 from iommi.part import Part
 from iommi.evaluate import evaluate_member
 from iommi.refinable import EvaluatedRefinable, Refinable
+from iommi.declarative.namespace import flatten
 from iommi.declarative.namespace import Namespace
 from iommi._web_compat import Template
 from iommi.shortcut import with_defaults
@@ -95,6 +97,12 @@ class Panel(Fragment):
         return self._get_cached_ancestor('_table_cells', Cells)
 
     def on_bind(self) -> None:
+        from iommi.table import Cells
+
+        parent = self.iommi_parent()
+        if isinstance(parent, Cells):
+            self.attrs = Attrs(self, **{**flatten(parent.attrs), **flatten(self.attrs)})
+
         super(Panel, self).on_bind()
 
         node = self

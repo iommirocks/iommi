@@ -1192,8 +1192,6 @@ class Cells(Traversable, Tag):
         super(Cells, self).on_bind()
         if self.layout is not None:
             assert self.template is None, 'row.layout cannot be used together with row.template'
-            if self.attrs is not None:
-                self.layout.attrs = Attrs(self.layout, **{**flatten(self.attrs), **flatten(self.layout.attrs)})
             bind_member(self, name='layout')
 
             layout_unused_columns = set(keys(self.get_table().columns)).difference(set(keys(self.layout.get_cell_panels())))
