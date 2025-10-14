@@ -863,21 +863,21 @@ def test_orderable_edit_table(fav_artists):
                         <th class="first_column subheader">Sort order</th>
                     </tr>
                 </thead>
-                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__sort_order__cell&quot;]">
+                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                     <tr data-pk="{fav_artists[0].pk}">
                         <td>Black Sabbath</td>
                         <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
                     </tr>
                     <tr data-pk="{fav_artists[1].pk}">
                         <td>Ozzy Osbourne</td>
                         <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
                     </tr>
                     <tr data-pk="{fav_artists[2].pk}">
                         <td>Damnation</td>
                         <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
             </table>
@@ -912,21 +912,21 @@ def test_orderable_edit_table_sortablejs_options(fav_artists):
                         <th class="first_column subheader">Sort order</th>
                     </tr>
                 </thead>
-                <tbody data-iommi-reorderable="{html.escape(json.dumps(sortablejs_options, separators=(',', ':')))}" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__sort_order__cell&quot;]">
+                <tbody data-iommi-reorderable="{html.escape(json.dumps(sortablejs_options, separators=(',', ':')))}" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                     <tr data-pk="{fav_artists[0].pk}">
                         <td>Black Sabbath</td>
                         <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
                     </tr>
                     <tr data-pk="{fav_artists[1].pk}">
                         <td>Ozzy Osbourne</td>
                         <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
                     </tr>
                     <tr data-pk="{fav_artists[2].pk}">
                         <td>Damnation</td>
                         <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
             </table>
@@ -958,14 +958,14 @@ def test_orderable_edit_table_reorder_handle():
                         <th class="first_column subheader">A</th>
                     </tr>
                 </thead>
-                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__a__cell&quot;]">
+                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                     <tr data-pk="{obj1.pk}">
                         <td>test_reorder_handle</td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj1.pk}" name="columns/a/{obj1.pk}" type="hidden" value="1"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj1.pk}" name="columns/a/{obj1.pk}" type="hidden" value="1"></td>
                     </tr>
                     <tr data-pk="{obj2.pk}">
                         <td>test_reorder_handle</td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj2.pk}" name="columns/a/{obj2.pk}" type="hidden" value="2"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj2.pk}" name="columns/a/{obj2.pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
             </table>

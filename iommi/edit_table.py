@@ -214,7 +214,7 @@ class EditColumn(Column):
         super(EditColumn, self).on_bind()
         if 'reorder_handle' in getattr(self, 'iommi_shortcut_stack', []):
             edit_table = self.iommi_parent().iommi_parent()
-            edit_table.tbody.attrs['data-iommi-reorderable-handle-selector'] = f'[data-iommi-path="{self.iommi_dunder_path}__cell"]'
+            edit_table.tbody.attrs['data-iommi-reorderable-handle-selector'] = '[data-iommi-reordering-handle]'
             edit_table.tbody.attrs['data-iommi-reorderable-field-selector'] = '[data-reordering-value]'
 
     @classmethod
@@ -277,6 +277,7 @@ class EditColumn(Column):
         after=LAST,
         **{
             'cell__attrs__class__reordering-handle-cell': True,
+            'cell__attrs__data-iommi-reordering-handle': True,
             'field__input__attrs__data-reordering-value': True,
         }
     )

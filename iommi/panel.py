@@ -331,6 +331,7 @@ class Panel(Fragment):
         attrs__title=gettext_lazy('Drag and drop to reorder'),
         **{
             'attrs__class__reordering-handle-cell': True,
+            'attrs__data-iommi-reordering-handle': True,
         }
     )
     def reorder_handle(cls, **kwargs):

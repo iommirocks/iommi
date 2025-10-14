@@ -299,25 +299,25 @@ def test_nested_forms(john_doe_user, fav_artists):
                                                 <th class="first_column subheader">Sort order</th>
                                             </tr>
                                         </thead>
-                                        <tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector='[data-iommi-path="fields__favorite_artists__columns__sort_order__cell"]'>
+                                        <tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                                             <tr data-pk="{fav_artists[0].pk}">
                                                 <td>Black Sabbath</td>
                                                 <td><input id="id_favorite_artists__comment__{fav_artists[0].pk}" name="favorite_artists/comment/{fav_artists[0].pk}" type="text" value="Love it!"/></td>
-                                                <td class="reordering-handle-cell" title="Drag and drop to reorder">
+                                                <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                                     <input data-reordering-value="" id="id_favorite_artists__sort_order__{fav_artists[0].pk}" name="favorite_artists/sort_order/{fav_artists[0].pk}" type="hidden" value="0"/>
                                                 </td>
                                             </tr>
                                             <tr data-pk="{fav_artists[1].pk}">
                                                 <td>Ozzy Osbourne</td>
                                                 <td><input id="id_favorite_artists__comment__{fav_artists[1].pk}" name="favorite_artists/comment/{fav_artists[1].pk}" type="text" value="I love this too!"/></td>
-                                                <td class="reordering-handle-cell" title="Drag and drop to reorder">
+                                                <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                                     <input data-reordering-value="" id="id_favorite_artists__sort_order__{fav_artists[1].pk}" name="favorite_artists/sort_order/{fav_artists[1].pk}" type="hidden" value="1"/>
                                                 </td>
                                             </tr>
                                             <tr data-pk="{fav_artists[2].pk}">
                                                 <td>Damnation</td>
                                                 <td><input id="id_favorite_artists__comment__{fav_artists[2].pk}" name="favorite_artists/comment/{fav_artists[2].pk}" type="text" value="And this as well"/></td>
-                                                <td class="reordering-handle-cell" title="Drag and drop to reorder">
+                                                <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                                     <input data-reordering-value="" id="id_favorite_artists__sort_order__{fav_artists[2].pk}" name="favorite_artists/sort_order/{fav_artists[2].pk}" type="hidden" value="2"/>
                                                 </td>
                                             </tr>
@@ -391,7 +391,7 @@ def test_nested_forms(john_doe_user, fav_artists):
                                                 <th class="first_column subheader">Sort order</th>
                                             </tr>
                                         </thead>
-                                        <tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector='[data-iommi-path="fields__favorite_artists__columns__sort_order__cell"]'>
+                                        <tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                                         </tbody>
                                     </table>
                                 </div>
@@ -587,7 +587,7 @@ def test_edit_table_row_layout(john_doe_user, fav_artists):
                 <form action="" enctype="multipart/form-data" method="post">
                     <div class="iommi-table-plus-paginator">
                         <div class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
-                            <div data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector='[data-iommi-path="columns__sort_order__cell"]'>
+                            <div data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                                 <div data-pk="{fav_artists[0].pk}">
                                     Black Sabbath
                                     <div class="row">
@@ -608,7 +608,7 @@ def test_edit_table_row_layout(john_doe_user, fav_artists):
                                             </div>
                                         </div>
                                     </div>
-                                    <span class="reordering-handle-cell" title="Drag and drop to reorder">
+                                    <span class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                         <input data-reordering-value="" id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"/>
                                     </span>
                                 </div>
@@ -632,7 +632,7 @@ def test_edit_table_row_layout(john_doe_user, fav_artists):
                                             </div>
                                         </div>
                                     </div>
-                                    <span class="reordering-handle-cell" title="Drag and drop to reorder">
+                                    <span class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                         <input data-reordering-value="" id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"/>
                                     </span>
                                 </div>
@@ -656,7 +656,7 @@ def test_edit_table_row_layout(john_doe_user, fav_artists):
                                             </div>
                                         </div>
                                     </div>
-                                    <span class="reordering-handle-cell" title="Drag and drop to reorder">
+                                    <span class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                         <input data-reordering-value="" id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"/>
                                     </span>
                                 </div>
