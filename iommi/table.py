@@ -1244,7 +1244,7 @@ class Cells(Traversable, Tag):
         return len([x for x in values(self.get_table().columns) if x.render_column])
 
     def __getitem__(self, name):
-        column = self.iommi_parent().columns[name]
+        column = self.get_table().columns[name]
         return self.cell_class(cells=self, column=column, parent=self)
 
 
