@@ -50,6 +50,7 @@ from iommi.form import (
     FULL_FORM_FROM_REQUEST,
     Field,
     Form,
+    int_parse,
 )
 from iommi.from_model import member_from_model
 from iommi.member import (
@@ -273,6 +274,7 @@ class EditColumn(Column):
         #  header__template=Template('<th{{ header.attrs }}></th>'),
         sortable=False,
         field__call_target__attribute='hidden',
+        field__parse=int_parse,
         field__include=True,
         cell__attrs__title=gettext_lazy('Drag and drop to reorder'),
         after=LAST,
