@@ -1319,7 +1319,9 @@ class RowConfig(RefinableObject, Tag):
         result = super(RowConfig, self).refine_done(parent=parent)
         if result.layout is not None:
             assert 'div' in getattr(parent, 'iommi_shortcut_stack', []), 'row.layout can be used only for Table.div()'
+            result.layout._name = 'layout'
             result.layout = result.layout.refine_done(parent=parent)
+            result.layout.attrs = Namespace(flatten(result.attrs), flatten(result.layout.attrs))
         return result
 
     def as_dict(self):

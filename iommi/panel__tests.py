@@ -15,7 +15,7 @@ from iommi.form import (
     FieldNameError,
 )
 from iommi.table import Table
-from tests.helpers import req, verify_part_html, verify_table_html, verify_html
+from tests.helpers import req, verify_part_html, verify_table_html
 from docs.models import FavoriteArtist
 
 
@@ -561,7 +561,6 @@ def test_table_row_layout(john_doe_user, fav_artists):
 
 
 @pytest.mark.django_db
-@override_settings(IOMMI_DEBUG=True)
 def test_edit_table_row_layout(john_doe_user, fav_artists):
     class FavoriteArtistsEditTable(EditTable):
         class Meta:
@@ -672,3 +671,25 @@ def test_edit_table_row_layout(john_doe_user, fav_artists):
             </div>
         ''',
     )
+
+
+@pytest.mark.django_db
+@override_settings(IOMMI_DEBUG=True)
+def test_row_layout_attrs(john_doe_user, fav_artists):
+    class FavoriteArtistsEditTable(EditTable):
+        class Meta:
+            auto__model = FavoriteArtist
+            auto__rows = john_doe_user.favorite_artists.all()[:1]
+            auto__include = ['comment']
+            columns__comment__field__include = True
+            row__layout = Panel.div(dict(
+                p_abc=Panel.row(dict(
+                    comment=Panel.cell(),
+                )),
+            ))
+
+    form = FavoriteArtistsEditTable.div().bind(request=req('get'))
+    row_layout_attrs = next(form.cells_for_rows()).layout.attrs
+    assert row_layout_attrs['data-pk'] == john_doe_user.favorite_artists.first().pk
+    assert row_layout_attrs['data-iommi-type'] == 'Panel'
+    assert row_layout_attrs['data-iommi-path'] == 'row__layout'
