@@ -1194,7 +1194,8 @@ class Cells(Traversable, Tag):
             assert self.template is None, 'row.layout cannot be used together with row.template'
             bind_member(self, name='layout')
 
-            layout_unused_columns = set(keys(self.get_table().columns)).difference(set(keys(self.layout.get_cell_panels())))
+            rendered_column_names = [column_name for column_name, column in items(self.get_table().columns) if column.render_column]
+            layout_unused_columns = set(rendered_column_names).difference(set(keys(self.layout.get_cell_panels())))
 
             if layout_unused_columns:
                 raise ImproperlyConfigured(
