@@ -90,6 +90,9 @@ def register_path_decoding(**kwargs):
 
 
 def decode_path_components(request, **kwargs):
+    if hasattr(request, 'iommi_decoded_path_components'):
+        return request.iommi_decoded_path_components
+
     decoded_kwargs = {}
     decoded_keys = set()
 
@@ -121,10 +124,11 @@ def decode_path_components(request, **kwargs):
     request.iommi_view_params.update(kwargs)
     request.iommi_view_params.update(decoded_kwargs)
 
-    return {
+    request.iommi_decoded_path_components = {
         **{k: v for k, v in items(kwargs) if k not in decoded_keys},
         **decoded_kwargs,
     }
+    return request.iommi_decoded_path_components
 
 
 def decode_path(f):
