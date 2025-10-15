@@ -1839,7 +1839,6 @@ class Table(Part, Tag):
     page_class: Type[Page] = Refinable()
     cells_class: Type[Cells] = Refinable()
     row_group_class: Type[RowGroup] = Refinable()
-    row_config_class: Type[RowConfig] = Refinable()
 
     empty_message: str = EvaluatedRefinable()
     invalid_form_message: str = EvaluatedRefinable()
@@ -1856,7 +1855,6 @@ class Table(Part, Tag):
         page_class = Page
         cells_class = Cells
         row_group_class = RowGroup
-        row_config_class = RowConfig
 
         columns = EMPTY
         parts = EMPTY
@@ -1997,7 +1995,7 @@ class Table(Part, Tag):
 
         self.initial_rows = self.rows
         self.header = HeaderConfig(_name='header', **self.header).refine_done(parent=self)
-        self.row = self.row_config_class(**self.row).refine_done(parent=self)
+        self.row = RowConfig(**self.row).refine_done(parent=self)
         self._preprocessed_rows = None
 
         # In bind initial_rows will be used to set these 3 (in that order)

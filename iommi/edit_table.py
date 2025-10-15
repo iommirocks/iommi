@@ -75,7 +75,6 @@ from iommi.table import (
     Cell,
     Cells,
     Column,
-    RowConfig,
     Table,
 )
 
@@ -288,14 +287,6 @@ class EditColumn(Column):
         return cls(**kwargs)
 
 
-class EditRowConfig(RowConfig):
-    @with_defaults(**{
-        'attrs__data-iommi-edit-table-row': True,
-    })
-    def __init__(self, *args, **kwargs):
-        super(EditRowConfig, self).__init__(*args, **kwargs)
-
-
 def edit_table__post_handler(table, request, **_):
     # 1. Validate all the fields
     table.edit_errors = defaultdict(set)
@@ -447,7 +438,6 @@ class EditTable(Table):
         form_class = Form
         member_class = EditColumn
         cells_class = EditCells
-        row_config_class = EditRowConfig
         edit_actions = EMPTY
         edit_actions__save = dict(
             call_target__attribute='primary',
@@ -477,6 +467,9 @@ class EditTable(Table):
         attrs = {
             'data-next-virtual-pk': '-1',
             'data-new-row-endpoint': lambda table, **_: table.endpoints.new_row.endpoint_path,
+        }
+        row__attrs = {
+            'data-iommi-edit-table-row': True,
         }
 
         @staticmethod
