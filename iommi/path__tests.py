@@ -149,11 +149,11 @@ def test_camel_to_snake():
     assert camel_to_snake('HelloFriend') == 'hello_friend'
 
 
-def test_iommi_view_params_fills_already_existing():
+def test_decode_path_components_cache():
     request = req('get')
     decode_path_components(request, foo=1)
-    decode_path_components(request, bar=3)
-    assert request.iommi_view_params == dict(foo=1, bar=3)
+    assert request.iommi_view_params == dict(foo=1)
+    assert request.iommi_decoded_path_components == dict(foo=1)
 
 
 def test_model_pk_user_error():
