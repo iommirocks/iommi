@@ -456,7 +456,6 @@ class EditTable(Table):
         )
         edit_form = EMPTY
         create_form = EMPTY
-        container__children__text__template = 'iommi/table/edit_table_container.html'
 
         reorderable = False
 
