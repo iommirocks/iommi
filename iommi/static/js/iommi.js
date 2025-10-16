@@ -458,7 +458,8 @@ class IommiBase {
             'click',
             '[data-iommi-edit-table-add-row-button]',
             async function (event) {
-                const table = this.closest('form').querySelector(`[data-iommi-path="${this.dataset.iommiEditTablePath}"]`);
+                const container = SELF.getContainer(this);
+                const table = container.querySelector('[data-new-row-endpoint]');
                 const endpoint = table.dataset.newRowEndpoint;
                 let url = `?${endpoint}=`;
                 if(SELF.select2) {
@@ -477,8 +478,7 @@ class IommiBase {
 
                 let tpl = document.createElement('template');
                 tpl.innerHTML = html.trim().replaceAll('#sentinel#', virtualPK);
-                let tbodyPath = this.dataset.iommiEditTablePath === "" ? 'tbody' :  `${this.dataset.iommiEditTablePath}__tbody`;
-                const tbody = table.querySelector(`[data-iommi-path=${tbodyPath}`);
+                const tbody = table.querySelector('[data-iommi-is-tbody]');
                 tpl.content.childNodes.forEach((el) => {
                     const appendedElement = tbody.appendChild(el);
                     appendedElement.dispatchEvent(

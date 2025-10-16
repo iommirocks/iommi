@@ -448,10 +448,10 @@ class EditTable(Table):
         edit_actions__add_row = dict(
             call_target__attribute='button',
             display_name=gettext_lazy('Add row'),
-            attrs__type="button",
+            attrs__type='button',
             **{
-                "attrs__data-iommi-edit-table-add-row-button": True,
-                "attrs__data-iommi-edit-table-path": lambda table, **_: table.iommi_dunder_path,
+                'attrs__data-iommi-edit-table-add-row-button': True,
+                'attrs__data-iommi-id-of-table': lambda table, **_: table.iommi_path,
             }
         )
         edit_form = EMPTY
@@ -469,6 +469,9 @@ class EditTable(Table):
         }
         row__attrs = {
             'data-iommi-edit-table-row': True,
+        }
+        tbody__attrs = {  # this is needed for "Add row" button javascript
+            'data-iommi-is-tbody': True,
         }
 
         @staticmethod

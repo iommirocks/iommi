@@ -298,7 +298,7 @@ def test_nested_forms(john_doe_user, fav_artists):
                                                 <th class="first_column subheader">Sort order</th>
                                             </tr>
                                         </thead>
-                                        <tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
+                                        <tbody data-iommi-is-tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                                             <tr data-iommi-edit-table-row data-pk="{fav_artists[0].pk}">
                                                 <td>Black Sabbath</td>
                                                 <td><input id="id_favorite_artists__comment__{fav_artists[0].pk}" name="favorite_artists/comment/{fav_artists[0].pk}" type="text" value="Love it!"/></td>
@@ -324,7 +324,7 @@ def test_nested_forms(john_doe_user, fav_artists):
                                     </table>
                                 </div>
                                 <div class="links">
-                                    <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="fields__favorite_artists" type="button">Add row</button>
+                                    <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="favorite_artists" type="button">Add row</button>
                                 </div>
                             </div>
                         </div>
@@ -389,12 +389,12 @@ def test_nested_forms(john_doe_user, fav_artists):
                                                 <th class="first_column subheader">Sort order</th>
                                             </tr>
                                         </thead>
-                                        <tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
+                                        <tbody data-iommi-is-tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                                         </tbody>
                                     </table>
                                 </div>
                                 <div class="links">
-                                    <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="fields__favorite_artists" type="button">Add row</button>
+                                    <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="favorite_artists" type="button">Add row</button>
                                 </div>
                             </div>
                         </div>
@@ -586,7 +586,7 @@ def test_edit_table_row_layout(john_doe_user, fav_artists):
                 <form action="" enctype="multipart/form-data" method="post">
                     <div class="iommi-table-plus-paginator">
                         <div class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
-                            <div data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
+                            <div data-iommi-is-tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                                 <div data-iommi-edit-table-row data-pk="{fav_artists[0].pk}">
                                     Black Sabbath
                                     <div class="row">
@@ -664,7 +664,7 @@ def test_edit_table_row_layout(john_doe_user, fav_artists):
                     </div>
                     <div class="links">
                         <button accesskey="s" name="-save">Save</button>
-                        <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="" type="button">Add row</button>
+                        <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="" type="button">Add row</button>
                     </div>
                 </form>
             </div>
