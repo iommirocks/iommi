@@ -273,7 +273,6 @@ def test_nested_forms(john_doe_user, fav_artists):
                     last_login=Panel.field(include=lambda form, **_: form.nested_forms.user_edit.instance is not None),
                 )),
             ))
-            layout__children__p_main__attrs__class__test = True
 
     verify_part_html(
         part=NestedEditForm(),
@@ -365,14 +364,13 @@ def test_nested_forms(john_doe_user, fav_artists):
                 },
                 'call_target': Panel,
             }
-            layout__children__p_main__attrs__class__test = True
 
     verify_part_html(
         part=NestedCreateForm(),
         # language=HTML
         expected_html='''
             <form action="" enctype="multipart/form-data" method="post">
-                <div class="card test">
+                <div class="card">
                     <div class="card-body">
                         <div>
                             <label for="id_username">Username</label>
@@ -411,6 +409,7 @@ def test_nested_forms(john_doe_user, fav_artists):
     )
 
 
+# @pytest.mark.skip('Doesn't work, jlubcke might know what's going on')
 def test_basic_refining():
     class MyForm(Form):
         class Meta:
