@@ -1,6 +1,5 @@
 import django
 from django.core import validators
-from django.db import models
 from django.db.models import (
     CASCADE,
     BooleanField,
@@ -12,6 +11,11 @@ from django.db.models import (
     ManyToManyField,
     Model,
     OneToOneField,
+    UUIDField,
+    UniqueConstraint,
+    TextChoices,
+    PositiveSmallIntegerField,
+    Field,
 )
 
 from iommi import register_search_fields
@@ -47,7 +51,7 @@ class FieldFromModelForeignKeyTest(Model):
 
 class Qux(Model):
     foo = ForeignKey(Foo, related_name='quxes', related_query_name='qux', on_delete=CASCADE)
-    lang = models.CharField(max_length=7)
+    lang = CharField(max_length=7)
     name = CharField(max_length=255, blank=True)
 
 
@@ -97,7 +101,7 @@ class UniqueConstraintAlternativeTest(Model):
 
     class Meta:
         verbose_name = "Unique constraint test"
-        constraints = [models.UniqueConstraint(fields=('f_int', 'f_float', 'f_bool'), name="unique_test")]
+        constraints = [UniqueConstraint(fields=('f_int', 'f_float', 'f_bool'), name="unique_test")]
 
 
 class NamespaceFormsTest(Model):
@@ -233,73 +237,73 @@ class AutomaticUrl2(Model):
         ordering = ('pk',)
 
 
-class T1(models.Model):
-    foo = models.CharField(max_length=255)
-    bar = models.CharField(max_length=255)
+class T1(Model):
+    foo = CharField(max_length=255)
+    bar = CharField(max_length=255)
 
     class Meta:
         ordering = ('id',)
 
 
-class T2(models.Model):
-    foo = models.CharField(max_length=255)
-    bar = models.CharField(max_length=255)
+class T2(Model):
+    foo = CharField(max_length=255)
+    bar = CharField(max_length=255)
 
     class Meta:
         ordering = ('id',)
 
 
-class EvilNames(models.Model):
-    values = models.CharField(max_length=255)
-    keys = models.CharField(max_length=255)
-    items = models.CharField(max_length=255)
+class EvilNames(Model):
+    values = CharField(max_length=255)
+    keys = CharField(max_length=255)
+    items = CharField(max_length=255)
 
     class Meta:
         ordering = ('id',)
 
 
-class DefaultsInForms(models.Model):
-    name = models.CharField(max_length=255, default='<name>')
-    number = models.IntegerField(default=7)
+class DefaultsInForms(Model):
+    name = CharField(max_length=255, default='<name>')
+    number = IntegerField(default=7)
 
 
-class SortKeyOnForeignKeyA(models.Model):
-    name = models.CharField(max_length=255, db_index=True, unique=True)
+class SortKeyOnForeignKeyA(Model):
+    name = CharField(max_length=255, db_index=True, unique=True)
 
 
-class SortKeyOnForeignKeyB(models.Model):
-    remote = models.ForeignKey(SortKeyOnForeignKeyA, on_delete=models.CASCADE)
+class SortKeyOnForeignKeyB(Model):
+    remote = ForeignKey(SortKeyOnForeignKeyA, on_delete=CASCADE)
 
 
-class ChoicesModel(models.Model):
+class ChoicesModel(Model):
     CHOICES = [('purple', 'Purple'), ('orange', 'Orange')]
-    color = models.CharField(choices=CHOICES, max_length=255)
+    color = CharField(choices=CHOICES, max_length=255)
 
 
 if django.VERSION[:2] >= (3, 0):
 
-    class ChoicesClassModel(models.Model):
-        class ColorChoices(models.TextChoices):
+    class ChoicesClassModel(Model):
+        class ColorChoices(TextChoices):
             PURPLE = ('purple_thing-thing', 'Purple')
             ORANGE = ('orange', 'Orange')
 
-        color = models.CharField(choices=ColorChoices.choices, max_length=255)
+        color = CharField(choices=ColorChoices.choices, max_length=255)
 
 
-class IntChoicesModel(models.Model):
+class IntChoicesModel(Model):
     CHOICES = [(301, '301 Moved Permanently'), (302, '302 Found'), (303, '303 See Other')]
-    status = models.PositiveSmallIntegerField(choices=CHOICES)
+    status = PositiveSmallIntegerField(choices=CHOICES)
 
 
-class CamelCaseFieldModel(models.Model):
-    camelCaseField = models.BooleanField()  # noqa: N815
+class CamelCaseFieldModel(Model):
+    camelCaseField = BooleanField()  # noqa: N815
 
 
-class CustomField(models.Field):
+class CustomField(Field):
     pass
 
 
-class NotRegisteredCustomFieldModel(models.Model):
+class NotRegisteredCustomFieldModel(Model):
     custom_field = CustomField()
 
 
@@ -311,6 +315,11 @@ class SomeModel(Model):
     foo = ForeignKey(OtherModel, on_delete=CASCADE)
 
 
-class TestModelValidators(models.Model):
+class TestModelValidators(Model):
     bar = CharField(max_length=5)
     slug = CharField(max_length=255, validators=[validators.validate_slug])
+
+class UuidPKModel(Model):
+    id = UUIDField(primary_key=True)
+    foo = CharField(max_length=255)
+
