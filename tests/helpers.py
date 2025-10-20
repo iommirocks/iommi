@@ -94,13 +94,20 @@ def verify_html(*, actual_html: str, find=None, expected_html: str = None):
 
     if find is not None:
         actual_soup_orig = actual_soup
-        actual_soup = actual_soup.find(**find)
+        if isinstance(find, dict):
+            actual_soup = actual_soup.find(**find)
+        else:
+            actual_soup = actual_soup.find(find)
+
         if not actual_soup:  # pragma: no cover
             prettied_actual = reindent(actual_soup_orig.prettify()).strip()
             print(prettied_actual)
             assert False, f"Couldn't find selector {find} in actual output"
 
-        expected_soup = expected_soup.find(**find)
+        if isinstance(find, dict):
+            expected_soup = expected_soup.find(**find)
+        else:
+            expected_soup = expected_soup.find(find)
 
     prettified_actual = reindent(actual_soup.prettify()).strip()
     prettified_expected = reindent(expected_soup.prettify()).strip()

@@ -1164,6 +1164,7 @@ class Cell(CellConfig):
     def get_request(self):
         return self.cells.get_request()
 
+
 class Cells(Traversable, Tag):
     """
     Internal class used in row rendering.
@@ -2332,10 +2333,10 @@ class Table(Part, Tag):
                     else:
                         rowspan_by_row[id(prev_row)] += 1
 
-                def rowspan(row, **_):
+                def rowspan(row, rowspan_by_row=rowspan_by_row, **_):
                     return rowspan_by_row[id(row)] if id(row) in rowspan_by_row else None
 
-                def auto_rowspan_style(row, **_):
+                def auto_rowspan_style(row, rowspan_by_row=rowspan_by_row, **_):
                     return 'none' if id(row) not in rowspan_by_row else ''
 
                 column.cell.attrs['rowspan'] = rowspan
