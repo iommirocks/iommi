@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+7.18.1 (2025-10-20)
+~~~~~~~~~~~~~~~~~~~
+
+* In enhance query form, remove the actions container if it becomes empty when removing the filter button
+
+* Cleaned up advanced filter html structure
+
+* Render query_error div with "hidden" css class initially if there are no errors
+
+* Don't require integer PKs in in admin urls (for example UUIDs are now also supported)
+
+* Only report template usage once in debug menu, and make the order stable
+
+
 7.18.0 (2025-10-08)
 ~~~~~~~~~~~~~~~~~~~
 
