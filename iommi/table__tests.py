@@ -1544,6 +1544,22 @@ def test_invalid_syntax_query():
 
 
 @pytest.mark.django_db
+def test_valid_syntax_query_hides_error_div():
+    class TestTable(Table):
+        a = Column.number(sortable=False, filter__include=True)
+
+    adv_query_param = TestTable(model=TFoo).bind(request=req('get')).query.get_advanced_query_param()
+
+    verify_table_html(
+        query={adv_query_param: ''},
+        table=TestTable(rows=TFoo.objects.all().order_by('pk')),
+        find__class='iommi_query_error',
+        # language=html
+        expected_html='<div class="iommi_query_error hidden"></div>',
+    )
+
+
+@pytest.mark.django_db
 def test_freetext_searching():
     objects = [
         T2.objects.create(foo='q', bar='q'),

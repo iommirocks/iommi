@@ -12,7 +12,7 @@
 
         {{ query.form.errors }}
 
-        <div class="iommi_query_error">
+        <div class="iommi_query_error {% if not query.query_error %}hidden{% endif %}">
             {% if query.query_error %}
                 {{ query.query_error }}
             {% endif %}
