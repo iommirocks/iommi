@@ -1551,10 +1551,10 @@ def create_or_edit_object_redirect(is_create, redirect_to, redirect, form):
 
 def delete_object__post_handler(form, **_):
     instance = form.instance
-    form.invoke_callback(form.extra.on_delete)
+    form.invoke_callback(form.extra.pre_delete)
     if instance.pk is not None:  # Check if already deleted by the callback
         try:
-            instance.delete()
+            form.invoke_callback(form.extra.delete, model_object=instance)
         except IntegrityError as e:
             objects = getattr(e, 'restricted_objects', None)
             if objects is None:
@@ -1595,6 +1595,8 @@ def delete_object__post_handler(form, **_):
                 )
             )
             return None
+
+    form.invoke_callback(form.extra.on_delete)
 
     return create_or_edit_object_redirect(
         is_create=False,
@@ -2147,6 +2149,8 @@ class Form(Part, Tag):
         extra__on_save_all_but_related_fields=lambda **kwargs: None,  # pragma: no mutate
         extra__pre_save=lambda **kwargs: None,  # pragma: no mutate
         extra__on_save=lambda **kwargs: None,  # pragma: no mutate
+        extra__pre_delete=lambda **kwargs: None,  # pragma: no mutate
+        extra__delete=lambda model_object, **_: model_object.delete(),
         extra__on_delete=lambda **kwargs: None,  # pragma: no mutate
         extra__redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
         extra__redirect_to=None,

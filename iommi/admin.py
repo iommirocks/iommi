@@ -481,8 +481,10 @@ class Admin(Page):
             )
             messages.add_message(request, messages.INFO, message, fail_silently=True)
 
-        def on_delete(request, form, instance, **_):
-            message = f'{form.model._meta.verbose_name.capitalize()} {instance} was deleted'
+        def delete(request, form, model_object, **_):
+            str_model_object = str(model_object)
+            model_object.delete()
+            message = f'{form.model._meta.verbose_name.capitalize()} {str_model_object} was deleted'
             messages.add_message(request, messages.INFO, message, fail_silently=True)
 
         form = setdefaults_path(
@@ -491,7 +493,7 @@ class Admin(Page):
             call_target__cls=cls.get_meta().form_class,
             call_target__attribute=operation,
             extra__on_save=on_save,
-            extra__on_delete=on_delete,
+            extra__delete=delete,
             actions__submit__include=lambda request, form, **_: cls.has_permission(
                 request, instance=None, model=form.model, operation=operation
             ),
