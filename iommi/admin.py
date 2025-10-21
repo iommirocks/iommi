@@ -481,10 +481,10 @@ class Admin(Page):
             )
             messages.add_message(request, messages.INFO, message, fail_silently=True)
 
-        def delete(request, form, model_object, **_):
-            str_model_object = str(model_object)
-            model_object.delete()
-            message = f'{form.model._meta.verbose_name.capitalize()} {str_model_object} was deleted'
+        def delete(request, form, instance, **_):
+            str_instance = str(instance)
+            instance.delete()
+            message = f'{form.model._meta.verbose_name.capitalize()} {str_instance} was deleted'
             messages.add_message(request, messages.INFO, message, fail_silently=True)
 
         form = setdefaults_path(
