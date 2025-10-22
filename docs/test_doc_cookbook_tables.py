@@ -1537,3 +1537,50 @@ def test_how_do_i_set_an_empty_message():
     """
     This setting is probably something you want to set up in your `Style`, and not per table.
     """
+
+
+def test_row_layout_with_panels(small_discography):
+    # language=rst
+    """
+    How do I make complex layouts for table rows?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    You can have more complex layout using the `panel` system:
+    """
+
+    class AlbumTable(Table):
+        class Meta:
+            auto__model = Album
+            auto__include = ['name', 'artist', 'year']
+            row__layout = Panel.div(
+                dict(
+                    p_album=Panel.row(dict(
+                        name=Panel.cell(**{
+                            'col__attrs__class': {
+                                'fw-bold': True,
+                                'text-decoration-underline': True
+                            }
+                        }),
+                        year=Panel.cell(),
+                    )),
+                    p_artist=Panel.row(dict(
+                        p_artist_test=html.em('Artist:'),
+                        artist=Panel.cell(),
+                    )),
+                ),
+                **{
+                    'attrs__style__border-bottom': '1px solid #6ea8fe',
+                }
+            )
+
+    # @test
+    show_output(AlbumTable.div())
+    # @end
+
+    # language=rst
+    """
+    `Panel.cell`'s are mapped to their corresponding `Table` columns automatically, and checked. That means that 
+    if you create a complex layout and forget a cell you will get an error, and vice versa.
+
+    The same way you can also use layouts for `EditTable`.
+    """

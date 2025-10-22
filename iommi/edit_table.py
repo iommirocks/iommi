@@ -43,11 +43,14 @@ from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     path_join,
 )
+from iommi.evaluate import evaluate_strict
 from iommi.form import (
+    default_input_id,
     find_unique_prefixes,
     FULL_FORM_FROM_REQUEST,
     Field,
     Form,
+    int_parse,
 )
 from iommi.from_model import member_from_model
 from iommi.member import (
@@ -74,9 +77,8 @@ from iommi.table import (
     Column,
     Table,
 )
-from iommi.evaluate import evaluate
 
-from ._db_compat import base_defaults_factory
+from iommi._db_compat import base_defaults_factory
 
 _edit_column_factory_by_field_type = {}
 
@@ -113,7 +115,10 @@ class EditCell(Cell):
 
             bind_field_from_instance(field, self.row)
 
-            input_html = field.input.__html__()
+            if self.table.extra_evaluated.render_inputs_only or 'hidden' in getattr(field, 'iommi_shortcut_stack', []):
+                input_html = field.input.__html__()
+            else:
+                input_html = field.__html__()
 
             field.attr = orig_attr
 
@@ -143,6 +148,7 @@ def bind_field_from_instance(field, instance):
     field.non_editable_input = field.iommi_namespace.non_editable_input(_name='non_editable_input')
     field.editable = field.iommi_namespace.editable
     field.initial = field.iommi_namespace.initial
+    field.label.attrs['for'] = evaluate_strict(default_input_id, **field.label.iommi_evaluate_parameters())
     field._evaluate_parameters['instance'] = instance
 
     field.bind_from_instance()
@@ -209,7 +215,7 @@ class EditColumn(Column):
         super(EditColumn, self).on_bind()
         if 'reorder_handle' in getattr(self, 'iommi_shortcut_stack', []):
             edit_table = self.iommi_parent().iommi_parent()
-            edit_table.tbody.attrs['data-iommi-reorderable-handle-selector'] = f'[data-iommi-path="{self.iommi_dunder_path}__cell"]'
+            edit_table.tbody.attrs['data-iommi-reorderable-handle-selector'] = '[data-iommi-reordering-handle]'
             edit_table.tbody.attrs['data-iommi-reorderable-field-selector'] = '[data-reordering-value]'
 
     @classmethod
@@ -266,16 +272,14 @@ class EditColumn(Column):
         # TODO this would be better, but it doesn't work and idk why
         #  header__template=Template('<th{{ header.attrs }}></th>'),
         sortable=False,
-        # TODO
-        #  field__call_target__attribute='hidden',
-        #  call_target raises TypeError(Field object has no refinable attribute(s): "call_target".)
-        #  so "temporary" fix to set attrs__type=hidden (works for inputs only):
-        field__input__attrs__type='hidden',
+        field__call_target__attribute='hidden',
+        field__parse=int_parse,
         field__include=True,
         cell__attrs__title=gettext_lazy('Drag and drop to reorder'),
         after=LAST,
         **{
             'cell__attrs__class__reordering-handle-cell': True,
+            'cell__attrs__data-iommi-reordering-handle': True,
             'field__input__attrs__data-reordering-value': True,
         }
     )
@@ -444,23 +448,30 @@ class EditTable(Table):
         edit_actions__add_row = dict(
             call_target__attribute='button',
             display_name=gettext_lazy('Add row'),
-            attrs__type="button",
+            attrs__type='button',
             **{
-                "attrs__data-iommi-edit-table-add-row-button": True,
-                "attrs__data-iommi-edit-table-path": lambda table, **_: table.iommi_dunder_path,
+                'attrs__data-iommi-edit-table-add-row-button': True,
+                'attrs__data-iommi-id-of-table': lambda table, **_: table.iommi_path,
             }
         )
         edit_form = EMPTY
         create_form = EMPTY
-        container__children__text__template = 'iommi/table/edit_table_container.html'
 
         reorderable = False
+
+        extra_evaluated__render_inputs_only = lambda table, **_: table.row.layout is None
 
         bulk__include = True
 
         attrs = {
             'data-next-virtual-pk': '-1',
             'data-new-row-endpoint': lambda table, **_: table.endpoints.new_row.endpoint_path,
+        }
+        row__attrs = {
+            'data-iommi-edit-table-row': True,
+        }
+        tbody__attrs = {  # this is needed for "Add row" button javascript
+            'data-iommi-is-tbody': True,
         }
 
         @staticmethod

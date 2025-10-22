@@ -74,12 +74,12 @@ def test_edit_table_rendering():
                                 <th class="first_column subheader"> Readonly thing </th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr data-pk="1">
+                        <tbody data-iommi-is-tbody>
+                            <tr data-iommi-edit-table-row data-pk="1">
                                 <td> <input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/> </td>
                                 <td> bar </td>
                             </tr>
-                            <tr data-pk="2">
+                            <tr data-iommi-edit-table-row data-pk="2">
                                 <td> <input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/> </td>
                                 <td> buzz </td>
                             </tr>
@@ -88,7 +88,7 @@ def test_edit_table_rendering():
                 </div>
                 <div class="links">
                     <button accesskey="s" name="-save"> Save </button>
-                    <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="" type="button"> Add row </button>
+                    <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="" type="button"> Add row </button>
                 </div>
             </form>
         """,
@@ -294,7 +294,7 @@ def test_edit_table_post_create():
         )['html'],
         # language=html
         expected_html='''
-            <tr data-pk="#sentinel#">
+            <tr data-iommi-edit-table-row data-pk="#sentinel#">
                 <td>
                     <select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices"></select>
                 </td>
@@ -479,12 +479,12 @@ def test_non_editable():
         find=dict(name='tbody'),
         # language=html
         expected_html='''
-            <tbody>
-                <tr data-pk="123">
+            <tbody data-iommi-is-tbody>
+                <tr data-iommi-edit-table-row data-pk="123">
                     <td class="rj"> 1 </td>
                     <td> <input id="id_columns__b__123" name="columns/b/123" type="text" value="asd"/> </td>
                 </tr>
-                <tr data-pk="456">
+                <tr data-iommi-edit-table-row data-pk="456">
                     <td class="rj"> 2 </td>
                     <td> <input disabled="" id="id_columns__b__456" name="columns/b/456" type="text" value="fgh"/> </td>
                 </tr>
@@ -532,11 +532,11 @@ def test_non_rendered():
         find=dict(name='tbody'),
         # language=html
         expected_html='''
-            <tbody>
-                <tr data-pk="321">
+            <tbody data-iommi-is-tbody>
+                <tr data-iommi-edit-table-row data-pk="321">
                     <td> <input id="id_columns__b__321" name="columns/b/321" type="text" value="asd"/> </td>
                 </tr>
-                <tr data-pk="654">
+                <tr data-iommi-edit-table-row data-pk="654">
                     <td> <input id="id_columns__b__654" name="columns/b/654" type="text" value="fgh"/> </td>
                 </tr>
             </tbody>
@@ -748,16 +748,16 @@ def test_lazy_tbody_on_fail():
                                         <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=year">Year</a></th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr data-pk="{album_2016.pk}">
+                                <tbody data-iommi-is-tbody>
+                                    <tr data-iommi-edit-table-row data-pk="{album_2016.pk}">
                                         <td><input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value="Where Shadows Forever Reign"></td>
                                         <td class="rj"><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"></td>
                                     </tr>
-                                    <tr data-pk="-1">
+                                    <tr data-iommi-edit-table-row data-pk="-1">
                                         <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"></td>
                                         <td class="rj"><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"></td>
                                     </tr>
-                                    <tr data-pk="-2">
+                                    <tr data-iommi-edit-table-row data-pk="-2">
                                         <td><input id="id_albums__name__-2" name="albums/name/-2" type="text" value="Angelus Exuro pro Eternus"></td>
                                         <td class="rj"><input id="id_albums__year__-2" name="albums/year/-2" type="text" value="2009"></td>
                                     </tr>
@@ -765,7 +765,7 @@ def test_lazy_tbody_on_fail():
                             </table>
                         </div>
                         <div class="links">
-                            <button data-iommi-edit-table-add-row-button data-iommi-edit-table-path="fields__albums" type="button">Add row</button>
+                            <button data-iommi-edit-table-add-row-button data-iommi-id-of-table="albums" type="button">Add row</button>
                         </div>
                     </div>
                 </div>
@@ -797,8 +797,8 @@ def test_lazy_tbody_on_fail():
                                         <th class="first_column iommi_sort_header subheader"><a href="?albums%2Forder=year">Year</a></th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr data-pk="{album_2016.pk}">
+                                <tbody data-iommi-is-tbody>
+                                    <tr data-iommi-edit-table-row data-pk="{album_2016.pk}">
                                         <td>
                                             <input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value=""/>
                                             <br/>
@@ -810,11 +810,11 @@ def test_lazy_tbody_on_fail():
                                         </td>
                                         <td class="rj"><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"/></td>
                                     </tr>
-                                    <tr data-pk="-1">
+                                    <tr data-iommi-edit-table-row data-pk="-1">
                                         <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"/></td>
                                         <td class="rj"><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"/></td>
                                     </tr>
-                                    <tr data-pk="-2">
+                                    <tr data-iommi-edit-table-row data-pk="-2">
                                         <td>
                                             <input id="id_albums__name__-2" name="albums/name/-2" type="text" value=""/>
                                             <br/>
@@ -830,7 +830,7 @@ def test_lazy_tbody_on_fail():
                             </table>
                         </div>
                         <div class="links">
-                            <button data-iommi-edit-table-add-row-button="" data-iommi-edit-table-path="fields__albums" type="button">Add row</button>
+                            <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="albums" type="button">Add row</button>
                         </div>
                     </div>
                 </div>
@@ -863,21 +863,21 @@ def test_orderable_edit_table(fav_artists):
                         <th class="first_column subheader">Sort order</th>
                     </tr>
                 </thead>
-                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__sort_order__cell&quot;]">
-                    <tr data-pk="{fav_artists[0].pk}">
+                <tbody data-iommi-is-tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists[0].pk}">
                         <td>Black Sabbath</td>
                         <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
                     </tr>
-                    <tr data-pk="{fav_artists[1].pk}">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists[1].pk}">
                         <td>Ozzy Osbourne</td>
                         <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
                     </tr>
-                    <tr data-pk="{fav_artists[2].pk}">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists[2].pk}">
                         <td>Damnation</td>
                         <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
             </table>
@@ -912,21 +912,21 @@ def test_orderable_edit_table_sortablejs_options(fav_artists):
                         <th class="first_column subheader">Sort order</th>
                     </tr>
                 </thead>
-                <tbody data-iommi-reorderable="{html.escape(json.dumps(sortablejs_options, separators=(',', ':')))}" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__sort_order__cell&quot;]">
-                    <tr data-pk="{fav_artists[0].pk}">
+                <tbody data-iommi-is-tbody data-iommi-reorderable="{html.escape(json.dumps(sortablejs_options, separators=(',', ':')))}" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists[0].pk}">
                         <td>Black Sabbath</td>
                         <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
                     </tr>
-                    <tr data-pk="{fav_artists[1].pk}">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists[1].pk}">
                         <td>Ozzy Osbourne</td>
                         <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
                     </tr>
-                    <tr data-pk="{fav_artists[2].pk}">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists[2].pk}">
                         <td>Damnation</td>
                         <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
             </table>
@@ -958,14 +958,14 @@ def test_orderable_edit_table_reorder_handle():
                         <th class="first_column subheader">A</th>
                     </tr>
                 </thead>
-                <tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-path=&quot;columns__a__cell&quot;]">
-                    <tr data-pk="{obj1.pk}">
+                <tbody data-iommi-is-tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
+                    <tr data-iommi-edit-table-row data-pk="{obj1.pk}">
                         <td>test_reorder_handle</td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj1.pk}" name="columns/a/{obj1.pk}" type="hidden" value="1"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj1.pk}" name="columns/a/{obj1.pk}" type="hidden" value="1"></td>
                     </tr>
-                    <tr data-pk="{obj2.pk}">
+                    <tr data-iommi-edit-table-row data-pk="{obj2.pk}">
                         <td>test_reorder_handle</td>
-                        <td class="reordering-handle-cell" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj2.pk}" name="columns/a/{obj2.pk}" type="hidden" value="2"></td>
+                        <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__a__{obj2.pk}" name="columns/a/{obj2.pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
             </table>
@@ -1001,16 +1001,16 @@ def test_orderable_sortable_edit_table(fav_artists):
                         </th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr data-pk="{fav_artists_data[0].pk}">
+                <tbody data-iommi-is-tbody>
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists_data[0].pk}">
                         <td>{fav_artists_data[0].artist.name}</td>
                         <td><input id="id_columns__comment__{fav_artists_data[0].pk}" name="columns/comment/{fav_artists_data[0].pk}" type="text" value="{fav_artists_data[0].comment}"></td>
                     </tr>
-                    <tr data-pk="{fav_artists_data[1].pk}">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists_data[1].pk}">
                         <td>{fav_artists_data[1].artist.name}</td>
                         <td><input id="id_columns__comment__{fav_artists_data[1].pk}" name="columns/comment/{fav_artists_data[1].pk}" type="text" value="{fav_artists_data[1].comment}"></td>
                     </tr>
-                    <tr data-pk="{fav_artists_data[2].pk}">
+                    <tr data-iommi-edit-table-row data-pk="{fav_artists_data[2].pk}">
                         <td>{fav_artists_data[2].artist.name}</td>
                         <td><input id="id_columns__comment__{fav_artists_data[2].pk}" name="columns/comment/{fav_artists_data[2].pk}" type="text" value="{fav_artists_data[2].comment}"></td>
                     </tr>

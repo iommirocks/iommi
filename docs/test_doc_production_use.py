@@ -88,6 +88,15 @@ def test_production_use():
     class MenuItem(iommi.MenuItem):
         pass
 
+
+    class PanelCol(iommi.PanelCol):
+        pass
+
+
+    class Panel(iommi.Panel):
+        class Meta:
+            col_class = PanelCol
+
     # language=rst
     """
     Admin

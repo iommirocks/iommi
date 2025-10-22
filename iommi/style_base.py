@@ -201,12 +201,15 @@ base = Style(
     EditColumn=dict(
         shortcuts=dict(
             reorder_handle=dict(
-                assets__sortable_js = Asset.js(
+                assets__sortable_js=Asset.js(
                     attrs__src='https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
                 )
             ),
         ),
-    )
+    ),
+    EditTable=dict(
+        container__children__text__template='iommi/table/edit_table_container.html'
+    ),
 )
 
 base_enhanced_forms = Style(
