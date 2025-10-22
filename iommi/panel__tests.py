@@ -409,7 +409,7 @@ def test_nested_forms(john_doe_user, fav_artists):
     )
 
 
-# @pytest.mark.skip('Doesn't work, jlubcke might know what's going on')
+@pytest.mark.skip("Doesn't work, jlubcke might know what's going on")
 def test_basic_refining():
     class MyForm(Form):
         class Meta:
