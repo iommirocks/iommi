@@ -319,7 +319,7 @@ class TestModelValidators(Model):
     bar = CharField(max_length=5)
     slug = CharField(max_length=255, validators=[validators.validate_slug])
 
+
 class UuidPKModel(Model):
     id = UUIDField(primary_key=True)
     foo = CharField(max_length=255)
-

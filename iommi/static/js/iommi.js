@@ -363,7 +363,12 @@ class IommiBase {
             s.addEventListener('change', onChange);
         });
 
-        form.querySelector('[data-iommi-filter-button]').remove();
+        const filterButton = form.querySelector('[data-iommi-filter-button]');
+        const actionsContainer = filterButton.parentNode;
+        filterButton.remove();
+        if (actionsContainer.children.length === 0) {
+            actionsContainer.remove();
+        }
 
         form.iommi = {
             getAjaxValidationUrl: function (params, endpoint) {

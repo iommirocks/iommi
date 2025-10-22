@@ -5,6 +5,7 @@ from datetime import (
     datetime,
     time,
 )
+from textwrap import dedent
 from urllib.parse import urlencode
 
 import pytest
@@ -90,15 +91,15 @@ from tests.models import (
     AutomaticUrl2,
     BooleanFromModelTestModel,
     ChoicesModel,
-    IntChoicesModel,
     CSVExportTestModel,
     DefaultsInForms,
     FieldFromModelOneToOneTest,
     Foo,
-    Qux,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
+    Qux,
     SortKeyOnForeignKeyB,
+    T1,
     T2,
     TBar,
     TBar2,
@@ -1540,6 +1541,22 @@ def test_invalid_syntax_query():
         find__class='iommi_query_error',
         # language=html
         expected_html='<div class="iommi_query_error"> Invalid syntax for query </div>',
+    )
+
+
+@pytest.mark.django_db
+def test_valid_syntax_query_hides_error_div():
+    class TestTable(Table):
+        a = Column.number(sortable=False, filter__include=True)
+
+    adv_query_param = TestTable(model=TFoo).bind(request=req('get')).query.get_advanced_query_param()
+
+    verify_table_html(
+        query={adv_query_param: ''},
+        table=TestTable(rows=TFoo.objects.all().order_by('pk')),
+        find__class='iommi_query_error',
+        # language=html
+        expected_html='<div class="iommi_query_error hidden"></div>',
     )
 
 
@@ -4663,3 +4680,35 @@ def test_table_headers_pick_up_sorting_from_model():
     ).bind(request=req('get'))
 
     assert t.current_sort_order == 'name'
+
+
+@pytest.mark.django_db
+def test_auto_rowspan_two_columns():
+    assert not T1.objects.exists()
+    T1.objects.create(pk=1, foo='a', bar='b')
+    T1.objects.create(pk=2, foo='a', bar='b')
+    T1.objects.create(pk=3, foo='a', bar='b')
+    T1.objects.create(pk=4, foo='b', bar='a')
+    T1.objects.create(pk=5, foo='b', bar='a')
+    T1.objects.create(pk=6, foo='b', bar='b')
+
+    verify_table_html(
+        table=Table(
+            auto__model=T1,
+            columns=dict(
+                foo__auto_rowspan=True,
+                bar__auto_rowspan=True,
+            )
+        ),
+        find='tbody',
+        expected_html='''
+        <tbody>
+            <tr data-pk="1"> <td rowspan="3">             a     </td> <td rowspan="3">              b    </td> </tr>
+            <tr data-pk="2"> <td style="display: none">   a     </td> <td style="display: none">    b    </td> </tr>
+            <tr data-pk="3"> <td style="display: none">   a     </td> <td style="display: none">    b    </td> </tr>
+            <tr data-pk="4"> <td rowspan="3">             b     </td> <td rowspan="2">              a    </td> </tr>
+            <tr data-pk="5"> <td style="display: none">   b     </td> <td style="display: none">    a    </td> </tr>
+            <tr data-pk="6"> <td style="display: none">   b     </td> <td rowspan="1">              b    </td> </tr>
+        </tbody>
+        '''
+    )
