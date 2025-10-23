@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.19.0 (2025-10-23)
+~~~~~~~~~~~~~~~~~~~
+
+* New system to do complex layouts for forms and table rows: `Panel` + `Form.layout` + `Table.row__layout`
+
+* Fixed a crash inside error handling when passing invalid callables to `attrs`
+
+* Table `auto_rowspan` feature was broken if you tried to apply it to more than one column
+
+
 7.18.1 (2025-10-20)
 ~~~~~~~~~~~~~~~~~~~
 
