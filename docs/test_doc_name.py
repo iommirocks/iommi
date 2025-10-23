@@ -20,10 +20,8 @@ from iommi import (
     Column,
     Table,
 )
-from tests.helpers import (
-    req,
-    show_output,
-)
+from iommi.docs import show_output
+from tests.helpers import req
 import pytest
 pytestmark = pytest.mark.django_db
 
@@ -85,7 +83,6 @@ def test_display_name():
     # @test
     show_output(table)
     # @end
-
 
 
 def test_iommi_path():

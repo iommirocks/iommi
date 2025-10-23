@@ -61,11 +61,13 @@ from iommi import (
     Table,
 )
 from iommi.admin import Admin
+from iommi.docs import (
+    show_output,
+    show_output_collapsed,
+)
 from iommi.path import register_path_decoding
 from tests.helpers import (
     req,
-    show_output,
-    show_output_collapsed,
     staff_req,
 )
 

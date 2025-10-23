@@ -5,10 +5,8 @@ from iommi._web_compat import (
     HttpResponse,
     Template,
 )
-from tests.helpers import (
-    req,
-    show_output,
-)
+from iommi.docs import show_output
+from tests.helpers import req
 
 
 def test_porting():

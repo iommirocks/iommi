@@ -2,6 +2,10 @@ from django.template import Template
 from django.utils.translation import gettext_lazy
 
 from docs.models import Album
+from iommi.docs import (
+    show_output,
+    show_output_collapsed,
+)
 from iommi.experimental.main_menu import (
     EXTERNAL,
     M,
@@ -10,11 +14,7 @@ from iommi.experimental.main_menu import (
 )
 from iommi.path import register_path_decoding
 from iommi.struct import Struct
-from tests.helpers import (
-    req,
-    show_output,
-    show_output_collapsed,
-)
+from tests.helpers import req
 
 request = req('get')
 

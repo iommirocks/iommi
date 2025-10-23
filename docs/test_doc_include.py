@@ -13,7 +13,7 @@ from docs.models import (
     Artist,
 )
 from iommi import Table
-from tests.helpers import show_output
+from iommi.docs import show_output
 import pytest
 pytestmark = pytest.mark.django_db
 

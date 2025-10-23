@@ -5,9 +5,9 @@ from django.urls import (
 
 from iommi.admin import Admin as _Admin
 from docs.models import Album
+from iommi.docs import show_output
 from tests.helpers import (
     req,
-    show_output,
     staff_req,
 )
 

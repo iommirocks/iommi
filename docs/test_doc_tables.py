@@ -2,10 +2,8 @@ import pytest
 from django.db import models
 from docs.models import *
 from iommi import *
-from tests.helpers import (
-    req,
-    show_output,
-)
+from iommi.docs import show_output
+from tests.helpers import req
 
 pytestmark = pytest.mark.django_db
 

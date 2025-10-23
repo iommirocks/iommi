@@ -1,10 +1,8 @@
 from iommi import *
+from iommi.docs import show_output
 from iommi.style import unregister_style
 from iommi.style_bootstrap import bootstrap
-from tests.helpers import (
-    req,
-    show_output,
-)
+from tests.helpers import req
 
 request = req('get')
 

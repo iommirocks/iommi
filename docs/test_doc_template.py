@@ -13,7 +13,7 @@ from django.template import Template
 
 from docs.models import Artist
 from iommi import Form
-from tests.helpers import show_output
+from iommi.docs import show_output
 
 
 def test_template_as_path():

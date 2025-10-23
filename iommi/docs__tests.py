@@ -283,7 +283,8 @@ from django.urls import (
 )
 import pytest
 from django.db import models
-from tests.helpers import req, user_req, staff_req, show_output
+from tests.helpers import req, user_req, staff_req
+from iommi.docs import *
 from docs.models import *
 
 pytestmark = pytest.mark.django_db
@@ -297,7 +298,7 @@ request = req('get')
 
 # language=rst
 """
-    
+
 Foo
 ===
 

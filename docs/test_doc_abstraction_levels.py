@@ -10,11 +10,11 @@ from iommi import (
     Column,
     Table,
 )
-from tests.helpers import (
-    req,
+from iommi.docs import (
     show_output,
     show_output_collapsed,
 )
+from tests.helpers import req
 
 pytestmark = pytest.mark.django_db
 

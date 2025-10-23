@@ -1,14 +1,12 @@
 from docs.models import Artist
 from iommi import Table
+from iommi.docs import show_output
 from iommi.experimental.main_menu import (
     M,
     MainMenu,
     main_menu_middleware,
 )
-from tests.helpers import (
-    req,
-    show_output,
-)
+from tests.helpers import req
 
 
 def fake_view():

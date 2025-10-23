@@ -10,7 +10,7 @@ from iommi.views import (
     auth_views,
     crud_views,
 )
-from tests.helpers import show_output
+from iommi.docs import show_output
 
 # language=rst
 """

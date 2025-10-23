@@ -3,11 +3,9 @@ from django.contrib.auth import get_user_model
 import pytest
 from docs.models import *
 from iommi import *
+from iommi.docs import show_output
 from iommi.form import save_nested_forms
-from tests.helpers import (
-    req,
-    show_output,
-)
+from tests.helpers import req
 
 pytestmark = pytest.mark.django_db
 

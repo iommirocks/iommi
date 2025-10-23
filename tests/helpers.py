@@ -1,28 +1,16 @@
-import inspect
-import os.path
 import re
-from os import (
-    makedirs,
-)
-from pathlib import Path
-from uuid import uuid4
 
 from bs4 import BeautifulSoup
-from django.template import Template
 from django.test import RequestFactory
-from django.urls import URLPattern
 
 from iommi import (
-    Page,
-    Table,
     middleware,
-    render_if_needed,
+    Table,
 )
 from iommi.base import keys
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
-from iommi.experimental.main_menu import MainMenu
 from iommi.member import (
     bind_members,
     refine_done_members,
@@ -32,7 +20,6 @@ from iommi.refinable import (
     RefinableMembers,
 )
 from iommi.struct import Struct
-from iommi.thread_locals import set_current_request
 from iommi.traversable import (
     Traversable,
 )
@@ -258,79 +245,3 @@ def prettify(content):
     from bs4 import BeautifulSoup
 
     return reindent(BeautifulSoup(content, 'html.parser').prettify().strip())
-
-
-def _show_relative_path_from_name(name):
-    return Path('doc_includes') / (name.replace('/', os.path.sep) + '.html')
-
-
-def _show_path_from_name(name):
-    return Path(__file__).parent.parent / 'docs' / 'custom' / _show_relative_path_from_name(name)
-
-
-_show_output_used = set()
-
-
-def show_output(part, url='/', user=None, request=None):
-    frame = inspect.currentframe().f_back
-    base_name = os.path.join(
-        Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''),
-        frame.f_code.co_name,
-    )
-    name = base_name
-    counter = 0
-    while name in _show_output_used:
-        counter += 1
-        name = f'{base_name}{counter}'
-    _show_output_used.add(name)
-
-    file_path = _show_path_from_name(name)
-    makedirs(file_path.parent, exist_ok=True)
-
-    if request is None:
-        request = req('get', url=url)
-
-    if user:
-        request.user = user
-
-    set_current_request(request)
-
-    if isinstance(part, URLPattern):
-        if url.startswith('/'):
-            url = url[1:]
-        match = part.resolve(url)
-        part = part.callback(request, **(match.kwargs if match else {}))
-
-    with open(file_path, 'wb') as f:
-        if isinstance(part, MainMenu):
-            request.iommi_main_menu = part.bind(request=request)
-            part = Page(
-                parts__user=Template(
-                    '''
-                    User is staff: {{ user.is_staff }}<br>
-                    URL: {{ request.get_full_path }}<br>
-                    '''
-                )
-            ).bind(request=request)
-
-        if isinstance(part, bytes):
-            content = part
-        else:
-            content = render_if_needed(request, part).content
-        f.write(content)
-        return content
-
-
-# This synonym exists to have a different name for write_rst_from_pytest()
-show_output_collapsed = show_output
-
-
-def create_iframe(name, collapsed):
-    uuid = uuid4()
-    file_path = _show_relative_path_from_name(name)
-    text = '► Show result' if collapsed else '▼ Hide result'
-    display = 'none' if collapsed else ''
-    return f'''
-        <div class="iframe_collapse" onclick="toggle('{uuid}', this)">{text}</div>
-        <iframe id="{uuid}" src="{file_path}" style="background: white; display: {display}; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
-    '''

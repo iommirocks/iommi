@@ -1,11 +1,11 @@
 from docs.models import *
 from iommi import *
 from iommi._web_compat import Template
-from tests.helpers import (
-    req,
+from iommi.docs import (
     show_output,
     show_output_collapsed,
 )
+from tests.helpers import req
 
 request = req('get')
 

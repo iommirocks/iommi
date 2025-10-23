@@ -1,9 +1,7 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import (
-    req,
-    show_output,
-)
+from iommi.docs import show_output
+from tests.helpers import req
 
 request = req('get')
 
@@ -165,3 +163,7 @@ def test_stand_alone_example(small_discography):
     albums_queryset = query.parse_query_string(
         'artist="Black Sabbath" and (year=1991 or year=1992)'
     )
+
+    # @test
+    assert str(albums_queryset) == "(AND: ('artist__pk', 141), (OR: ('year__exact', 1991), ('year__exact', 1992)))"
+    # @end

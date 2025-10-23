@@ -7,10 +7,9 @@ from iommi import (
     Page,
 )
 from iommi.code_finder import setup_code_finder
-from tests.helpers import (
-    req,
-    show_output,
-)
+from iommi.docs import show_output
+from tests.helpers import req
+
 
 request = req('get')
 

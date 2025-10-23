@@ -8,12 +8,13 @@ from iommi._web_compat import (
     HttpResponseRedirect,
     mark_safe,
 )
-from iommi.struct import Struct
-from tests.helpers import (
-    req,
+from iommi.docs import (
     show_output,
     show_output_collapsed,
 )
+from iommi.struct import Struct
+from tests.helpers import req
+
 
 request = req('get')
 

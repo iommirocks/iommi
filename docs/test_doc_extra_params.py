@@ -9,10 +9,8 @@
 from django.template import Template
 
 from iommi import Page
-from tests.helpers import (
-    req,
-    show_output,
-)
+from iommi.docs import show_output
+from tests.helpers import req
 
 
 def test_extra_params():

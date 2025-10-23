@@ -1,10 +1,10 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import (
-    req,
+from iommi.docs import (
     show_output,
     show_output_collapsed,
 )
+from tests.helpers import req
 
 request = req('get')
 
@@ -141,6 +141,7 @@ def test_extra_params():
     # @test
     show_output_collapsed(my_page)
     # @end
+
 
 # language=rst
 """

@@ -2,7 +2,7 @@ from docs.models import (
     Album,
 )
 from iommi import Form
-from tests.helpers import show_output
+from iommi.docs import show_output
 
 
 def test_auto():
