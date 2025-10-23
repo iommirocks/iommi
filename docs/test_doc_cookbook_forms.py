@@ -1378,7 +1378,7 @@ def test_layout_with_panels():
     # language=rst
     """
     How do I make complex layouts for forms?
-    ========================================
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     You can have more complex layout using the `panel` system:
     """
