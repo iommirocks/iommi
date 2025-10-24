@@ -39,3 +39,25 @@ function toggle(id, source) {
         source.innerText = '► Show result';
     }
 }
+
+function scrollToLocationHash() {
+    const link = document.querySelector(`a[href="${window.location.hash}"]`);
+    const section = document.querySelector(window.location.hash);
+    if(section) {
+        if(link) {
+            // right panel with links to anchors has its own scrollbar,
+            // so when the link is at the end, scroll it to view too
+            link.scrollIntoView();
+        }
+        section.scrollIntoView();
+    }
+}
+
+docReady(function() {
+    scrollToLocationHash();
+    document.querySelectorAll("iframe").forEach(iframe => {
+        iframe.addEventListener('load', () => {
+            scrollToLocationHash();
+        });
+    });
+});
