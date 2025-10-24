@@ -16,6 +16,10 @@
     src: url(/_static/clayton-thin-webfont.woff) format("woff");
 }
 
+html {
+    scroll-behavior: auto !important;
+}
+
 h1 {
     font-size: 4.5rem;
     font-family: "Clayton", sans-serif;
