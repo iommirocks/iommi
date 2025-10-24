@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+        <title>iommi - Django Power Tools</title>
+        <meta name="description" content="iommi is a productivity toolkit for Django: ship forms, tables, pages, and an admin with tiny amounts of code and zero boilerplate."/>
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+        <style>
+            :root {
+                color-scheme: light dark;
+                --bg: light-dark(#ffffff, #0f172a);
+                --bg-soft: light-dark(#f6f7fb, #1e293b);
+                --ink: light-dark(#0f172a, #f1f5f9);
+                --muted: light-dark(#475569, #94a3b8);
+                --brand: light-dark(#0f172a, #f1f5f9);
+                --accent: light-dark(#e2e8f0, #334155);
+                --ring: light-dark(0 0 0 4px rgba(15, 23, 42, .12), 0 0 0 4px rgba(241, 245, 249, .12));
+                --radius: 18px;
+                --border: light-dark(#e5e7eb, #334155);
+                --card-bg: light-dark(#ffffff, #1e293b);
+                --code-bg: light-dark(#0b1020, #020617);
+                --code-text: #e5edff;
+                --header-bg: light-dark(rgba(255, 255, 255, .7), rgba(15, 23, 42, .7));
+                --tag-bg: light-dark(#eef2ff, #312e81);
+                --tag-border: light-dark(#c7d2fe, #4338ca);
+                --tag-text: light-dark(#3730a3, #e0e7ff);
+                --django-green: #10b981;
+                --list-text: light-dark(#334155, #cbd5e1);
+                --btn-solid-bg: light-dark(#0f172a, #f1f5f9);
+                --btn-solid-text: light-dark(#ffffff, #0f172a);
+                --card-shadow: light-dark(0 10px 30px rgba(2, 6, 23, .06), 0 10px 30px rgba(0, 0, 0, .3));
+                --icon-color: light-dark(white, black);
+            }
+
+            * {
+                box-sizing: border-box
+            }
+
+            html, body {
+                margin: 0;
+                padding: 0;
+                font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+                color: var(--ink);
+                background: var(--bg);
+                transition: background-color 0.3s ease, color 0.3s ease;
+                overflow-x: hidden;
+                max-width: 100%
+            }
+            .base-margin {
+                margin: 0 14px;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: none
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 20px;
+                overflow-x: hidden
+            }
+
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: .5rem;
+                border: 1px solid var(--ink);
+                padding: .9rem 1.1rem;
+                border-radius: 999px;
+                font-weight: 600;
+                transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            }
+
+            .btn:hover {
+                box-shadow: var(--ring);
+                transform: translateY(-1px)
+            }
+
+            .btn.outline {
+                background: transparent;
+                border-color: var(--ink);
+                color: var(--ink)
+            }
+
+            .btn.solid {
+                background: var(--btn-solid-bg);
+                color: var(--btn-solid-text);
+                border-color: var(--btn-solid-bg)
+            }
+
+            /* Header */
+            header {
+                position: sticky;
+                top: 0;
+                backdrop-filter: saturate(1.2) blur(6px);
+                background: var(--header-bg);
+                border-bottom: 1px solid var(--border);
+                z-index: 10;
+                transition: background-color 0.3s ease, border-color 0.3s ease
+            }
+
+            .nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 0
+            }
+
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: .75rem
+            }
+
+            .logo {
+                display: grid;
+                place-items: center;
+                font-weight: 800
+            }
+
+            .tag {
+                display: inline-block;
+                background: var(--tag-bg);
+                border: 1px solid var(--tag-border);
+                color: var(--tag-text);
+                padding: .35rem .6rem;
+                border-radius: 999px;
+                font-size: .78rem;
+                font-weight: 600
+            }
+
+            /* Hero */
+            .hero {
+                display: grid;
+                grid-template-columns:1.2fr 1fr;
+                gap: 40px;
+                align-items: center;
+                padding: 56px 0 24px
+            }
+
+            .hero h1 {
+                font-size: clamp(2.1rem, 4vw + .5rem, 3.8rem);
+                line-height: 1.05;
+                margin: .25rem 0 .75rem;
+                font-weight: 800;
+                letter-spacing: -.02em
+            }
+
+            .hero p {
+                font-size: 1.125rem;
+                color: var(--muted);
+                max-width: 100vw;
+            }
+
+            .hero-cta {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-top: 18px
+            }
+
+            /* Code card */
+            .card {
+                background: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                box-shadow: var(--card-shadow);
+                transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+                overflow: hidden;
+                max-width: 100%
+            }
+
+            .card .hd + pre {
+                margin-top: 14px;
+            }
+
+            .card .hd {
+                padding: 18px 20px;
+                border-bottom: 1px solid var(--border);
+                font-weight: 700
+            }
+
+            .card .bd {
+                padding: 18px 20px;
+                overflow-x: auto;
+                max-width: 100%
+            }
+            .card pre {
+                margin: 0 14px;
+            }
+
+            pre {
+                margin: 0;
+                background: var(--code-bg);
+                color: var(--code-text);
+                padding: 18px;
+                border-radius: 14px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                font-size: .95rem;
+                max-width: 100%
+            }
+
+            code {
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                white-space: pre
+            }
+
+            /* Syntax highlighting */
+            .keyword { color: #c678dd }
+            .class-name { color: #e5c07b }
+            .function { color: #61afef }
+            .string { color: #98c379 }
+            .comment { color: #5c6370; font-style: italic }
+            .property { color: #d19a66 }
+            .operator { color: #56b6c2 }
+            .punctuation { color: #abb2bf }
+
+            .small {
+                color: var(--muted);
+                font-size: .9rem
+            }
+
+            /* Trust bar */
+            .trust {
+                border-block: 1px solid var(--border);
+                background: var(--card-bg);
+                padding: 0 14px;
+            }
+
+            .trust-grid {
+                display: grid;
+                grid-template-columns:repeat(4, 1fr);
+                gap: 18px;
+                padding: 18px 0
+            }
+
+            .trust-item {
+                display: flex;
+                align-items: center;
+                gap: .6rem;
+                color: var(--ink)
+            }
+
+            .dot {
+                width: 36px;
+                height: 36px;
+                border-radius: 14px;
+                background: var(--btn-solid-bg);
+                display: grid;
+                place-items: center;
+                color: var(--btn-solid-text);
+                flex-shrink: 0
+            }
+
+            .dot svg {
+                display: block
+            }
+
+            /* Features */
+            .features {
+                padding: 64px 0
+            }
+
+            .features-grid {
+                display: grid;
+                grid-template-columns:repeat(3, 1fr);
+                gap: 18px
+            }
+
+            .feature {
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 20px;
+                background: var(--card-bg)
+            }
+
+            .feature h3 {
+                margin: 0 0 .4rem
+            }
+
+            .feature p {
+                margin: .3rem 0 1rem;
+                color: var(--muted)
+            }
+
+            .check {
+                display: flex;
+                gap: .5rem;
+                align-items: flex-start;
+                margin: .4rem 0;
+                color: var(--ink)
+            }
+
+            .check .icon {
+                min-width: 18px;
+                width: 18px;
+                height: 18px;
+                border-radius: 999px;
+                border: 2px solid var(--ink);
+                display: inline-block;
+                position: relative;
+                margin-top: 3px
+            }
+
+            .check .icon:after {
+                content: "";
+                position: absolute;
+                inset: 3px;
+                background: var(--ink);
+                border-radius: 999px
+            }
+
+            /* Split */
+            .split {
+                display: grid;
+                grid-template-columns:1fr 1fr;
+                gap: 28px;
+                align-items: center;
+                padding: 10px 0
+            }
+
+            .kbd {
+                display: inline-block;
+                border: 1px solid var(--border);
+                border-bottom-width: 3px;
+                padding: .25rem .5rem;
+                border-radius: 8px;
+                background: var(--card-bg);
+                font-weight: 600
+            }
+
+            /* Testimonials */
+            .testimonials {
+                background: var(--bg-soft);
+                border-top: 1px solid var(--border);
+                border-bottom: 1px solid var(--border);
+                padding: 56px 0
+            }
+
+            .quotes {
+                display: grid;
+                grid-template-columns:1fr 1fr 1fr;
+                gap: 18px
+            }
+
+            blockquote {
+                background: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 18px;
+                margin: 0
+            }
+
+            blockquote p {
+                margin: 0 0 .75rem;
+                color: var(--ink)
+            }
+
+            blockquote .who {
+                color: var(--muted);
+                font-size: .95rem
+            }
+
+            /* CTA footer */
+            .cta {
+                padding: 64px 0
+            }
+
+            .cta-wrap {
+                display: grid;
+                grid-template-columns:1.3fr 1fr;
+                gap: 28px;
+                align-items: center
+            }
+
+            .stats {
+                display: flex;
+                gap: 18px;
+                flex-wrap: wrap
+            }
+
+            .stat {
+                border: 1px solid var(--border);
+                background: var(--card-bg);
+                border-radius: 14px;
+                padding: 14px 16px;
+                min-width: 160px
+            }
+
+            .stat b {
+                font-size: 1.4rem
+            }
+
+            footer {
+                border-top: 1px solid var(--border);
+                padding: 18px 0 40px;
+                color: var(--muted)
+            }
+
+            /* Responsive */
+            @media (max-width: 980px) {
+                .container {
+                    padding: 0 16px
+                }
+
+                .hero {
+                    grid-template-columns:1fr;
+                    padding: 40px 0 20px;
+                    gap: 28px
+                }
+
+                .trust-grid {
+                    grid-template-columns:repeat(2, 1fr);
+                    gap: 12px;
+                    padding: 14px 0
+                }
+
+                .features-grid {
+                    grid-template-columns:1fr 1fr;
+                    gap: 14px
+                }
+
+                .features {
+                    padding: 48px 0
+                }
+
+                .split {
+                    grid-template-columns:1fr;
+                    gap: 20px
+                }
+
+                .quotes {
+                    grid-template-columns:1fr 1fr;
+                    gap: 14px
+                }
+
+                .cta-wrap {
+                    grid-template-columns:1fr
+                }
+
+                .cta {
+                    padding: 48px 0
+                }
+
+                .testimonials {
+                    padding: 48px 0
+                }
+            }
+
+            @media (max-width: 640px) {
+                div {
+                    max-width: 100vw;
+                }
+
+                .container {
+                    padding: 0 14px
+                }
+
+                .nav {
+                    padding: 10px 0;
+                    flex-wrap: wrap;
+                    gap: 8px
+                }
+
+                nav {
+                    width: 100vw;
+                    justify-content: space-between !important
+                }
+
+                .btn {
+                    padding: .7rem .85rem;
+                    font-size: .9rem
+                }
+
+                .hero {
+                    padding: 28px 0 16px
+                }
+
+                .hero h1 {
+                    font-size: 1.85rem;
+                    margin: .15rem 0 .5rem
+                }
+
+                .hero p {
+                    font-size: 1rem
+                }
+
+                .hero-cta {
+                    flex-direction: column;
+                    gap: 8px
+                }
+
+                .hero-cta .btn {
+                    max-width: 100vw
+                }
+
+                .card {
+                    border-radius: 0;
+                    border-left: 0;
+                    border-right: 0;
+                }
+
+                .card .hd {
+                    padding: 14px 16px;
+                    font-size: .95rem
+                }
+
+                .card .bd {
+                    padding: 14px 16px
+                }
+
+                .card pre {
+                    margin: 0 0;
+                    padding: 10px 6px;
+                    border-radius: 0;
+                }
+
+
+                pre {
+                    padding: 14px 2px;
+                    font-size: .85rem;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    max-width: 100vw;
+                }
+
+                .trust-grid {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                    margin: 8px 0;
+                }
+
+                .trust-item {
+                    font-size: .9rem
+                }
+
+                .dot {
+                    width: 32px;
+                    height: 32px
+                }
+
+                .dot svg {
+                    width: 18px;
+                    height: 18px
+                }
+
+                .features {
+                    padding: 32px 0
+                }
+
+                .features-grid {
+                    grid-template-columns:1fr;
+                    gap: 12px
+                }
+
+                .feature {
+                    padding: 16px;
+                    margin: 0 14px;
+                }
+
+                .feature h3 {
+                    font-size: 1.1rem
+                }
+
+                .feature p {
+                    font-size: .9rem
+                }
+
+                .check {
+                    font-size: .9rem
+                }
+
+                h2 {
+                    font-size: 1.5rem !important
+                }
+
+                .split {
+                    padding: 8px 0
+                }
+
+                .stats {
+                    gap: 12px
+                }
+
+                .stat {
+                    min-width: 140px;
+                    padding: 12px 14px
+                }
+
+                .stat b {
+                    font-size: 1.2rem
+                }
+
+                .quotes {
+                    grid-template-columns:1fr;
+                    gap: 12px
+                }
+
+                blockquote {
+                    padding: 14px
+                }
+
+                .cta {
+                    padding: 32px 0
+                }
+
+                .testimonials {
+                    padding: 32px 0
+                }
+
+                footer {
+                    padding: 14px 0 32px;
+                    font-size: .85rem
+                }
+
+                .free-floating-content {
+                    padding: 0 14px;
+                }
+
+                .container nav {
+                    padding: 0 8px;
+                }
+
+                .logo {
+                    padding: 0 8px;
+                }
+
+                .brand {
+                    padding: 8px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Header -->
+        <header>
+            <div class="container nav">
+                <a class="brand" href="#">
+                    <div class="logo">
+                        <picture>
+                            <source srcset="https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/logo_for_dark_background.svg" media="(prefers-color-scheme: dark)">
+                            <img style="width: 40px" src="https://raw.githubusercontent.com/iommirocks/iommi/refs/heads/master/logo.svg" alt="iommi logo">
+                        </picture>
+                    </div>
+                    <div>
+                        <div style="font-weight:700; line-height:1">iommi</div>
+                        <div style="font-size:.78rem; color:var(--muted); line-height:1">Django power tools</div>
+                    </div>
+                </a>
+                <nav style="display:flex; gap:10px; align-items:center">
+                    <a class="btn outline" href="https://docs.iommi.rocks/" target="_blank" rel="noreferrer">Docs</a>
+                    <a class="btn outline" href="https://github.com/iommirocks/iommi" target="_blank" rel="noreferrer">GitHub</a>
+                    <a class="btn outline" href="https://pypi.org/project/iommi/" target="_blank" rel="noreferrer">PyPI</a>
+                    <a class="btn solid" href="#install">Get started</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Hero -->
+        <section class="container hero">
+            <div class="free-floating-content">
+                <h1>Your first pick for a <span style="color:var(--django-green)">Django</span> power chord</h1>
+                <p>iommi is a productivity toolkit for Django that lets you ship complex UIs fast: forms, tables, pages, and an admin - without the boilerplate. Compose powerful parts, keep your code tiny, and stay in Python.</p>
+                <div class="hero-cta">
+                    <a class="btn solid" href="#install">Install in minutes</a>
+                    <a class="btn outline" href="#snippet">See it in code</a>
+                </div>
+            </div>
+            <div>
+                <div class="card">
+                    <div class="hd">From zero to CRUD in ~10 lines</div>
+<pre><code><span class="comment"># views.py</span>
+<span class="keyword">from</span> iommi <span class="keyword">import</span> <span class="class-name">Table</span>, <span class="class-name">Form</span>, <span class="class-name">Page</span>
+<span class="keyword">from</span> .models <span class="keyword">import</span> <span class="class-name">Album</span>
+
+<span class="keyword">class</span> <span class="class-name">AlbumPage</span>(<span class="class-name">Page</span>):
+    <span class="keyword">class</span> <span class="class-name">Meta</span>:
+        title = <span class="string">'Albums'</span>
+
+    create_album = <span class="class-name">Form</span>.<span class="function">create</span>(auto__model=<span class="class-name">Album</span>)
+    albums = <span class="class-name">Table</span>(auto__model=<span class="class-name">Album</span>)
+</code></pre>
+                    <div class="bd">
+                    <p class="small" style="margin-top:10px">Auto forms + powerful tables on one page. No handwritten templates needed. No namespace conflicts, iommi handles it automagically.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trust bar -->
+        <section class="trust">
+            <div class="container trust-grid">
+                <div class="trust-item"><span class="dot"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 9.5H21M3 14.5H21M8 4.5V19.5M6.2 19.5H17.8C18.9201 19.5 19.4802 19.5 19.908 19.282C20.2843 19.0903 20.5903 18.7843 20.782 18.408C21 17.9802 21 17.4201 21 16.3V7.7C21 6.5799 21 6.01984 20.782 5.59202C20.5903 5.21569 20.2843 4.90973 19.908 4.71799C19.4802 4.5 18.9201 4.5 17.8 4.5H6.2C5.0799 4.5 4.51984 4.5 4.09202 4.71799C3.71569 4.90973 3.40973 5.21569 3.21799 5.59202C3 6.01984 3 6.57989 3 7.7V16.3C3 17.4201 3 17.9802 3.21799 18.408C3.40973 18.7843 3.71569 19.0903 4.09202 19.282C4.51984 19.5 5.07989 19.5 6.2 19.5Z" stroke="var(--icon-color)" stroke-width="2"/>
+</svg></span> Production‑ready tables</div>
+                <div class="trust-item"><span class="dot"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Edit / Table_Add">
+<path id="Vector" d="M11 4H15.8002C16.9203 4 17.4801 4 17.9079 4.21799C18.2842 4.40973 18.5905 4.71547 18.7822 5.0918C19 5.5192 19 6.07899 19 7.19691V9.0002L11.0001 9.0001M11 4H6.2002C5.08009 4 4.51962 4 4.0918 4.21799C3.71547 4.40973 3.40973 4.71547 3.21799 5.0918C3 5.51962 3 6.08009 3 7.2002V9M11 4L11.0001 9.0001M3 9V15M3 9L11.0001 9.0001M3 15V16.8002C3 17.9203 3 18.4801 3.21799 18.9079C3.40973 19.2842 3.71547 19.5905 4.0918 19.7822C4.5192 20 5.07899 20 6.19691 20H11.0002L11.0001 9.0001M3 15H11M15 16H18M18 16H21M18 16V19M18 16V13" stroke="var(--icon-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg></span> Composable building blocks</div>
+                <div class="trust-item"><span class="dot"><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M7.5 10V14M11.5 10V14M15.5 10V14M21 13V11M6.2 18H16.8C17.9201 18 18.4802 18 18.908 17.782C19.2843 17.5903 19.5903 17.2843 19.782 16.908C20 16.4802 20 15.9201 20 14.8V9.2C20 8.0799 20 7.51984 19.782 7.09202C19.5903 6.71569 19.2843 6.40973 18.908 6.21799C18.4802 6 17.9201 6 16.8 6H6.2C5.0799 6 4.51984 6 4.09202 6.21799C3.71569 6.40973 3.40973 6.71569 3.21799 7.09202C3 7.51984 3 8.07989 3 9.2V14.8C3 15.9201 3 16.4802 3.21799 16.908C3.40973 17.2843 3.71569 17.5903 4.09202 17.782C4.51984 18 5.07989 18 6.2 18Z" stroke="var(--icon-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></span> Batteries‑included widgets</div>
+                <div class="trust-item"><span class="dot"><svg fill="var(--icon-color)" width="20px" height="20px" viewBox="0 0 32 32" enable-background="new 0 0 32 32" id="Glyph" version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M27.526,18.036L27,17.732c-0.626-0.361-1-1.009-1-1.732s0.374-1.371,1-1.732l0.526-0.304  c1.436-0.83,1.927-2.662,1.098-4.098l-1-1.732c-0.827-1.433-2.666-1.925-4.098-1.098L23,7.339c-0.626,0.362-1.375,0.362-2,0  c-0.626-0.362-1-1.009-1-1.732V5c0-1.654-1.346-3-3-3h-2c-1.654,0-3,1.346-3,3v0.608c0,0.723-0.374,1.37-1,1.732  c-0.626,0.361-1.374,0.362-2,0L8.474,7.036C7.042,6.209,5.203,6.701,4.375,8.134l-1,1.732c-0.829,1.436-0.338,3.269,1.098,4.098  L5,14.268C5.626,14.629,6,15.277,6,16s-0.374,1.371-1,1.732l-0.526,0.304c-1.436,0.829-1.927,2.662-1.098,4.098l1,1.732  c0.828,1.433,2.667,1.925,4.098,1.098L9,24.661c0.626-0.363,1.374-0.361,2,0c0.626,0.362,1,1.009,1,1.732V27c0,1.654,1.346,3,3,3h2  c1.654,0,3-1.346,3-3v-0.608c0-0.723,0.374-1.37,1-1.732c0.625-0.361,1.374-0.362,2,0l0.526,0.304  c1.432,0.826,3.271,0.334,4.098-1.098l1-1.732C29.453,20.698,28.962,18.865,27.526,18.036z M16,21c-2.757,0-5-2.243-5-5s2.243-5,5-5  s5,2.243,5,5S18.757,21,16,21z" id="XMLID_273_"/></svg></span> Full admin in your app</div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section id="features" class="container features">
+            <div class="features-grid">
+                <article class="feature">
+                    <h3>Forms that scale</h3>
+                    <p>Familiar API with smarter defaults than Django forms. Great HTML by default, integrates with your design system, and handles complexity without glue code.</p>
+                    <div class="check"><span class="icon"></span> Auto‑generate from models with include/exclude</div>
+                    <div class="check"><span class="icon"></span> Foreign key widgets with async search</div>
+                    <div class="check"><span class="icon"></span> Cross‑object field paths (double‑underscore style)</div>
+                </article>
+                <article class="feature">
+                    <h3>Tables you won't outgrow</h3>
+                    <p>Sorting, filtering, pagination, bulk actions - configured in Python. Deliver fast without drowning in template code.</p>
+                    <div class="check"><span class="icon"></span> Server‑side filters from simple Python</div>
+                    <div class="check"><span class="icon"></span> Column formatting & actions per row</div>
+                    <div class="check"><span class="icon"></span> Easily add CSV/Excel export</div>
+                </article>
+                <article class="feature">
+                    <h3>Pages & admin, your way</h3>
+                    <p>Compose pages declaratively and ship a polished admin that lives inside your app - no separate project, no styling mismatch.</p>
+                    <div class="check"><span class="icon"></span> Drop‑in admin using your models</div>
+                    <div class="check"><span class="icon"></span> Override anything with clean hooks</div>
+                    <div class="check"><span class="icon"></span> Sensible, accessible defaults</div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Split section: how it feels -->
+        <section class="container split">
+            <div class="free-floating-content">
+                <h2 style="margin:0 0 .4rem">Ship features, not plumbing</h2>
+                <p class="small">iommi removes repetitive glue code so you can think in "what" not "how". Declare intent in Python and get great UX by default.</p>
+                <div class="stats" style="margin-top:12px">
+                    <div class="stat"><b>10x to 100x</b><br><span class="small">Less code</span></div>
+                    <div class="stat"><b>&lt;10</b><br><span class="small">Lines to CRUD</span></div>
+                    <div class="stat"><b>Zero</b><br><span class="small">Boilerplate</span></div>
+                </div>
+            </div>
+            <div>
+                <div class="card">
+                    <div class="hd">Zero boilerplate even for very deep customization</div>
+
+                    <div class="bd">
+                    <p class="small" style="margin-top:10px">Example: Set the initial filter of a table, 5 levels of nesting deep. Just clean configuration, no need to create 5 classes.</p>
+                    </div>
+<pre><code><span class="class-name">Table</span>(
+    auto__model=<span class="class-name">Album</span>,
+    columns__artist__filter__include=<span class="keyword">True</span>,
+    query__form__fields__artist__initial=
+        <span class="keyword">lambda</span> **_: <span class="class-name">Artist</span>.objects.<span class="function">get</span>(name=<span class="string">'Dio'</span>),
+)
+</code></pre>
+                    <div class="bd">
+                        <p class="small" style="margin-top:10px">Use as‑is or customize with clean hooks. Everything is overrideable.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Snippet -->
+        <section id="snippet" class="container" style="padding:26px 0 56px">
+            <div class="card">
+                <div class="hd">Feature highlight: powerful Table filters</div>
+<pre><code><span class="keyword">class</span> <span class="class-name">AlbumTable</span>(<span class="class-name">Table</span>):
+    <span class="keyword">class</span> <span class="class-name">Meta</span>:
+        auto__model = <span class="class-name">Album</span>
+        columns__artist__filter__include = <span class="keyword">True</span>
+        columns__year__filter__include = <span class="keyword">True</span>
+        bulk__delete__include = <span class="keyword">True</span>
+</code></pre>
+                <div class="bd">
+                    <p class="small" style="margin-top:10px">Turn on filters and bulk actions with a few lines. No template hacks needed.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="testimonials">
+            <div class="container">
+                <h2 style="margin-top:0">What developers say</h2>
+                <div class="quotes" style="margin-top:12px">
+                    <blockquote>
+                        <p>"I am now in love with iommi forms 😄"</p>
+                    </blockquote>
+                    <blockquote>
+                        <p>"By the time I'm done with this project, it will be impossible for me not to use iommi in future projects"</p>
+                    </blockquote>
+                    <blockquote>
+                        <p>"btw @boxed thanks for your amazing work! iommi is a wonderful framework 😄"</p>
+                    </blockquote>
+                    <blockquote>
+                        <p>"Great lib, I use it on multiple projects already. This is the proper way to make forms, tables with pagination and filtering, and more."</p>
+                    </blockquote>
+                </div>
+            </div>
+        </section>
+
+        <!-- Install CTA -->
+        <section id="install" class="container cta">
+            <div class="cta-wrap">
+                <div>
+                    <div class="free-floating-content">
+                    <h2 style="margin:0 0 .4rem">Install in minutes</h2>
+                    <p class="small">Add iommi to your project and start declaring UIs in Python. Works with your existing Django stack.</p>
+                    </div>
+                    <div style="margin-top:14px; padding-top:14px" class="card">
+<pre><code><span class="comment"># 1) Install</span>
+pip install iommi
+
+<span class="comment"># 2) Add to INSTALLED_APPS</span>
+INSTALLED_APPS = [
+    ...,
+    <span class="string">'iommi'</span>,
+]
+
+<span class="comment"># 3) Add to MIDDLEWARE</span>
+MIDDLEWARE = [
+    ...,
+    <span class="string">'iommi.middleware',</span>,
+]
+
+<span class="comment"># 4) Build a page</span>
+<span class="keyword">from</span> iommi <span class="keyword">import</span> <span class="class-name">Table</span>, <span class="class-name">Form</span>, <span class="class-name">Page</span>
+
+<span class="keyword">class</span> <span class="class-name">AlbumPage</span>(<span class="class-name">Page</span>):
+    <span class="keyword">class</span> <span class="class-name">Meta</span>:
+        title = <span class="string">'Albums'</span>
+
+    create_album = <span class="class-name">Form</span>.<span class="function">create</span>(auto__model=<span class="class-name">Album</span>)
+    albums = <span class="class-name">Table</span>(auto__model=<span class="class-name">Album</span>)
+
+<span class="comment"># 5) Map it to a URL</span>
+urlpatterns = [
+    <span class="function">path</span>('album/', <span class="class-name">AlbumPage</span>().<span class="function">as_view</span>(),
+]
+
+</code></pre>
+                <div class="bd">
+                    <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap">
+                        <a class="btn solid" href="https://docs.iommi.rocks/" target="_blank" rel="noreferrer">Read the docs</a>
+                        <a class="btn outline" href="https://github.com/iommirocks/iommi" target="_blank" rel="noreferrer">Star on GitHub</a>
+                        <a class="btn outline" href="https://pypi.org/project/iommi/" target="_blank" rel="noreferrer">Get from PyPI</a>
+                    </div>
+                </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="hd">Why teams choose iommi</div>
+                    <div class="bd">
+                        <ul style="margin:0; padding-left:18px; color:var(--list-text); line-height:1.8">
+                            <li>Declare intent, get great UX by default</li>
+                            <li>Powerful tables, forms, and pages without templates</li>
+                            <li>Override anything: clean, well‑documented hooks</li>
+                            <li>Built for Django, embraces your models and auth</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="container" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
+                <div>© <span id="year"></span> iommi. All rights reserved.</div>
+                <div style="display:flex; gap:12px">
+                    <a href="https://docs.iommi.rocks/" target="_blank" rel="noreferrer">Docs</a>
+                    <span>·</span>
+                    <a href="https://github.com/iommirocks/iommi" target="_blank" rel="noreferrer">GitHub</a>
+                    <span>·</span>
+                    <a href="https://pypi.org/project/iommi/" target="_blank" rel="noreferrer">PyPI</a>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            // purely cosmetic: current year in footer (optional to keep HTML-only, safe to remove)
+            document.getElementById('year').textContent = new Date().getFullYear();
+        </script>
+    </body>
+</html>

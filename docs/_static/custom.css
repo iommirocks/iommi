@@ -38,13 +38,140 @@ h3 code {
     display: none;
 }
 
-.highlight .p,
-.highlight .o {
-    color: rgb(107, 106, 190);
+/* Syntax highlighting using light-dark() for theme-aware colors */
+.highlight {
+    background: light-dark(#fafafa, #0b1020) !important;
+    color: light-dark(#383a42, #e5edff) !important;
+    border-radius: 14px;
 }
 
-.highlight {
-    background: #f7fafa;
+/* Keywords: import, from, class, def, etc. */
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt,
+.highlight .ow {
+    color: light-dark(#a626a4, #c678dd) !important;
+    font-weight: normal !important;
+}
+
+/* Class names */
+.highlight .nc,
+.highlight .nn {
+    color: light-dark(#c18401, #e5c07b) !important;
+    font-weight: normal !important;
+    text-decoration: none !important;
+}
+
+/* Function names */
+.highlight .nf,
+.highlight .fm {
+    color: light-dark(#4078f2, #61afef) !important;
+}
+
+/* Strings */
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .sr,
+.highlight .ss,
+.highlight .sa,
+.highlight .dl {
+    color: light-dark(#50a14f, #98c379) !important;
+    font-weight: normal !important;
+}
+
+/* Comments */
+.highlight .c,
+.highlight .ch,
+.highlight .cm,
+.highlight .cp,
+.highlight .cpf,
+.highlight .c1,
+.highlight .cs {
+    color: light-dark(#a0a1a7, #5c6370) !important;
+    font-style: italic !important;
+    background-color: transparent !important;
+}
+
+/* Properties/attributes */
+.highlight .na,
+.highlight .py {
+    color: light-dark(#986801, #d19a66) !important;
+}
+
+/* Operators */
+.highlight .o {
+    color: light-dark(#0184bc, #56b6c2) !important;
+}
+
+/* Punctuation */
+.highlight .p,
+.highlight .pm {
+    color: light-dark(#383a42, #abb2bf) !important;
+}
+
+/* Numbers */
+.highlight .m,
+.highlight .mb,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo,
+.highlight .il {
+    color: light-dark(#986801, #d19a66) !important;
+}
+
+/* Variables, constants */
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi,
+.highlight .vm,
+.highlight .no {
+    color: light-dark(#c18401, #e5c07b) !important;
+}
+
+/* Builtins */
+.highlight .nb,
+.highlight .bp {
+    color: light-dark(#4078f2, #61afef) !important;
+}
+
+/* Decorators */
+.highlight .nd {
+    color: light-dark(#4078f2, #61afef) !important;
+}
+
+/* Default text color */
+.highlight .n,
+.highlight .nx {
+    color: light-dark(#383a42, #e5edff) !important;
+}
+
+/* Line numbers if present */
+.highlight .linenos,
+.highlight span.linenos,
+.highlight td.linenos .normal {
+    color: light-dark(#a0a1a7, #5c6370) !important;
+    background-color: transparent !important;
+}
+
+/* Errors */
+.highlight .err {
+    color: light-dark(#e45649, #e06c75) !important;
+    border: none !important;
+    background-color: transparent !important;
 }
 
 h2 {
@@ -78,12 +205,6 @@ h2 {
     max-width: 70%;
 }
 
-@media (prefers-color-scheme: dark) {
-    .highlight {
-        background: #202020;
-        color: #d0d0d0;
-    }
-}
 
 @media screen and (max-width: 67em) {
 
