@@ -92,7 +92,7 @@ def test_query_language():
     """
 
 
-def test_stand_alone_example(small_discography):
+def test_stand_alone_example(small_discography, black_sabbath):
     # language=rst
     """
     Stand alone example
@@ -165,5 +165,5 @@ def test_stand_alone_example(small_discography):
     )
 
     # @test
-    assert str(albums_queryset) == "(AND: ('artist__pk', 141), (OR: ('year__exact', 1991), ('year__exact', 1992)))"
+    assert str(albums_queryset) == f"(AND: ('artist__pk', {black_sabbath.pk}), (OR: ('year__exact', 1991), ('year__exact', 1992)))"
     # @end
