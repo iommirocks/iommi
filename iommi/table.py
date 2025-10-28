@@ -1199,11 +1199,12 @@ class Cells(Traversable, Tag):
             layout_unused_columns = set(rendered_column_names).difference(set(keys(self.layout.get_cell_panels())))
 
             if layout_unused_columns:
+                missing_columns = ",\n".join(sorted(layout_unused_columns))
                 raise ImproperlyConfigured(
                     'Some columns are missing in Table.row.layout as Panel.cell. '
                     'Either add them or exclude them.\n'
                     'Missing columns:\n'
-                    f'{",\n".join(sorted(layout_unused_columns))}'
+                    f'{missing_columns}'
                 )
 
     def own_evaluate_parameters(self):
