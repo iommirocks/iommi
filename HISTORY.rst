@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.19.2 (2025-10-29)
+~~~~~~~~~~~~~~~~~~~
+
+* Restored Python 3.11 support that was accidentally broken with an advanced f-string. This time works :P
+
+
 7.19.1 (2025-10-29)
 ~~~~~~~~~~~~~~~~~~~
 
