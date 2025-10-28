@@ -277,6 +277,8 @@ def test_table_customization():
     doing for query sets and we really like it so we've taken this concept further
     and it is now everywhere in iommi.
     
+    Read more about this double underscore form in :ref:`dunder-dict-equivalence` 
+    
     The other levels of customization are `value` which is how the value is 
     extracted from the row, `attr` which is the attribute that is read (if
     you don't customize `value`), and lastly `template` which you use to override

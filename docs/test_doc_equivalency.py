@@ -60,6 +60,8 @@ def test_equivalence():
     1. Variables declared in `class Meta` in iommi means they get passed into the constructor. `model = Album` in `Meta` is exactly the same as `Table(model=Album)`.
     2. The `name` column is declared on the class itself, and the `columns` part of the argument (`Table(columns=dict(...)`) is implicit. For `Page` the same implicit name is called `parts`, and for `Form` it's called `fields`.
     
+    .. _dunder-dict-equivalence:
+    
     Double underscore short form
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
