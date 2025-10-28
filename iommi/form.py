@@ -1976,11 +1976,12 @@ class Form(Part, Tag):
 
             if self.layout_unused_fields:
                 if not self.layout_render_unused_fields:
+                    missing_fields = ",\n".join(sorted(self.layout_unused_fields.keys()))
                     raise ImproperlyConfigured(
                         'Some fields are missing in self.layout. '
                         'Either add them, exclude them, or set self.layout_render_unused_fields=True.\n'
                         'Missing fields:\n'
-                        f'{",\n".join(sorted(self.layout_unused_fields.keys()))}'
+                        f'{missing_fields}'
                     )
 
     def own_evaluate_parameters(self):
