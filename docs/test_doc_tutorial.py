@@ -13,6 +13,9 @@ Tutorial
 
 This tutorial will build a discography app. Let's start with the models:
 
+.. literalinclude:: models.py
+    :pyobject: Genre
+    :end-before: def __str__
 
 .. literalinclude:: models.py
     :pyobject: Artist
