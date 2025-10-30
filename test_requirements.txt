@@ -1,5 +1,4 @@
 beautifulsoup4==4.12.3
-flask
 gprof2dot
 parso
 pytest-django==4.8.0
