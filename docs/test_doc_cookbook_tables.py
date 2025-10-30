@@ -803,6 +803,23 @@ def test_how_do_i_set_the_default_sort_order_on_a_table(medium_discography):
     # @test
     assert Album.objects.count() > 0
     show_output(table)
+    assert [x.year for x in table.bind(request=req('get')).get_visible_rows()] == [1980, 1980, 1981]
+    # @end
+
+    # language=rst
+    """
+    Or reversed:
+    """
+
+    table = Table(
+        auto__model=Album,
+        default_sort_order='-year',
+    )
+
+    # @test
+    assert Album.objects.count() > 0
+    show_output(table)
+    assert [x.year for x in table.bind(request=req('get')).get_visible_rows()] == [1981, 1980, 1980]
     # @end
 
 
