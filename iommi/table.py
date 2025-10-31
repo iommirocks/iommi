@@ -151,6 +151,7 @@ from iommi.traversable import (
 )
 
 from ._db_compat import base_defaults_factory
+from .declarative.util import strip_prefix
 
 LAST = LAST
 
@@ -2130,6 +2131,7 @@ class Table(Part, Tag):
                 any(x.bulk.include for x in values(self.iommi_namespace.columns))
                 or 'actions' in self.iommi_namespace.bulk
             ):
+                # noinspection PyCallingNonCallable
                 self.bulk = form_class(
                     **setdefaults_path(
                         Namespace(),
@@ -2159,6 +2161,7 @@ class Table(Part, Tag):
                 assert False, "The builtin bulk actions only work on querysets."
             declared_bulk_fields = Struct()
             add_hidden_all_pks_field(declared_bulk_fields)
+            # noinspection PyArgumentList,PyCallingNonCallable
             self.bulk = form_class(
                 _name='bulk',
                 # We don't want form's default submit button unless somebody
@@ -2176,10 +2179,14 @@ class Table(Part, Tag):
         if self.query is not None:
             self.query = self.query.refine_done(parent=self)
 
+        # noinspection PyCallingNonCallable
         self.bulk_container = self.bulk_container(_name='bulk_container').refine_done(parent=self)
+        # noinspection PyCallingNonCallable
         self.container = self.container(_name='container').refine_done(parent=self)
+        # noinspection PyCallingNonCallable
         self.table_tag_wrapper = self.table_tag_wrapper(_name='table_tag_wrapper').refine_done(parent=self)
 
+        # noinspection PyCallingNonCallable
         self.outer = (
             self.outer(_name='outer').refine(
                 children=dict(
@@ -2194,6 +2201,7 @@ class Table(Part, Tag):
             )
         ).refine_done(parent=self)
 
+        # noinspection PyCallingNonCallable
         self.tbody = self.tbody(_name='tbody').refine_done(parent=self)
 
         super(Table, self).on_refine_done()
@@ -2232,6 +2240,10 @@ class Table(Part, Tag):
         bind_member(self, name='header')
         if self.header is None:
             self.header = ''
+
+        if self.default_sort_order is not None and strip_prefix(self.default_sort_order, prefix='-') not in keys(self.columns):
+            column_names = '\n    '.join(keys(self.columns))
+            assert False, f'default_sort_order must be the name of a column. `{self.default_sort_order}` specified. Valid values:\n    {column_names}'
 
         # needs to be done first because _bind_headers depends on it
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())

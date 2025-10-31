@@ -783,7 +783,7 @@ def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instea
     # @end
 
 
-def test_how_do_i_set_the_default_sort_order_on_a_table(medium_discography):
+def test_how_do_i_set_the_default_sort_order_on_a_table(really_big_discography):
     # language=rst
     """
     .. _default-sort-order:
@@ -803,7 +803,8 @@ def test_how_do_i_set_the_default_sort_order_on_a_table(medium_discography):
     # @test
     assert Album.objects.count() > 0
     show_output(table)
-    assert [x.year for x in table.bind(request=req('get')).get_visible_rows()] == [1980, 1980, 1981]
+    years = [x.year for x in table.bind(request=req('get')).get_visible_rows()]
+    assert years == sorted(years)
     # @end
 
     # language=rst
@@ -819,7 +820,32 @@ def test_how_do_i_set_the_default_sort_order_on_a_table(medium_discography):
     # @test
     assert Album.objects.count() > 0
     show_output(table)
-    assert [x.year for x in table.bind(request=req('get')).get_visible_rows()] == [1981, 1980, 1980]
+    years = [x.year for x in table.bind(request=req('get')).get_visible_rows()]
+    assert years == sorted(years, reverse=True)
+    # @end
+
+    table = Table(
+        auto__model=Album,
+        default_sort_order='artist',
+    )
+
+    # @test
+    assert Album.objects.count() > 0
+    show_output(table)
+    artist_names = [x.artist.name for x in table.bind(request=req('get')).get_visible_rows()]
+    assert artist_names == sorted(artist_names)
+    # @end
+
+    # @test
+    table = Table(
+        auto__model=Album,
+        default_sort_order='artist__name',
+    )
+
+    with pytest.raises(AssertionError) as e:
+        table.bind(request=req('get'))
+
+    assert str(e.value) == 'default_sort_order must be the name of a column. `artist__name` specified. Valid values:\n    name\n    artist\n    year\n    genres'
     # @end
 
 
