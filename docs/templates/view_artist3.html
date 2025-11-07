@@ -1,5 +1,9 @@
-{{ artist }}
+{% extends "iommi/base.html" %}
 
-{{ albums }}
+{% block content %}
+    {{ artist }}
 
-{{ tracks }}
+    {{ albums }}
+
+    {{ tracks }}
+{% endblock %}

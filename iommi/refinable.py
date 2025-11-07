@@ -124,7 +124,9 @@ class RefinableNamespace(Namespace):
 
 
 class Refinable:
-    pass
+    def __str__(self):
+        # Prevent non-defined string conversion ending up in templates
+        assert False
 
 
 # decorator

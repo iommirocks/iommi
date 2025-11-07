@@ -402,7 +402,7 @@ def test__foo():
     )
 
     # @test
-    show_output(albums.as_view()(staff_req('get')))
+    show_output(albums, request=staff_req('get'))
     # @end
 
     # language=rst

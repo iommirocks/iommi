@@ -13,7 +13,10 @@ from iommi import (
     Table,
 )
 from iommi.docs import show_output
-from tests.helpers import req
+from tests.helpers import (
+    call_view_through_middleware,
+    req,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -59,6 +62,10 @@ def test_legacy_fbv_step2(small_discography, black_sabbath):
     """
     Add an iommi table
     ==================
+
+    First the template is modified to extend `"iommi/base.html"` and wrap the content in `{% block content %}`.
+
+    Then we need to create the iommi object, and pass the collected assets to the context:
     """
 
     def view_artist(request, artist_name):
@@ -74,11 +81,12 @@ def test_legacy_fbv_step2(small_discography, black_sabbath):
             context={
                 'artist': artist,
                 'albums': albums,
+                'assets': albums.iommi_collected_assets(),
             }
         )
 
     # @test
-    response = view_artist(req('get'), artist_name=black_sabbath.name)
+    response = call_view_through_middleware(view_artist, req('get'), artist_name=black_sabbath.name)
     assert black_sabbath.name in response.content.decode()
     show_output(response)
     # @end
@@ -177,6 +185,7 @@ def test_legacy_fbv_step4(black_sabbath, album, track):
                 'artist': artist,
                 'tracks': page.parts.tracks,
                 'albums': page.parts.albums,
+                'assets': page.iommi_collected_assets(),
             }
         )
 

@@ -3281,7 +3281,7 @@ def test_create_or_edit_object_full_template_1():
         # language=HTML
         expected_html="""
             <!DOCTYPE html>
-            <html lang="en-us">
+            <html lang="en">
                 <head>
                     <title> Create foo </title>
                 </head>

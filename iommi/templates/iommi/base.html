@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html{% block iommi_html_tag_attrs %} lang="{{ iommi_language_code }}"{% endblock %}>
+{% load i18n %}<!DOCTYPE html>
+<html{% block iommi_html_tag_attrs %} lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}"{% endblock %}>
 <head>
-    <title>{% block title %}{{ title }}{% endblock %}</title>
+    <title>{% block title %}{% if title %}{{ title }}{% endif %}{% endblock %}</title>
     {% block iommi_head_contents %}{% endblock %}
     {% for asset in assets.values %}
         {% if not asset.in_body %}
@@ -19,9 +19,9 @@
 
     {% block iommi_top %}{% endblock %}
 
-    {{ container.iommi_open_tag }}
+    {% if container %}{{ container.iommi_open_tag }}{% endif %}
         {% block content %}{% endblock %}
-    {{ container.iommi_close_tag }}
+    {% if container %}{{ container.iommi_close_tag }}{% endif %}
 
     {% block iommi_bottom %}{% endblock %}
 

@@ -22,6 +22,7 @@ TEMPLATES = [
             'debug': TEMPLATE_DEBUG,
             'context_processors': [
                 'tests.context_processors.context_processor_is_called',
+                'django.template.context_processors.request',
             ],
         },
     },

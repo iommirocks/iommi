@@ -237,5 +237,5 @@ def test_change_grouping(small_discography):
             apps__docs_album__group = 'The endless search for where you are'
 
     # @test
-    show_output(MyAdmin.all_models().as_view()(staff_req('get')))
+    show_output(MyAdmin.all_models(), request=staff_req('get'))
     # @end
