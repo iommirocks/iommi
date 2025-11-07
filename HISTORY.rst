@@ -1,11 +1,15 @@
 Changelog
 ---------
 
+7.19.3 (2025-11-07)
+~~~~~~~~~~~~~~~~~~~
+
 * Improved handling of language header, which makes it nicer to use FBVs with iommi parts.
 
 * An unbound `Refinable` object will now raise an error if you try to render it in a template.
 
 * Added an error message for invalid `default_sort_order`. The old behavior was that it was silently ignored if invalid.
+
 
 7.19.2 (2025-10-29)
 ~~~~~~~~~~~~~~~~~~~
