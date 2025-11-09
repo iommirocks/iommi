@@ -10,7 +10,7 @@ from iommi import (
     Field,
     Form,
 )
-from iommi.experimental.main_menu import (
+from iommi.main_menu import (
     EXTERNAL,
     M,
     MainMenu,
@@ -137,56 +137,56 @@ def test_rendering():
         actual_html=str(menu),
         # language=html
         expected_html='''
-            <div class="main_menu">
-                <nav>
-                    <a href="/" id="menu-logo">
-                         <div class="iommi_logo_menu">
-                         </div>
-                    </a>
-                    <ul>
-                        <li class="is_active">
-                            <details open>
-                                <summary>
-                                    <div class="menu_open_close"></div>
-                                    <a href="/foo/" title="Foo"><i class="fa fa-edit"></i><span>Foo</span></a>
-                                </summary>
-            
-                                <ul>
-                                    <li class="is_active">
-                                        <details open>
-                                            <summary>
-                                                <div class="menu_open_close"></div>
-                                                <a href="/foo/bar/" title="Bar"><span>Bar</span></a>
-                                            </summary>
-                                            <ul>
-                                                <li class="baz is_active">
-                                                    <a href="/foo/bar/baz/" title="Baz"><span>Baz</span></a>
-                                                </li>
-                                            </ul>
-                                        </details>
-                                    </li>
-                                </ul>
-                            </details>
-                        </li>
-                        <li>
-                            <a title="External" href="https://example.com" target=\'"blank"\'>
+                      <div class="main_menu">
+                          <nav>
+                              <a href="/" id="menu-logo">
+                                  <div class="iommi_logo_menu">
+                                  </div>
+                              </a>
+                              <ul>
+                                  <li class="is_active">
+                                      <details open>
+                                          <summary>
+                                              <div class="menu_open_close"></div>
+                                              <a href="/foo/" title="Foo"><i class="fa fa-edit"></i><span>Foo</span></a>
+                                          </summary>
+
+                                          <ul>
+                                              <li class="is_active">
+                                                  <details open>
+                                                      <summary>
+                                                          <div class="menu_open_close"></div>
+                                                          <a href="/foo/bar/" title="Bar"><span>Bar</span></a>
+                                                      </summary>
+                                                      <ul>
+                                                          <li class="baz is_active">
+                                                              <a href="/foo/bar/baz/" title="Baz"><span>Baz</span></a>
+                                                          </li>
+                                                      </ul>
+                                                  </details>
+                                              </li>
+                                          </ul>
+                                      </details>
+                                  </li>
+                                  <li>
+                                      <a title="External" href="https://example.com" target=\'"blank"\'>
                                 <span>
                                     External
                                     <i class="fa fa-external-link">
                                     </i>
                                 </span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        ''',
+                                      </a>
+                                  </li>
+                              </ul>
+                          </nav>
+                      </div>
+                      ''',
     )
 
 
 def test_access(settings):
-    settings.IOMMI_MAIN_MENU = 'iommi.experimental.main_menu__tests.menu_declaration'
-    settings.ROOT_URLCONF = 'iommi.experimental.main_menu__tests'
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
 
     ok = object()
     inner = main_menu_middleware(lambda request: ok)
@@ -236,8 +236,8 @@ def test_reprs():
 
 @pytest.mark.django_db
 def test_path_decoding(settings, black_sabbath):
-    settings.IOMMI_MAIN_MENU = 'iommi.experimental.main_menu__tests.menu_declaration'
-    settings.ROOT_URLCONF = 'iommi.experimental.main_menu__tests'
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
 
     def decode_artist(string, **_):
         return Artist.objects.get(pk=string)

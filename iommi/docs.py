@@ -657,7 +657,7 @@ def show_output(part, url='/', user=None, request=None):
         part = part.callback(request, **(match.kwargs if match else {}))
 
     with open(file_path, 'wb') as f:
-        from iommi.experimental.main_menu import MainMenu
+        from iommi.main_menu import MainMenu
         if isinstance(part, MainMenu):
             request.iommi_main_menu = part.bind(request=request)
             part = Page(

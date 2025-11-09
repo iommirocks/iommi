@@ -1,5 +1,4 @@
 import functools
-from traceback import print_stack
 from typing import Type
 from urllib.parse import urlencode
 
@@ -553,7 +552,7 @@ class Admin(Page):
 
     @classmethod
     def m(cls):
-        from iommi.experimental.main_menu import M
+        from iommi.main_menu import M
         return M(
             view=cls.all_models(),
             display_name=capitalize(gettext_lazy('admin')),

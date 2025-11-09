@@ -245,7 +245,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             get_debug_menu,
         )
         from iommi.table import Paginator
-        from iommi.experimental.main_menu import (
+        from iommi.main_menu import (
             MainMenu,
             M,
         )

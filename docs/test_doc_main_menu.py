@@ -1,7 +1,7 @@
 from docs.models import Artist
 from iommi import Table
 from iommi.docs import show_output
-from iommi.experimental.main_menu import (
+from iommi.main_menu import (
     M,
     MainMenu,
     main_menu_middleware,
@@ -79,7 +79,7 @@ def test_base(settings, medium_discography):
     # @test
     settings.IOMMI_MAIN_MENU = 'docs.test_doc_main_menu.menu_declaration'
     settings.ROOT_URLCONF = 'docs.test_doc_main_menu'
-    assert 'iommi.experimental.main_menu.main_menu_middleware' in settings.MIDDLEWARE
+    assert 'iommi.main_menu.main_menu_middleware' in settings.MIDDLEWARE
 
     response = main_menu_middleware(get_response=lambda request: Table(auto__model=Artist).bind(request=request).render_to_response())(req('get', url='/artists/'))
     show_output(response)

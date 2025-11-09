@@ -5,15 +5,13 @@ from examples.models import (
 )
 from iommi import Form
 from iommi.admin import Admin
-from iommi.experimental.main_menu import (
+from iommi.main_menu import (
     EXTERNAL,
     M,
     MainMenu,
 )
 
-import examples.views as views
 from examples import (
-    experimental_examples,
     form_examples,
     menu_examples,
     page_examples,

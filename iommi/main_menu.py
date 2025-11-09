@@ -77,9 +77,9 @@ class MainMenu:
             c._set_name(name)
 
     def urlpatterns(self):
-        if 'iommi.experimental.main_menu.main_menu_middleware' not in settings.MIDDLEWARE:
+        if 'iommi.main_menu.main_menu_middleware' not in settings.MIDDLEWARE:
             # This is an explicit raise instead of an `assert` because I'm paranoid of people running Python in optimized mode with skipped asserts.
-            raise AssertionError('To use the iommi main menu, you must add `iommi.experimental.main_menu.main_menu_middleware` to the MIDDLEWARE list.')
+            raise AssertionError('To use the iommi main menu, you must add `iommi.main_menu.main_menu_middleware` to the MIDDLEWARE list.')
 
         return [
             path(x.path, x.urlpatterns())

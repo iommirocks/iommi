@@ -6,7 +6,7 @@ from iommi.docs import (
     show_output,
     show_output_collapsed,
 )
-from iommi.experimental.main_menu import (
+from iommi.main_menu import (
     EXTERNAL,
     M,
     MainMenu,
