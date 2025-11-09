@@ -44,17 +44,17 @@ class NoTranslateString(str):
     pass
 
 
-def path(path, view_or_list, kwargs=None):
+def path(path, view_or_list, name=None, kwargs=None):
     if isinstance(view_or_list, list):
         assert kwargs is None
-        return orig_path(path, include(view_or_list))
+        return orig_path(path, include(view_or_list), name=name)
     elif isinstance(view_or_list, type):
-        return orig_path(path, view_or_list().as_view(), kwargs=kwargs)
+        return orig_path(path, view_or_list().as_view(), name=name, kwargs=kwargs)
     else:
         try:
-            return orig_path(path, view_or_list.as_view(), kwargs=kwargs)
+            return orig_path(path, view_or_list.as_view(), name=name, kwargs=kwargs)
         except AttributeError:
-            return orig_path(path, view_or_list, kwargs=kwargs)
+            return orig_path(path, view_or_list, name=name, kwargs=kwargs)
 
 
 class MainMenu:
@@ -82,7 +82,7 @@ class MainMenu:
             raise AssertionError('To use the iommi main menu, you must add `iommi.main_menu.main_menu_middleware` to the MIDDLEWARE list.')
 
         return [
-            path(x.path, x.urlpatterns())
+            path(x.path, x.urlpatterns(), name=x.name)
             for x in self.items.values()
             if x.view is not EXTERNAL
         ] + self.paths
@@ -111,6 +111,9 @@ class MainMenu:
             template=template,
             assets=assets,
         )
+
+    def _name_path(self):
+        return 'main_menu'
 
     def __repr__(self):
         return '<MainMenu>'
@@ -280,9 +283,9 @@ class M:
             return []
 
         return [
-            path('', self.view, kwargs=self.view_kwargs)
+            path('', self.view, name=self._name_path(), kwargs=self.view_kwargs)
         ] + [
-            path(x.path, x.urlpatterns())
+            path(x.path, x.urlpatterns(), name=f'{self.name}.{self.name}')
             for x in self.items.values()
             if x.view is not EXTERNAL
         ] + self.paths
@@ -294,6 +297,9 @@ class M:
             root=root,
             parent=None,
         )
+
+    def _name_path(self):
+        return '.'.join([self.parent._name_path(), self.name])
 
 
 class BoundM:

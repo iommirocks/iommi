@@ -4,6 +4,7 @@ import pytest
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseForbidden
 from django.template import Template
+from django.urls import reverse
 
 from docs.models import Artist
 from iommi import (
@@ -49,7 +50,7 @@ menu_declaration = MainMenu(
                             attrs__class__baz=True,
                             paths=[
                                 path('quux/', [
-                                    path('', fake_view),
+                                    path('', fake_view, name='quux'),
                                 ])
                             ]
                         ),
@@ -357,3 +358,12 @@ def test_main_menu_extra_evaluated():
     ).bind(request=req('get'))
 
     assert 'https://example.com' in str(menu)
+
+
+def test_reverse_name(settings):
+    settings.DEBUG = True
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
+
+    assert reverse('main_menu.foo.bar.baz') == '/foo/bar/baz/'
+    assert reverse('quux') == '/foo/bar/baz/quux/'
