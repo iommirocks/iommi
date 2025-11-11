@@ -9,10 +9,12 @@ from docs.models import (
     Track,
 )
 from iommi import (
+    middleware,
     Page,
     Table,
 )
 from iommi.docs import show_output
+from iommi.main_menu import main_menu_middleware
 from tests.helpers import (
     call_view_through_middleware,
     req,
@@ -197,4 +199,46 @@ def test_legacy_fbv_step4(black_sabbath, album, track):
     response = view_artist(req('get', **{'/album/choices': album.name}), artist_name=black_sabbath.name)
     assert black_sabbath.name not in response.content.decode()
     assert album.name in response.content.decode()
+    # @end
+
+
+def test_legacy_fbv_with_main_menu_and_basic_html(settings, black_sabbath, medium_discography):
+    # language=rst
+    """
+    Using iommi's base template with a FBV
+    ======================================
+
+    For existing FBVs, you can get the iommi `MainMenu` and the base style
+    assets by simply extending `iommi/base.html`:
+
+    """
+    # @test
+    settings.DEBUG = True
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
+    assert 'iommi.main_menu.main_menu_middleware' in settings.MIDDLEWARE
+    # @end
+
+    def view_artist(request, artist_name):
+        artist = get_object_or_404(Artist, name=artist_name)
+        return render(
+            request,
+            'view_artist4.html',
+            context={
+                'artist': artist,
+            }
+        )
+
+    # language=rst
+    """
+    .. literalinclude:: templates/view_artist4.html
+        :language: jinja
+    """
+
+    # @test
+    foo = main_menu_middleware(get_response=lambda request: view_artist(request, artist_name=black_sabbath.name))
+    bar = middleware(get_response=foo)
+    response = bar(req('get', url='/artists/'))
+    show_output(response)
+    assert black_sabbath.name in response.content.decode()
     # @end

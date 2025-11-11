@@ -55,6 +55,7 @@ from iommi.table import (
     register_cell_formatter,
     register_column_factory,
 )
+from iommi.thread_locals import get_current_request
 
 setup_db_compat()
 
@@ -97,6 +98,8 @@ class middleware:
         request.iommi_not_atomic_for = getattr(view_func, '_non_atomic_requests', set())
 
     def __call__(self, request):
+        # For plain FBVs that want to extend iommi/base.html, we need to insert some assets
+        request.iommi_fallback_assets = lambda: Page().bind(request=get_current_request()).iommi_collected_assets()
         response = self.get_response(request)
 
         if isinstance(response, Part):
