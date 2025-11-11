@@ -1,0 +1,13 @@
+{% extends "iommi/base.html" %}
+
+{% block content %}
+    <h1>{{ artist }}</h1>
+
+    <ul>
+        {% for album in artist.albums.all %}
+            <li>
+                {{ album }}
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
