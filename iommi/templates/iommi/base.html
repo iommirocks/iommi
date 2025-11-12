@@ -27,9 +27,9 @@
 
     {% block iommi_top %}{% endblock %}
 
-    {% if container %}{{ container.iommi_open_tag }}{% endif %}
+    {% if container %}{{ container.iommi_open_tag }}{% elif request.iommi_fallback_container %}{{ request.iommi_fallback_container.iommi_open_tag }}{% endif %}
         {% block content %}{% endblock %}
-    {% if container %}{{ container.iommi_close_tag }}{% endif %}
+    {% if container %}{{ container.iommi_close_tag }}{% elif request.iommi_fallback_container %}{{ request.iommi_fallback_container.iommi_close_tag }}{% endif %}
 
     {% block iommi_bottom %}{% endblock %}
 

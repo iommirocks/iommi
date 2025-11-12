@@ -23,6 +23,7 @@ from iommi.form import (
     register_field_factory,
 )
 from iommi.fragment import (
+    Container,
     Fragment,
     Header,
     html,
@@ -98,8 +99,9 @@ class middleware:
         request.iommi_not_atomic_for = getattr(view_func, '_non_atomic_requests', set())
 
     def __call__(self, request):
-        # For plain FBVs that want to extend iommi/base.html, we need to insert some assets
+        # For plain FBVs that want to extend iommi/base.html, we need to insert some assets and container
         request.iommi_fallback_assets = lambda: Page().bind(request=get_current_request()).iommi_collected_assets()
+        request.iommi_fallback_container = lambda: Container(_name='Container').bind(request=get_current_request())
         response = self.get_response(request)
 
         if isinstance(response, Part):
