@@ -402,7 +402,7 @@ class BoundM:
 
     def _include(self):
         if self.m.include is not None:
-            return evaluate_strict(self.m.include, **self.own_evaluate_parameters())
+            return self.params_are_satisfied() and evaluate_strict(self.m.include, **self.own_evaluate_parameters())
         return self.params_are_satisfied()
 
     @cached_property
