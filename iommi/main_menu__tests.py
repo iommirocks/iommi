@@ -10,6 +10,7 @@ from docs.models import Artist
 from iommi import (
     Field,
     Form,
+    Table,
 )
 from iommi.main_menu import (
     EXTERNAL,
@@ -32,6 +33,14 @@ from tests.helpers import (
 
 def fake_view():
     pass  # pragma: no cover
+
+
+def artist_include(artist: Artist) -> bool:
+    """
+    See :func:`test_path_decoding_include_denied`
+    """
+    included: bool = artist.name == "Black Sabbath"
+    return included
 
 
 menu_declaration = MainMenu(
@@ -69,7 +78,21 @@ menu_declaration = MainMenu(
         external=M(
             view=EXTERNAL,
             url='https://example.com',
-        )
+        ),
+        table=M(
+            view=Table(auto__model=Artist),
+            items=dict(
+                detail=M(
+                    include=lambda artist, **_: artist_include(artist),
+                    params={'artist'},
+                    path='<artist_pk>/',
+                    view=Form(
+                        auto__model=Artist,
+                        instance=lambda artist, **_: artist,
+                    ),
+                ),
+            ),
+        ),
     ),
 )
 
@@ -109,6 +132,10 @@ def test_urlpatterns():
                             '' - > fake_view
         <artist_pk>/ - > None
              '' - > Form.as_view
+        table/ - > None
+             '' - > Table.as_view
+             <artist_pk>/ - > None
+                  '' - > Form.as_view
         ''').strip()
 
 
@@ -176,6 +203,13 @@ def test_rendering():
                                     <i class="fa fa-external-link">
                                     </i>
                                 </span>
+                                      </a>
+                                  </li>
+                                  <li>
+                                      <a href="/table/" title="Table">
+                                          <span>
+                                              Table
+                                          </span>
                                       </a>
                                   </li>
                               </ul>
@@ -259,6 +293,57 @@ def test_path_decoding(settings, black_sabbath):
 
         result = inner(staff_req('get', url=f'/{black_sabbath.pk}/'))
         assert isinstance(result, HttpResponseForbidden)
+
+
+def test_path_decoding_include_parent(settings):
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
+
+    ok = object()
+    inner = main_menu_middleware(lambda request: ok)
+
+    assert (
+        inner(req('get', url='/table/')) == ok
+    ), "Could not access M containing items with `params` and `include` functions that use them."
+
+
+@pytest.mark.django_db
+def test_path_decoding_include_permitted(settings, black_sabbath):
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
+
+    def decode_artist(string, **_):
+        return Artist.objects.get(pk=string)
+
+    with register_path_decoding(artist_pk=PathDecoder(decode=decode_artist, name='artist')):
+        ok = object()
+        inner = main_menu_middleware(lambda request: ok)
+
+        assert (
+            inner(req('get', url=f'/table/{black_sabbath.pk}/')) == ok
+        ), "Could not access M with `params`, whose `include` uses them to allow access."
+
+
+@pytest.mark.django_db
+def test_path_decoding_include_denied(settings, ozzy):
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
+
+    def decode_artist(string, **_):
+        return Artist.objects.get(pk=string)
+
+    with register_path_decoding(artist_pk=PathDecoder(decode=decode_artist, name='artist')):
+        ok = object()
+        inner = main_menu_middleware(lambda request: ok)
+
+        result = inner(req('get', url=f'/table/{ozzy.pk}/'))
+
+        # This doesn't work, for some reason - the denial happens at "is_active",
+        # and the inactive element doesn't seem to trigger a 403 in the middleware,
+        # even though it does in practise.
+        assert isinstance(
+            result, HttpResponseForbidden
+        ), "Not forbidden to access M with `params`, whose `include` uses them to deny access."
 
 
 def test_m_template():
