@@ -1296,6 +1296,14 @@ class Field(Part, Tag):
         return cls(**kwargs)
 
     @classmethod
+    @with_defaults
+    def choice_searchable(cls, **kwargs):
+        """
+        Shortcut for single choice field, but with select2.
+        """
+        return cls.choice(**kwargs)
+
+    @classmethod
     @with_defaults(
         choices=[True, False],
         choice_id_formatter=lambda choice, **_: 'true' if choice else 'false',
