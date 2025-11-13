@@ -333,16 +333,9 @@ def test_path_decoding_include_denied(settings, ozzy):
         return Artist.objects.get(pk=string)
 
     with register_path_decoding(artist_pk=PathDecoder(decode=decode_artist, name='artist')):
-        ok = object()
-        inner = main_menu_middleware(lambda request: ok)
-
-        result = inner(req('get', url=f'/table/{ozzy.pk}/'))
-
-        # This doesn't work, for some reason - the denial happens at "is_active",
-        # and the inactive element doesn't seem to trigger a 403 in the middleware,
-        # even though it does in practise.
-        assert isinstance(
-            result, HttpResponseForbidden
+        menu = menu_declaration.bind(request=req('get', url=f'/table/{ozzy.pk}/'))
+        assert (
+                menu.active_item.url == "/table/"
         ), "Not forbidden to access M with `params`, whose `include` uses them to deny access."
 
 
