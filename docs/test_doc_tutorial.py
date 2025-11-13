@@ -295,7 +295,7 @@ def test_table_customization():
     =========
     
     A very common case of tables is to show a link in the cell. You can do that
-    with `cell_format` and `cell__template` like above, but it's such a common
+    with `cell__format` and `cell__template` like above, but it's such a common
     case that we supply a special convenience method `cell__url` for this. Let's
     make the artist column link to the artist page in our table. First we add
     a `get_absolute_url` on the model, then replace the 
