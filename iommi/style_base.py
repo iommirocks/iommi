@@ -38,6 +38,14 @@ select2_enhanced_forms = Style(
                 input__attrs__class__select2_enhance=True,
                 attrs__style={'min-width': '200px'},
             ),
+            choice_searchable=dict(
+                input__template='iommi/form/choice_select2.html',
+                non_editable_input__attrs__class__select2_enhance=False,
+                non_editable_input__attrs__disabled=True,
+                assets=select2_assets,
+                input__attrs__class__select2_enhance=True,
+                attrs__style={'min-width': '200px'},
+            ),
         ),
     ),
 )

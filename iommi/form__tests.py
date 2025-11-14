@@ -2666,6 +2666,7 @@ def test_all_field_shortcuts():
 
     type_specifics = Namespace(
         fields__field_of_type_choice__choices=[],
+        fields__field_of_type_choice_searchable__choices=[],
         fields__field_of_type_multi_choice__choices=[],
         fields__field_of_type_radio__choices=[],
         fields__field_of_type_checkboxes__choices=[],
@@ -4152,3 +4153,29 @@ def test_shoot_config_into_related_field():
     assert form.fields.foo_foo.iommi_shortcut_stack == ['hardcoded']
     assert form.fields.foo_foo.parsed_data == 123
     assert form.fields.foo_foo.value == 123
+
+
+@pytest.mark.django_db
+def test_choice_searchable(medium_discography):
+
+    class AlbumForm(Form):
+        class Meta:
+            auto__model = Album
+            auto__include = ['year']
+            fields__year__call_target__attribute = 'choice_searchable'
+            fields__year__choices = Album.objects.filter(
+                pk__in=[obj.pk for obj in medium_discography],
+            ).order_by("year").values_list("year").distinct()
+
+    form = AlbumForm().bind(request=req('get'))
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=HTML
+        expected_html=f"""
+            <select class="select2_enhance" data-placeholder="" id="id_year" name="year">
+                <option label="1980" value="1980">1980</option>
+                <option label="1981" value="1981">1981</option>
+            </select>
+        """,
+    )
