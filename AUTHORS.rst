@@ -36,3 +36,4 @@ Credits
 * Milton Johansson <milton.johansson@trioptima.com>
 * astrocbxy <chrisbehrmann00@gmail.com>
 * yanhuixie <yanhuixie@gmail.com>
+* Sam Mangham <mangham@gmail.com>

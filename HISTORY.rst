@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+7.20.0 (2025-11-14)
+~~~~~~~~~~~~~~~~~~~
+
+* `MainMenu` promoted to stable. If you used it from the experimental import, you have to change your imports.
+
+* Default Django view names for main menu items. This is useful for `reverse()`/`{% url %}`
+
+* Improved FBV support. See the updated docs for FBVs.
+
+* Bugfix for `M`: ensure parameters are satisfied before calling `include`. Thanks to first time contributor Sam Mangham!
+
+
 7.19.3 (2025-11-07)
 ~~~~~~~~~~~~~~~~~~~
 
