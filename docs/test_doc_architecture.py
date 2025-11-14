@@ -29,8 +29,9 @@ def test_execution_phases():
 
     1. Definition
     2. Construction
-    3. `Bind`_
-    4. Traversal (e.g. render to html, respond to ajax, custom report creation)
+    3. Refine done
+    4. `Bind`_
+    5. Traversal (e.g. render to html, respond to ajax, custom report creation)
 
 
     At definition time we can have just a bunch of dicts. This is really a stacking and merging of namespaces.
@@ -44,8 +45,63 @@ def test_execution_phases():
     - invoke any user defined :code:`on_bind` handlers
 
     At traversal time we are good to go and can now invoke the final methods of all objects. We can now render html, respond to ajax, etc.
+    """
 
 
+def test_refine_done():
+    # language=rst
+    """
+    Refine done
+    -----------
+
+    At some point we know that this object has been completely configured.
+    This is when `refine_done` is either called automatically (for example if
+    you call `bind()` on an object that hasn't had `refine_done()` called yet),
+    or you can do it explicitly yourself.
+
+    The refine done step does a lot of of the work that is needed for the final
+    traversal step, so if possible you want to make sure this is done before.
+    If this step is done on an object that is then kept around, all this work
+    doesn't need to be redone. Examples of work that is done in this step include
+    all the application of the `Style`, and pre-sorting out callables and constants.
+
+    This is simpler to understand with a concrete example, so let's take a
+    table of albums that contain the string passed in a query parameter, or
+    otherwise the letter `x`:
+    """
+
+    albums_with_o = Table(auto__model=Album, rows=lambda request, **_: Album.objects.filter(name__icontains=request.GET.get('q', 'x')))
+
+    # @test
+    albums_with_o.bind(request=req('get')).render_to_response()
+    # @end
+
+    # language=rst
+    """
+    If you register that to a path with the `.as_view()` method, then 
+    `refine_done` will be called once on first use. You can also explicitly call
+    `refine_done()` to force this optimization to happen at import time, which
+    might be preferable to you, especially for views that you know will be called
+    by all web workers anyway.
+
+    If you do this instead:
+    """
+
+    def albums_with_o(request):
+        return Table(auto__model=Album, rows=Album.objects.filter(name__icontains=request.GET.get('q', 'x')))
+
+    # @test
+    albums_with_o(req('get')).bind(request=req('get')).render_to_response()
+    # @end
+
+    # language=rst
+    """
+    The functionality is the same, but since a fresh `Table` is created on
+    each request, all the work done in the `refine_done` step will have to
+    be redone each request. 
+
+    So in general, the FBV style is often easier to reason about when starting
+    out with iommi, but it has some big downsides on performance.
     """
 
 
