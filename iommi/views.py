@@ -118,7 +118,7 @@ class LoginForm(Form):
                 if user is not None:
                     request = form.get_request()
                     auth.login(request, user)
-                    return HttpResponseRedirect(request.GET.get('next', '/'))
+                    return HttpResponseRedirect(request.GET.get('next', getattr(settings, 'LOGIN_REDIRECT_URL', '/')))
 
                 form.add_error(gettext_lazy('Unknown username or password'))
 
