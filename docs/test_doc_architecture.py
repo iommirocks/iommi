@@ -70,7 +70,12 @@ def test_refine_done():
     otherwise the letter `x`:
     """
 
-    albums_with_o = Table(auto__model=Album, rows=lambda request, **_: Album.objects.filter(name__icontains=request.GET.get('q', 'x')))
+    albums_with_o = Table(
+        auto__model=Album,
+        rows=lambda request, **_: Album.objects.filter(
+            name__icontains=request.GET.get('q', 'x')
+        )
+    )
 
     # @test
     albums_with_o.bind(request=req('get')).render_to_response()
@@ -88,7 +93,12 @@ def test_refine_done():
     """
 
     def albums_with_o(request):
-        return Table(auto__model=Album, rows=Album.objects.filter(name__icontains=request.GET.get('q', 'x')))
+        return Table(
+            auto__model=Album,
+            rows=Album.objects.filter(
+                name__icontains=request.GET.get('q', 'x')
+            )
+        )
 
     # @test
     albums_with_o(req('get')).bind(request=req('get')).render_to_response()
