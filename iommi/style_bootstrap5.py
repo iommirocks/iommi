@@ -20,6 +20,10 @@ bootstrap5_base = Style(
             shortcuts=dict(
                 boolean__label__attrs__class={
                     'col-form-label': True,
+                    'pt-0': True,
+                },
+                boolean__input__attrs__class={
+                    'mt-1': True,
                 },
             ),
             attrs__class={
