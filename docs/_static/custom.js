@@ -42,6 +42,9 @@ function toggle(id, source) {
 
 function scrollToLocationHash() {
     const link = document.querySelector(`a[href="${window.location.hash}"]`);
+    if (!window.location.hash) {
+        return;
+    }
     const section = document.querySelector(window.location.hash);
     if(section) {
         if(link) {
