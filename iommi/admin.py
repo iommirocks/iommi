@@ -19,15 +19,15 @@ from django.urls import (
 from django.utils.translation import gettext_lazy
 
 from iommi import (
+    LAST,
     EditTable,
     Form,
     Fragment,
-    html,
-    LAST,
     Menu,
     MenuItem,
     Page,
     Table,
+    html,
 )
 from iommi._web_compat import format_html
 from iommi.base import (
@@ -39,8 +39,8 @@ from iommi.base import (
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    flatten,
     Namespace,
+    flatten,
     setdefaults_path,
 )
 from iommi.refinable import Refinable
@@ -112,7 +112,6 @@ def read_config(f):
         return f(self, *args, **Namespace(*configs, kwargs))
 
     return read_config_wrapper
-
 
 
 class Admin(Page):
@@ -204,10 +203,17 @@ class Admin(Page):
             raise Http404()
 
         if model is not None and instance is None:
-            refined_admin = refined_admin.refine(model=model, parts__table__auto__model=model)
+            refined_admin = refined_admin.refine(
+                model=model,
+                parts__list__auto__model=model,
+                parts__create__auto__model=model,
+            )
 
         if instance is not None:
-            refined_admin = refined_admin.refine(instance=instance, parts__form__auto__instance=instance)
+            refined_admin = refined_admin.refine(
+                parts__edit__auto__instance=instance,
+                parts__delete__auto__instance=instance,
+            )
 
         return refined_admin
 
@@ -246,15 +252,24 @@ class Admin(Page):
         if self.model_name:
             part_name += '_' + self.model_name
 
-        table = self.parts.get('table')
-        if table is not None:
-            setdefaults_path(self.parts, **{part_name: flatten(table)})
-            self.parts.table = None
+        conf = Namespace()
+        common_conf = self.parts.pop('common', {})
+        setdefaults_path(conf, **flatten(common_conf))
 
-        form = self.parts.get('form')
-        if form is not None:
-            setdefaults_path(self.parts, **{part_name: flatten(form)})
-            self.parts.form = None
+        table_conf = self.parts.pop('table', {})
+        if self.operation in ['all_models', 'list']:
+            setdefaults_path(conf, **flatten(table_conf))
+
+        form_conf = self.parts.pop('form', {})
+        if self.operation in ['edit', 'create', 'delete']:
+            setdefaults_path(conf, **flatten(form_conf))
+
+        for operation in ['all_models', 'list', 'edit', 'create', 'delete']:
+            operation_conf = self.parts.pop(operation, {})
+            if operation == self.operation:
+                setdefaults_path(conf, **flatten(operation_conf))
+
+        setdefaults_path(self.parts, **{part_name: conf})
 
         def should_throw_away(k, v):
             if k == part_name:
@@ -336,7 +351,10 @@ class Admin(Page):
 
         def rows(admin, request, included_filter=False, **_):
             last_group = None
-            for row in sorted(rows_raw(admin=admin, request=request, included_filter=included_filter), key=lambda row: (row.group, row.name)):
+            for row in sorted(
+                rows_raw(admin=admin, request=request, included_filter=included_filter),
+                key=lambda row: (row.group, row.name),
+            ):
                 if last_group != row.group:
                     yield Struct(
                         name=row.group,
@@ -553,6 +571,7 @@ class Admin(Page):
     @classmethod
     def m(cls):
         from iommi.main_menu import M
+
         return M(
             view=cls.all_models(),
             display_name=capitalize(gettext_lazy('admin')),
