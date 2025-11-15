@@ -135,17 +135,6 @@ def test_legacy_fbv_step3(black_sabbath, album, track):
             }
         )
 
-    # language=rst
-    """
-    You will also have to render the assets into the `<head>` block of your html:
-    
-    .. code-block:: html
-    
-        {% for asset in assets.values %}
-            {{ asset }}
-        {% endfor %}
-    """
-
     # @test
     response = view_artist(req('get'), artist_name=black_sabbath.name)
     assert black_sabbath.name in response.content.decode()
@@ -162,7 +151,7 @@ def test_legacy_fbv_step4(black_sabbath, album, track):
     Multiple iommi components
     =========================
 
-    You should only create one iommi component in order to get the automatic namespacing for free. So if you wanted to add two tables, you should wrap them in a `Page`:
+    You should only create one top level iommi component in order to get the automatic namespacing for free. So if you wanted to add two tables, you should wrap them in a `Page`:
     """
 
     def view_artist(request, artist_name):
