@@ -36,6 +36,7 @@ from iommi.base import (
     items,
     values,
 )
+from iommi.declarative.with_meta import with_meta
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
@@ -113,7 +114,7 @@ def read_config(f):
 
     return read_config_wrapper
 
-
+@with_meta
 class Admin(Page):
     class Meta:
         table_class = EditTable
@@ -371,7 +372,7 @@ class Admin(Page):
             Namespace(),
             table if table is not None else {},
             title='',
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=Table,
             call_target__attribute='div',
             sortable=False,
             rows=rows,
@@ -383,17 +384,14 @@ class Admin(Page):
                     row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
                 ),
             ),
-            edit_actions__add_row__include=False,
-            edit_actions__save__include=False,
             attrs__class__table=False,
         )
 
         add_models = setdefaults_path(
             Namespace(),
             include=settings.DEBUG,
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=Table,
             sortable=False,
-            create_form=None,
             rows=functools.partial(rows_raw, included_filter=True),
             page_size=None,
             columns__app_name=cls.get_meta().table_class.get_meta().member_class(auto_rowspan=True),
@@ -426,8 +424,6 @@ class Admin(Page):
                     row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
                 ),
             ),
-            edit_actions__add_row__include=False,
-            edit_actions__save__include=False,
         )
 
         return cls(
@@ -467,6 +463,7 @@ class Admin(Page):
                 delete=dict(
                     call_target__attribute='delete',
                     after=LAST,
+                    cell__url=lambda row, **_: '%s/delete/' % row.pk,
                     include=lambda request, table, **_: (
                         cls.has_permission(request, instance=None, model=table.model, operation='delete')
                     ),
