@@ -553,6 +553,7 @@ def url_parse(string_value, field=None, **_):
 
 
 def file_write_to_instance(field, instance, value, **kwargs):
+    # TODO mazání souboru
     if value:
         Field.write_to_instance(field=field, instance=instance, value=value, **kwargs)
 
@@ -625,9 +626,12 @@ def default_input_id(field, **_):
 
 
 def file__raw_data(form, field, **_):
+    # TODO delete__{name}
     request = form.get_request()
     if field.iommi_path not in request.FILES:
         return None
+    if field.is_list:
+        return request.FILES.getlist(field.iommi_path)
     return request.FILES[field.iommi_path]
 
 
@@ -1418,9 +1422,18 @@ class Field(Part, Tag):
         write_to_instance=file_write_to_instance,
         # Prevent double save. See https://github.com/iommirocks/iommi/issues/419
         extra__django_related_field=True,
+        input__attrs__multiple=lambda field, **_: True if field.is_list else None,
+        **{
+            "attrs__data-iommi-extended-file-field": True,
+        }
     )
     def file(cls, **kwargs):
         return cls(**kwargs)
+
+    @classmethod
+    @with_defaults
+    def dropfile(cls, **kwargs):
+        return cls.file(**kwargs)
 
     @classmethod
     @with_defaults(

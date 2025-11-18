@@ -1,0 +1,27 @@
+{% load iommi %}
+{{ field.iommi_open_tag }}
+    {% if field.label %}{{ field.label }}{% endif %}
+    <div{% if not field.is_list and field.value %} class="hidden"{% endif %} data-iommi-extended-file-input-wrapper>{% block input %}{{ field.input }}{% endblock %}</div>
+    <div class="file-items" data-iommi-extended-file-items-wrapper>
+        {% if field.extra.file_item_template and field.value %}
+            {% if field.is_list %}
+                {% for file in field.value %}
+                    {% include field.extra.file_item_template with file_existing_name=file.name file_name=file.name|basename file_type=file.name|file_type file_size=file.size|filesizeformat file_url=file.url %}
+                {% endfor %}
+            {% else %}
+                {% with file=field.value %}
+                    {% include field.extra.file_item_template with file_existing_name=file.name file_name=file.name|basename file_type=file.name|file_type file_size=file.size|filesizeformat file_url=file.url %}
+                {% endwith %}
+            {% endif %}
+        {% endif %}
+    </div>
+    {% if field.help %}
+        {{ field.help }}
+    {% endif %}
+    {{ field.errors }}
+    {% if field.extra.file_item_template %}
+        <template data-iommi-extended-file-item-template>
+            {% include field.extra.file_item_template with file_existing_name='' file_name='{file_name}' file_type='{file_type}' file_size='{file_size}' file_url='' %}
+        </template>
+    {% endif %}
+{{ field.iommi_close_tag }}

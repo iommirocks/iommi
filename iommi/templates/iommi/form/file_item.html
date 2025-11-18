@@ -1,0 +1,10 @@
+{% load i18n %}
+<div class="file-field-item" data-iommi-extended-file-item{% if file_existing_name %} data-iommi-extended-file-existing-name="{{ file_existing_name }}"{% endif %}>
+    {% if file_type %}<span class="file-icon file-icon-{{ file_type }}"></span>{% endif %}
+    <{% if file_url %}a href="{{ file_url }}" target="_blank"{% else %}span{% endif %} class="file-name">
+    {{ file_name }}
+    </{% if file_url %}a{% else %}span{% endif %}>
+    {% if file_size %}<span class="file-size">{{ file_size }}</span>{% endif %}
+    <button type="button" class="btn-file-delete" title="{% translate "Delete" %}" data-iommi-extended-file-delete
+            data-iommi-delete-confirm-text="{% translate "Do you really want to delete this file?" %}">🗑</button>
+</div>

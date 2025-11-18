@@ -65,3 +65,45 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     content: "||";
 }
 /* /EditTable */
+
+/* extended file field */
+[data-iommi-extended-file-field] [data-iommi-extended-file-input-wrapper].hidden {
+    display: none;
+}
+[data-iommi-extended-file-field] .file-field-item {
+    border: 1px dotted #cccccc;
+    padding: .375rem .75rem;
+}
+/* .file-icon-jpg */
+[data-iommi-extended-file-field] .file-field-item .file-icon::after {
+    content: '📄';
+}
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-jpg::after,
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-jpeg::after,
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-bmp::after,
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-png::after,
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-ico::after,
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-avif::after,
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-webp::after {
+    content: '🖼';
+}
+[data-iommi-extended-file-field] .file-field-item .file-name {
+    margin-right: 3rem;
+}
+[data-iommi-extended-file-field] .file-field-item .file-size {
+    font-size: 80%;
+    margin-right: 3rem;
+}
+[data-iommi-extended-file-field] .file-field-item .file-size::before {
+    content: '(';
+}
+[data-iommi-extended-file-field] .file-field-item .file-size::after {
+    content: ')';
+}
+[data-iommi-extended-file-field] .btn-file-delete {
+    border: 0;
+    color: #930000;
+    background: inherit;
+    border-radius: 50%;
+}
+/* /extended file field */

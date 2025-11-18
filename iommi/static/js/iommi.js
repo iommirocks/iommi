@@ -673,10 +673,204 @@ class IommiReorderable {
     }
 }
 
+class IommiExtendedFileInput {
+    defaultSelector = '[data-iommi-extended-file-field]';
+
+    constructor() {
+        const SELF = this;
+        document.addEventListener('iommi.element.populated', (event) => {
+            SELF.initAll(event.target);
+        });
+    }
+
+    onCompleteReadyState() {
+        if(document.querySelector('[data-iommi-extended-file-drop-zone]')) {
+            // For file dropping, the browser may process them by default (such as opening or downloading the file)
+            // even when the file is not dropped into a valid drop target.
+            // To prevent this behavior, we also need to listen for the drop event on window and cancel it.
+            window.addEventListener("drop", (e) => {
+              if ([...e.dataTransfer.items].some((item) => item.kind === "file")) {
+                e.preventDefault();
+              }
+            });
+
+            // In order for the drop event to fire, the element must also cancel the dragover event.
+            // Because we are listening for drop on window, we need to cancel the dragover event for the whole window as well.
+            window.addEventListener("dragover", (e) => {
+                const fileItems = [...e.dataTransfer.items].filter(
+                    (item) => item.kind === "file",
+                );
+                if (fileItems.length > 0) {
+                    e.preventDefault();
+                    if (!dropZone.contains(e.target)) {
+                        e.dataTransfer.dropEffect = "none";
+                    }
+                }
+            });
+        }
+
+        this.initAll();
+
+        // add live event-listener for delete
+        IommiBase.addLiveEventListener(
+            'click',
+            '[data-iommi-extended-file-item] [data-iommi-extended-file-delete]',
+            (event) => {
+                if(!event.target.dataset.iommiDeleteConfirmText || confirm(event.target.dataset.iommiDeleteConfirmText)) {
+                    this.deleteFile(event.target.closest("[data-iommi-extended-file-item]"));
+                }
+            }
+        );
+    }
+
+    initAll(parent, selector) {
+        if (!parent) {
+            parent = document;
+        }
+        if (!selector) {
+            selector = this.defaultSelector;
+        }
+        parent.querySelectorAll(selector).forEach((el) => {this.initOne(el)});
+    }
+
+    initOne(extendedFileField) {
+        if(extendedFileField.matches('[data-iommi-extended-file-bound]')) {
+            return;
+        }
+        const fileInput = extendedFileField.querySelector('input[type="file"]');
+        const dropZone = extendedFileField.querySelector('[data-iommi-extended-file-drop-zone]');
+
+        if(dropZone) {
+            dropZone.addEventListener('drop', this.dropHandler);
+
+            // In order for the drop event to fire, the element must also cancel the dragover event.
+            dropZone.addEventListener('dragover', (event) => {
+                const fileItems = [...event.dataTransfer.items].filter(
+                    (item) => item.kind === 'file',
+                );
+                if (fileItems.length > 0) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'copy';
+                }
+            });
+        }
+
+        fileInput.addEventListener('change', (event) => {
+            extendedFileField.querySelector('[data-iommi-extended-file-items-wrapper]').querySelectorAll(
+                '[data-iommi-extended-file-item]'
+            ).forEach((fileItem) => {
+                // TODO smazat jen pokud neni ve fileInput.files
+                //  ?podmínkou nebo předat parametr deleteFile?
+                // if(fileItem.dataset.iommiExtendedFileUploadedName && ) {
+                this.deleteFile(fileItem);
+            });
+            this.displayFiles(extendedFileField, event.target.files);
+        });
+
+        extendedFileField.setAttribute('data-iommi-extended-file-bound', '');
+    }
+
+    deleteFile(fileItem) {
+        const extendedFileField = fileItem.closest(this.defaultSelector);
+        const fileInput = extendedFileField.querySelector('input[type="file"]');
+
+        if(fileItem.dataset.iommiExtendedFileUploadedName) {
+            const dt = new DataTransfer();
+            for(let file of fileInput.files) {
+                if(file.name !== fileItem.dataset.iommiExtendedFileUploadedName) {
+                    dt.items.add(file);
+                }
+            }
+            fileInput.files = dt.files;
+        } else {
+            const hiddenInput = document.createElement("input");
+            hiddenInput.setAttribute("type", "hidden");
+            hiddenInput.setAttribute("name", `delete__${fileInput.name}`);
+            hiddenInput.setAttribute("value", fileItem.dataset.iommiExtendedFileExistingName);
+            extendedFileField.appendChild(hiddenInput);
+        }
+
+        fileItem.remove();
+
+        if(!fileInput.hasAttribute('multiple') && !fileInput.files.length) {
+            extendedFileField.querySelector('[data-iommi-extended-file-input-wrapper]').classList.remove('hidden');
+        }
+
+        fileItem.dispatchEvent(
+            new CustomEvent('iommi.extendedFile.deleted', {
+                bubbles: true
+            })
+        );
+    }
+
+    displayFiles(extendedFileField, files) {
+        const addedFiles = [];
+
+        for(let file of files) {
+            addedFiles.push({
+                file: file,
+                fileItem: this.displayOneFile(extendedFileField, file)
+            });
+        }
+
+        extendedFileField.dispatchEvent(
+            new CustomEvent('iommi.extendedFile.addedFiles', {
+                bubbles: true,
+                detail: {addedFiles: addedFiles}
+            })
+        );
+    }
+
+    displayOneFile(extendedFileField, file) {
+        const template = extendedFileField.querySelector('[data-iommi-extended-file-item-template]');
+        const clone = template.content.cloneNode(true).firstElementChild;
+        clone.innerHTML = clone.innerHTML.replace('{file_name}', file.name).replace('{file_type}', this.getFileType(file.name)).replace('{file_size}', this.formatFileSize(file.size));
+        clone.dataset.iommiExtendedFileUploadedName = file.name;
+        const fileItem = extendedFileField.querySelector('[data-iommi-extended-file-items-wrapper]').appendChild(clone);
+
+        if(!extendedFileField.querySelector('input[type="file"]').hasAttribute('multiple')) {
+            extendedFileField.querySelector('[data-iommi-extended-file-input-wrapper]').classList.add('hidden');
+        }
+
+        return fileItem
+    }
+
+    dropHandler(event) {
+        event.preventDefault();
+
+        const extendedFileField = event.target.closest(this.defaultSelector);
+        const fileInput = extendedFileField.querySelector('input[type="file"]');
+
+        const dt = new DataTransfer();
+        for(let file of fileInput.files) {
+            dt.items.add(file);
+        }
+        for(let file of event.dataTransfer.files) {
+            dt.items.add(file);
+        }
+        fileInput.files = dt.files;
+
+        this.displayFiles(extendedFileField, event.dataTransfer.files);
+    }
+
+    formatFileSize(size) {
+        const i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
+        return ((size / Math.pow(1024, i)).toFixed(2)) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+    }
+
+    getFileType(filename) {
+        if(filename.lastIndexOf('.') > 0) {
+            return filename.split('.').pop();
+        }
+        return '';
+    }
+}
+
 // TODO should this be somehow conditioned? so people can create their own extended instance?
 window.iommi = new IommiBase({
     select2: new IommiSelect2(),
-    reorderable: new IommiReorderable()
+    reorderable: new IommiReorderable(),
+    extendedFileInput: new IommiExtendedFileInput()
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -691,5 +885,6 @@ document.addEventListener('readystatechange', () => {
     if (document.readyState === 'complete') {
         window.iommi.select2.onCompleteReadyState();
         window.iommi.reorderable.onCompleteReadyState();
+        window.iommi.extendedFileInput.onCompleteReadyState();
     }
 });
