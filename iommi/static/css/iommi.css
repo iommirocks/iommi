@@ -106,4 +106,22 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     background: inherit;
     border-radius: 50%;
 }
+[data-iommi-extended-file-field] .file-drop-zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    height: 80px;
+    padding: 1em;
+    border: 1px dashed #cccccc;
+    border-radius: 8px;
+    cursor: pointer;
+}
+[data-iommi-extended-file-field] .file-drop-zone.dragover {
+    border: 1px solid #cccccc;
+    box-shadow: rgba(0, 0, 0, 0.35) 0 5px 15px;
+}
+[data-iommi-extended-file-field] .file-drop-zone input[type="file"] {
+    display: none;
+}
 /* /extended file field */

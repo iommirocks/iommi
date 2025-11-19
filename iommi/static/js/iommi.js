@@ -674,7 +674,19 @@ class IommiReorderable {
 }
 
 class IommiExtendedFileInput {
-    defaultSelector = '[data-iommi-extended-file-field]';
+    bound_attr = 'data-iommi-extended-file-bound';
+
+    selectors = {
+        field: '[data-iommi-extended-file-field]',
+        bound_field: `[${this.bound_attr}]`,
+        drop_zone: '[data-iommi-extended-file-drop-zone]',
+        file_item: '[data-iommi-extended-file-item]',
+        file_item_template: '[data-iommi-extended-file-item-template]',
+        file_items_wrapper: '[data-iommi-extended-file-items-wrapper]',
+        file_delete: '[data-iommi-extended-file-delete]',
+        file_input: 'input[type="file"]',
+        file_input_wrapper: '[data-iommi-extended-file-input-wrapper]',
+    };
 
     constructor() {
         const SELF = this;
@@ -684,14 +696,14 @@ class IommiExtendedFileInput {
     }
 
     onCompleteReadyState() {
-        if(document.querySelector('[data-iommi-extended-file-drop-zone]')) {
+        if(document.querySelector(this.selectors.drop_zone)) {
             // For file dropping, the browser may process them by default (such as opening or downloading the file)
             // even when the file is not dropped into a valid drop target.
             // To prevent this behavior, we also need to listen for the drop event on window and cancel it.
             window.addEventListener("drop", (e) => {
-              if ([...e.dataTransfer.items].some((item) => item.kind === "file")) {
-                e.preventDefault();
-              }
+                if ([...e.dataTransfer.items].some((item) => item.kind === "file")) {
+                    e.preventDefault();
+                }
             });
 
             // In order for the drop event to fire, the element must also cancel the dragover event.
@@ -702,7 +714,7 @@ class IommiExtendedFileInput {
                 );
                 if (fileItems.length > 0) {
                     e.preventDefault();
-                    if (!dropZone.contains(e.target)) {
+                    if (!e.target.matches(this.selectors.drop_zone) && !e.target.closest(this.selectors.drop_zone)) {
                         e.dataTransfer.dropEffect = "none";
                     }
                 }
@@ -714,34 +726,34 @@ class IommiExtendedFileInput {
         // add live event-listener for delete
         IommiBase.addLiveEventListener(
             'click',
-            '[data-iommi-extended-file-item] [data-iommi-extended-file-delete]',
+            `${this.selectors.file_item} ${this.selectors.file_delete}`,
             (event) => {
                 if(!event.target.dataset.iommiDeleteConfirmText || confirm(event.target.dataset.iommiDeleteConfirmText)) {
-                    this.deleteFile(event.target.closest("[data-iommi-extended-file-item]"));
+                    this.deleteFile(event.target.closest(this.selectors.file_item));
                 }
             }
         );
     }
 
-    initAll(parent, selector) {
+    initAll(parent) {
         if (!parent) {
             parent = document;
         }
-        if (!selector) {
-            selector = this.defaultSelector;
-        }
-        parent.querySelectorAll(selector).forEach((el) => {this.initOne(el)});
+        parent.querySelectorAll(this.selectors.field).forEach((el) => {this.initOne(el)});
     }
 
     initOne(extendedFileField) {
-        if(extendedFileField.matches('[data-iommi-extended-file-bound]')) {
+        if(extendedFileField.matches(this.selectors.bound_field)) {
             return;
         }
-        const fileInput = extendedFileField.querySelector('input[type="file"]');
-        const dropZone = extendedFileField.querySelector('[data-iommi-extended-file-drop-zone]');
+        const fileInput = extendedFileField.querySelector(this.selectors.file_input);
+        const dropZone = extendedFileField.querySelector(this.selectors.drop_zone);
 
         if(dropZone) {
-            dropZone.addEventListener('drop', this.dropHandler);
+            dropZone.addEventListener('drop', (event) => {
+                dropZone.classList.remove('dragover');
+                this.dropHandler(event)
+            });
 
             // In order for the drop event to fire, the element must also cancel the dragover event.
             dropZone.addEventListener('dragover', (event) => {
@@ -751,30 +763,32 @@ class IommiExtendedFileInput {
                 if (fileItems.length > 0) {
                     event.preventDefault();
                     event.dataTransfer.dropEffect = 'copy';
+                    dropZone.classList.add('dragover');
                 }
+            });
+
+            dropZone.addEventListener("dragleave", () => {
+              dropZone.classList.remove("dragover");
             });
         }
 
         fileInput.addEventListener('change', (event) => {
-            extendedFileField.querySelector('[data-iommi-extended-file-items-wrapper]').querySelectorAll(
-                '[data-iommi-extended-file-item]'
+            extendedFileField.querySelector(this.selectors.file_items_wrapper).querySelectorAll(
+                this.selectors.file_item
             ).forEach((fileItem) => {
-                // TODO smazat jen pokud neni ve fileInput.files
-                //  ?podmínkou nebo předat parametr deleteFile?
-                // if(fileItem.dataset.iommiExtendedFileUploadedName && ) {
-                this.deleteFile(fileItem);
+                this.deleteFile(fileItem, true);
             });
             this.displayFiles(extendedFileField, event.target.files);
         });
 
-        extendedFileField.setAttribute('data-iommi-extended-file-bound', '');
+        extendedFileField.setAttribute(this.bound_attr, '');
     }
 
-    deleteFile(fileItem) {
-        const extendedFileField = fileItem.closest(this.defaultSelector);
-        const fileInput = extendedFileField.querySelector('input[type="file"]');
+    deleteFile(fileItem, preserveFileInputValue) {
+        const extendedFileField = fileItem.closest(this.selectors.field);
+        const fileInput = extendedFileField.querySelector(this.selectors.file_input);
 
-        if(fileItem.dataset.iommiExtendedFileUploadedName) {
+        if(fileItem.dataset.iommiExtendedFileUploadedName && !preserveFileInputValue) {
             const dt = new DataTransfer();
             for(let file of fileInput.files) {
                 if(file.name !== fileItem.dataset.iommiExtendedFileUploadedName) {
@@ -782,7 +796,7 @@ class IommiExtendedFileInput {
                 }
             }
             fileInput.files = dt.files;
-        } else {
+        } else if(fileItem.dataset.iommiExtendedFileExistingName) {
             const hiddenInput = document.createElement("input");
             hiddenInput.setAttribute("type", "hidden");
             hiddenInput.setAttribute("name", `delete__${fileInput.name}`);
@@ -793,7 +807,7 @@ class IommiExtendedFileInput {
         fileItem.remove();
 
         if(!fileInput.hasAttribute('multiple') && !fileInput.files.length) {
-            extendedFileField.querySelector('[data-iommi-extended-file-input-wrapper]').classList.remove('hidden');
+            extendedFileField.querySelector(this.selectors.file_input_wrapper).classList.remove('hidden');
         }
 
         fileItem.dispatchEvent(
@@ -822,14 +836,14 @@ class IommiExtendedFileInput {
     }
 
     displayOneFile(extendedFileField, file) {
-        const template = extendedFileField.querySelector('[data-iommi-extended-file-item-template]');
+        const template = extendedFileField.querySelector(this.selectors.file_item_template);
         const clone = template.content.cloneNode(true).firstElementChild;
         clone.innerHTML = clone.innerHTML.replace('{file_name}', file.name).replace('{file_type}', this.getFileType(file.name)).replace('{file_size}', this.formatFileSize(file.size));
         clone.dataset.iommiExtendedFileUploadedName = file.name;
-        const fileItem = extendedFileField.querySelector('[data-iommi-extended-file-items-wrapper]').appendChild(clone);
+        const fileItem = extendedFileField.querySelector(this.selectors.file_items_wrapper).appendChild(clone);
 
-        if(!extendedFileField.querySelector('input[type="file"]').hasAttribute('multiple')) {
-            extendedFileField.querySelector('[data-iommi-extended-file-input-wrapper]').classList.add('hidden');
+        if(!extendedFileField.querySelector(this.selectors.file_input).hasAttribute('multiple')) {
+            extendedFileField.querySelector(this.selectors.file_input_wrapper).classList.add('hidden');
         }
 
         return fileItem
@@ -838,19 +852,51 @@ class IommiExtendedFileInput {
     dropHandler(event) {
         event.preventDefault();
 
-        const extendedFileField = event.target.closest(this.defaultSelector);
-        const fileInput = extendedFileField.querySelector('input[type="file"]');
+        const extendedFileField = event.target.closest(this.selectors.field);
+        const fileInput = extendedFileField.querySelector(this.selectors.file_input);
 
-        const dt = new DataTransfer();
-        for(let file of fileInput.files) {
-            dt.items.add(file);
+        if(fileInput.hasAttribute('multiple')) {
+            const dt = new DataTransfer();
+            const dtDisplay = new DataTransfer();
+            for (let file of fileInput.files) {
+                dt.items.add(file);
+            }
+            for (let file of event.dataTransfer.files) {
+                if(!this.dataTransferContainsFile(dt, file) && !this.isFirefoxDirectory(file)) {
+                    dt.items.add(file);
+                    dtDisplay.items.add(file);
+                }
+            }
+            fileInput.files = dt.files;
+            this.displayFiles(extendedFileField, dtDisplay.files);
+        } else {
+            // only first file when input is not multiple
+            const dt = new DataTransfer();
+            if(event.dataTransfer.files.length) {
+                for (let file of event.dataTransfer.files) {
+                    if(!this.isFirefoxDirectory(file)) {
+                        dt.items.add(file);
+                        break;
+                    }
+                }
+                fileInput.files = dt.files;
+                fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
+            }
         }
-        for(let file of event.dataTransfer.files) {
-            dt.items.add(file);
-        }
-        fileInput.files = dt.files;
+    }
 
-        this.displayFiles(extendedFileField, event.dataTransfer.files);
+    dataTransferContainsFile(dt, file) {
+        return Array.from(dt.files).some(f =>
+            f.name === file.name &&
+            f.size === file.size &&
+            f.type === file.type
+        );
+    }
+
+    // in Firefox directories are still in event.dataTransfer.files
+    // we want to skip those
+    isFirefoxDirectory(file) {
+        return (file.type === "" || file.type === "application/x-moz-file") && file.size === 0;
     }
 
     formatFileSize(size) {
