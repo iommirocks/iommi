@@ -23,10 +23,6 @@ def test_base(settings, medium_discography):
     Main menu
     ~~~~~~~~~
 
-    .. warning::
-
-        The `MainMenu` component is considered experimental. That means the API can change in breaking ways in minor releases of iommi. It also means you import from `iommi.experimental` to make that clear.
-
     The main menu component in iommi is used to create the main navigation for your app. This is primarily useful for SaaS or internal apps. It creates a sidebar menu with support for nested menu items, and centralized access control that automatically shows only menu items the user has access to.
 
     To set up your main menu:
