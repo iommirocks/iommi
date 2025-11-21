@@ -12,6 +12,7 @@ from django.urls import (
     path,
 )
 
+from iommi import Table
 from iommi.admin import (
     Admin,
     Messages,
@@ -300,3 +301,26 @@ def test_edit_non_int_pk(mock_messages, settings):
     mock_messages.add_message.assert_called_with(
         request, mock_messages.INFO, f'Uuid pk model {f} was updated', fail_silently=True
     )
+
+class TableAdmin(Admin):
+    class Meta:
+        table_class = Table
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'admin, kwargs',
+    [
+        (TableAdmin.all_models(), dict()),
+        (TableAdmin.list(), dict(app_name='tests', model_name='foo')),
+        (TableAdmin.edit(), dict(app_name='tests', model_name='foo', pk=0)),
+        (TableAdmin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
+    ],
+)
+def test_redirect_to_login(admin, kwargs):
+    if 'pk' in kwargs:
+        Foo.objects.create(pk=kwargs['pk'], foo=1)
+    request = req('get')
+    request.user = Struct(is_staff=True, is_authenticated=True, is_superuser=True)
+    view = admin.as_view()
+    result = view(request=request, **kwargs)
+    assert result.status_code == 200
