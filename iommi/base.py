@@ -47,7 +47,11 @@ def build_as_view_wrapper(target):
             view_wrapper.__iommi_target__ = view_wrapper.__iommi_target__.refine_done()
 
         decode_path_components(request, **view_params)
-        return view_wrapper.__iommi_target__.bind(request=request).render_to_response()
+        part = view_wrapper.__iommi_target__.bind(request=request)
+        if part is None:
+            from django.http import Http404
+            raise Http404()
+        return part.render_to_response()
 
     view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
     view_wrapper.__doc__ = target.__class__.__doc__
