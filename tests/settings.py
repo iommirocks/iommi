@@ -82,6 +82,9 @@ FORMAT_MODULE_PATH = [
 ]
 
 
+IOMMI_DISABLE_DEBUG_PANEL = True
+IOMMI_DEBUG = True
+
 USE_L10N = False
 
 STATIC_URL = '/static/'

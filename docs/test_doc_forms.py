@@ -51,8 +51,9 @@ def test_forms():
     """
 
 
-def test_fully_automatic_forms():
+def test_fully_automatic_forms(settings):
     # @test
+    settings.DEBUG = True
     user = User.objects.create(username='foo')
     # @end
 
