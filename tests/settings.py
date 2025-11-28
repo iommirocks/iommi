@@ -81,10 +81,6 @@ FORMAT_MODULE_PATH = [
     'tests.formats',
 ]
 
-
-IOMMI_DISABLE_DEBUG_PANEL = True
-IOMMI_DEBUG = True
-
 USE_L10N = False
 
 STATIC_URL = '/static/'
