@@ -17,9 +17,11 @@ from iommi.base import (
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    Namespace,
 )
-from iommi.refinable import RefinableObject
+from iommi.refinable import (
+    RefinableNamespace,
+    RefinableObject,
+)
 from iommi.shortcut import get_shortcuts_by_name
 
 DEFAULT_STYLE = 'bootstrap5'
@@ -45,7 +47,7 @@ def class_names_for(cls):
 
 def recursive_namespace(d):
     if isinstance(d, dict):
-        return Namespace({k: recursive_namespace(v) for k, v in items(d)})
+        return RefinableNamespace({k: recursive_namespace(v) for k, v in items(d)})
     else:
         return d
 
@@ -83,8 +85,8 @@ class Style:
                     self.icon_formatter = base.icon_formatter
                     break
 
-        self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
-        self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
+        self.root = {k: v for k, v in items(RefinableNamespace(*(base.root for base in bases), root)) if v is not None}
+        self.config = RefinableNamespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
         for k, v in items(self.config):
             if k[0].islower():

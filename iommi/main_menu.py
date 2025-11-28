@@ -34,6 +34,7 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.path import decode_path_components
+from iommi.refinable import RefinableNamespace
 from iommi.struct import Struct
 from iommi.style import resolve_style
 
@@ -89,7 +90,7 @@ class MainMenu:
 
     def bind(self, request):
         style = resolve_style(None)
-        conf = Namespace(*style.resolve(self))
+        conf = RefinableNamespace(*style.resolve(self))
 
         template = conf.pop('template', 'iommi/main_menu/menu.html')
         if self.template is MISSING:
@@ -98,9 +99,10 @@ class MainMenu:
         assets = {
             k: v.bind(request=request)
             for k, v in conf.pop('assets', {}).items()
+            if v
         }
 
-        attrs = Namespace(self.attrs, conf.pop('attrs', {}))
+        attrs = RefinableNamespace(self.attrs, conf.pop('attrs', {}))
 
         assert not conf, f'Unknown configuration {conf} for `MainMenu`'
 
