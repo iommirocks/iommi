@@ -1,6 +1,6 @@
 {% load i18n %}
 <div id="iommi_{{ query.iommi_dunder_path }}">
-    <form{{ query.form.attrs }}>
+    {{ query.form.iommi_open_tag }}
 
         {% if query.advanced %}
             {{ query.advanced }}
@@ -19,5 +19,5 @@
         </div>
 
         {{ query.form.render_actions }}
-   </form>
+    {{ query.form.iommi_close_tag }}
 </div>
