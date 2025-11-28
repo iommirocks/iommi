@@ -27,7 +27,7 @@ def test_base(settings, medium_discography):
 
     To set up your main menu:
 
-    - add the `iommi.experimental.main_menu.main_menu_middleware` middleware to the `MIDDLEWARE` list
+    - add the `iommi.main_menu.main_menu_middleware` middleware to the `MIDDLEWARE` list
     - declare your `MainMenu`
     - define the `IOMMI_MAIN_MENU` setting to point to where you have defined your menu (like `IOMMI_MAIN_MENU = 'your_app.main_menu.main_menu'`).
     - add the url patterns from the menu to your app
