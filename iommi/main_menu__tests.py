@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from docs.models import Artist
 from iommi import (
+    Asset,
     Field,
     Form,
     Table,
@@ -23,7 +24,12 @@ from iommi.path import (
     PathDecoder,
     register_path_decoding,
 )
-from iommi.style import resolve_style
+from iommi.style import (
+    register_style,
+    resolve_style,
+    Style,
+)
+from iommi.style_base import base
 from tests.helpers import (
     req,
     staff_req,
@@ -445,3 +451,81 @@ def test_reverse_name(settings):
 
     assert reverse('main_menu.foo.bar.baz') == '/foo/bar/baz/'
     assert reverse('quux') == '/foo/bar/baz/quux/'
+
+
+def test_styling_1(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_main_menu_style'
+    test_main_menu_style = Style(
+        base,
+        MainMenu__assets = dict(
+            iommi_main_menu_css__include=False,
+        ),
+    )
+    assert isinstance(test_main_menu_style.resolve(MainMenu())[0]['assets']['iommi_main_menu_css'], Asset)
+    with register_style('test_main_menu_style', test_main_menu_style):
+        MainMenu().bind(request=req('get'))
+
+
+def test_styling_2(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_main_menu_style'
+    test_main_menu_style = Style(
+        base,
+        MainMenu=dict(
+            attrs__class=dict(main_menu=False),
+            assets=dict(
+                iommi_main_menu_css__include=False,
+            ),
+        ),
+    )
+    assert isinstance(test_main_menu_style.resolve(MainMenu())[0]['assets']['iommi_main_menu_css'], Asset)
+    with register_style('test_main_menu_style', test_main_menu_style):
+        MainMenu().bind(request=req('get'))
+
+
+def test_styling_3(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_main_menu_style'
+    test_main_menu_style = Style(
+        base,
+        MainMenu__assets__iommi_main_menu_css__include=False,
+    )
+    assert isinstance(test_main_menu_style.resolve(MainMenu())[0]['assets']['iommi_main_menu_css'], Asset)
+    with register_style('test_main_menu_style', test_main_menu_style):
+        MainMenu().bind(request=req('get'))
+
+
+def test_styling_4(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_main_menu_style'
+    test_main_menu_style = Style(
+        base,
+        MainMenu__attrs__class__foo=True,
+    )
+    assert isinstance(test_main_menu_style.resolve(MainMenu())[0]['assets']['iommi_main_menu_css'], Asset)
+    with register_style('test_main_menu_style', test_main_menu_style):
+        MainMenu().bind(request=req('get'))
+
+
+def test_styling_5(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_main_menu_style'
+    test_main_menu_style = Style(
+        base,
+        MainMenu__assets__iommi_main_menu_css=None,
+    )
+    assert test_main_menu_style.resolve(MainMenu())[0]['assets']['iommi_main_menu_css'] is None
+    with register_style('test_main_menu_style', test_main_menu_style):
+        MainMenu().bind(request=req('get'))
+
+
+def test_styling_6(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_main_menu_style'
+    test_main_menu_style = Style(
+        base,
+        MainMenu=dict(
+            attrs__class=dict(main_menu=False),
+            assets=dict(
+                iommi_main_menu_css=None,
+            ),
+        ),
+    )
+    assert test_main_menu_style.resolve(MainMenu())[0]['assets']['iommi_main_menu_css'] is None
+    with register_style('test_main_menu_style', test_main_menu_style):
+        MainMenu().bind(request=req('get'))
