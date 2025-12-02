@@ -44,6 +44,7 @@ from django.utils import timezone
 from django.utils.functional import Promise
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
+from django.templatetags.static import static
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
@@ -1423,8 +1424,14 @@ class Field(Part, Tag):
         # Prevent double save. See https://github.com/iommirocks/iommi/issues/419
         extra__django_related_field=True,
         input__attrs__multiple=lambda field, **_: True if field.is_list else None,
+        extra_evaluated__show_thumbs=True,
         **{
-            "attrs__data-iommi-extended-file-field": True,
+            'attrs__data-iommi-extended-file-field': True,
+            'attrs__data-iommi-extended-file-with-thumbs': lambda field, **_: field.extra_evaluated.show_thumbs,
+            # for JS thumb generating when image.size > 1MB:
+            'attrs__data-iommi-extended-file-thumb-width': 100,
+            'attrs__data-iommi-extended-file-thumb-height': 100,
+            'attrs__data-iommi-extended-file-loading-icon': lambda **_: static('images/iommi-icons/spinner.svg'),
         }
     )
     def file(cls, **kwargs):
@@ -1437,7 +1444,7 @@ class Field(Part, Tag):
 
     @classmethod
     @with_defaults(
-        template='iommi/form/image_row.html',
+        template='iommi/form/image_row.html',  # TODO toto už nebude potřeba asi
     )
     def image(cls, **kwargs):
         return cls.file(**kwargs)

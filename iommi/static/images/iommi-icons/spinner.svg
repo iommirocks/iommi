@@ -1,0 +1,15 @@
+<svg width="40" height="40" viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+  <!-- Subtle spinner -->
+  <circle cx="35" cy="35" r="20"
+          stroke="#000" stroke-width="2" fill="none"
+          stroke-linecap="round"
+          stroke-dasharray="31.4 31.4"
+          stroke-opacity="0.3">
+    <animateTransform attributeName="transform"
+      type="rotate"
+      from="0 35 35"
+      to="360 35 35"
+      dur="1.5s"
+      repeatCount="indefinite"/>
+  </circle>
+</svg>

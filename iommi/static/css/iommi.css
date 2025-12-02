@@ -74,18 +74,36 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     border: 1px dotted #cccccc;
     padding: .375rem .75rem;
 }
-/* .file-icon-jpg */
-[data-iommi-extended-file-field] .file-field-item .file-icon::after {
-    content: '📄';
+[data-iommi-extended-file-field] .file-field-item .file-icon {
+    display: inline-block;
+    height: 64px;
+    width: 64px;
 }
-[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-jpg::after,
-[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-jpeg::after,
-[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-bmp::after,
-[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-png::after,
-[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-ico::after,
-[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-avif::after,
-[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon-webp::after {
-    content: '🖼';
+[data-iommi-extended-file-field] .file-field-item .file-icon:not(:has(.file-thumb)) {
+    background: url('/static/images/iommi-icons/file.svg');  /* TODO předělat přes style="--iommi-icon-bg" */
+}
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--jpg:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--jpeg:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--jif:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--jfif:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--jfi:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--gif:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--bmp:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--png:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--ico:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--avif:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--webp:not(:has(.file-thumb)),
+[data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--svg:not(:has(.file-thumb)) {
+    background: url('/static/images/iommi-icons/image.svg');  /* TODO předělat přes style="--iommi-icon-bg" */
+}
+[data-iommi-extended-file-field] .file-field-item .file-icon .file-thumb {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: var(--iommi-image-thumb-bg)
 }
 [data-iommi-extended-file-field] .file-field-item .file-name {
     margin-right: 3rem;
@@ -94,10 +112,10 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     font-size: 80%;
     margin-right: 3rem;
 }
-[data-iommi-extended-file-field] .file-field-item .file-size::before {
+[data-iommi-extended-file-field] .file-field-item .file-size:not(.file-size-missing)::before {
     content: '(';
 }
-[data-iommi-extended-file-field] .file-field-item .file-size::after {
+[data-iommi-extended-file-field] .file-field-item .file-size:not(.file-size-missing)::after {
     content: ')';
 }
 [data-iommi-extended-file-field] .btn-file-delete {
@@ -124,4 +142,9 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 [data-iommi-extended-file-field] .file-drop-zone input[type="file"] {
     display: none;
 }
+/*
+TODO
+ .file-icon {bg svg file/picture}
+     - jen černobílé
+*/
 /* /extended file field */

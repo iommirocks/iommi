@@ -788,15 +788,21 @@ class IommiExtendedFileInput {
         const extendedFileField = fileItem.closest(this.selectors.field);
         const fileInput = extendedFileField.querySelector(this.selectors.file_input);
 
-        if(fileItem.dataset.iommiExtendedFileUploadedName && !preserveFileInputValue) {
-            const dt = new DataTransfer();
-            for(let file of fileInput.files) {
-                if(file.name !== fileItem.dataset.iommiExtendedFileUploadedName) {
-                    dt.items.add(file);
+        let deletedFileName = '';
+
+        if(fileItem.dataset.iommiExtendedFileUploadedName) {
+            deletedFileName = fileItem.dataset.iommiExtendedFileUploadedName;
+            if(!preserveFileInputValue) {
+                const dt = new DataTransfer();
+                for (let file of fileInput.files) {
+                    if (file.name !== fileItem.dataset.iommiExtendedFileUploadedName) {
+                        dt.items.add(file);
+                    }
                 }
+                fileInput.files = dt.files;
             }
-            fileInput.files = dt.files;
         } else if(fileItem.dataset.iommiExtendedFileExistingName) {
+            deletedFileName = fileItem.dataset.iommiExtendedFileExistingName;
             const hiddenInput = document.createElement("input");
             hiddenInput.setAttribute("type", "hidden");
             hiddenInput.setAttribute("name", `delete__${fileInput.name}`);
@@ -810,9 +816,10 @@ class IommiExtendedFileInput {
             extendedFileField.querySelector(this.selectors.file_input_wrapper).classList.remove('hidden');
         }
 
-        fileItem.dispatchEvent(
+        extendedFileField.dispatchEvent(
             new CustomEvent('iommi.extendedFile.deleted', {
-                bubbles: true
+                bubbles: true,
+                detail: {deletedFileName: deletedFileName}
             })
         );
     }
@@ -839,6 +846,38 @@ class IommiExtendedFileInput {
         const template = extendedFileField.querySelector(this.selectors.file_item_template);
         const clone = template.content.cloneNode(true).firstElementChild;
         clone.innerHTML = clone.innerHTML.replace('{file_name}', file.name).replace('{file_type}', this.getFileType(file.name)).replace('{file_size}', this.formatFileSize(file.size));
+
+        if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined') {
+            if(this.is_image_thumb_allowed(file)) {
+                const imgURL = URL.createObjectURL(file);
+                const img = new Image();
+                const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200");
+                const requiredHeight = parseInt(extendedFileField.dataset.iommiExtendedFileThumbHeight || "200");
+                const loadingIcon = extendedFileField.dataset.iommiExtendedFileLoadingIcon;
+                img.addEventListener("load", () => {
+                    if(file.size > 1024*1024) {
+                        const canvas = document.createElement('canvas');
+                        const scale = Math.max(requiredWidth / img.width, requiredHeight / img.height);
+                        canvas.width = Math.ceil(img.width * scale);
+                        canvas.height = Math.ceil(img.height * scale);
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+                        clone.innerHTML = clone.innerHTML.replace(loadingIcon, dataUrl);
+                    } else {
+                        clone.innerHTML = clone.innerHTML.replace(loadingIcon, imgURL);
+                    }
+                    URL.revokeObjectURL(imgURL);
+                });
+                img.src = imgURL;
+                clone.innerHTML = clone.innerHTML.replace('{file_blob}', loadingIcon);
+            } else {
+                clone.querySelectorAll('[data-iommi-extended-file-thumb]').forEach((thumb_element) => {
+                    thumb_element.remove();
+                })
+            }
+        }
+
         clone.dataset.iommiExtendedFileUploadedName = file.name;
         const fileItem = extendedFileField.querySelector(this.selectors.file_items_wrapper).appendChild(clone);
 
@@ -909,6 +948,18 @@ class IommiExtendedFileInput {
             return filename.split('.').pop();
         }
         return '';
+    }
+
+    is_image_thumb_allowed(file) {
+        return [
+            'image/gif',
+            'image/jpeg',
+            'image/png',
+            'image/avif',
+            'image/svg+xml',
+            'image/webp',
+            'image/bmp'
+        ].includes(file.type);
     }
 }
 
