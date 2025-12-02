@@ -847,8 +847,11 @@ class IommiExtendedFileInput {
         const clone = template.content.cloneNode(true).firstElementChild;
         clone.innerHTML = clone.innerHTML.replace('{file_name}', file.name).replace('{file_type}', this.getFileType(file.name)).replace('{file_size}', this.formatFileSize(file.size));
 
+        // TODO pro .file-icon nastavit style="--iommi-icon-bg=url('')" dle this.is_image(file)
+        //      držet cesty v extendedFileField.dataset., abych mohl využít static() v py
+
         if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined') {
-            if(this.is_image_thumb_allowed(file)) {
+            if(this.is_image(file)) {
                 const imgURL = URL.createObjectURL(file);
                 const img = new Image();
                 const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200");
@@ -950,7 +953,7 @@ class IommiExtendedFileInput {
         return '';
     }
 
-    is_image_thumb_allowed(file) {
+    is_image(file) {
         return [
             'image/gif',
             'image/jpeg',
