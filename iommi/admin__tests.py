@@ -338,9 +338,12 @@ def test_edit_non_int_pk(mock_messages, settings):
         request, mock_messages.INFO, f'Uuid pk model {f} was updated', fail_silently=True
     )
 
+
 class TableAdmin(Admin):
     class Meta:
         table_class = Table
+        apps__tests_foo__include = True
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
