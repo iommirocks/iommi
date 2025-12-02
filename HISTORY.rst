@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.21.1 (2025-12-02)
+~~~~~~~~~~~~~~~~~~~
+
+* Admin handles non-int primary keys better
+
+* Fixed admin crash due to missing `Namespace` conversion when reading configuration
+
+* Disallow sorting by default on non-sortable columns
+
+
 7.21.0 (2025-11-28)
 ~~~~~~~~~~~~~~~~~~~
 
