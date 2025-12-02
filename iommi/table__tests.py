@@ -89,6 +89,7 @@ from tests.helpers import (
 from tests.models import (
     AutomaticUrl,
     AutomaticUrl2,
+    Bar,
     BooleanFromModelTestModel,
     ChoicesModel,
     CSVExportTestModel,
@@ -4731,5 +4732,27 @@ def test_disallow_sorting_on_non_sortable_columns_that_have_valid_attr():
 
     # This should not crash
     t = t.bind(request=req('get', **{'order': 'synthetic'}))
+
+    assert not t.columns.synthetic.sortable
+
+
+@pytest.mark.skip('Validation is only done on the first level, not on nested levels for now')
+@pytest.mark.django_db
+def test_disallow_sorting_on_non_sortable_columns_that_have_valid_attr__nested():
+    Bar.objects.create(pk=1, foo=Foo.objects.create(foo='1'))
+
+    def preprocess_rows(rows, **_):
+        for row in rows:
+            row.foo.synthetic = 1
+        return rows
+
+    t = Table(
+        auto__model=Bar,
+        preprocess_rows=preprocess_rows,
+        columns__synthetic=Column(attr='foo__synthetic'),
+    )
+
+    # This should not crash
+    t = t.bind(request=req('get', **{'order': 'foo__synthetic'}))
 
     assert not t.columns.synthetic.sortable
