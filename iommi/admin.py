@@ -153,7 +153,7 @@ class Admin(Page):
     @with_defaults(
         include=lambda admin, **_: (
                 admin.app_name is None
-                or admin.apps.get(admin.app_name+'_'+admin.model_name, Namespace(include=False)).include is True
+                or Namespace(admin.apps.get(admin.app_name+'_'+admin.model_name, dict(include=False))).include is True
         ),
         apps__auth_user__include=True,
         parts__edit_auth_user__fields__password__write_to_instance=lambda instance, value, **_: instance.set_password(value),
