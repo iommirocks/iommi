@@ -291,6 +291,13 @@ def filename_and_line_num_from_part(part):
     return filename, line_num
 
 
+def iommi_debug_panel_on():
+    if getattr(settings, 'IOMMI_DISABLE_DEBUG_PANEL', False):
+        return False
+    else:
+        return iommi_debug_on()
+
+
 def iommi_debug_panel(part):
     source_url = source_url_from_part(part)
     # language=js

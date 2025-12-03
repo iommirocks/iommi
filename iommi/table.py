@@ -23,7 +23,10 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+)
 from django.db.models import (
     AutoField,
     BooleanField,
@@ -506,6 +509,14 @@ class Column(Part):
 
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
+
+        if self.table.model and self.attr is not None and self.sortable:
+            if '__' not in self.attr:
+                # Only validate one level of the path for now
+                try:
+                    self.table.model._meta.get_field(self.attr)
+                except FieldDoesNotExist:
+                    self.sortable = False
 
         if self.auto_rowspan:
             assert 'rowspan' not in self.cell.attrs, (

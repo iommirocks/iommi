@@ -231,3 +231,15 @@ h2 {
     background: url(/_static/images/iommi_logo_text_only.svg) no-repeat;
     background-size: contain;
 }
+
+.show_structure_toggler {
+    width: 100%;
+    text-align: right;
+
+    span {
+        cursor: pointer;
+        border: 1px solid gray;
+        border-radius: 11px;
+        padding: 4px 8px;
+    }
+}

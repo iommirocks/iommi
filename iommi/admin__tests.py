@@ -12,6 +12,7 @@ from django.urls import (
     path,
 )
 
+from iommi import Table
 from iommi.admin import (
     Admin,
     Messages,
@@ -37,6 +38,7 @@ def test_bulk_edit_for_non_unique(settings):
     request = staff_req('get')
     result = (
         Admin.list(
+            apps__tests_adminunique__include=True,
             parts__list_tests_adminunique__columns__foo__bulk__include=True,
         )
         .refine_with_params(
@@ -48,6 +50,9 @@ def test_bulk_edit_for_non_unique(settings):
 
     assert [x._name for x in values(result.parts.list_tests_adminunique.columns) if x.bulk.include] == ['foo']
 
+class FooAdmin(Admin):
+    class Meta:
+        apps__tests_foo__include = True
 
 @pytest.mark.django_db
 @mock.patch('iommi.admin.messages')
@@ -55,7 +60,7 @@ def test_create(mock_messages, settings):
     settings.ROOT_URLCONF = __name__
 
     request = staff_req('get')
-    c = Admin.create().refine_with_params(app_name='tests', model_name='foo')
+    c = FooAdmin.create().refine_with_params(app_name='tests', model_name='foo')
     p = c.bind(request=request)
     assert list(p.parts.create_tests_foo.fields.keys()) == ['foo']
 
@@ -63,7 +68,7 @@ def test_create(mock_messages, settings):
 
     # Check access control for not logged in
     request = req('post', foo=7, **{'-submit': ''})
-    view = Admin.create().as_view()
+    view = FooAdmin.create().as_view()
     assert isinstance(view(request, app_name='tests', model_name='foo'), HttpResponseRedirect)
     assert Foo.objects.count() == 0
 
@@ -74,7 +79,7 @@ def test_create(mock_messages, settings):
 
     # Now for real
     request = staff_req('post', foo=7, **{'-submit': ''})
-    c = Admin.create().refine_with_params(app_name='tests', model_name='foo')
+    c = FooAdmin.create().refine_with_params(app_name='tests', model_name='foo')
     p = c.bind(request=request)
     assert p.parts.create_tests_foo.is_valid()
     p.render_to_response()
@@ -95,7 +100,7 @@ def test_edit(mock_messages, settings):
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
 
-    c = Admin.edit().refine_with_params(app_name='tests', model_name='foo', pk=f.pk)
+    c = FooAdmin.edit().refine_with_params(app_name='tests', model_name='foo', pk=f.pk)
     request = staff_req('post', foo=11, **{'-submit': ''})
     p = c.bind(request=request)
     assert p.parts.edit_tests_foo.is_valid()
@@ -114,7 +119,7 @@ def test_delete(mock_messages, settings):
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
 
-    c = Admin.delete().refine_with_params(app_name='tests', model_name='foo', pk=f.pk)
+    c = FooAdmin.delete().refine_with_params(app_name='tests', model_name='foo', pk=f.pk)
     request = staff_req('post', **{'-submit': ''})
     p = c.bind(request=request)
     assert p.parts.delete_tests_foo.is_valid(), p.parts.delete_tests_foo.get_errors()
@@ -131,10 +136,10 @@ def test_delete(mock_messages, settings):
 @pytest.mark.parametrize(
     'admin, kwargs',
     [
-        (Admin.all_models(), dict()),
-        (Admin.list(), dict(app_name='tests', model_name='foo')),
-        (Admin.edit(), dict(app_name='tests', model_name='foo', pk=0)),
-        (Admin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
+        (FooAdmin.all_models(), dict()),
+        (FooAdmin.list(), dict(app_name='tests', model_name='foo')),
+        (FooAdmin.edit(), dict(app_name='tests', model_name='foo', pk=0)),
+        (FooAdmin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
     ],
 )
 def test_redirect_to_login(settings, is_authenticated, admin, kwargs):
@@ -172,6 +177,38 @@ def test_404_for_non_staff(settings, admin, kwargs):
 
     with pytest.raises(Http404):
         view(request=request, **kwargs)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'success, admin, kwargs',
+    [
+        (False, Admin.list(), dict(app_name='tests', model_name='foo')),
+        (False, Admin.edit(), dict(app_name='tests', model_name='foo', pk=0)),
+        (False, Admin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
+        (False, Admin.list(apps__tests_foo__include=False), dict(app_name='tests', model_name='foo')),
+        (False, Admin.edit(apps__tests_foo__include=False), dict(app_name='tests', model_name='foo', pk=0)),
+        (False, Admin.delete(apps__tests_foo__include=False), dict(app_name='tests', model_name='foo', pk=0)),
+        (True, Admin.list(apps__tests_foo__include=True), dict(app_name='tests', model_name='foo')),
+        (True, Admin.edit(apps__tests_foo__include=True), dict(app_name='tests', model_name='foo', pk=0)),
+        (True, Admin.delete(apps__tests_foo__include=True), dict(app_name='tests', model_name='foo', pk=0)),
+    ],
+)
+def test_404_for_non_include(settings, success, admin, kwargs):
+    settings.ROOT_URLCONF = __name__
+    if 'pk' in kwargs:
+        Foo.objects.create(pk=kwargs['pk'], foo=1)
+    view = admin.as_view()
+    request = user_req('get')
+    request.user = Struct(is_staff=True, is_authenticated=True, is_superuser=True)
+
+    if success:
+        result = view(request=request, **kwargs)
+        assert result.status_code == 200
+    else:
+        with pytest.raises(Http404):
+            view(request=request, **kwargs)
+
 
 
 def test_messages():
@@ -270,7 +307,7 @@ def test_no_config():
 @mock.patch('iommi.admin.messages')
 def test_create_non_int_pk(mock_messages, settings):
     request = staff_req('post', id=str(uuid4()), foo='banana', **{'-submit': ''})
-    c = Admin.create().refine_with_params(app_name='tests', model_name='uuidpkmodel')
+    c = FooAdmin.create(apps__tests_uuidpkmodel__include=True).refine_with_params(app_name='tests', model_name='uuidpkmodel')
     p = c.bind(request=request)
     assert p.parts.create_tests_uuidpkmodel.is_valid()
     p.render_to_response()
@@ -290,7 +327,7 @@ def test_edit_non_int_pk(mock_messages, settings):
     settings.ROOT_URLCONF = __name__
     f = UuidPKModel.objects.create(id=str(uuid4()), foo='banana')
 
-    c = Admin.edit().refine_with_params(app_name='tests', model_name='uuidpkmodel', pk=f.pk)
+    c = Admin.edit(apps__tests_uuidpkmodel__include=True).refine_with_params(app_name='tests', model_name='uuidpkmodel', pk=f.pk)
     request = staff_req('post', id=f.pk, foo='orange', **{'-submit': ''})
     p = c.bind(request=request)
     assert p.parts.edit_tests_uuidpkmodel.is_valid(), p.parts.edit_tests_uuidpkmodel.get_errors()
@@ -300,3 +337,29 @@ def test_edit_non_int_pk(mock_messages, settings):
     mock_messages.add_message.assert_called_with(
         request, mock_messages.INFO, f'Uuid pk model {f} was updated', fail_silently=True
     )
+
+
+class TableAdmin(Admin):
+    class Meta:
+        table_class = Table
+        apps__tests_foo__include = True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'admin, kwargs',
+    [
+        (TableAdmin.all_models(), dict()),
+        (TableAdmin.list(), dict(app_name='tests', model_name='foo')),
+        (TableAdmin.edit(), dict(app_name='tests', model_name='foo', pk=0)),
+        (TableAdmin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
+    ],
+)
+def test_redirect_to_login(admin, kwargs):
+    if 'pk' in kwargs:
+        Foo.objects.create(pk=kwargs['pk'], foo=1)
+    request = req('get')
+    request.user = Struct(is_staff=True, is_authenticated=True, is_superuser=True)
+    view = admin.as_view()
+    result = view(request=request, **kwargs)
+    assert result.status_code == 200

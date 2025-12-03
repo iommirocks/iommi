@@ -89,6 +89,7 @@ from tests.helpers import (
 from tests.models import (
     AutomaticUrl,
     AutomaticUrl2,
+    Bar,
     BooleanFromModelTestModel,
     ChoicesModel,
     CSVExportTestModel,
@@ -2552,8 +2553,8 @@ def test_preprocess_row():
             <table class="table" >
                 <thead>
                     <tr>
-                        <th class="first_column  iommi_sort_header subheader">
-                            <a href="?order=some_non_existent_property"> Some non existent property </a>
+                        <th class="first_column subheader">
+                            Some non existent property
                         </th>
                     </tr>
                 </thead>
@@ -2801,8 +2802,8 @@ def test_render_column_attribute():
             <table class="table" >
                 <thead>
                     <tr>
-                        <th class="first_column  iommi_sort_header subheader">
-                            <a href="?order=a"> A </a>
+                        <th class="first_column subheader">
+                            A
                         </th>
                     </tr>
                 </thead>
@@ -4712,3 +4713,46 @@ def test_auto_rowspan_two_columns():
         </tbody>
         '''
     )
+
+
+@pytest.mark.django_db
+def test_disallow_sorting_on_non_sortable_columns_that_have_valid_attr():
+    T1.objects.create(pk=1, foo='a', bar='b')
+
+    def preprocess_rows(rows, **_):
+        for row in rows:
+            row.synthetic = 1
+        return rows
+
+    t = Table(
+        auto__model=T1,
+        preprocess_rows=preprocess_rows,
+        columns__synthetic=Column(),
+    )
+
+    # This should not crash
+    t = t.bind(request=req('get', **{'order': 'synthetic'}))
+
+    assert not t.columns.synthetic.sortable
+
+
+@pytest.mark.skip('Validation is only done on the first level, not on nested levels for now')
+@pytest.mark.django_db
+def test_disallow_sorting_on_non_sortable_columns_that_have_valid_attr__nested():
+    Bar.objects.create(pk=1, foo=Foo.objects.create(foo='1'))
+
+    def preprocess_rows(rows, **_):
+        for row in rows:
+            row.foo.synthetic = 1
+        return rows
+
+    t = Table(
+        auto__model=Bar,
+        preprocess_rows=preprocess_rows,
+        columns__synthetic=Column(attr='foo__synthetic'),
+    )
+
+    # This should not crash
+    t = t.bind(request=req('get', **{'order': 'foo__synthetic'}))
+
+    assert not t.columns.synthetic.sortable

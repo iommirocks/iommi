@@ -28,7 +28,7 @@ def test_dev_tools(settings):
     """
 
     # @test
-    settings.IOMMI_DEBUG = True
+    settings.IOMMI_DISABLE_DEBUG_PANEL = False
     show_output(Page())
     # @end
 

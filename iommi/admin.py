@@ -19,15 +19,15 @@ from django.urls import (
 from django.utils.translation import gettext_lazy
 
 from iommi import (
+    LAST,
     EditTable,
     Form,
     Fragment,
-    html,
-    LAST,
     Menu,
     MenuItem,
     Page,
     Table,
+    html,
 )
 from iommi._web_compat import format_html
 from iommi.base import (
@@ -36,11 +36,12 @@ from iommi.base import (
     items,
     values,
 )
+from iommi.declarative.with_meta import with_meta
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    flatten,
     Namespace,
+    flatten,
     setdefaults_path,
 )
 from iommi.refinable import Refinable
@@ -113,8 +114,7 @@ def read_config(f):
 
     return read_config_wrapper
 
-
-
+@with_meta
 class Admin(Page):
     class Meta:
         table_class = EditTable
@@ -151,6 +151,10 @@ class Admin(Page):
 
     @read_config
     @with_defaults(
+        include=lambda admin, **_: (
+                admin.app_name is None
+                or Namespace(admin.apps.get(admin.app_name+'_'+admin.model_name, dict(include=False))).include is True
+        ),
         apps__auth_user__include=True,
         parts__edit_auth_user__fields__password__write_to_instance=lambda instance, value, **_: instance.set_password(value),
         parts__edit_auth_user__fields__password__read_from_instance=lambda **_: '',
@@ -204,10 +208,17 @@ class Admin(Page):
             raise Http404()
 
         if model is not None and instance is None:
-            refined_admin = refined_admin.refine(model=model, parts__table__auto__model=model)
+            refined_admin = refined_admin.refine(
+                model=model,
+                parts__list__auto__model=model,
+                parts__create__auto__model=model,
+            )
 
         if instance is not None:
-            refined_admin = refined_admin.refine(instance=instance, parts__form__auto__instance=instance)
+            refined_admin = refined_admin.refine(
+                parts__edit__auto__instance=instance,
+                parts__delete__auto__instance=instance,
+            )
 
         return refined_admin
 
@@ -246,15 +257,24 @@ class Admin(Page):
         if self.model_name:
             part_name += '_' + self.model_name
 
-        table = self.parts.get('table')
-        if table is not None:
-            setdefaults_path(self.parts, **{part_name: flatten(table)})
-            self.parts.table = None
+        conf = Namespace()
+        common_conf = self.parts.pop('common', {})
+        setdefaults_path(conf, **flatten(common_conf))
 
-        form = self.parts.get('form')
-        if form is not None:
-            setdefaults_path(self.parts, **{part_name: flatten(form)})
-            self.parts.form = None
+        table_conf = self.parts.pop('table', {})
+        if self.operation in ['all_models', 'list']:
+            setdefaults_path(conf, **flatten(table_conf))
+
+        form_conf = self.parts.pop('form', {})
+        if self.operation in ['edit', 'create', 'delete']:
+            setdefaults_path(conf, **flatten(form_conf))
+
+        for operation in ['all_models', 'list', 'edit', 'create', 'delete']:
+            operation_conf = self.parts.pop(operation, {})
+            if operation == self.operation:
+                setdefaults_path(conf, **flatten(operation_conf))
+
+        setdefaults_path(self.parts, **{part_name: conf})
 
         def should_throw_away(k, v):
             if k == part_name:
@@ -336,7 +356,10 @@ class Admin(Page):
 
         def rows(admin, request, included_filter=False, **_):
             last_group = None
-            for row in sorted(rows_raw(admin=admin, request=request, included_filter=included_filter), key=lambda row: (row.group, row.name)):
+            for row in sorted(
+                rows_raw(admin=admin, request=request, included_filter=included_filter),
+                key=lambda row: (row.group, row.name),
+            ):
                 if last_group != row.group:
                     yield Struct(
                         name=row.group,
@@ -353,7 +376,7 @@ class Admin(Page):
             Namespace(),
             table if table is not None else {},
             title='',
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=Table,
             call_target__attribute='div',
             sortable=False,
             rows=rows,
@@ -365,17 +388,14 @@ class Admin(Page):
                     row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
                 ),
             ),
-            edit_actions__add_row__include=False,
-            edit_actions__save__include=False,
             attrs__class__table=False,
         )
 
         add_models = setdefaults_path(
             Namespace(),
             include=settings.DEBUG,
-            call_target__cls=cls.get_meta().table_class,
+            call_target__cls=Table,
             sortable=False,
-            create_form=None,
             rows=functools.partial(rows_raw, included_filter=True),
             page_size=None,
             columns__app_name=cls.get_meta().table_class.get_meta().member_class(auto_rowspan=True),
@@ -408,8 +428,6 @@ class Admin(Page):
                     row.format(row=row, **format_kwargs) if getattr(row, 'pk', None) != '#sentinel#' else ''
                 ),
             ),
-            edit_actions__add_row__include=False,
-            edit_actions__save__include=False,
         )
 
         return cls(
@@ -449,6 +467,7 @@ class Admin(Page):
                 delete=dict(
                     call_target__attribute='delete',
                     after=LAST,
+                    cell__url=lambda row, **_: '%s/delete/' % row.pk,
                     include=lambda request, table, **_: (
                         cls.has_permission(request, instance=None, model=table.model, operation='delete')
                     ),
@@ -553,6 +572,7 @@ class Admin(Page):
     @classmethod
     def m(cls):
         from iommi.main_menu import M
+
         return M(
             view=cls.all_models(),
             display_name=capitalize(gettext_lazy('admin')),

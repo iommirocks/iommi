@@ -43,3 +43,44 @@ readthedocs-flyout {
     background: url(/_static/images/iommi_logo_text_only.svg) no-repeat !important;
     background-size: contain !important;
 }
+
+
+.show_structure {
+    [data-iommi-type],
+    .select2 {
+        margin-top: 3.5rem;
+    }
+
+    [data-iommi-type] {
+        border: 2px dashed #3498db !important;
+        padding: 1rem;
+    }
+
+    .iommi-name-information_boxes {
+        position: fixed;
+        position-anchor: var(--anchor-name);
+        bottom: anchor(top);
+        left: anchor(left);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4px 8px;
+        font-size: 13px;
+        border-radius: 10px 10px 0 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        z-index: 10000;
+        max-width: 250px;
+        word-wrap: break-word;
+    }
+
+    .iommi-name-information_boxes .iommi-type {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .iommi-name-information_boxes .iommi-path {
+        font-size: 10px;
+        opacity: 0.9;
+        display: block;
+    }
+}

@@ -14,3 +14,6 @@ def pytest_sessionstart(session):
 @pytest.fixture(autouse=True)
 def docs_style(settings):
     settings.IOMMI_DEFAULT_STYLE = 'bootstrap_docs'
+
+    settings.IOMMI_DISABLE_DEBUG_PANEL = True
+    settings.IOMMI_DEBUG = True

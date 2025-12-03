@@ -64,3 +64,10 @@ docReady(function() {
         });
     });
 });
+
+function toggle_iframe_structure_overlay() {
+    for (let iframe of document.getElementsByTagName('iframe')) {
+        iframe.contentWindow.toggle_name_information_boxes();
+        resizeIFrameToFitContent(iframe);
+    }
+}

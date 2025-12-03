@@ -1,6 +1,30 @@
 Changelog
 ---------
 
+7.21.1 (2025-12-02)
+~~~~~~~~~~~~~~~~~~~
+
+* Admin handles non-int primary keys better
+
+* Fixed admin crash due to missing `Namespace` conversion when reading configuration
+
+* Disallow sorting by default on non-sortable columns
+
+
+7.21.0 (2025-11-28)
+~~~~~~~~~~~~~~~~~~~
+
+* SECURITY FIX: Make admin views respect `apps__*__include`. This meant that admin users that could access the admin but not see a specific model could access that model if they knew the URL.
+
+* Allow MainMenu `assets__foo__include=False` style config
+
+* Fix boolean filter alignment in bootstrap 5 horizontal style
+
+* Use `LOGIN_REDIRECT_URL` instead of `/` as default in the login view
+
+* `Field.choice_searchable` for non-ajax searchable choices
+
+
 7.20.0 (2025-11-14)
 ~~~~~~~~~~~~~~~~~~~
 

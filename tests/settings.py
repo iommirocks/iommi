@@ -81,7 +81,6 @@ FORMAT_MODULE_PATH = [
     'tests.formats',
 ]
 
-
 USE_L10N = False
 
 STATIC_URL = '/static/'

@@ -689,4 +689,5 @@ def create_iframe(name, collapsed):
     return f'''
         <div class="iframe_collapse" onclick="toggle('{uuid}', this)">{text}</div>
         <iframe id="{uuid}" src="{file_path}" style="background: white; display: {display}; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="show_structure_toggler"><span onclick="toggle_iframe_structure_overlay()">Toggle structure</span></div>
     '''
