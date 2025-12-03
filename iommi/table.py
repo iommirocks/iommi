@@ -324,6 +324,10 @@ def default_cell__value(column, row, **kwargs):
             return None
 
 
+def default_sortable(column, **_):
+    return column.attr is not None
+
+
 class DataRetrievalMethods(Enum):
     attribute_access = auto()
     prefetch = auto()
@@ -405,7 +409,7 @@ class Column(Part):
     @with_defaults(
         attr=MISSING,
         sort_default_desc=False,
-        sortable=lambda column, **_: column.attr is not None,
+        sortable=default_sortable,
         auto_rowspan=False,
         bulk__include=False,
         data_retrieval_method=DataRetrievalMethods.attribute_access,
@@ -510,7 +514,7 @@ class Column(Part):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
-        if self.table.model and self.attr is not None and self.sortable:
+        if self.table.model and self.attr is not None and (self.iommi_namespace['sortable'] is MISSING or self.iommi_namespace['sortable'] is default_sortable):
             if '__' not in self.attr:
                 # Only validate one level of the path for now
                 try:
