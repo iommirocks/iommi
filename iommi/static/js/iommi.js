@@ -847,38 +847,33 @@ class IommiExtendedFileInput {
         const clone = template.content.cloneNode(true).firstElementChild;
         clone.innerHTML = clone.innerHTML.replace('{file_name}', file.name).replace('{file_type}', this.getFileType(file.name)).replace('{file_size}', this.formatFileSize(file.size));
 
-        // TODO pro .file-icon nastavit style="--iommi-icon-bg=url('')" dle this.is_image(file)
-        //      držet cesty v extendedFileField.dataset., abych mohl využít static() v py
-
-        if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined') {
-            if(this.is_image(file)) {
-                const imgURL = URL.createObjectURL(file);
-                const img = new Image();
-                const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200");
-                const requiredHeight = parseInt(extendedFileField.dataset.iommiExtendedFileThumbHeight || "200");
-                const loadingIcon = extendedFileField.dataset.iommiExtendedFileLoadingIcon;
-                img.addEventListener("load", () => {
-                    if(file.size > 1024*1024) {
-                        const canvas = document.createElement('canvas');
-                        const scale = Math.max(requiredWidth / img.width, requiredHeight / img.height);
-                        canvas.width = Math.ceil(img.width * scale);
-                        canvas.height = Math.ceil(img.height * scale);
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-                        clone.innerHTML = clone.innerHTML.replace(loadingIcon, dataUrl);
-                    } else {
-                        clone.innerHTML = clone.innerHTML.replace(loadingIcon, imgURL);
-                    }
-                    URL.revokeObjectURL(imgURL);
-                });
-                img.src = imgURL;
-                clone.innerHTML = clone.innerHTML.replace('{file_blob}', loadingIcon);
-            } else {
-                clone.querySelectorAll('[data-iommi-extended-file-thumb]').forEach((thumb_element) => {
-                    thumb_element.remove();
-                })
-            }
+        if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined' && this.is_image(file)) {
+            const imgURL = URL.createObjectURL(file);
+            const img = new Image();
+            const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200");
+            const requiredHeight = parseInt(extendedFileField.dataset.iommiExtendedFileThumbHeight || "200");
+            const loadingIcon = extendedFileField.dataset.iommiExtendedFileLoadingIcon;
+            img.addEventListener("load", () => {
+                if(file.size > 1024*1024) {
+                    const canvas = document.createElement('canvas');
+                    const scale = Math.max(requiredWidth / img.width, requiredHeight / img.height);
+                    canvas.width = Math.ceil(img.width * scale);
+                    canvas.height = Math.ceil(img.height * scale);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+                    clone.innerHTML = clone.innerHTML.replace(loadingIcon, dataUrl);
+                } else {
+                    clone.innerHTML = clone.innerHTML.replace(loadingIcon, imgURL);
+                }
+                URL.revokeObjectURL(imgURL);
+            });
+            img.src = imgURL;
+            clone.innerHTML = clone.innerHTML.replace('{file_blob}', loadingIcon);
+        } else {
+            clone.querySelectorAll('[data-iommi-extended-file-thumb]').forEach((thumb_element) => {
+                thumb_element.remove();
+            })
         }
 
         clone.dataset.iommiExtendedFileUploadedName = file.name;
@@ -959,9 +954,9 @@ class IommiExtendedFileInput {
             'image/jpeg',
             'image/png',
             'image/avif',
-            'image/svg+xml',
             'image/webp',
-            'image/bmp'
+            'image/bmp',
+            'image/svg+xml'
         ].includes(file.type);
     }
 }

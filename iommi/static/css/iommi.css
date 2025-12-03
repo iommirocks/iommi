@@ -70,9 +70,17 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 [data-iommi-extended-file-field] [data-iommi-extended-file-input-wrapper].hidden {
     display: none;
 }
-[data-iommi-extended-file-field] .file-field-item {
+[data-iommi-extended-file-field] .file-items:has(.file-field-item) {
     border: 1px dotted #cccccc;
-    padding: .375rem .75rem;
+    border-radius: 8px;
+}
+[data-iommi-extended-file-field] .file-field-item {
+    padding: .375rem;
+    display: flex;
+    align-items: center;
+}
+[data-iommi-extended-file-field] .file-field-item:not(:last-child) {
+    border-bottom: 1px dotted #cccccc;
 }
 [data-iommi-extended-file-field] .file-field-item .file-icon {
     display: inline-block;
@@ -80,7 +88,10 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     width: 64px;
 }
 [data-iommi-extended-file-field] .file-field-item .file-icon:not(:has(.file-thumb)) {
-    background: url('/static/images/iommi-icons/file.svg');  /* TODO předělat přes style="--iommi-icon-bg" */
+    background-image: url('../images/iommi-icons/file.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 [data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--jpg:not(:has(.file-thumb)),
 [data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--jpeg:not(:has(.file-thumb)),
@@ -94,7 +105,7 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 [data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--avif:not(:has(.file-thumb)),
 [data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--webp:not(:has(.file-thumb)),
 [data-iommi-extended-file-field] .file-field-item .file-icon.file-icon--svg:not(:has(.file-thumb)) {
-    background: url('/static/images/iommi-icons/image.svg');  /* TODO předělat přes style="--iommi-icon-bg" */
+    background-image: url('../images/iommi-icons/image.svg');
 }
 [data-iommi-extended-file-field] .file-field-item .file-icon .file-thumb {
     display: inline-block;
@@ -107,6 +118,7 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 }
 [data-iommi-extended-file-field] .file-field-item .file-name {
     margin-right: 3rem;
+	margin-left: 1rem;
 }
 [data-iommi-extended-file-field] .file-field-item .file-size {
     font-size: 80%;
@@ -122,7 +134,6 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     border: 0;
     color: #930000;
     background: inherit;
-    border-radius: 50%;
 }
 [data-iommi-extended-file-field] .file-drop-zone {
     display: flex;
@@ -142,9 +153,4 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 [data-iommi-extended-file-field] .file-drop-zone input[type="file"] {
     display: none;
 }
-/*
-TODO
- .file-icon {bg svg file/picture}
-     - jen černobílé
-*/
 /* /extended file field */
