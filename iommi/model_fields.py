@@ -3,7 +3,7 @@ from django import VERSION as DJANGO_VERSION
 
 
 class SortOrderField(PositiveIntegerField):
-    def __init__(self, to=None, **kwargs):
+    def __init__(self, **kwargs):
         kwargs.setdefault("null", False)
         kwargs.setdefault("blank", False)
         if DJANGO_VERSION[0] >= 5:
@@ -11,4 +11,4 @@ class SortOrderField(PositiveIntegerField):
         kwargs.setdefault("db_index", True)
         kwargs.setdefault("default", 0)
         kwargs.setdefault("editable", False)
-        super().__init__(to, **kwargs)
+        super().__init__(**kwargs)
