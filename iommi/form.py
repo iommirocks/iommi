@@ -1443,9 +1443,7 @@ class Field(Part, Tag):
         return cls.file(**kwargs)
 
     @classmethod
-    @with_defaults(
-        template='iommi/form/image_row.html',  # TODO toto už nebude potřeba asi
-    )
+    @with_defaults
     def image(cls, **kwargs):
         return cls.file(**kwargs)
 
