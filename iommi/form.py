@@ -1447,6 +1447,11 @@ class Field(Part, Tag):
     def image(cls, **kwargs):
         return cls.file(**kwargs)
 
+    @classmethod
+    @with_defaults
+    def dropimage(cls, **kwargs):
+        return cls.dropfile(**kwargs)
+
     # Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
     @classmethod
     @with_defaults(

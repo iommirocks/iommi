@@ -850,8 +850,8 @@ class IommiExtendedFileInput {
         if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined' && this.is_image(file)) {
             const imgURL = URL.createObjectURL(file);
             const img = new Image();
-            const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200");
-            const requiredHeight = parseInt(extendedFileField.dataset.iommiExtendedFileThumbHeight || "200");
+            const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200", 10);
+            const requiredHeight = parseInt(extendedFileField.dataset.iommiExtendedFileThumbHeight || "200", 10);
             const loadingIcon = extendedFileField.dataset.iommiExtendedFileLoadingIcon;
             img.addEventListener("load", () => {
                 if(file.size > 1024*1024) {
