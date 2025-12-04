@@ -12,6 +12,7 @@ import pytest
 from django.db.models import (
     F,
     QuerySet,
+    Sum,
 )
 from django.http import HttpResponse
 from django.test import override_settings
@@ -4734,6 +4735,23 @@ def test_disallow_sorting_on_non_sortable_columns_that_have_valid_attr():
     t = t.bind(request=req('get', **{'order': 'synthetic'}))
 
     assert not t.columns.synthetic.sortable
+
+
+@pytest.mark.django_db
+def test_allow_sorting_on_annotated_column():
+    T1.objects.create(pk=1, foo='a', bar='b')
+
+    t = Table(
+        auto__rows=T1.objects.all().annotate(annotated=Sum('pk')),
+        columns__annotated=Column(
+            sortable=True,
+        ),
+    )
+
+    # This should not crash
+    t = t.bind(request=req('get', **{'order': 'annotated'}))
+
+    assert t.columns.annotated.sortable
 
 
 @pytest.mark.skip('Validation is only done on the first level, not on nested levels for now')
