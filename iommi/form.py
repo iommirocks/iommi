@@ -554,9 +554,7 @@ def url_parse(string_value, field=None, **_):
 
 
 def file_write_to_instance(field, instance, value, **kwargs):
-    # TODO mazání souboru
-    if value:
-        Field.write_to_instance(field=field, instance=instance, value=value, **kwargs)
+    Field.write_to_instance(field=field, instance=instance, value=value, **kwargs)
 
 
 def email_parse(string_value, field=None, **_):
@@ -627,12 +625,25 @@ def default_input_id(field, **_):
 
 
 def file__raw_data(form, field, **_):
-    # TODO delete__{name}
     request = form.get_request()
-    if field.iommi_path not in request.FILES:
-        return None
+
+    # delete__{field_name} are hidden inputs created by iommi.js when a user deletes files
+    delete_field_name = f'delete__{field.iommi_path}'
+
     if field.is_list:
-        return request.FILES.getlist(field.iommi_path)
+        existing_files = []
+        if field.initial:
+            deleted_files = request.POST.getlist(delete_field_name)
+            for initial_file in field.initial:
+                if initial_file.name not in deleted_files:
+                    existing_files.append(initial_file)
+        return existing_files + request.FILES.getlist(field.iommi_path)
+
+    if field.iommi_path not in request.FILES:
+        if field.initial and not request.POST.get(delete_field_name):
+            return field.initial
+        return None
+
     return request.FILES[field.iommi_path]
 
 

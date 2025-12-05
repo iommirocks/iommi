@@ -140,6 +140,7 @@ base = Style(
             ),
             file=dict(
                 template='iommi/form/file.html',
+                attrs__class__file_field=True,
                 extra__file_item_template='iommi/form/file_item.html',
                 assets__iommi_css=Asset.css(attrs__href=lambda **_: static('css/iommi.css')),
             ),

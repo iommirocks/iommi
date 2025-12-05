@@ -1,16 +1,16 @@
 {% load i18n iommi %}
-<div class="file-field-item" data-iommi-extended-file-item{% if file_existing_name %} data-iommi-extended-file-existing-name="{{ file_existing_name }}"{% endif %}>
-    <span class="file-icon{% if file_type %} file-icon--{{ file_type }}{% endif %}">
+<div class="file_field_item" data-iommi-extended-file-item{% if file_existing_name %} data-iommi-extended-file-existing-name="{{ file_existing_name }}"{% endif %}>
+    <span class="file_icon{% if file_type %} file_icon--{{ file_type }}{% endif %}">
         {% if field.extra_evaluated.show_thumbs %}
             {% if not file_url or file_name|is_image_thumb_allowed %}
-                <span class="file-thumb" style="--iommi-image-thumb-bg: url('{% if file_url %}{{ file_url }}{% else %}{file_blob}{% endif %}')" data-iommi-extended-file-thumb></span>
+                <span class="file_thumb" style="--iommi-image-thumb-bg: url('{% if file_url %}{{ file_url }}{% else %}{file_blob}{% endif %}')" data-iommi-extended-file-thumb></span>
             {% endif %}
         {% endif %}
     </span>
-    <{% if file_url %}a href="{{ file_url }}" target="_blank"{% else %}span{% endif %} class="file-name">
+    <{% if file_url %}a href="{{ file_url }}" target="_blank"{% else %}span{% endif %} class="file_name">
     {{ file_name }}
     </{% if file_url %}a{% else %}span{% endif %}>
-    <span class="file-size{% if not file_size %} file-size-missing{% endif %}">{{ file_size }}</span>
-    <button type="button" class="btn-file-delete" title="{% translate "Delete" %}" data-iommi-extended-file-delete
+    <span class="file_size{% if not file_size %} file_size_missing{% endif %}">{{ file_size }}</span>
+    <button type="button" class="btn_file_delete" title="{% translate "Delete" %}" data-iommi-extended-file-delete
             data-iommi-delete-confirm-text="{% translate "Do you really want to delete this file?" %}">🗑</button>
 </div>

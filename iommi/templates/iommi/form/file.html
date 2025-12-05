@@ -1,8 +1,8 @@
 {% load iommi %}
 {{ field.iommi_open_tag }}
     {% if field.label %}{{ field.label }}{% endif %}
-    <div{% if not field.is_list and field.value %} class="hidden"{% endif %} data-iommi-extended-file-input-wrapper>{% block input %}{{ field.input }}{% endblock %}</div>
-    <div class="file-items" data-iommi-extended-file-items-wrapper>
+    <div{% if not field.is_list and field.value %} class="file_input_wrapper hidden"{% endif %} data-iommi-extended-file-input-wrapper>{% block input %}{{ field.input }}{% endblock %}</div>
+    <div class="file_items" data-iommi-extended-file-items-wrapper>
         {% if field.extra.file_item_template and field.value %}
             {% if field.is_list %}
                 {% for file in field.value %}
