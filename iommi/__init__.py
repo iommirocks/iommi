@@ -35,6 +35,10 @@ from iommi.menu import (
     Menu,
     MenuItem,
 )
+from iommi.main_menu import (
+    M,
+    MainMenu,
+)
 from iommi.page import (
     Page,
 )
