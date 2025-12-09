@@ -31,6 +31,7 @@ from iommi.declarative.namespace import (
 from iommi.refinable import (
     EvaluatedRefinable,
     is_refinable_function,
+    RefinableObject,
     SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import (
@@ -119,6 +120,8 @@ def get_default_classes():
         iommi.Page,
         iommi.Menu,
         iommi.MenuItem,
+        iommi.M,
+        iommi.MainMenu,
         iommi.Style,
         iommi.fragment.Header,
         iommi.Asset,
@@ -312,6 +315,8 @@ request = req('get')
 
     if c.__base__ in classes:
         w(0, f'Base class: :doc:`{c.__base__.__name__}`')
+    elif c.__base__ is object:
+        pass
     else:
         w(0, f'Base class: `{c.__base__.__name__}`')
 
@@ -401,13 +406,23 @@ request = req('get')
             cookbook_usages = uses_by_field.get(f'{c.__name__}.{refinable}', [])
             if cookbook_usages:
                 w(0, '')
-                w(0, f'Cookbook:')
+                w(0, 'Cookbook:')
                 for id_, title in cookbook_usages:
                     w(1, f':ref:`{id_}`')
                     w(0, '')
             else:
                 if refinable not in concepts and verbose:
                     print(f'WARNING: {c.__name__}.{refinable} has no cookbook examples')
+
+        w(0, '')
+
+    if not issubclass(c, RefinableObject):
+        section(3, 'Constructor arguments')
+
+        for k, v in inspect.signature(x.__init__).parameters.items():
+            if k == 'self':
+                continue
+            w(0, f'* `{k}`')
 
         w(0, '')
 

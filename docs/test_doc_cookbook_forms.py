@@ -1378,6 +1378,8 @@ def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath
 def test_layout_with_panels():
     # language=rst
     """
+    .. _complex-layouts-forms:
+
     How do I make complex layouts for forms?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

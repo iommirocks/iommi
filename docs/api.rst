@@ -28,6 +28,8 @@ API Reference
    Menu
    MenuItem
    Page
+   Panel
+   PanelCol
    Part
    Query
    QueryAutoConfig

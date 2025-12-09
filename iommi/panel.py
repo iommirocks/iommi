@@ -14,7 +14,9 @@ from iommi.shortcut import with_defaults
 
 class PanelCol(Fragment):
     """
-    generates div.col - for wrapping all children of Panel.row
+    Generates `div.col` - for wrapping all children of `Panel.row`.
+
+    See :ref:`the forms cookbook <complex-layouts-forms>` and :ref:`the table cookbook <complex-layouts-tables>`.
     """
 
     @with_defaults(
@@ -30,7 +32,7 @@ class PanelCol(Fragment):
 
 class Panel(Fragment):
     """
-    wrappers for defining Form.layout
+    Class used to define form and table row layouts. See :ref:`the forms cookbook <complex-layouts-forms>` and :ref:`the table cookbook <complex-layouts-tables>`.
     """
     _parent_form = Refinable()  # Form|None
     _parent_table = Refinable()  # Table|None

@@ -1585,6 +1585,8 @@ def test_how_do_i_set_an_empty_message():
 def test_row_layout_with_panels(small_discography):
     # language=rst
     """
+    .. _complex-layouts-tables:
+
     How do I make complex layouts for table rows?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
