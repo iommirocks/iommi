@@ -59,6 +59,11 @@ def path(path, view_or_list, name=None, kwargs=None):
 
 
 class MainMenu:
+    # language=rst
+    """
+    See the :ref:`MainMenu <mainmenu>` docs and the :ref:`MainMenu cookbook <cookbook-main-menu>`.
+    """
+
     @dispatch(
         items=EMPTY,
         attrs__style=EMPTY,
@@ -209,6 +214,11 @@ class BoundMainMenu:
 
 
 class M:
+    # language=rst
+    """
+    See the :ref:`MainMenu <mainmenu>` docs and the :ref:`MainMenu cookbook <cookbook-main-menu>`.
+    """
+
     @dispatch(
         items=EMPTY,
         attrs__style=EMPTY,

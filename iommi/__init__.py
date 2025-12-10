@@ -1,4 +1,4 @@
-__version__ = '7.21.2'
+__version__ = '7.21.3'
 
 from functools import wraps
 
@@ -34,6 +34,10 @@ from iommi.from_model import (
 from iommi.menu import (
     Menu,
     MenuItem,
+)
+from iommi.main_menu import (
+    M,
+    MainMenu,
 )
 from iommi.page import (
     Page,

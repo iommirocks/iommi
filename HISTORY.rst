@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.21.3 (2025-12-04)
+~~~~~~~~~~~~~~~~~~~
+
+* Allow `Column.sortable=True` override. This allows you to turn on sorting for annotated columns
+
+
 7.21.2 (2025-12-03)
 ~~~~~~~~~~~~~~~~~~~
 

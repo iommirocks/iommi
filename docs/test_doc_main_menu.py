@@ -20,6 +20,8 @@ urlpatterns = None
 def test_base(settings, medium_discography):
     # language=rst
     """
+    .. _mainmenu:
+
     Main menu
     ~~~~~~~~~
 
