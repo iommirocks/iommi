@@ -640,9 +640,9 @@ def file__raw_data(form, field, **_):
         return existing_files + request.FILES.getlist(field.iommi_path)
 
     if field.iommi_path not in request.FILES:
-        if field.initial and not (delete_field_name in request.POST and request.POST[delete_field_name] == field.initial.name):
+        if field.initial and request.POST.get(delete_field_name) != field.initial.name:
             return field.initial
-        return None
+        return ''  # has to return '' and not None because of Field._validate()
 
     return request.FILES[field.iommi_path]
 

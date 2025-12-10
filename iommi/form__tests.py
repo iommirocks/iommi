@@ -1923,6 +1923,7 @@ def test_file():
 
     file_data = '1'
     fake_file = StringIO(file_data)
+    fake_file.name = "test.jpg"
 
     form = FooForm().bind(request=req('post', foo=fake_file))
     instance = Struct(foo=None)
@@ -1931,15 +1932,33 @@ def test_file():
     assert instance.foo.file.getvalue() == b'1'
 
     # Non-existent form entry should not overwrite data
-    form = FooForm().bind(request=req('post', foo=''))
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req('post', foo=''))
     assert form.is_valid(), form.get_errors()
     form.apply(instance)
     assert instance.foo.file.getvalue() == b'1'
 
-    form = FooForm().bind(request=req('post'))
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req('post'))
     assert form.is_valid(), form.get_errors()
     form.apply(instance)
     assert instance.foo.file.getvalue() == b'1'
+
+    # uploading new file
+    fake_file_2 = StringIO(file_data)
+    fake_file_2.name = "test_2.pdf"
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req(
+        'post',
+        delete__foo=instance.foo.name,  # cannot "delete" new file
+        foo=fake_file_2
+    ))
+    assert form.is_valid(), form.get_errors()
+    form.apply(instance)
+    assert instance.foo.name == 'test_2.pdf'
+
+    # deleting file value
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req('post', delete__foo=instance.foo.name))
+    assert form.is_valid(), form.get_errors()
+    form.apply(instance)
+    assert instance.foo is None
 
 
 @pytest.mark.django

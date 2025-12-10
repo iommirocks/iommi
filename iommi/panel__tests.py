@@ -301,21 +301,21 @@ def test_nested_forms(john_doe_user, fav_artists):
                                         <tbody data-iommi-is-tbody data-iommi-reorderable="" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                                             <tr data-iommi-edit-table-row data-pk="{fav_artists[0].pk}">
                                                 <td>Black Sabbath</td>
-                                                <td><input id="id_favorite_artists__comment__{fav_artists[0].pk}" name="favorite_artists/comment/{fav_artists[0].pk}" type="text" value="Love it!"/></td>
+                                                <td><div><input id="id_favorite_artists__comment__{fav_artists[0].pk}" name="favorite_artists/comment/{fav_artists[0].pk}" type="text" value="Love it!"/></div></td>
                                                 <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                                     <input data-reordering-value="" id="id_favorite_artists__sort_order__{fav_artists[0].pk}" name="favorite_artists/sort_order/{fav_artists[0].pk}" type="hidden" value="0"/>
                                                 </td>
                                             </tr>
                                             <tr data-iommi-edit-table-row data-pk="{fav_artists[1].pk}">
                                                 <td>Ozzy Osbourne</td>
-                                                <td><input id="id_favorite_artists__comment__{fav_artists[1].pk}" name="favorite_artists/comment/{fav_artists[1].pk}" type="text" value="I love this too!"/></td>
+                                                <td><div><input id="id_favorite_artists__comment__{fav_artists[1].pk}" name="favorite_artists/comment/{fav_artists[1].pk}" type="text" value="I love this too!"/></div></td>
                                                 <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                                     <input data-reordering-value="" id="id_favorite_artists__sort_order__{fav_artists[1].pk}" name="favorite_artists/sort_order/{fav_artists[1].pk}" type="hidden" value="1"/>
                                                 </td>
                                             </tr>
                                             <tr data-iommi-edit-table-row data-pk="{fav_artists[2].pk}">
                                                 <td>Damnation</td>
-                                                <td><input id="id_favorite_artists__comment__{fav_artists[2].pk}" name="favorite_artists/comment/{fav_artists[2].pk}" type="text" value="And this as well"/></td>
+                                                <td><div><input id="id_favorite_artists__comment__{fav_artists[2].pk}" name="favorite_artists/comment/{fav_artists[2].pk}" type="text" value="And this as well"/></div></td>
                                                 <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder">
                                                     <input data-reordering-value="" id="id_favorite_artists__sort_order__{fav_artists[2].pk}" name="favorite_artists/sort_order/{fav_artists[2].pk}" type="hidden" value="2"/>
                                                 </td>

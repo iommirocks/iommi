@@ -10,7 +10,6 @@ from typing import (
 
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
-from django.template import Context
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
@@ -23,6 +22,7 @@ from iommi.action import (
     Actions,
     group_actions,
 )
+from iommi.error import Errors
 from iommi.sort_after import LAST
 from iommi.base import (
     MISSING,
@@ -115,13 +115,6 @@ class EditCell(Cell):
 
             bind_field_from_instance(field, self.row)
 
-            if self.table.extra_evaluated.render_inputs_only or 'hidden' in getattr(field, 'iommi_shortcut_stack', []):
-                input_html = field.input.__html__()
-            else:
-                input_html = field.__html__()
-
-            field.attr = orig_attr
-
             # Check both edit_errors and create_errors
             errors = None
             if self.table.edit_errors:
@@ -129,10 +122,19 @@ class EditCell(Cell):
             if not errors and self.table.create_errors:
                 errors = self.table.create_errors.get(path)
 
-            if errors:
-                return Template(
-                    '{{ input_html }}<br><span class="text-danger"><ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></span>'
-                ).render(context=Context(dict(input_html=input_html, errors=errors)))
+            if self.table.extra_evaluated.render_inputs_only or 'hidden' in getattr(field, 'iommi_shortcut_stack', []):
+                input_html = field.input.__html__()
+            else:
+                if self.table.extra_evaluated.input_labels_include is False:
+                    field.label.include = False
+                if errors:
+                    field._errors = errors
+
+                input_html = field.__html__()
+
+                field.errors = Errors(parent=field)
+
+            field.attr = orig_attr
 
             return input_html
         else:
@@ -359,7 +361,8 @@ def edit_table__post_handler(table, request, **_):
                 pass
             if instance.pk is not None and instance.pk < 0:
                 instance.pk = None
-            if instance.pk is None:
+
+            if instance.pk is None:  # TODO smazat po otestování
                 attrs_to_save = None
 
             if attrs_to_save is None:
@@ -370,6 +373,15 @@ def edit_table__post_handler(table, request, **_):
                     if prefix:  # Might be ''
                         model_object = getattr_path(model_object, prefix)
                     model_object.save(update_fields=[strip_prefix(x, prefix=f'{prefix}__') for x in attrs_to_save if x.startswith(prefix)])
+
+            # TODO toto dodělat nějak takto, aby fungoval upload nového souboru, příp. mazání
+            # if instance.pk is None:
+            #     for prefix in find_unique_prefixes(attrs_to_save):
+            #         model_object = instance
+            #         if prefix:  # Might be ''
+            #             model_object = getattr_path(model_object, prefix)
+            #         model_object.save(update_fields=[strip_prefix(x, prefix=f'{prefix}__') for x in attrs_to_save if x.startswith(prefix)])
+            # instance.save()
 
     save(table.cells_for_rows(), table.edit_form)
     save(table.cells_for_rows_for_create(save=True), table.create_form)
@@ -459,7 +471,8 @@ class EditTable(Table):
 
         reorderable = False
 
-        extra_evaluated__render_inputs_only = lambda table, **_: table.row.layout is None
+        extra_evaluated__render_inputs_only = False
+        extra_evaluated__input_labels_include = lambda table, **_: table.row.layout is not None
 
         bulk__include = True
 
