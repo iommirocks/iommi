@@ -147,7 +147,9 @@ base = Style(
             dropfile=dict(
                 template='iommi/form/dropfile.html',
                 extra_evaluated__drop_area_text=lambda field, **_: (
-                    gettext_lazy("Drop files here, or click to upload.") if field.is_list else gettext_lazy("Drop file here, or click to upload.")
+                    gettext_lazy("Drop files here, or click to upload.") if field.is_list
+                    else gettext_lazy("Drop file here, or click to upload.") if field.editable
+                    else gettext_lazy("This field is disabled.")
                 )
             ),
         ),

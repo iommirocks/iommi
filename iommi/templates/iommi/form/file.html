@@ -19,7 +19,7 @@
         {{ field.help }}
     {% endif %}
     {{ field.errors }}
-    {% if field.extra.file_item_template %}
+    {% if field.editable and field.extra.file_item_template %}
         <template data-iommi-extended-file-item-template>
             {% include field.extra.file_item_template with file_existing_name='' file_name='{file_name}' file_type='{file_type}' file_size='{file_size}' file_url='' %}
         </template>

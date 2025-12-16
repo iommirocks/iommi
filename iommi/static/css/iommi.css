@@ -153,4 +153,8 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
 .file_field .file_drop_zone input[type="file"] {
     display: none;
 }
+.file_field .file_drop_zone.disabled {
+    background-color: #dddddd;
+    cursor: auto;
+}
 /* /extended file field */

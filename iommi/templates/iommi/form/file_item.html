@@ -11,6 +11,8 @@
     {{ file_name }}
     </{% if file_url %}a{% else %}span{% endif %}>
     <span class="file_size{% if not file_size %} file_size_missing{% endif %}">{{ file_size }}</span>
+    {% if field.editable %}
     <button type="button" class="btn_file_delete" title="{% translate "Delete" %}" data-iommi-extended-file-delete
             data-iommi-delete-confirm-text="{% translate "Do you really want to delete this file?" %}">🗑</button>
+    {% endif %}
 </div>
