@@ -674,29 +674,56 @@ class IommiReorderable {
 }
 
 class IommiExtendedFileInput {
-    bound_attr = 'data-iommi-extended-file-bound';
+    boundAttr = 'data-iommi-extended-file-bound';
 
     selectors = {
         field: '[data-iommi-extended-file-field]',
-        bound_field: `[${this.bound_attr}]`,
-        drop_zone: '[data-iommi-extended-file-drop-zone]',
-        file_item: '[data-iommi-extended-file-item]',
-        file_item_template: '[data-iommi-extended-file-item-template]',
-        file_items_wrapper: '[data-iommi-extended-file-items-wrapper]',
-        file_delete: '[data-iommi-extended-file-delete]',
-        file_input: 'input[type="file"]',
-        file_input_wrapper: '[data-iommi-extended-file-input-wrapper]',
+        boundField: `[${this.boundAttr}]`,
+        dropZone: '[data-iommi-extended-file-drop-zone]',
+        fileItem: '[data-iommi-extended-file-item]',
+        fileItemTemplate: '[data-iommi-extended-file-item-template]',
+        fileItemsWrapper: '[data-iommi-extended-file-items-wrapper]',
+        fileDelete: '[data-iommi-extended-file-delete]',
+        fileInput: 'input[type="file"]',
+        fileInputWrapper: '[data-iommi-extended-file-input-wrapper]',
     };
+
+    windowEventListenersAdded = false;
 
     constructor() {
         const SELF = this;
         document.addEventListener('iommi.element.populated', (event) => {
             SELF.initAll(event.target);
         });
+
+        document.addEventListener('iommi.editTable.newElement', (event) => {
+            if(event.target.querySelector(this.selectors.field)) {
+                SELF.initAll(event.target);
+            }
+        });
     }
 
     onCompleteReadyState() {
-        if(document.querySelector(this.selectors.drop_zone)) {
+        this.initAll();
+
+        // add live event-listener for delete
+        IommiBase.addLiveEventListener(
+            'click',
+            `${this.selectors.fileItem} ${this.selectors.fileDelete}`,
+            (event) => {
+                if(!event.target.dataset.iommiDeleteConfirmText || confirm(event.target.dataset.iommiDeleteConfirmText)) {
+                    this.deleteFile(event.target.closest(this.selectors.fileItem));
+                }
+            }
+        );
+    }
+
+    initAll(parent) {
+        if (!parent) {
+            parent = document;
+        }
+
+        if(!this.windowEventListenersAdded && parent.querySelector(this.selectors.dropZone)) {
             // For file dropping, the browser may process them by default (such as opening or downloading the file)
             // even when the file is not dropped into a valid drop target.
             // To prevent this behavior, we also need to listen for the drop event on window and cancel it.
@@ -714,40 +741,24 @@ class IommiExtendedFileInput {
                 );
                 if (fileItems.length > 0) {
                     e.preventDefault();
-                    if (!e.target.matches(this.selectors.drop_zone) && !e.target.closest(this.selectors.drop_zone)) {
+                    if (!e.target.matches(this.selectors.dropZone) && !e.target.closest(this.selectors.dropZone)) {
                         e.dataTransfer.dropEffect = "none";
                     }
                 }
             });
+
+            this.windowEventListenersAdded = true;
         }
 
-        this.initAll();
-
-        // add live event-listener for delete
-        IommiBase.addLiveEventListener(
-            'click',
-            `${this.selectors.file_item} ${this.selectors.file_delete}`,
-            (event) => {
-                if(!event.target.dataset.iommiDeleteConfirmText || confirm(event.target.dataset.iommiDeleteConfirmText)) {
-                    this.deleteFile(event.target.closest(this.selectors.file_item));
-                }
-            }
-        );
-    }
-
-    initAll(parent) {
-        if (!parent) {
-            parent = document;
-        }
         parent.querySelectorAll(this.selectors.field).forEach((el) => {this.initOne(el)});
     }
 
     initOne(extendedFileField) {
-        if(extendedFileField.matches(this.selectors.bound_field)) {
+        if(extendedFileField.matches(this.selectors.boundField)) {
             return;
         }
-        const fileInput = extendedFileField.querySelector(this.selectors.file_input);
-        const dropZone = extendedFileField.querySelector(this.selectors.drop_zone);
+        const fileInput = extendedFileField.querySelector(this.selectors.fileInput);
+        const dropZone = extendedFileField.querySelector(this.selectors.dropZone);
 
         if(dropZone) {
             dropZone.addEventListener('drop', (event) => {
@@ -773,20 +784,20 @@ class IommiExtendedFileInput {
         }
 
         fileInput.addEventListener('change', (event) => {
-            extendedFileField.querySelector(this.selectors.file_items_wrapper).querySelectorAll(
-                this.selectors.file_item
+            extendedFileField.querySelector(this.selectors.fileItemsWrapper).querySelectorAll(
+                this.selectors.fileItem
             ).forEach((fileItem) => {
                 this.deleteFile(fileItem, true);
             });
             this.displayFiles(extendedFileField, event.target.files);
         });
 
-        extendedFileField.setAttribute(this.bound_attr, '');
+        extendedFileField.setAttribute(this.boundAttr, '');
     }
 
     deleteFile(fileItem, preserveFileInputValue) {
         const extendedFileField = fileItem.closest(this.selectors.field);
-        const fileInput = extendedFileField.querySelector(this.selectors.file_input);
+        const fileInput = extendedFileField.querySelector(this.selectors.fileInput);
 
         let deletedFileName = '';
 
@@ -813,7 +824,7 @@ class IommiExtendedFileInput {
         fileItem.remove();
 
         if(!fileInput.hasAttribute('multiple') && !fileInput.files.length) {
-            extendedFileField.querySelector(this.selectors.file_input_wrapper).classList.remove('hidden');
+            extendedFileField.querySelector(this.selectors.fileInputWrapper).classList.remove('hidden');
         }
 
         extendedFileField.dispatchEvent(
@@ -843,11 +854,11 @@ class IommiExtendedFileInput {
     }
 
     displayOneFile(extendedFileField, file) {
-        const template = extendedFileField.querySelector(this.selectors.file_item_template);
+        const template = extendedFileField.querySelector(this.selectors.fileItemTemplate);
         const clone = template.content.cloneNode(true).firstElementChild;
         clone.innerHTML = clone.innerHTML.replace('{file_name}', file.name).replace('{file_type}', this.getFileType(file.name)).replace('{file_size}', this.formatFileSize(file.size));
 
-        if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined' && this.is_image(file)) {
+        if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined' && this.isImage(file)) {
             const imgURL = URL.createObjectURL(file);
             const img = new Image();
             const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200", 10);
@@ -871,16 +882,16 @@ class IommiExtendedFileInput {
             img.src = imgURL;
             clone.innerHTML = clone.innerHTML.replace('{file_blob}', loadingIcon);
         } else {
-            clone.querySelectorAll('[data-iommi-extended-file-thumb]').forEach((thumb_element) => {
-                thumb_element.remove();
+            clone.querySelectorAll('[data-iommi-extended-file-thumb]').forEach((thumbElement) => {
+                thumbElement.remove();
             })
         }
 
         clone.dataset.iommiExtendedFileUploadedName = file.name;
-        const fileItem = extendedFileField.querySelector(this.selectors.file_items_wrapper).appendChild(clone);
+        const fileItem = extendedFileField.querySelector(this.selectors.fileItemsWrapper).appendChild(clone);
 
-        if(!extendedFileField.querySelector(this.selectors.file_input).hasAttribute('multiple')) {
-            extendedFileField.querySelector(this.selectors.file_input_wrapper).classList.add('hidden');
+        if(!extendedFileField.querySelector(this.selectors.fileInput).hasAttribute('multiple')) {
+            extendedFileField.querySelector(this.selectors.fileInputWrapper).classList.add('hidden');
         }
 
         return fileItem
@@ -890,7 +901,7 @@ class IommiExtendedFileInput {
         event.preventDefault();
 
         const extendedFileField = event.target.closest(this.selectors.field);
-        const fileInput = extendedFileField.querySelector(this.selectors.file_input);
+        const fileInput = extendedFileField.querySelector(this.selectors.fileInput);
 
         if(fileInput.hasAttribute('multiple')) {
             const dt = new DataTransfer();
@@ -948,7 +959,7 @@ class IommiExtendedFileInput {
         return '';
     }
 
-    is_image(file) {
+    isImage(file) {
         return [
             'image/gif',
             'image/jpeg',
