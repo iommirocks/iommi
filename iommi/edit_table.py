@@ -9,6 +9,7 @@ from typing import (
 )
 
 from django.db.models import QuerySet
+from django.db.models.fields.files import FieldFile
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
@@ -349,10 +350,14 @@ def edit_table__post_handler(table, request, **_):
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
                 if cells.is_create_template or (
-                    field.invoke_callback(field.read_from_instance, instance=instance) != value
+                        (instance_value := field.invoke_callback(field.read_from_instance, instance=instance)) != value
                 ):
                     if field.extra.get('django_related_field', False):
-                        to_save_in_second_phase.append((field, value))
+                        if not cells.is_create_template and isinstance(instance_value, FieldFile) and not instance_value and value is None:
+                            # instance value of FileField/ImageField is an empty FieldFile/ImageFieldFile, not None
+                            pass
+                        else:
+                            to_save_in_second_phase.append((field, value))
                     else:
                         field.invoke_callback(field.write_to_instance, instance=instance, value=value)
                         attrs_to_save.append(field.attr)
@@ -361,8 +366,6 @@ def edit_table__post_handler(table, request, **_):
 
         to_save.sort(key=lambda x: abs(x[0].pk))
         for instance, attrs_to_save, to_save_in_second_phase in to_save:
-            if not to_save:
-                pass
             if instance.pk is not None and instance.pk < 0:
                 instance.pk = None
 
