@@ -302,7 +302,6 @@ request = req('get')
 Foo
 ===
 
-Base class: `object`
 
 """
 def test_base():
@@ -314,6 +313,12 @@ def test_base():
     """
 
 Initialize self.  See help(type(self)) for accurate signature.
+
+Constructor arguments
++++++++++++++++++++++
+
+* `args`
+* `kwargs`
 
 Methods
 -------
