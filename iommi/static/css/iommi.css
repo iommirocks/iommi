@@ -134,6 +134,9 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     border: 0;
     color: #930000;
     background: inherit;
+    background-image: url('../images/iommi-icons/trash-bin.svg');
+    width: 24px;
+    height: 24px;
 }
 .file_field .file_drop_zone {
     display: flex;

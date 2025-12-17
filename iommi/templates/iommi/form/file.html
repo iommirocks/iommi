@@ -6,11 +6,11 @@
         {% if field.extra.file_item_template and field.value %}
             {% if field.is_list %}
                 {% for file in field.value %}
-                    {% include field.extra.file_item_template with file_existing_name=file.name file_name=file.name|basename file_type=file.name|file_type file_size=file.size|filesizeformat file_url=file.url %}
+                    {% include field.extra.file_item_template with file_existing_name=file.name file_name=file.name|basename file_type=file.name|file_type file_size=file.size|filesizeformat file_url=file.url|default:"" %}
                 {% endfor %}
             {% else %}
                 {% with file=field.value %}
-                    {% include field.extra.file_item_template with file_existing_name=file.name file_name=file.name|basename file_type=file.name|file_type file_size=file.size|filesizeformat file_url=file.url %}
+                    {% include field.extra.file_item_template with file_existing_name=file.name file_name=file.name|basename file_type=file.name|file_type file_size=file.size|filesizeformat file_url=file.url|default:"" %}
                 {% endwith %}
             {% endif %}
         {% endif %}

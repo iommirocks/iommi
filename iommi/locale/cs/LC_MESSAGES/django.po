@@ -222,7 +222,7 @@ msgstr "Hromadné mazání"
 
 #: templates/iommi/form/file_item.html:16
 msgid "Do you really want to delete this file?"
-msgstr "Jste si jisti, že chcete smazat těchto {count} položek?"
+msgstr "Opravdu si přejete smazat tento soubor?"
 
 #: templates/iommi/query/advanced.html:4
 msgid "Search query"

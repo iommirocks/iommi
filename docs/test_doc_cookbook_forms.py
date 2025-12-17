@@ -1,3 +1,7 @@
+from pathlib import Path
+
+from django.core.files import File
+from django.db.models import FileField, ImageField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy
@@ -1442,3 +1446,46 @@ def test_layout_with_panels():
 
     The same way you can also use layouts for filter forms via `Table.query__form__layout`
     """
+
+
+def test_dropfile_dropimage_field():
+    # language=rst
+    """
+    .. _dropfile-dropimage:
+
+    How to make cool drag&drop file or image fields?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    If you don't want a regular file-inputs, you can use `Field.dropfile` and `Field.dropimage`:
+    """
+
+    # @test
+    existing_files = []
+    for fn in ("iommi_logo_for_dark_background.svg", "iommi_logo_text_only.svg"):
+        with open(Path(__file__).resolve().parent.parent / "iommi" / "static" / "images" / fn, "rb") as f:
+            _file = File(f)
+            _file.url = f'/_static/images/{fn}'
+            existing_files.append(_file)
+    # @end
+
+    form = Form.create(
+        fields__my_document=Field.dropfile(display_name="My document"),
+        fields__my_image=Field.dropimage(display_name="My image"),
+        fields__existing_files=Field.dropfile(
+            display_name="Existing multiple files",
+            is_list=True,
+            initial=existing_files
+        ),
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+    # language=rst
+    """
+    And of course you can also use `registrations </registrations.html#django-custom-fields>`__ to enable drag&drop for all file/image fields:
+    """
+
+    register_field_factory(FileField, shortcut_name='dropfile')
+    register_field_factory(ImageField, shortcut_name='dropimage')
