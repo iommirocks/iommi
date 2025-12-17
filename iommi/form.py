@@ -810,7 +810,7 @@ class Field(Part, Tag):
     def is_valid(form: 'Form', field: 'Field', parsed_data: Any, **_) -> Tuple[bool, str]:
         # language=rst
         """
-        Validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError.
+        Validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise `ValidationError`.
 
         .. code-block:: python
 
