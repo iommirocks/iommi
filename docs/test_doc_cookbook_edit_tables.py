@@ -34,7 +34,9 @@ def test_how_do_you_edit_one_to_one_in_a_table(black_sabbath):
     Include them in `auto__include`. Say you have a profile model for an artist:
     """
 
+    # @test
     profile = Profile.objects.create(artist=black_sabbath)
+    # @end
 
     # language=rst
     """
@@ -68,7 +70,7 @@ def test_how_do_you_edit_one_to_one_in_a_table(black_sabbath):
     # @end
 
 
-def test_how_do_I_change_delete_to_checkboxes():
+def test_how_do_i_change_delete_to_checkboxes(ozzy):
     # language=rst
     """
     .. _edit-table-delete-as-checkbox:
@@ -79,6 +81,10 @@ def test_how_do_I_change_delete_to_checkboxes():
     Just add `data-iommi-edit-table-delete-with="checkbox"`:
     """
 
+    # @test
+    Profile.objects.create(artist=ozzy)
+    # @end
+
     edit_table = EditTable(
         auto__model=Profile,
         auto__include=['artist__name'],
@@ -87,6 +93,35 @@ def test_how_do_I_change_delete_to_checkboxes():
         **{
             'attrs__data-iommi-edit-table-delete-with': 'checkbox',
         }
+    )
+
+    # @test
+    show_output(edit_table)
+    # @end
+
+
+def test_how_do_i_include_labels_for_fields(ozzy):
+    # language=rst
+    """
+    .. _edit-table-include-field-labels:
+
+    How do I include labels for fields?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    If you're using `EditTable` and not `EditTable.div`, then by default you get fields rendered without labels,
+    because the label text is in the table header. But in case you still want to render labels (e.g. as floating labels),
+    you can just set `extra_evaluated__input_labels_include = True`:
+    """
+
+    # @test
+    Profile.objects.create(artist=ozzy)
+    # @end
+
+    edit_table = EditTable(
+        auto__model=Profile,
+        auto__include=['artist__name'],
+        columns__artist_name__field__include=True,
+        extra_evaluated__input_labels_include=True,
     )
 
     # @test

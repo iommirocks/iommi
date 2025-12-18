@@ -673,10 +673,310 @@ class IommiReorderable {
     }
 }
 
+class IommiExtendedFileInput {
+    boundAttr = 'data-iommi-extended-file-bound';
+
+    selectors = {
+        field: '[data-iommi-extended-file-field]',
+        boundField: `[${this.boundAttr}]`,
+        dropZone: '[data-iommi-extended-file-drop-zone]',
+        fileItem: '[data-iommi-extended-file-item]',
+        fileItemTemplate: '[data-iommi-extended-file-item-template]',
+        fileItemsWrapper: '[data-iommi-extended-file-items-wrapper]',
+        fileDelete: '[data-iommi-extended-file-delete]',
+        fileInput: 'input[type="file"]',
+        fileInputWrapper: '[data-iommi-extended-file-input-wrapper]',
+    };
+
+    windowEventListenersAdded = false;
+
+    constructor() {
+        const SELF = this;
+        document.addEventListener('iommi.element.populated', (event) => {
+            SELF.initAll(event.target);
+        });
+
+        document.addEventListener('iommi.editTable.newElement', (event) => {
+            if(event.target.querySelector(this.selectors.field)) {
+                SELF.initAll(event.target);
+            }
+        });
+    }
+
+    onCompleteReadyState() {
+        this.initAll();
+
+        // add live event-listener for delete
+        IommiBase.addLiveEventListener(
+            'click',
+            `${this.selectors.fileItem} ${this.selectors.fileDelete}`,
+            (event) => {
+                if(!event.target.dataset.iommiDeleteConfirmText || confirm(event.target.dataset.iommiDeleteConfirmText)) {
+                    this.deleteFile(event.target.closest(this.selectors.fileItem));
+                }
+            }
+        );
+    }
+
+    initAll(parent) {
+        if (!parent) {
+            parent = document;
+        }
+
+        if(!this.windowEventListenersAdded && parent.querySelector(this.selectors.dropZone)) {
+            // For file dropping, the browser may process them by default (such as opening or downloading the file)
+            // even when the file is not dropped into a valid drop target.
+            // To prevent this behavior, we also need to listen for the drop event on window and cancel it.
+            window.addEventListener("drop", (e) => {
+                if ([...e.dataTransfer.items].some((item) => item.kind === "file")) {
+                    e.preventDefault();
+                }
+            });
+
+            // In order for the drop event to fire, the element must also cancel the dragover event.
+            // Because we are listening for drop on window, we need to cancel the dragover event for the whole window as well.
+            window.addEventListener("dragover", (e) => {
+                const fileItems = [...e.dataTransfer.items].filter(
+                    (item) => item.kind === "file",
+                );
+                if (fileItems.length > 0) {
+                    e.preventDefault();
+                    if (!e.target.matches(this.selectors.dropZone) && !e.target.closest(this.selectors.dropZone)) {
+                        e.dataTransfer.dropEffect = "none";
+                    }
+                }
+            });
+
+            this.windowEventListenersAdded = true;
+        }
+
+        parent.querySelectorAll(this.selectors.field).forEach((el) => {this.initOne(el)});
+    }
+
+    initOne(extendedFileField) {
+        if(extendedFileField.matches(this.selectors.boundField)) {
+            return;
+        }
+        const fileInput = extendedFileField.querySelector(this.selectors.fileInput);
+        const dropZone = extendedFileField.querySelector(this.selectors.dropZone);
+
+        if(dropZone) {
+            dropZone.addEventListener('drop', (event) => {
+                dropZone.classList.remove('dragover');
+                this.dropHandler(event)
+            });
+
+            // In order for the drop event to fire, the element must also cancel the dragover event.
+            dropZone.addEventListener('dragover', (event) => {
+                const fileItems = [...event.dataTransfer.items].filter(
+                    (item) => item.kind === 'file',
+                );
+                if (fileItems.length > 0) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'copy';
+                    dropZone.classList.add('dragover');
+                }
+            });
+
+            dropZone.addEventListener("dragleave", () => {
+              dropZone.classList.remove("dragover");
+            });
+        }
+
+        fileInput.addEventListener('change', (event) => {
+            extendedFileField.querySelector(this.selectors.fileItemsWrapper).querySelectorAll(
+                this.selectors.fileItem
+            ).forEach((fileItem) => {
+                this.deleteFile(fileItem, true);
+            });
+            this.displayFiles(extendedFileField, event.target.files);
+        });
+
+        extendedFileField.setAttribute(this.boundAttr, '');
+    }
+
+    deleteFile(fileItem, preserveFileInputValue) {
+        const extendedFileField = fileItem.closest(this.selectors.field);
+        const fileInput = extendedFileField.querySelector(this.selectors.fileInput);
+
+        let deletedFileName = '';
+
+        if(fileItem.dataset.iommiExtendedFileUploadedName) {
+            deletedFileName = fileItem.dataset.iommiExtendedFileUploadedName;
+            if(!preserveFileInputValue) {
+                const dt = new DataTransfer();
+                for (let file of fileInput.files) {
+                    if (file.name !== fileItem.dataset.iommiExtendedFileUploadedName) {
+                        dt.items.add(file);
+                    }
+                }
+                fileInput.files = dt.files;
+            }
+        } else if(fileItem.dataset.iommiExtendedFileExistingName) {
+            deletedFileName = fileItem.dataset.iommiExtendedFileExistingName;
+            const hiddenInput = document.createElement("input");
+            hiddenInput.setAttribute("type", "hidden");
+            hiddenInput.setAttribute("name", `delete__${fileInput.name}`);
+            hiddenInput.setAttribute("value", fileItem.dataset.iommiExtendedFileExistingName);
+            extendedFileField.appendChild(hiddenInput);
+        }
+
+        fileItem.remove();
+
+        if(!fileInput.hasAttribute('multiple') && !fileInput.files.length) {
+            extendedFileField.querySelector(this.selectors.fileInputWrapper).classList.remove('hidden');
+        }
+
+        extendedFileField.dispatchEvent(
+            new CustomEvent('iommi.extendedFile.deleted', {
+                bubbles: true,
+                detail: {deletedFileName: deletedFileName}
+            })
+        );
+    }
+
+    displayFiles(extendedFileField, files) {
+        const addedFiles = [];
+
+        for(let file of files) {
+            addedFiles.push({
+                file: file,
+                fileItem: this.displayOneFile(extendedFileField, file)
+            });
+        }
+
+        extendedFileField.dispatchEvent(
+            new CustomEvent('iommi.extendedFile.addedFiles', {
+                bubbles: true,
+                detail: {addedFiles: addedFiles}
+            })
+        );
+    }
+
+    displayOneFile(extendedFileField, file) {
+        const template = extendedFileField.querySelector(this.selectors.fileItemTemplate);
+        const clone = template.content.cloneNode(true).firstElementChild;
+        clone.innerHTML = clone.innerHTML.replace('{file_name}', file.name).replace('{file_type}', this.getFileType(file.name)).replace('{file_size}', this.formatFileSize(file.size));
+
+        if(typeof extendedFileField.dataset.iommiExtendedFileWithThumbs !== 'undefined' && this.isImage(file)) {
+            const imgURL = URL.createObjectURL(file);
+            const img = new Image();
+            const requiredWidth = parseInt(extendedFileField.dataset.iommiExtendedFileThumbWidth || "200", 10);
+            const requiredHeight = parseInt(extendedFileField.dataset.iommiExtendedFileThumbHeight || "200", 10);
+            const loadingIcon = extendedFileField.dataset.iommiExtendedFileLoadingIcon;
+            img.addEventListener("load", () => {
+                if(file.size > 1024*1024) {
+                    const canvas = document.createElement('canvas');
+                    const scale = Math.max(requiredWidth / img.width, requiredHeight / img.height);
+                    canvas.width = Math.ceil(img.width * scale);
+                    canvas.height = Math.ceil(img.height * scale);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+                    clone.innerHTML = clone.innerHTML.replace(loadingIcon, dataUrl);
+                } else {
+                    clone.innerHTML = clone.innerHTML.replace(loadingIcon, imgURL);
+                }
+                URL.revokeObjectURL(imgURL);
+            });
+            img.src = imgURL;
+            clone.innerHTML = clone.innerHTML.replace('{file_blob}', loadingIcon);
+        } else {
+            clone.querySelectorAll('[data-iommi-extended-file-thumb]').forEach((thumbElement) => {
+                thumbElement.remove();
+            })
+        }
+
+        clone.dataset.iommiExtendedFileUploadedName = file.name;
+        const fileItem = extendedFileField.querySelector(this.selectors.fileItemsWrapper).appendChild(clone);
+
+        if(!extendedFileField.querySelector(this.selectors.fileInput).hasAttribute('multiple')) {
+            extendedFileField.querySelector(this.selectors.fileInputWrapper).classList.add('hidden');
+        }
+
+        return fileItem
+    }
+
+    dropHandler(event) {
+        event.preventDefault();
+
+        const extendedFileField = event.target.closest(this.selectors.field);
+        const fileInput = extendedFileField.querySelector(this.selectors.fileInput);
+
+        if(fileInput.hasAttribute('multiple')) {
+            const dt = new DataTransfer();
+            const dtDisplay = new DataTransfer();
+            for (let file of fileInput.files) {
+                dt.items.add(file);
+            }
+            for (let file of event.dataTransfer.files) {
+                if(!this.dataTransferContainsFile(dt, file) && !this.isFirefoxDirectory(file)) {
+                    dt.items.add(file);
+                    dtDisplay.items.add(file);
+                }
+            }
+            fileInput.files = dt.files;
+            this.displayFiles(extendedFileField, dtDisplay.files);
+        } else {
+            // only first file when input is not multiple
+            const dt = new DataTransfer();
+            if(event.dataTransfer.files.length) {
+                for (let file of event.dataTransfer.files) {
+                    if(!this.isFirefoxDirectory(file)) {
+                        dt.items.add(file);
+                        break;
+                    }
+                }
+                fileInput.files = dt.files;
+                fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
+            }
+        }
+    }
+
+    dataTransferContainsFile(dt, file) {
+        return Array.from(dt.files).some(f =>
+            f.name === file.name &&
+            f.size === file.size &&
+            f.type === file.type
+        );
+    }
+
+    // in Firefox directories are still in event.dataTransfer.files
+    // we want to skip those
+    isFirefoxDirectory(file) {
+        return (file.type === "" || file.type === "application/x-moz-file") && file.size === 0;
+    }
+
+    formatFileSize(size) {
+        const i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
+        return ((size / Math.pow(1024, i)).toFixed(2)) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+    }
+
+    getFileType(filename) {
+        if(filename.lastIndexOf('.') > 0) {
+            return filename.split('.').pop();
+        }
+        return '';
+    }
+
+    isImage(file) {
+        return [
+            'image/gif',
+            'image/jpeg',
+            'image/png',
+            'image/avif',
+            'image/webp',
+            'image/bmp',
+            'image/svg+xml'
+        ].includes(file.type);
+    }
+}
+
 // TODO should this be somehow conditioned? so people can create their own extended instance?
 window.iommi = new IommiBase({
     select2: new IommiSelect2(),
-    reorderable: new IommiReorderable()
+    reorderable: new IommiReorderable(),
+    extendedFileInput: new IommiExtendedFileInput()
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -691,5 +991,6 @@ document.addEventListener('readystatechange', () => {
     if (document.readyState === 'complete') {
         window.iommi.select2.onCompleteReadyState();
         window.iommi.reorderable.onCompleteReadyState();
+        window.iommi.extendedFileInput.onCompleteReadyState();
     }
 });

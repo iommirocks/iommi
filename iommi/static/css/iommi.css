@@ -65,3 +65,99 @@ div[data-iommi-edit-table-delete-with="checkbox"] input[data-iommi-edit-table-de
     content: "||";
 }
 /* /EditTable */
+
+/* extended file field */
+.file_field .file_input_wrapper.hidden {
+    display: none;
+}
+.file_field .file_items:has(.file_field_item) {
+    border: 1px dotted #cccccc;
+    border-radius: 8px;
+}
+.file_field .file_field_item {
+    padding: .375rem;
+    display: flex;
+    align-items: center;
+}
+.file_field .file_field_item:not(:last-child) {
+    border-bottom: 1px dotted #cccccc;
+}
+.file_field .file_field_item .file_icon {
+    display: inline-block;
+    height: 64px;
+    width: 64px;
+}
+.file_field .file_field_item .file_icon:not(:has(.file_thumb)) {
+    background-image: url('../images/iommi-icons/file.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.file_field .file_field_item .file_icon.file_icon--jpg:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--jpeg:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--jif:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--jfif:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--jfi:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--gif:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--bmp:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--png:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--ico:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--avif:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--webp:not(:has(.file_thumb)),
+.file_field .file_field_item .file_icon.file_icon--svg:not(:has(.file_thumb)) {
+    background-image: url('../images/iommi-icons/image.svg');
+}
+.file_field .file_field_item .file_icon .file_thumb {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: var(--iommi-image-thumb-bg)
+}
+.file_field .file_field_item .file_name {
+    margin-right: 3rem;
+	margin-left: 1rem;
+}
+.file_field .file_field_item .file_size {
+    font-size: 80%;
+    margin-right: 3rem;
+}
+.file_field .file_field_item .file_size:not(.file_size_missing)::before {
+    content: '(';
+}
+.file_field .file_field_item .file_size:not(.file_size_missing)::after {
+    content: ')';
+}
+.file_field .btn_file_delete {
+    border: 0;
+    color: #930000;
+    background: inherit;
+    background-image: url('../images/iommi-icons/trash-bin.svg');
+    width: 24px;
+    height: 24px;
+}
+.file_field .file_drop_zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    height: 80px;
+    padding: 1em;
+    border: 1px dashed #cccccc;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.file_field .file_drop_zone.dragover {
+    border: 1px solid #cccccc;
+    box-shadow: rgba(0, 0, 0, 0.35) 0 5px 15px;
+}
+.file_field .file_drop_zone input[type="file"] {
+    display: none;
+}
+.file_field .file_drop_zone.disabled {
+    background-color: #dddddd;
+    cursor: auto;
+}
+/* /extended file field */

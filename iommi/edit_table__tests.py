@@ -1,6 +1,12 @@
 import html
 import json
+import tempfile
+
 import pytest
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models.fields.files import FieldFile
+from django.test import override_settings
 
 from docs.models import (
     Album,
@@ -32,6 +38,7 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+    AttachmentModel,
 )
 
 
@@ -76,11 +83,11 @@ def test_edit_table_rendering():
                         </thead>
                         <tbody data-iommi-is-tbody>
                             <tr data-iommi-edit-table-row data-pk="1">
-                                <td> <input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/> </td>
+                                <td> <div><input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/></div> </td>
                                 <td> bar </td>
                             </tr>
                             <tr data-iommi-edit-table-row data-pk="2">
-                                <td> <input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/> </td>
+                                <td> <div><input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/></div> </td>
                                 <td> buzz </td>
                             </tr>
                         </tbody>
@@ -296,10 +303,10 @@ def test_edit_table_post_create():
         expected_html='''
             <tr data-iommi-edit-table-row data-pk="#sentinel#">
                 <td>
-                    <select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices"></select>
+                    <div style="min-width: 200px"><select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices"></select></div>
                 </td>
                 <td>
-                    <input id="id_columns__c__#sentinel#" name="columns/c/#sentinel#" type="checkbox">
+                    <div><input id="id_columns__c__#sentinel#" name="columns/c/#sentinel#" type="checkbox"></div>
                 </td>
             </tr>
         ''',
@@ -482,11 +489,11 @@ def test_non_editable():
             <tbody data-iommi-is-tbody>
                 <tr data-iommi-edit-table-row data-pk="123">
                     <td class="rj"> 1 </td>
-                    <td> <input id="id_columns__b__123" name="columns/b/123" type="text" value="asd"/> </td>
+                    <td> <div><input id="id_columns__b__123" name="columns/b/123" type="text" value="asd"/></div> </td>
                 </tr>
                 <tr data-iommi-edit-table-row data-pk="456">
                     <td class="rj"> 2 </td>
-                    <td> <input disabled="" id="id_columns__b__456" name="columns/b/456" type="text" value="fgh"/> </td>
+                    <td> <div><input disabled="" id="id_columns__b__456" name="columns/b/456" type="text" value="fgh"/></div> </td>
                 </tr>
             </tbody>
         ''',
@@ -534,10 +541,10 @@ def test_non_rendered():
         expected_html='''
             <tbody data-iommi-is-tbody>
                 <tr data-iommi-edit-table-row data-pk="321">
-                    <td> <input id="id_columns__b__321" name="columns/b/321" type="text" value="asd"/> </td>
+                    <td> <div><input id="id_columns__b__321" name="columns/b/321" type="text" value="asd"/></div> </td>
                 </tr>
                 <tr data-iommi-edit-table-row data-pk="654">
-                    <td> <input id="id_columns__b__654" name="columns/b/654" type="text" value="fgh"/> </td>
+                    <td> <div><input id="id_columns__b__654" name="columns/b/654" type="text" value="fgh"/></div> </td>
                 </tr>
             </tbody>
         ''',
@@ -750,16 +757,16 @@ def test_lazy_tbody_on_fail():
                                 </thead>
                                 <tbody data-iommi-is-tbody>
                                     <tr data-iommi-edit-table-row data-pk="{album_2016.pk}">
-                                        <td><input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value="Where Shadows Forever Reign"></td>
-                                        <td class="rj"><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"></td>
+                                        <td><div><input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value="Where Shadows Forever Reign"></div></td>
+                                        <td class="rj"><div><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"></div></td>
                                     </tr>
                                     <tr data-iommi-edit-table-row data-pk="-1">
-                                        <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"></td>
-                                        <td class="rj"><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"></td>
+                                        <td><div><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"></div></td>
+                                        <td class="rj"><div><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"></div></td>
                                     </tr>
                                     <tr data-iommi-edit-table-row data-pk="-2">
-                                        <td><input id="id_albums__name__-2" name="albums/name/-2" type="text" value="Angelus Exuro pro Eternus"></td>
-                                        <td class="rj"><input id="id_albums__year__-2" name="albums/year/-2" type="text" value="2009"></td>
+                                        <td><div><input id="id_albums__name__-2" name="albums/name/-2" type="text" value="Angelus Exuro pro Eternus"></div></td>
+                                        <td class="rj"><div><input id="id_albums__year__-2" name="albums/year/-2" type="text" value="2009"></div></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -800,31 +807,29 @@ def test_lazy_tbody_on_fail():
                                 <tbody data-iommi-is-tbody>
                                     <tr data-iommi-edit-table-row data-pk="{album_2016.pk}">
                                         <td>
-                                            <input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value=""/>
-                                            <br/>
-                                            <span class="text-danger">
-                                                <ul class="errors">
+                                            <div>
+                                                <input id="id_albums__name__{album_2016.pk}" name="albums/name/{album_2016.pk}" type="text" value=""/>
+                                                <ul>
                                                     <li>This field is required</li>
                                                 </ul>
-                                            </span>
+                                            </div>
                                         </td>
-                                        <td class="rj"><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"/></td>
+                                        <td class="rj"><div><input id="id_albums__year__{album_2016.pk}" name="albums/year/{album_2016.pk}" type="text" value="2016"/></div></td>
                                     </tr>
                                     <tr data-iommi-edit-table-row data-pk="-1">
-                                        <td><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"/></td>
-                                        <td class="rj"><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"/></td>
+                                        <td><div><input id="id_albums__name__-1" name="albums/name/-1" type="text" value="We Are the Apocalypse"/></div></td>
+                                        <td class="rj"><div><input id="id_albums__year__-1" name="albums/year/-1" type="text" value="2021"/></div></td>
                                     </tr>
                                     <tr data-iommi-edit-table-row data-pk="-2">
                                         <td>
-                                            <input id="id_albums__name__-2" name="albums/name/-2" type="text" value=""/>
-                                            <br/>
-                                            <span class="text-danger">
-                                                <ul class="errors">
+                                            <div>
+                                                <input id="id_albums__name__-2" name="albums/name/-2" type="text" value=""/>
+                                                <ul>
                                                     <li>This field is required</li>
                                                 </ul>
-                                            </span>
+                                            </div>
                                         </td>
-                                        <td class="rj"><input id="id_albums__year__-2" name="albums/year/-2" type="text" value="2009"/></td>
+                                        <td class="rj"><div><input id="id_albums__year__-2" name="albums/year/-2" type="text" value="2009"/></div></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -866,17 +871,17 @@ def test_orderable_edit_table(fav_artists):
                 <tbody data-iommi-is-tbody data-iommi-reorderable data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                     <tr data-iommi-edit-table-row data-pk="{fav_artists[0].pk}">
                         <td>Black Sabbath</td>
-                        <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></div></td>
                         <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
                     </tr>
                     <tr data-iommi-edit-table-row data-pk="{fav_artists[1].pk}">
                         <td>Ozzy Osbourne</td>
-                        <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></div></td>
                         <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
                     </tr>
                     <tr data-iommi-edit-table-row data-pk="{fav_artists[2].pk}">
                         <td>Damnation</td>
-                        <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></div></td>
                         <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
@@ -915,17 +920,17 @@ def test_orderable_edit_table_sortablejs_options(fav_artists):
                 <tbody data-iommi-is-tbody data-iommi-reorderable="{html.escape(json.dumps(sortablejs_options, separators=(',', ':')))}" data-iommi-reorderable-field-selector="[data-reordering-value]" data-iommi-reorderable-handle-selector="[data-iommi-reordering-handle]">
                     <tr data-iommi-edit-table-row data-pk="{fav_artists[0].pk}">
                         <td>Black Sabbath</td>
-                        <td><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists[0].pk}" name="columns/comment/{fav_artists[0].pk}" type="text" value="Love it!"></div></td>
                         <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[0].pk}" name="columns/sort_order/{fav_artists[0].pk}" type="hidden" value="0"></td>
                     </tr>
                     <tr data-iommi-edit-table-row data-pk="{fav_artists[1].pk}">
                         <td>Ozzy Osbourne</td>
-                        <td><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists[1].pk}" name="columns/comment/{fav_artists[1].pk}" type="text" value="I love this too!"></div></td>
                         <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[1].pk}" name="columns/sort_order/{fav_artists[1].pk}" type="hidden" value="1"></td>
                     </tr>
                     <tr data-iommi-edit-table-row data-pk="{fav_artists[2].pk}">
                         <td>Damnation</td>
-                        <td><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists[2].pk}" name="columns/comment/{fav_artists[2].pk}" type="text" value="And this as well"></div></td>
                         <td class="reordering-handle-cell" data-iommi-reordering-handle="" title="Drag and drop to reorder"><input data-reordering-value id="id_columns__sort_order__{fav_artists[2].pk}" name="columns/sort_order/{fav_artists[2].pk}" type="hidden" value="2"></td>
                     </tr>
                 </tbody>
@@ -1004,17 +1009,232 @@ def test_orderable_sortable_edit_table(fav_artists):
                 <tbody data-iommi-is-tbody>
                     <tr data-iommi-edit-table-row data-pk="{fav_artists_data[0].pk}">
                         <td>{fav_artists_data[0].artist.name}</td>
-                        <td><input id="id_columns__comment__{fav_artists_data[0].pk}" name="columns/comment/{fav_artists_data[0].pk}" type="text" value="{fav_artists_data[0].comment}"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists_data[0].pk}" name="columns/comment/{fav_artists_data[0].pk}" type="text" value="{fav_artists_data[0].comment}"></div></td>
                     </tr>
                     <tr data-iommi-edit-table-row data-pk="{fav_artists_data[1].pk}">
                         <td>{fav_artists_data[1].artist.name}</td>
-                        <td><input id="id_columns__comment__{fav_artists_data[1].pk}" name="columns/comment/{fav_artists_data[1].pk}" type="text" value="{fav_artists_data[1].comment}"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists_data[1].pk}" name="columns/comment/{fav_artists_data[1].pk}" type="text" value="{fav_artists_data[1].comment}"></div></td>
                     </tr>
                     <tr data-iommi-edit-table-row data-pk="{fav_artists_data[2].pk}">
                         <td>{fav_artists_data[2].artist.name}</td>
-                        <td><input id="id_columns__comment__{fav_artists_data[2].pk}" name="columns/comment/{fav_artists_data[2].pk}" type="text" value="{fav_artists_data[2].comment}"></td>
+                        <td><div><input id="id_columns__comment__{fav_artists_data[2].pk}" name="columns/comment/{fav_artists_data[2].pk}" type="text" value="{fav_artists_data[2].comment}"></div></td>
                     </tr>
                 </tbody>
             </table>
         """,
     )
+
+
+@pytest.mark.django_db
+def test_edit_table_dropfile_rendering():
+    attachment = AttachmentModel.objects.create()
+
+    edit_table = EditTable(
+        auto__model=AttachmentModel,
+        auto__include=['file'],
+        columns__file__field__include=True,
+        columns__file__field__call_target__attribute='dropfile',
+    )
+
+    verify_table_html(
+        table=edit_table.bind(request=req('get')),
+        find__name='form',
+        # language=html
+        expected_html=f"""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div class="iommi-table-plus-paginator">
+                    <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                        <thead>
+                            <tr>
+                                <th class="first_column iommi_sort_header subheader">
+                                    <a href="?order=file">File</a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody data-iommi-is-tbody="">
+                            <tr data-iommi-edit-table-row="" data-pk="{attachment.pk}">
+                                <td>
+                                    <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                                        <div class="file_input_wrapper" data-iommi-extended-file-input-wrapper="">
+                                            <label class="file_drop_zone" data-iommi-extended-file-drop-zone="">
+                                                Drop file here, or click to upload.
+                                                <input id="id_columns__file__{attachment.pk}" name="columns/file/{attachment.pk}" type="file" value=""/>
+                                            </label>
+                                        </div>
+                                        <div class="file_items" data-iommi-extended-file-items-wrapper=""></div>
+                                        <template data-iommi-extended-file-item-template="">
+                                            <div class="file_field_item" data-iommi-extended-file-item="">
+                                                <span class="file_icon file_icon--{{file_type}}">
+                                                    <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{{file_blob}}')"></span>
+                                                </span>
+                                                <span class="file_name">{{file_name}}</span>
+                                                <span class="file_size">{{file_size}}</span>
+                                                <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                                    <span></span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-save">Save</button>
+                    <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="" type="button">Add row</button>
+                </div>
+            </form>
+        """,
+    )
+
+
+@pytest.mark.django_db
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+def test_dropfile_crud():
+    # create/upload:
+    uploaded_file = SimpleUploadedFile(
+        "test.txt",
+        b"hello iommi",
+        content_type="text/plain"
+    )
+
+    class FileEditTable(EditTable):
+        class Meta:
+            auto__model = AttachmentModel
+            auto__include = ['file']
+            columns__file__field__include = True
+            columns__file__field__call_target__attribute = 'dropfile'
+
+    edit_table = FileEditTable().bind(
+        request=req(
+            'post',
+            **{
+                'columns/file/-1': uploaded_file,
+                '-save': '',
+            },
+        )
+    )
+
+    edit_table.render_to_response()
+    assert edit_table.is_valid()
+
+    attachment = AttachmentModel.objects.get()
+
+    assert attachment is not None
+    assert attachment.file.name == 'test.txt'
+
+    # edit table rendering:
+    attachment.refresh_from_db()
+
+    verify_table_html(
+        table=FileEditTable().bind(request=req('get')),
+        find__name='form',
+        # language=HTML
+        expected_html=f"""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div class="iommi-table-plus-paginator">
+                    <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                        <thead>
+                            <tr>
+                                <th class="first_column iommi_sort_header subheader">
+                                    <a href="?order=file">File</a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody data-iommi-is-tbody="">
+                            <tr data-iommi-edit-table-row="" data-pk="{attachment.pk}">
+                                <td>
+                                    <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                                        <div class="file_input_wrapper hidden" data-iommi-extended-file-input-wrapper="">
+                                            <label class="file_drop_zone" data-iommi-extended-file-drop-zone="">
+                                                Drop file here, or click to upload.
+                                                <input id="id_columns__file__{attachment.pk}" name="columns/file/{attachment.pk}" type="file" value="test.txt"/>
+                                            </label>
+                                        </div>
+                                        <div class="file_items" data-iommi-extended-file-items-wrapper="">
+                                            <div class="file_field_item" data-iommi-extended-file-existing-name="test.txt" data-iommi-extended-file-item="">
+                                                <span class="file_icon file_icon--txt"></span>
+                                                <a class="file_name" data-iommi-extended-file-link="" href="/test.txt" target="_blank">test.txt</a>
+                                                <span class="file_size">11 bytes</span>
+                                                <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                                    <span></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <template data-iommi-extended-file-item-template="">
+                                            <div class="file_field_item" data-iommi-extended-file-item="">
+                                                <span class="file_icon file_icon--{{file_type}}">
+                                                    <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{{file_blob}}')"></span>
+                                                </span>
+                                                <span class="file_name">{{file_name}}</span>
+                                                <span class="file_size">{{file_size}}</span>
+                                                <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                                    <span></span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-save">Save</button>
+                    <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="" type="button">Add row</button>
+                </div>
+            </form>
+        """,
+    )
+
+    # edit - keep file if no new uploaded
+    edit_table = FileEditTable().bind(request=req('post', **{'-save': ''}))
+    edit_table.render_to_response()
+    assert edit_table.is_valid()
+
+    attachment.refresh_from_db()
+
+    assert attachment is not None
+    assert attachment.file.name == 'test.txt'
+
+    # edit - upload new file
+    uploaded_new_file = SimpleUploadedFile(
+        "other_test.txt",
+        b"this is cool",
+        content_type="text/plain"
+    )
+    edit_table = FileEditTable().bind(
+        request=req(
+            'post',
+            **{
+                f'columns/file/{attachment.pk}': uploaded_new_file,
+                '-save': ''
+            },
+        )
+    )
+    assert edit_table.is_valid()
+    edit_table.render_to_response()
+
+    attachment.refresh_from_db()
+
+    assert attachment is not None
+    assert attachment.file.name == 'other_test.txt'
+
+    # deleting file
+    edit_table = FileEditTable().bind(
+        request=req(
+            'post',
+            **{
+                f'delete__columns/file/{attachment.pk}': attachment.file.name,
+                '-save': ''
+            },
+        )
+    )
+    assert edit_table.is_valid()
+    edit_table.render_to_response()
+
+    attachment.refresh_from_db()
+
+    assert attachment is not None
+    assert isinstance(attachment.file, FieldFile) and not attachment.file.name

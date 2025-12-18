@@ -138,6 +138,20 @@ base = Style(
             heading=dict(
                 template='iommi/form/heading.html',
             ),
+            file=dict(
+                template='iommi/form/file.html',
+                attrs__class__file_field=True,
+                extra__file_item_template='iommi/form/file_item.html',
+                assets__iommi_css=Asset.css(attrs__href=lambda **_: static('css/iommi.css')),
+            ),
+            dropfile=dict(
+                template='iommi/form/dropfile.html',
+                extra_evaluated__drop_area_text=lambda field, **_: (
+                    gettext_lazy("Drop files here, or click to upload.") if field.is_list
+                    else gettext_lazy("Drop file here, or click to upload.") if field.editable
+                    else gettext_lazy("Upload from this field is disabled.")
+                )
+            ),
         ),
         non_editable_input=dict(
             attrs__disabled=lambda fragment, **_: True if fragment.tag in ('input', 'textarea') else None,

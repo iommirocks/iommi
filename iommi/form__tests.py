@@ -1,5 +1,6 @@
 import json
 import re
+import tempfile
 from collections import defaultdict
 from datetime import (
     date,
@@ -19,11 +20,13 @@ import pytest
 import time_machine
 from bs4 import BeautifulSoup
 from django.core.exceptions import FieldError
+from django.db.models.fields.files import FieldFile
 from django.http.response import HttpResponseBase
 from django.test import override_settings
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from docs.models import (
     Album,
@@ -124,6 +127,7 @@ from tests.models import (
     TFoo,
     UniqueConstraintAlternativeTest,
     UniqueConstraintTest,
+    AttachmentModel,
 )
 
 
@@ -1923,6 +1927,7 @@ def test_file():
 
     file_data = '1'
     fake_file = StringIO(file_data)
+    fake_file.name = "test.jpg"
 
     form = FooForm().bind(request=req('post', foo=fake_file))
     instance = Struct(foo=None)
@@ -1931,15 +1936,33 @@ def test_file():
     assert instance.foo.file.getvalue() == b'1'
 
     # Non-existent form entry should not overwrite data
-    form = FooForm().bind(request=req('post', foo=''))
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req('post', foo=''))
     assert form.is_valid(), form.get_errors()
     form.apply(instance)
     assert instance.foo.file.getvalue() == b'1'
 
-    form = FooForm().bind(request=req('post'))
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req('post'))
     assert form.is_valid(), form.get_errors()
     form.apply(instance)
     assert instance.foo.file.getvalue() == b'1'
+
+    # uploading new file
+    fake_file_2 = StringIO(file_data)
+    fake_file_2.name = "test_2.pdf"
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req(
+        'post',
+        delete__foo=instance.foo.name,  # cannot "delete" new file
+        foo=fake_file_2
+    ))
+    assert form.is_valid(), form.get_errors()
+    form.apply(instance)
+    assert instance.foo.name == 'test_2.pdf'
+
+    # deleting file value
+    form = FooForm(fields__foo__initial=instance.foo).bind(request=req('post', delete__foo=instance.foo.name))
+    assert form.is_valid(), form.get_errors()
+    form.apply(instance)
+    assert instance.foo is None
 
 
 @pytest.mark.django
@@ -1952,6 +1975,248 @@ def test_file_no_roundtrip():
     form = FooForm().bind(request=req('post', foo=fake_file))
     assert form.is_valid() is False, form.get_errors()
     assert 'binary_content_here' not in form.__html__()
+
+
+@pytest.mark.django
+def test_file_rendering():
+    form = Form.create(
+        auto__model=AttachmentModel,
+        fields__file__call_target__attribute = 'file'
+    )
+
+    verify_part_html(
+        part=form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <h1>Create attachment model</h1>
+                <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                    <label for="id_file">File</label>
+                    <div class="file_input_wrapper" data-iommi-extended-file-input-wrapper="">
+                        <input id="id_file" name="file" type="file" value=""/>
+                    </div>
+                    <div class="file_items" data-iommi-extended-file-items-wrapper="">
+                    </div>
+                    <template data-iommi-extended-file-item-template="">
+                        <div class="file_field_item" data-iommi-extended-file-item="">
+                            <span class="file_icon file_icon--{file_type}">
+                                <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{file_blob}')">
+                                </span>
+                            </span>
+                            <span class="file_name">{file_name}</span>
+                            <span class="file_size">{file_size}</span>
+                            <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                <span></span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit">Create</button>
+                </div>
+            </form>
+        """,
+    )
+
+
+@pytest.mark.django
+def test_dropfile_rendering():
+    form = Form.create(
+        auto__model=AttachmentModel,
+        fields__file__call_target__attribute='dropfile',
+    )
+
+    verify_part_html(
+        part=form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <h1>Create attachment model</h1>
+                <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                    <label for="id_file">File</label>
+                    <div class="file_input_wrapper" data-iommi-extended-file-input-wrapper="">
+                        <label class="file_drop_zone" data-iommi-extended-file-drop-zone="">
+                            Drop file here, or click to upload.
+                            <input id="id_file" name="file" type="file" value=""/>
+                        </label>
+                    </div>
+                    <div class="file_items" data-iommi-extended-file-items-wrapper="">
+                    </div>
+                    <template data-iommi-extended-file-item-template="">
+                        <div class="file_field_item" data-iommi-extended-file-item="">
+                            <span class="file_icon file_icon--{file_type}">
+                                <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{file_blob}')">
+                                </span>
+                            </span>
+                            <span class="file_name">{file_name}</span>
+                            <span class="file_size">{file_size}</span>
+                            <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                <span></span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit">Create</button>
+                </div>
+            </form>
+        """,
+    )
+
+
+@pytest.mark.django
+def test_dropimage_rendering():
+    form = Form.create(
+        auto__model=AttachmentModel,
+        fields__file__call_target__attribute='dropimage',
+    )
+
+    verify_part_html(
+        part=form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <h1>Create attachment model</h1>
+                <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                    <label for="id_file">File</label>
+                    <div class="file_input_wrapper" data-iommi-extended-file-input-wrapper="">
+                        <label class="file_drop_zone" data-iommi-extended-file-drop-zone="">
+                            Drop file here, or click to upload.
+                            <input id="id_file" name="file" type="file" value=""/>
+                        </label>
+                    </div>
+                    <div class="file_items" data-iommi-extended-file-items-wrapper="">
+                    </div>
+                    <template data-iommi-extended-file-item-template="">
+                        <div class="file_field_item" data-iommi-extended-file-item="">
+                            <span class="file_icon file_icon--{file_type}">
+                                <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{file_blob}')">
+                                </span>
+                            </span>
+                            <span class="file_name">{file_name}</span>
+                            <span class="file_size">{file_size}</span>
+                            <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                <span></span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit">Create</button>
+                </div>
+            </form>
+        """,
+    )
+
+
+@pytest.mark.django_db
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+def test_dropfile_crud():
+    # create/upload:
+    uploaded_file = SimpleUploadedFile(
+        "test.txt",
+        b"hello iommi",
+        content_type="text/plain"
+    )
+
+    class FileForm(Form):
+        class Meta:
+            auto__model = AttachmentModel
+            auto__include = ['file']
+            fields__file__call_target__attribute = 'dropfile'
+
+    form = FileForm.create().bind(request=req('post', file=uploaded_file, **{'-submit': ''}))
+    assert form.is_valid()
+    form.render_to_response()
+
+    attachment = form.instance
+
+    assert attachment is not None
+    assert attachment.file.name == 'test.txt'
+
+    # edit form rendering:
+    attachment.refresh_from_db()
+
+    form = FileForm.edit(auto__instance=attachment).bind(request=req('get'))
+
+    verify_part_html(
+        part=form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <h1>Edit attachment model</h1>
+                <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                    <label for="id_file">File</label>
+                    <div class="file_input_wrapper hidden" data-iommi-extended-file-input-wrapper="">
+                        <label class="file_drop_zone" data-iommi-extended-file-drop-zone="">
+                            Drop file here, or click to upload.
+                            <input id="id_file" name="file" type="file" value="test.txt"/>
+                        </label>
+                    </div>
+                    <div class="file_items" data-iommi-extended-file-items-wrapper="">
+                        <div class="file_field_item" data-iommi-extended-file-existing-name="test.txt" data-iommi-extended-file-item="">
+                            <span class="file_icon file_icon--txt"></span>
+                            <a class="file_name" data-iommi-extended-file-link="" href="/test.txt" target="_blank">test.txt</a>
+                            <span class="file_size">11 bytes</span>
+                            <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                <span></span>
+                            </button>
+                        </div>
+                    </div>
+                    <template data-iommi-extended-file-item-template="">
+                        <div class="file_field_item" data-iommi-extended-file-item="">
+                            <span class="file_icon file_icon--{file_type}">
+                                <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{file_blob}')"></span>
+                            </span>
+                            <span class="file_name">{file_name}</span>
+                            <span class="file_size">{file_size}</span>
+                            <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                <span></span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit">Save</button>
+                </div>
+            </form>
+        """,
+    )
+
+    # edit - keep file if no new uploaded
+    form = FileForm.edit(auto__instance=attachment).bind(request=req('post', **{'-submit': ''}))
+    assert form.is_valid()
+    form.render_to_response()
+
+    attachment = form.instance
+
+    assert attachment is not None
+    assert attachment.file.name == 'test.txt'
+
+    # edit - upload new file
+    uploaded_new_file = SimpleUploadedFile(
+        "other_test.txt",
+        b"this is cool",
+        content_type="text/plain"
+    )
+    form = FileForm.edit(auto__instance=attachment).bind(request=req('post', file=uploaded_new_file, **{'-submit': ''}))
+    assert form.is_valid()
+    form.render_to_response()
+
+    attachment = form.instance
+
+    assert attachment is not None
+    assert attachment.file.name == 'other_test.txt'
+
+    # deleting file
+    form = FileForm.edit(auto__instance=attachment).bind(request=req('post', delete__file=attachment.file.name, **{'-submit': ''}))
+    assert form.is_valid()
+    form.render_to_response()
+
+    form.instance.refresh_from_db()
+
+    assert form.instance is not None
+    assert isinstance(form.instance.file, FieldFile) and not form.instance.file.name
 
 
 @pytest.mark.django

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-05 12:07+0200\n"
+"POT-Creation-Date: 2025-12-17 09:11+0100\n"
 "Last-Translator: Martin Beran <info@berycz.net>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -13,60 +13,65 @@ msgstr ""
 msgid "Submit"
 msgstr "Odeslat"
 
-#: admin.py:140
+#: admin.py:139
 msgid "iommi administration"
 msgstr "iommi administrace"
 
-#: admin.py:144 views.py:159
+#: admin.py:143 views.py:159
 msgid "Change password"
 msgstr "Změnit heslo"
 
-#: admin.py:148
+#: admin.py:147
 msgid "Logout"
 msgstr "Odhlásit"
 
-#: admin.py:419
+#: admin.py:436
 msgid "Add models to admin"
 msgstr "Přidat modely do administrace"
 
-#: admin.py:461
+#: admin.py:479
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "Vytvořit %(model_name)s"
 
-#: admin.py:559
+#: admin.py:578
 msgid "admin"
 msgstr ""
 
-#: base__tests.py:68 form.py:1583
+#: base__tests.py:68 form.py:1662
 msgid "edit"
 msgstr "editace"
 
-#: edit_table.py:170 style_base.py:108 table.py:599
+#: edit_table.py:231 style_base.py:116 table.py:620
+#: templates/iommi/form/file_item.html:15
 msgid "Delete"
 msgstr "Smazat"
 
-#: edit_table.py:357 form.py:1756 style_base.py:106
+#: edit_table.py:281 panel.py:333
+msgid "Drag and drop to reorder"
+msgstr "Přetáhni pro změnu pořadí"
+
+#: edit_table.py:456 form.py:1881 style_base.py:114
 msgid "Save"
 msgstr "Uložit"
 
-#: edit_table.py:363
+#: edit_table.py:462
 msgid "Add row"
 msgstr "Přidat řádek"
 
-#: form.py:161
+#: form.py:173
 msgid "{} is not a valid boolean value"
 msgstr "{} není validní boolean"
 
-#: form.py:306
+#: form.py:335
 msgid "Could not convert string to float: {}"
 msgstr "Nepodařilo se konvertovat řetězec na desetinné číslo: {}"
 
-#: form.py:317 form.py:335
+#: form.py:346 form.py:364
 msgid "{} not in available choices"
 msgstr "{} není dostupnou volbou"
 
-#: form.py:434
+#: form.py:463
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
@@ -75,7 +80,7 @@ msgstr ""
 "Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\", "
 "{formats}, a nejedná se o relativní datum jako \"2d\" nebo \"2 weeks ago\""
 
-#: form.py:469
+#: form.py:498
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
@@ -86,7 +91,7 @@ msgstr ""
 "{formats}, a nejedná se o relativní datum jako \"2d\" nebo \"2 weeks "
 "ago\"{extra_information}"
 
-#: form.py:501
+#: form.py:530
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\" or "
@@ -95,12 +100,12 @@ msgstr ""
 "Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\" nebo "
 "{formats}"
 
-#: form.py:517
+#: form.py:546
 #, python-brace-format
 msgid "Invalid literal for Decimal: '{string_value}'"
 msgstr "Neplatný literál pro desetinné číslo: '{string_value}'"
 
-#: form.py:543
+#: form.py:571
 msgid ""
 "Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
 "123 4567 or +1 212 123 4567"
@@ -108,119 +113,139 @@ msgstr ""
 "Použijte prosím formát +<kód země> (XX) XX XX. Příklad čísla v USA: +1 (212) "
 "123 4567 nebo +1 212 123 4567"
 
-#: form.py:1018
+#: form.py:1062
 msgid "This field is required"
 msgstr "Toto pole je povinné"
 
-#: form.py:1268 table.py:254
+#: form.py:1326 table.py:258
 msgid "Yes"
 msgstr "Ano"
 
-#: form.py:1268 table.py:256
+#: form.py:1326 table.py:260
 msgid "No"
 msgstr "Ne"
 
-#: form.py:1536
+#: form.py:1615
 #, python-format
 msgid "Cannot delete %(name)s"
 msgstr "Nelze smazat %(name)s"
 
-#: form.py:1582
+#: form.py:1661
 msgid "create"
 msgstr "vytvořit"
 
-#: form.py:1584
+#: form.py:1663
 msgid "delete"
 msgstr "smazat"
 
-#: form.py:1748
+#: form.py:1872
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:2162
+#: form.py:2334
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Jste si jisti, že chcete smazat %(model_name)s \"%(instance)s\"?"
 
-#: form__tests.py:3907
+#: form__tests.py:3965
 msgid "yes"
 msgstr "Ano"
 
-#: query.py:619 templates/iommi/query/form_toggle_script.html:26
+#: panel__tests.py:62
+msgid "Permissions"
+msgstr "Oprávnění"
+
+#: query.py:626 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Přepnout do rozšířeného hledání"
 
-#: query.py:751
+#: query.py:758
 msgid "Search"
 msgstr "Hledané slovo"
 
-#: query.py:800
+#: query.py:807
 msgctxt "verb"
 msgid "Filter"
 msgstr "Filtrovat"
 
-#: style_98.py:136 style_base.py:141 style_bootstrap.py:141
-#: style_bootstrap5.py:154 style_bulma.py:126 style_semantic_ui.py:87
+#: style_98.py:136 style_base.py:163 style_bootstrap.py:141
+#: style_bootstrap5.py:158 style_bulma.py:126 style_semantic_ui.py:87
 #: style_us_web_design_system.py:138 style_vanilla_css.py:94
 msgid "Select all"
 msgstr "Vybrat vše"
 
-#: style_base.py:107
+#: style_base.py:115
 msgid "Create"
 msgstr "Vytvořit"
 
-#: table.py:576
+#: style_base.py:150
+msgid "Drop files here, or click to upload."
+msgstr "Sem přetáhněte soubory, nebo klikněte pro výběr."
+
+#: style_base.py:151
+msgid "Drop file here, or click to upload."
+msgstr "Sem přetáhněte soubor, nebo klikněte pro výběr."
+
+#: style_base.py:152
+msgid "Upload from this field is disabled."
+msgstr "Upload z tohoto pole je zakázaný."
+
+#: table.py:597
 msgid "Edit"
 msgstr "Editovat"
 
-#: table.py:624
+#: table.py:645
 msgid "Download"
 msgstr "Stáhnout"
 
-#: table.py:648
+#: table.py:669
 msgid "Run"
 msgstr "Spustit"
 
-#: table.py:1406
+#: table.py:1461
 #, python-brace-format
 msgid "Are you sure you want to delete these {count} items?"
 msgstr "Jste si jisti, že chcete smazat těchto {count} položek?"
 
-#: table.py:1422
+#: table.py:1477
 msgid "Yes, delete all!"
 msgstr "Ano, smazat vše!"
 
-#: table.py:1859 table.py:2084
+#: table.py:1932 table.py:2158
 msgid "Bulk change"
 msgstr "Hromadné úpravy"
 
-#: table.py:2090
+#: table.py:2164
 msgid "Bulk delete"
 msgstr "Hromadné mazání"
 
-#: templates/iommi/query/advanced.html:5
+#: templates/iommi/form/file_item.html:16
+msgid "Do you really want to delete this file?"
+msgstr "Opravdu si přejete smazat tento soubor?"
+
+#: templates/iommi/query/advanced.html:4
 msgid "Search query"
 msgstr "Hledaný výraz"
 
-#: templates/iommi/query/advanced.html:9
+#: templates/iommi/query/advanced.html:8
 #: templates/iommi/query/form_toggle_script.html:48
 msgid "Show help"
 msgstr "Zobrazit nápovědu"
 
-#: templates/iommi/query/advanced.html:14
+#: templates/iommi/query/advanced.html:13
 msgid "Available fields"
 msgstr "Dostupná pole"
 
-#: templates/iommi/query/advanced.html:22
+#: templates/iommi/query/advanced.html:21
 msgid "Queries"
 msgstr "Příkazy"
 
-#: templates/iommi/query/advanced.html:24
+#: templates/iommi/query/advanced.html:23
 msgid "Search for an exact value: <code>field_name=value</code>"
 msgstr "Hledání přesné hodnoty: <code>nazev_pole=hodnota</code>"
 
-#: templates/iommi/query/advanced.html:25
+#: templates/iommi/query/advanced.html:24
 msgid ""
 "Search for an exact value containing space: <code>field_name=\"value with "
 "space\"</code>"
@@ -228,15 +253,15 @@ msgstr ""
 "Hledání přesné hodnoty obsahující mezery: <code>nazev_pole=\"hodnota s "
 "mezerami\"</code>"
 
-#: templates/iommi/query/advanced.html:26
+#: templates/iommi/query/advanced.html:25
 msgid "Containing a text: <code>field_name:val</code>"
 msgstr "Obsahující text: <code>nazev_pole:hodnota</code>"
 
-#: templates/iommi/query/advanced.html:27
+#: templates/iommi/query/advanced.html:26
 msgid "Exclude a value: <code>field_name!=value</code>"
 msgstr "Vyřadit hodnotu: <code>nazev_pole!=hodnota</code>"
 
-#: templates/iommi/query/advanced.html:28
+#: templates/iommi/query/advanced.html:27
 msgid ""
 "You can also use <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
 "and <code>&gt;=</code> to find ranges of values: <code>field_name&lt;10</"
@@ -246,14 +271,14 @@ msgstr ""
 "a <code>&gt;=</code> pro hledání rozsahů hodnot: <code>nazev_pole&lt;10</"
 "code>"
 
-#: templates/iommi/query/advanced.html:29
+#: templates/iommi/query/advanced.html:28
 msgid ""
 "To search for dates, use ISO8601 format: <code>field_name>1969-07-20</code>"
 msgstr ""
 "Pro vyhledávání datumů použijte ISO8601 formát: <code>nazev_pole>1969-07-20</"
 "code>"
 
-#: templates/iommi/query/advanced.html:30
+#: templates/iommi/query/advanced.html:29
 msgid ""
 "You can filter for relative dates: <code>field_name < \"10 days ago\"</"
 "code>. Supported fields are <code>days</code>, <code>months</code>, "

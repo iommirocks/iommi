@@ -44,6 +44,7 @@ from django.utils import timezone
 from django.utils.functional import Promise
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
+from django.templatetags.static import static
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
@@ -553,8 +554,7 @@ def url_parse(string_value, field=None, **_):
 
 
 def file_write_to_instance(field, instance, value, **kwargs):
-    if value:
-        Field.write_to_instance(field=field, instance=instance, value=value, **kwargs)
+    Field.write_to_instance(field=field, instance=instance, value=value, **kwargs)
 
 
 def email_parse(string_value, field=None, **_):
@@ -626,8 +626,24 @@ def default_input_id(field, **_):
 
 def file__raw_data(form, field, **_):
     request = form.get_request()
+
+    # delete__{field_name} are hidden inputs created by iommi.js when a user deletes files
+    delete_field_name = f'delete__{field.iommi_path}'
+
+    if field.is_list:
+        existing_files = []
+        if field.initial:
+            deleted_files = request.POST.getlist(delete_field_name)
+            for initial_file in field.initial:
+                if initial_file.name not in deleted_files:
+                    existing_files.append(initial_file)
+        return existing_files + request.FILES.getlist(field.iommi_path)
+
     if field.iommi_path not in request.FILES:
-        return None
+        if field.initial and request.POST.get(delete_field_name) != field.initial.name:
+            return field.initial
+        return ''  # has to return '' and not None because of Field._validate()
+
     return request.FILES[field.iommi_path]
 
 
@@ -1418,16 +1434,34 @@ class Field(Part, Tag):
         write_to_instance=file_write_to_instance,
         # Prevent double save. See https://github.com/iommirocks/iommi/issues/419
         extra__django_related_field=True,
+        input__attrs__multiple=lambda field, **_: True if field.is_list else None,
+        extra_evaluated__show_thumbs=True,
+        **{
+            'attrs__data-iommi-extended-file-field': True,
+            'attrs__data-iommi-extended-file-with-thumbs': lambda field, **_: field.extra_evaluated.show_thumbs,
+            # for JS thumb generating when image.size > 1MB:
+            'attrs__data-iommi-extended-file-thumb-width': 100,
+            'attrs__data-iommi-extended-file-thumb-height': 100,
+            'attrs__data-iommi-extended-file-loading-icon': lambda **_: static('images/iommi-icons/spinner.svg'),
+        }
     )
     def file(cls, **kwargs):
         return cls(**kwargs)
 
     @classmethod
-    @with_defaults(
-        template='iommi/form/image_row.html',
-    )
+    @with_defaults
+    def dropfile(cls, **kwargs):
+        return cls.file(**kwargs)
+
+    @classmethod
+    @with_defaults
     def image(cls, **kwargs):
         return cls.file(**kwargs)
+
+    @classmethod
+    @with_defaults
+    def dropimage(cls, **kwargs):
+        return cls.dropfile(**kwargs)
 
     # Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
     @classmethod

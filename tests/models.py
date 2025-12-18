@@ -323,3 +323,7 @@ class TestModelValidators(Model):
 class UuidPKModel(Model):
     id = UUIDField(primary_key=True)
     foo = CharField(max_length=255)
+
+
+class AttachmentModel(Model):
+    file = FileField(null=True)

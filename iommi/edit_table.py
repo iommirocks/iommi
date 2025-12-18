@@ -9,8 +9,8 @@ from typing import (
 )
 
 from django.db.models import QuerySet
+from django.db.models.fields.files import FieldFile
 from django.http import HttpResponseRedirect
-from django.template import Context
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
@@ -23,6 +23,7 @@ from iommi.action import (
     Actions,
     group_actions,
 )
+from iommi.error import Errors
 from iommi.sort_after import LAST
 from iommi.base import (
     MISSING,
@@ -115,13 +116,6 @@ class EditCell(Cell):
 
             bind_field_from_instance(field, self.row)
 
-            if self.table.extra_evaluated.render_inputs_only or 'hidden' in getattr(field, 'iommi_shortcut_stack', []):
-                input_html = field.input.__html__()
-            else:
-                input_html = field.__html__()
-
-            field.attr = orig_attr
-
             # Check both edit_errors and create_errors
             errors = None
             if self.table.edit_errors:
@@ -129,10 +123,19 @@ class EditCell(Cell):
             if not errors and self.table.create_errors:
                 errors = self.table.create_errors.get(path)
 
-            if errors:
-                return Template(
-                    '{{ input_html }}<br><span class="text-danger"><ul class="errors">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></span>'
-                ).render(context=Context(dict(input_html=input_html, errors=errors)))
+            if self.table.extra_evaluated.render_inputs_only or 'hidden' in getattr(field, 'iommi_shortcut_stack', []):
+                input_html = field.input.__html__()
+            else:
+                if self.table.extra_evaluated.input_labels_include is False:
+                    field.label.include = False
+                if errors:
+                    field._errors = errors
+
+                input_html = field.__html__()
+
+                field.errors = Errors(parent=field)
+
+            field.attr = orig_attr
 
             return input_html
         else:
@@ -142,6 +145,7 @@ class EditCell(Cell):
         if self.cells.is_create_template:
             self.value = None
         super(EditCell, self).on_refine_done()
+
 
 def bind_field_from_instance(field, instance):
     field.input = field.iommi_namespace.input(_name='input')
@@ -337,6 +341,7 @@ def edit_table__post_handler(table, request, **_):
             instance = cells.row
             form.instance = instance
             attrs_to_save = []
+            to_save_in_second_phase = []
             for cell in cells.iter_editable_cells():
                 path = cell.get_path()
                 if path not in parsed_data:
@@ -345,20 +350,25 @@ def edit_table__post_handler(table, request, **_):
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
                 if cells.is_create_template or (
-                    field.invoke_callback(field.read_from_instance, instance=instance) != value
+                        (instance_value := field.invoke_callback(field.read_from_instance, instance=instance)) != value
                 ):
-                    field.invoke_callback(field.write_to_instance, instance=instance, value=value)
-                    if not field.extra.get('django_related_field', False):
+                    if field.extra.get('django_related_field', False):
+                        if not cells.is_create_template and isinstance(instance_value, FieldFile) and not instance_value and value is None:
+                            # instance value of FileField/ImageField is an empty FieldFile/ImageFieldFile, not None
+                            pass
+                        else:
+                            to_save_in_second_phase.append((field, value))
+                    else:
+                        field.invoke_callback(field.write_to_instance, instance=instance, value=value)
                         attrs_to_save.append(field.attr)
 
-            to_save.append((instance, attrs_to_save))
+            to_save.append((instance, attrs_to_save, to_save_in_second_phase))
 
         to_save.sort(key=lambda x: abs(x[0].pk))
-        for instance, attrs_to_save in to_save:
-            if not to_save:
-                pass
+        for instance, attrs_to_save, to_save_in_second_phase in to_save:
             if instance.pk is not None and instance.pk < 0:
                 instance.pk = None
+
             if instance.pk is None:
                 attrs_to_save = None
 
@@ -370,6 +380,11 @@ def edit_table__post_handler(table, request, **_):
                     if prefix:  # Might be ''
                         model_object = getattr_path(model_object, prefix)
                     model_object.save(update_fields=[strip_prefix(x, prefix=f'{prefix}__') for x in attrs_to_save if x.startswith(prefix)])
+
+            if to_save_in_second_phase:
+                for field, value in to_save_in_second_phase:
+                    field.invoke_callback(field.write_to_instance, instance=instance, value=value)
+                instance.save()
 
     save(table.cells_for_rows(), table.edit_form)
     save(table.cells_for_rows_for_create(save=True), table.create_form)
@@ -459,7 +474,8 @@ class EditTable(Table):
 
         reorderable = False
 
-        extra_evaluated__render_inputs_only = lambda table, **_: table.row.layout is None
+        extra_evaluated__render_inputs_only = False
+        extra_evaluated__input_labels_include = lambda table, **_: table.row.layout is not None
 
         bulk__include = True
 
@@ -651,8 +667,9 @@ class EditTable(Table):
             except ValueError:
                 return None
 
-        post_data = self.get_request().POST
-        pks = {parse_virtual_pk(k) for k in keys(post_data)}
+        request = self.get_request()
+        post_data = request.POST
+        pks = {parse_virtual_pk(k) for k in {*keys(post_data), *keys(request.FILES)}}
         virtual_pks = [
             k for k in pks
             if k is not None and k < 0 and f'{delete_prefix}{k}' not in post_data
