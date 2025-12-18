@@ -2110,14 +2110,14 @@ def test_dropimage_rendering():
 
 @pytest.mark.django_db
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
-def test_dropfile_upload_and_edit_rendering_and_deleting():
+def test_dropfile_crud():
+    # create/upload:
     uploaded_file = SimpleUploadedFile(
         "test.txt",
         b"hello iommi",
         content_type="text/plain"
     )
 
-    # create/upload:
     class FileForm(Form):
         class Meta:
             auto__model = AttachmentModel
@@ -2131,6 +2131,7 @@ def test_dropfile_upload_and_edit_rendering_and_deleting():
     attachment = form.instance
 
     assert attachment is not None
+    assert attachment.file.name == 'test.txt'
 
     # edit form rendering:
     attachment.refresh_from_db()
@@ -2181,8 +2182,33 @@ def test_dropfile_upload_and_edit_rendering_and_deleting():
         """,
     )
 
+    # edit - keep file if no new uploaded
+    form = FileForm.edit(auto__instance=attachment).bind(request=req('post', **{'-submit': ''}))
+    assert form.is_valid()
+    form.render_to_response()
+
+    attachment = form.instance
+
+    assert attachment is not None
+    assert attachment.file.name == 'test.txt'
+
+    # edit - upload new file
+    uploaded_new_file = SimpleUploadedFile(
+        "other_test.txt",
+        b"this is cool",
+        content_type="text/plain"
+    )
+    form = FileForm.edit(auto__instance=attachment).bind(request=req('post', file=uploaded_new_file, **{'-submit': ''}))
+    assert form.is_valid()
+    form.render_to_response()
+
+    attachment = form.instance
+
+    assert attachment is not None
+    assert attachment.file.name == 'other_test.txt'
+
     # deleting file
-    form = FileForm.create().bind(request=req('post', delete__file=attachment.file.name, **{'-submit': ''}))
+    form = FileForm.edit(auto__instance=attachment).bind(request=req('post', delete__file=attachment.file.name, **{'-submit': ''}))
     assert form.is_valid()
     form.render_to_response()
 

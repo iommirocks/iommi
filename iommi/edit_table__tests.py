@@ -1,6 +1,11 @@
 import html
 import json
+import tempfile
+
 import pytest
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 
 from docs.models import (
     Album,
@@ -1081,3 +1086,40 @@ def test_edit_table_dropfile_rendering():
             </form>
         """,
     )
+
+
+@pytest.mark.django_db
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+def test_dropfile_crud():
+    # create/upload:
+    uploaded_file = SimpleUploadedFile(
+        "test.txt",
+        b"hello iommi",
+        content_type="text/plain"
+    )
+
+    class FileEditTable(EditTable):
+        class Meta:
+            auto__model = AttachmentModel
+            auto__include = ['file']
+            columns__file__field__include = True
+            columns__file__field__call_target__attribute = 'dropfile'
+
+    edit_table = FileEditTable().bind(
+        request=req(
+            'POST',
+            **{
+                'columns/file/-1': uploaded_file,
+                '-save': '',
+            },
+        )
+    )
+    assert edit_table.is_valid()
+    edit_table.render_to_response()
+
+    raise ValueError(list(AttachmentModel.objects.all()))
+
+    attachment = edit_table.rows[0]
+
+    assert attachment is not None
+    assert attachment.file.name == 'test.txt'
