@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.22.0 (2025-12-28)
+~~~~~~~~~~~~~~~~~~~
+
+* New drag&drop file uploader shortcuts for `Form`: `Field.dropfile`/`Field.dropimage`
+
+* `MainMenu` and `M` are not available to import straight from `iommi`
+
+
 7.21.3 (2025-12-04)
 ~~~~~~~~~~~~~~~~~~~
 
