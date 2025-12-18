@@ -32,6 +32,7 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+    AttachmentModel,
 )
 
 
@@ -1014,5 +1015,69 @@ def test_orderable_sortable_edit_table(fav_artists):
                     </tr>
                 </tbody>
             </table>
+        """,
+    )
+
+
+@pytest.mark.django_db
+def test_edit_table_dropfile_rendering():
+    attachment = AttachmentModel.objects.create()
+
+    edit_table = EditTable(
+        auto__model=AttachmentModel,
+        auto__include=['file'],
+        columns__file__field__include=True,
+        columns__file__field__call_target__attribute='dropfile',
+    )
+
+    verify_table_html(
+        table=edit_table.bind(request=req('get')),
+        find__name='form',
+        # language=html
+        expected_html=f"""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div class="iommi-table-plus-paginator">
+                    <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                        <thead>
+                            <tr>
+                                <th class="first_column iommi_sort_header subheader">
+                                    <a href="?order=file">File</a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody data-iommi-is-tbody="">
+                            <tr data-iommi-edit-table-row="" data-pk="{attachment.pk}">
+                                <td>
+                                    <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                                        <div class="file_input_wrapper" data-iommi-extended-file-input-wrapper="">
+                                            <label class="file_drop_zone" data-iommi-extended-file-drop-zone="">
+                                                Drop file here, or click to upload.
+                                                <input id="id_columns__file__{attachment.pk}" name="columns/file/{attachment.pk}" type="file" value=""/>
+                                            </label>
+                                        </div>
+                                        <div class="file_items" data-iommi-extended-file-items-wrapper=""></div>
+                                        <template data-iommi-extended-file-item-template="">
+                                            <div class="file_field_item" data-iommi-extended-file-item="">
+                                                <span class="file_icon file_icon--{{file_type}}">
+                                                    <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{{file_blob}}')"></span>
+                                                </span>
+                                                <span class="file_name">{{file_name}}</span>
+                                                <span class="file_size">{{file_size}}</span>
+                                                <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                                    <span></span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-save">Save</button>
+                    <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="" type="button">Add row</button>
+                </div>
+            </form>
         """,
     )

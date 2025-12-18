@@ -1474,7 +1474,7 @@ def test_dropfile_dropimage_field():
         fields__existing_files=Field.dropfile(
             display_name="Existing multiple files",
             is_list=True,
-            initial=existing_files
+            initial=existing_files,
         ),
     )
 
