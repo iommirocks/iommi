@@ -1461,10 +1461,10 @@ def test_dropfile_dropimage_field():
 
     # @test
     existing_files = []
-    for fn in ("iommi_logo_for_dark_background.svg", "iommi_logo_text_only.svg"):
-        with open(Path(__file__).resolve().parent.parent / "iommi" / "static" / "images" / fn, "rb") as f:
+    for fn in ("Black Sabbath Vol 4.jpg", "Heaven And Hell.jpg"):
+        with open(Path(__file__).resolve().parent.parent / "examples" / "examples" / "static" / "album_art" / "Black Sabbath" / fn, "rb") as f:
             _file = File(f)
-            _file.url = f'/_static/images/{fn}'
+            _file.url = f'https://github.com/iommirocks/iommi/blob/master/examples/examples/static/album_art/Black%20Sabbath/{fn}?raw=true'
             existing_files.append(_file)
     # @end
 
