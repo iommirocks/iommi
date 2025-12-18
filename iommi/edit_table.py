@@ -667,8 +667,9 @@ class EditTable(Table):
             except ValueError:
                 return None
 
-        post_data = self.get_request().POST
-        pks = {parse_virtual_pk(k) for k in keys(post_data)}
+        request = self.get_request()
+        post_data = request.POST
+        pks = {parse_virtual_pk(k) for k in {*keys(post_data), *keys(request.FILES)}}
         virtual_pks = [
             k for k in pks
             if k is not None and k < 0 and f'{delete_prefix}{k}' not in post_data

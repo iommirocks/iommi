@@ -5,6 +5,7 @@ import tempfile
 import pytest
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models.fields.files import FieldFile
 from django.test import override_settings
 
 from docs.models import (
@@ -1107,19 +1108,133 @@ def test_dropfile_crud():
 
     edit_table = FileEditTable().bind(
         request=req(
-            'POST',
+            'post',
             **{
                 'columns/file/-1': uploaded_file,
                 '-save': '',
             },
         )
     )
-    assert edit_table.is_valid()
+
     edit_table.render_to_response()
+    assert edit_table.is_valid()
 
-    raise ValueError(list(AttachmentModel.objects.all()))
-
-    attachment = edit_table.rows[0]
+    attachment = AttachmentModel.objects.get()
 
     assert attachment is not None
     assert attachment.file.name == 'test.txt'
+
+    # edit table rendering:
+    attachment.refresh_from_db()
+
+    verify_table_html(
+        table=FileEditTable().bind(request=req('get')),
+        find__name='form',
+        # language=HTML
+        expected_html=f"""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div class="iommi-table-plus-paginator">
+                    <table class="table" data-new-row-endpoint="/new_row" data-next-virtual-pk="-1">
+                        <thead>
+                            <tr>
+                                <th class="first_column iommi_sort_header subheader">
+                                    <a href="?order=file">File</a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody data-iommi-is-tbody="">
+                            <tr data-iommi-edit-table-row="" data-pk="{attachment.pk}">
+                                <td>
+                                    <div class="file_field" data-iommi-extended-file-field="" data-iommi-extended-file-loading-icon="/static/images/iommi-icons/spinner.svg" data-iommi-extended-file-thumb-height="100" data-iommi-extended-file-thumb-width="100" data-iommi-extended-file-with-thumbs="">
+                                        <div class="file_input_wrapper hidden" data-iommi-extended-file-input-wrapper="">
+                                            <label class="file_drop_zone" data-iommi-extended-file-drop-zone="">
+                                                Drop file here, or click to upload.
+                                                <input id="id_columns__file__{attachment.pk}" name="columns/file/{attachment.pk}" type="file" value="test.txt"/>
+                                            </label>
+                                        </div>
+                                        <div class="file_items" data-iommi-extended-file-items-wrapper="">
+                                            <div class="file_field_item" data-iommi-extended-file-existing-name="test.txt" data-iommi-extended-file-item="">
+                                                <span class="file_icon file_icon--txt"></span>
+                                                <a class="file_name" data-iommi-extended-file-link="" href="/test.txt" target="_blank">test.txt</a>
+                                                <span class="file_size">11 bytes</span>
+                                                <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                                    <span></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <template data-iommi-extended-file-item-template="">
+                                            <div class="file_field_item" data-iommi-extended-file-item="">
+                                                <span class="file_icon file_icon--{{file_type}}">
+                                                    <span class="file_thumb" data-iommi-extended-file-thumb="" style="--iommi-image-thumb-bg: url('{{file_blob}}')"></span>
+                                                </span>
+                                                <span class="file_name">{{file_name}}</span>
+                                                <span class="file_size">{{file_size}}</span>
+                                                <button class="btn_file_delete" data-iommi-delete-confirm-text="Do you really want to delete this file?" data-iommi-extended-file-delete="" title="Delete" type="button">
+                                                    <span></span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-save">Save</button>
+                    <button data-iommi-edit-table-add-row-button="" data-iommi-id-of-table="" type="button">Add row</button>
+                </div>
+            </form>
+        """,
+    )
+
+    # edit - keep file if no new uploaded
+    edit_table = FileEditTable().bind(request=req('post', **{'-save': ''}))
+    edit_table.render_to_response()
+    assert edit_table.is_valid()
+
+    attachment.refresh_from_db()
+
+    assert attachment is not None
+    assert attachment.file.name == 'test.txt'
+
+    # edit - upload new file
+    uploaded_new_file = SimpleUploadedFile(
+        "other_test.txt",
+        b"this is cool",
+        content_type="text/plain"
+    )
+    edit_table = FileEditTable().bind(
+        request=req(
+            'post',
+            **{
+                f'columns/file/{attachment.pk}': uploaded_new_file,
+                '-save': ''
+            },
+        )
+    )
+    assert edit_table.is_valid()
+    edit_table.render_to_response()
+
+    attachment.refresh_from_db()
+
+    assert attachment is not None
+    assert attachment.file.name == 'other_test.txt'
+
+    # deleting file
+    edit_table = FileEditTable().bind(
+        request=req(
+            'post',
+            **{
+                f'delete__columns/file/{attachment.pk}': attachment.file.name,
+                '-save': ''
+            },
+        )
+    )
+    assert edit_table.is_valid()
+    edit_table.render_to_response()
+
+    attachment.refresh_from_db()
+
+    assert attachment is not None
+    assert isinstance(attachment.file, FieldFile) and not attachment.file.name
