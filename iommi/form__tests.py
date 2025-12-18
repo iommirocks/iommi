@@ -1981,6 +1981,7 @@ def test_file_no_roundtrip():
 def test_file_rendering():
     form = Form.create(
         auto__model=AttachmentModel,
+        fields__file__call_target__attribute = 'file'
     )
 
     verify_part_html(
