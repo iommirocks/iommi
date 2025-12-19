@@ -343,7 +343,7 @@ def edit_table__post_handler(table, request, **_):
                 continue
             instance = cells.row
             form.instance = instance
-            if instance and instance.pk is not None and instance.pk in deleted_pks:
+            if instance is not None and instance.pk is not None and instance.pk in deleted_pks:
                 continue
             attrs_to_save = []
             to_save_in_second_phase = []
