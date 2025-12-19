@@ -439,6 +439,7 @@ class IommiBase {
     }
 
     initEditTableDeleteRowButton() {
+        // check/uncheck checkbox based on delete button
         IommiBase.addLiveEventListener(
             'click',
             '[data-iommi-edit-table-delete-row-button]',
@@ -453,6 +454,34 @@ class IommiBase {
                 checkbox.checked = !checkbox.checked;
                 event.preventDefault();
                 return false;
+            }
+        );
+
+        // remove/restore required and required and pattern
+        IommiBase.addLiveEventListener(
+            'change',
+            '[data-iommi-edit-table-delete-row-checkbox]',
+            function (event) {
+                const row = this.closest('[data-iommi-edit-table-row]');
+                if(this.checked) {
+                    row.querySelectorAll('[required]').forEach((field) => {
+                        field.setAttribute('data-iommi-attr-bak-required', true);
+                        field.removeAttribute('required');
+                    });
+                    row.querySelectorAll('[pattern]').forEach((field) => {
+                        field.setAttribute('data-iommi-attr-bak-pattern', field.getAttribute('pattern'));
+                        field.removeAttribute('pattern');
+                    });
+                } else {
+                    row.querySelectorAll('[data-iommi-attr-bak-required]').forEach((field) => {
+                        field.setAttribute('required', true);
+                        field.removeAttribute('data-iommi-attr-bak-required');
+                    });
+                    row.querySelectorAll('[data-iommi-attr-bak-pattern]').forEach((field) => {
+                        field.setAttribute('pattern', field.getAttribute('data-iommi-attr-bak-pattern'));
+                        field.removeAttribute('data-iommi-attr-bak-pattern');
+                    });
+                }
             }
         );
     }
