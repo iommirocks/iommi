@@ -397,6 +397,7 @@ def test_edit_table_post_delete():
 def test_edit_table_delete_new_row_and_existing_row():
     existing_foo = TFoo.objects.create(a=1, b='existing')
     another_foo = TFoo.objects.create(a=2, b='another')
+    third__foo = TFoo.objects.create(a=3, b='third')
 
     edit_table = EditTable(
         auto__model=TFoo,
@@ -423,6 +424,11 @@ def test_edit_table_delete_new_row_and_existing_row():
                 f'columns/a/{existing_foo.pk}': str(existing_foo.a),
                 f'columns/b/{existing_foo.pk}': existing_foo.b,
 
+                # Mark existing row for deletion, but pass some changes too
+                f'pk_delete_{third__foo.pk}': '',
+                f'columns/a/{third__foo.pk}': str(third__foo.a),
+                f'columns/b/{third__foo.pk}': 'third but changed',
+
                 # Data for the other existing row (unchanged)
                 f'columns/a/{another_foo.pk}': str(another_foo.a),
                 f'columns/b/{another_foo.pk}': another_foo.b,
@@ -434,6 +440,7 @@ def test_edit_table_delete_new_row_and_existing_row():
     assert response.status_code == 302
     assert not TFoo.objects.filter(pk=existing_foo.pk).exists()
     assert TFoo.objects.filter(pk=another_foo.pk).exists()
+    assert not TFoo.objects.filter(pk=third__foo.pk).exists()
     new_row = TFoo.objects.filter(a=88, b='new row to keep').first()
     assert new_row is not None
     assert not TFoo.objects.filter(a=99, b='new row to delete').exists()
