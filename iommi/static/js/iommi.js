@@ -457,7 +457,7 @@ class IommiBase {
             }
         );
 
-        // remove/restore required and required and pattern
+        // remove/restore required and pattern
         IommiBase.addLiveEventListener(
             'change',
             '[data-iommi-edit-table-delete-row-checkbox]',
