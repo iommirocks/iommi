@@ -329,9 +329,12 @@ def edit_table__post_handler(table, request, **_):
     if table.edit_errors or table.create_errors:
         return None
 
+    deleted_pks = set()
     if isinstance(table.initial_rows, QuerySet):
         prefix = path_join(table.iommi_path, 'pk_delete_')
-        table.bulk_queryset(prefix=prefix).delete()
+        qs = table.bulk_queryset(prefix=prefix)
+        deleted_pks = set(qs.values_list('pk', flat=True))
+        qs.delete()
 
     def save(cells_iterator, form):
         to_save = []
@@ -340,6 +343,8 @@ def edit_table__post_handler(table, request, **_):
                 continue
             instance = cells.row
             form.instance = instance
+            if instance is not None and instance.pk is not None and instance.pk in deleted_pks:
+                continue
             attrs_to_save = []
             to_save_in_second_phase = []
             for cell in cells.iter_editable_cells():
