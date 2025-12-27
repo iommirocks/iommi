@@ -13,6 +13,7 @@
 # serve to show the default.
 
 import sys, os
+from datetime import datetime
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -40,17 +41,15 @@ if os.environ.get("READTHEDOCS", "") == "True":
         html_context = {}
     html_context["READTHEDOCS"] = True
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
 
-from django import setup
-setup()
-
-check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs -q", shell=True)
+check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs -q -n 4", shell=True)
 
 
 def build_finished(app, exception):
     print('Running build_finished')
+    start = datetime.now()
     check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python insert_docs_links.py", shell=True)
+    print('    ', (datetime.now() - start).total_seconds(), 'seconds')
 
 
 def setup(app):
