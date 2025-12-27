@@ -935,7 +935,7 @@ class Query(Part):
         something < 10 AND other >= 2015-01-01 AND (foo < 1 OR bar > 1)
 
         """
-        quoted_string_excluding_quotes = QuotedString('"', esc_char='\\').setParseAction(
+        quoted_string_excluding_quotes = QuotedString('"', esc_char='\\').set_parse_action(
             lambda token: StringValue(token[0])
         )
         and_ = Keyword('and', caseless=True)
@@ -950,9 +950,9 @@ class Query(Part):
 
         # Define a where expression
         where_expression = Forward()
-        binary_operator_statement = (identifier + binary_op + value_string).setParseAction(self._binary_op_to_q)
-        unary_operator_statement = (identifier | (Char('!') + identifier)).setParseAction(self._unary_op_to_q)
-        free_text_statement = quotedString.copy().setParseAction(self._freetext_to_q)
+        binary_operator_statement = (identifier + binary_op + value_string).set_parse_action(self._binary_op_to_q)
+        unary_operator_statement = (identifier | (Char('!') + identifier)).set_parse_action(self._unary_op_to_q)
+        free_text_statement = quotedString.copy().set_parse_action(self._freetext_to_q)
         operator_statement = binary_operator_statement | free_text_statement | unary_operator_statement
         where_condition = Group(operator_statement | ('(' + where_expression + ')'))
         where_expression << where_condition + ZeroOrMore((and_ | or_) + where_expression)
