@@ -935,7 +935,7 @@ class Query(Part):
         something < 10 AND other >= 2015-01-01 AND (foo < 1 OR bar > 1)
 
         """
-        quoted_string_excluding_quotes = QuotedString('"', escChar='\\').setParseAction(
+        quoted_string_excluding_quotes = QuotedString('"', esc_char='\\').setParseAction(
             lambda token: StringValue(token[0])
         )
         and_ = Keyword('and', caseless=True)
