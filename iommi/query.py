@@ -30,7 +30,7 @@ from pyparsing import (
     Forward,
     Group,
     Keyword,
-    oneOf,
+    one_of,
     ParseException,
     ParseResults,
     QuotedString,
@@ -862,7 +862,7 @@ class Query(Part):
             return Q()
         parser = self._create_grammar()
         try:
-            tokens = parser.parseString(query_string, parseAll=True)
+            tokens = parser.parse_string(query_string, parse_all=True)
         except ParseException:
             raise QueryException('Invalid syntax for query')
         return self._compile(tokens)
@@ -940,12 +940,12 @@ class Query(Part):
         )
         and_ = Keyword('and', caseless=True)
         or_ = Keyword('or', caseless=True)
-        binary_op = oneOf('=> =< = < > >= <= : != !:', caseless=True).setResultsName('operator')
+        binary_op = one_of('=> =< = < > >= <= : != !:', caseless=True).set_results_name('operator')
 
         # define query tokens
-        identifier = Word(alphas, alphanums + '_$-.').setName('identifier')
+        identifier = Word(alphas, alphanums + '_$-.').set_name('identifier')
         raw_value_chars = alphanums + '_$-+/$%*;?@[]\\^`{}|~.'
-        raw_value = Word(raw_value_chars, raw_value_chars).setName('raw_value')
+        raw_value = Word(raw_value_chars, raw_value_chars).set_name('raw_value')
         value_string = quoted_string_excluding_quotes | raw_value
 
         # Define a where expression
@@ -959,7 +959,7 @@ class Query(Part):
 
         # define the full grammar
         query_statement = Forward()
-        query_statement << Group(where_expression).setResultsName("where")
+        query_statement << Group(where_expression).set_results_name("where")
         return query_statement
 
     def _unary_op_to_q(self, token):
