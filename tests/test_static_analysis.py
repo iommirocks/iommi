@@ -11,7 +11,9 @@ def check_line_import_datetime(line, **_):
         return 'Importing datetime as a module is not allowed. Please use `from datetime import ...` to import the symbol you need.'
 
 
-def check_line_datetime_now(line, **_):
+def check_line_datetime_now(line, full_path, **_):
+    if full_path.endswith('conf.py'):
+        return
     if 'datetime.now()' in line:
         return "Don't use `datetime.now()`, you should use `django.timezone.now`"
     if 'datetime.utcnow()' in line:
@@ -54,7 +56,7 @@ def test_static_analysis():
             with open(full_path) as f:
                 for i, line in enumerate(f.readlines(), start=1):
                     for check in checks:
-                        message = check(line)
+                        message = check(line=line, full_path=full_path)
                         if message:
                             errors.append((full_path, i, line, message))
 
