@@ -2460,7 +2460,7 @@ class Table(Part, Tag):
             sort_keys = [('-' + x if descending else x) for x in sort_keys]
             if table.model is not None and table.model._meta.ordering:
                 sort_keys.extend(table.model._meta.ordering)
-            if sort_keys[-1] != 'pk':
+            if sort_keys[-1] not in ('pk', '-pk'):
                 sort_keys.append('pk')  # Add pk to always guarantee stable order for pagination.
             return rows.order_by(*sort_keys)
 
