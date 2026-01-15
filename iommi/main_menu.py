@@ -97,9 +97,8 @@ class MainMenu:
         style = resolve_style(None)
         conf = RefinableNamespace(*style.resolve(self))
 
-        template = conf.pop('template', 'iommi/main_menu/menu.html')
         if self.template is MISSING:
-            template = template
+            self.template = conf.pop('template', 'iommi/main_menu/menu.html')
 
         assets = {
             k: v.bind(request=request)
@@ -115,7 +114,7 @@ class MainMenu:
             self,
             request,
             attrs=attrs,
-            template=template,
+            template=self.template,
             assets=assets,
         )
 

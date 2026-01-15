@@ -339,6 +339,20 @@ def test_path_decoding_include_denied(settings, ozzy):
         ), "Not forbidden to access M with `params`, whose `include` uses them to deny access."
 
 
+def test_main_menu_template():
+    # Regression test for https://github.com/iommirocks/iommi/issues/708
+    menu = MainMenu(
+        template=Template('<div>custom main menu template</div>'),
+        items=dict(
+            foo=M(
+                view=fake_view,
+            ),
+        ),
+    ).bind(request=req('get'))
+
+    assert '<div>custom main menu template</div>' in str(menu)
+
+
 def test_m_template():
     menu = MainMenu(
         items=dict(
