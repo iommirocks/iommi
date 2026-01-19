@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.22.1 (2026-01-19)
+~~~~~~~~~~~~~~~~~~~
+
+* `MainMenu` did not respect the `template` parameter properly
+
+* `order_by` - don't add `pk` when the last is `-pk`
+
+* Fixed `EditTable` row deleting with changed fields values
+
+
 7.22.0 (2025-12-28)
 ~~~~~~~~~~~~~~~~~~~
 
