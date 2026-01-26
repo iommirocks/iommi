@@ -1384,7 +1384,7 @@ def test_nested_foreign_keys(big_discography):
 
     # language=rst
     """
-    The column created is named `album_artist` (as `__` is reserved for traversing a namespace), so that's the name you need to reference is you need to add more configuration to that column:
+    The column created is named `album_artist` (as `__` is reserved for traversing a namespace), so that's the name you need to reference if you need to add more configuration to that column:
     """
 
     t = Table(
