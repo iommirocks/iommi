@@ -175,7 +175,7 @@ def test_nesting():
     .. uses M.items
     .. uses M.open
 
-    You can create a menu hierarchy with the `items` argument, which produces expandable sections. iommi will open the menu items that matches the current URL by default. You can also force a submenu to be open with the `open` argument:
+    You can create a menu hierarchy with the `items` argument, which produces expandable sections. iommi will open the menu items that match the current URL by default. You can also force a submenu to be open with the `open` argument:
     """
 
     menu = MainMenu(

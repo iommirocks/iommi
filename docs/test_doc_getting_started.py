@@ -86,7 +86,7 @@ def test_2__your_first_form():
 
     From this point this guide is aimed at users trying iommi in an existing project. :doc:`The tutorial <tutorial>` is a more in-depth guide to building a full application with iommi from scratch.
 
-    Pick a model from your app, and let's build a create form for it! I'm using `Album` here, but you should replace it with some your model. Add this to your `urls.py`:
+    Pick a model from your app, and let's build a create form for it! I'm using `Album` here, but you should replace it with your own model. Add this to your `urls.py`:
 
 
     """
@@ -193,7 +193,7 @@ def test_5__a_simple_function_based_view():
     -------------------------------
 
     It's often useful to have a function based view around your iommi code to do
-    some basic setup. So we'll add an example for that too. With iommis
+    some basic setup. So we'll add an example for that too. With iommi's
     middleware you can return iommi objects from your view:
 
 

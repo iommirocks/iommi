@@ -56,7 +56,7 @@ def test_query_language():
     --------------
 
     iommi comes with an advanced query language so users can filter tables
-    after what they want. Searching songs can look like this:
+    based on what they want. Searching songs can look like this:
 
     .. code-block::
 

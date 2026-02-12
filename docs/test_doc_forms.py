@@ -315,7 +315,7 @@ def test_customization_of_save_behavior():
     is to set some hardcoded value for a field that is not in the form. This is best done by using `Field.hardcoded`, so
     that should be your first option.
 
-    Saving a model in Django models SQL quite closely and iommi have hooks for all the steps in a multi-step commit.
+    Saving a model in Django mirrors SQL quite closely, and iommi has hooks for all the steps in a multi-step commit.
 
     The callbacks are executed in this order:
 

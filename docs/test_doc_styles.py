@@ -263,7 +263,7 @@ def test_switching_style_for_a_single_part():
     Changing style for a single part
     --------------------------------
 
-    You can can change the style for a single part by passing the `iommi_style`. The
+    You can change the style for a single part by passing the `iommi_style`. The
     `iommi_style` parameter can either be the name of a registered style, or a `Style`
     instance:
     """

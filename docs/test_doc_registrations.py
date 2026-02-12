@@ -117,7 +117,7 @@ def test_the_search_fields_of_your_django_models():
 
     # language=rst
     """
-    On startup iommi registers just this one particular canonical name for you since you probably want it. Note also that you can use `__` separated paths here if you have a one-to-one with another model where the name field exists.
+    On startup iommi registers just this one particular canonical name for you, since you probably want it. Note also that you can use `__` separated paths here if you have a one-to-one with another model where the name field exists.
     """
 
 

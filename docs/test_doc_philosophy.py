@@ -150,7 +150,7 @@ def test_traversing_a_namespace_is_done_with____when___cant_be_used_in_normal_py
         
         car = Car(engine.gearbox.clutch_type='double')
 
-    but pythons syntax doesn't allow this. So instead we use `__`:
+    but Python's syntax doesn't allow this. So instead we use `__`:
 
 
     """
@@ -278,7 +278,7 @@ def test_declarative_programmatic_hybrid_api():
 
     # language=rst
     """
-    This style can be much more readable. There's a subtle different though
+    This style can be much more readable. There's a subtle difference though
     between the first and second styles: the second is really a way to
     declare defaults, not hard coding values. This means we can create
     instances of the class and set the values in the call to the
@@ -334,10 +334,10 @@ def test_single_point_customization_with_no_boilerplate():
     Single point customization with no boilerplate
     ----------------------------------------------
 
-    GUIs consists of layers of abstraction like a form containing fields,
+    GUIs consist of layers of abstraction like a form containing fields,
     fields containing input tags, and a button. But in traditional APIs, to customize the input tag of
     a form field row you must subclass several classes even for very trivial
-    things. Often trivial things also requires copy pasting a template and making
+    things. Often trivial things also require copy pasting a template and making
     a minor change. This leads to lots of code that basically does nothing and it
     *hides* the unique and relevant code in the noise of the other cruft around
     it that is just copy paste or boilerplate.

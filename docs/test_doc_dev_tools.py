@@ -22,7 +22,7 @@ def test_dev_tools(settings):
 
     iommi ships with several integrated tools to increase your development speed. They
     are shown on iommi pages when `settings.DEBUG` is `True`. Some are always
-    active and some are optional and needs to be added to your project.
+    active and some are optional and need to be added to your project.
 
     On iommi pages you get a debug panel to quickly access the debug tools:
     """
@@ -160,7 +160,7 @@ def test_profile():
     to get the total time.
 
     - If you have gprof2dot installed you can also do `?_iommi_prof=graph` to get a graph output.
-    - If you have snakeviz installed you can also do `?iommi_prof=snake` to get snakeviz output.
+    - If you have snakeviz installed you can also do `?_iommi_prof=snake` to get snakeviz output.
 
     .. note::
 
@@ -201,8 +201,8 @@ def test_sql_trace():
         if you want to use this in production. Only staff users are allowed to
         trace sql in production, but all users can trace sql in debug mode.
 
-    In DEBUG the SQL trace middleware will automatically warn you if you have views
-    appear to have `N+1 type errors <https://stackoverflow.com/questions/97197/what-is-the-n1-selects-problem-in-orm-object-relational-mapping>`_. By default iommi will will print stack traces and example SQL statements
+    In DEBUG the SQL trace middleware will automatically warn you if your views
+    appear to have `N+1 type errors <https://stackoverflow.com/questions/97197/what-is-the-n1-selects-problem-in-orm-object-relational-mapping>`_. By default iommi will print stack traces and example SQL statements
     for the worst offenders for your view to the console:
 
     .. code-block::

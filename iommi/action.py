@@ -85,7 +85,7 @@ class Action(Fragment):
     with a single primary submit button are so common, iommi assumes
     that if you have an action called submit and do NOT explicitly
     specify the action that it is a primary action. This is only
-    done for the action called `submit`, inside the Forms actions
+    done for the action called `submit`, inside the Form's actions
     `Namespace`.
 
     For that reason this works:

@@ -66,12 +66,12 @@ def test_how_do_i_specify_which_fields_to_show():
     """
     This will show the field `name` only if the GET parameter `some_parameter` is set to `hello!`.
 
-    To be more precise, `include` turns off the entire field. See  :ref:`field-non-editable` and :ref:`field-hidden`  
+    To be more precise, `include` turns off the entire field. See :ref:`field-non-editable` and :ref:`field-hidden`  
     """
 
     # language=rst
     """
-    Use `auto__include`, to specify the complete list of fields you want:
+    Use `auto__include` to specify the complete list of fields you want:
     """
 
     form = Form.create(
@@ -433,7 +433,7 @@ def test_how_do_i_set_if_a_field_is_required():
 
     # language=rst
     """
-    ...and this CSS added to your sites custom style sheet:
+    ...and this CSS added to your site's custom style sheet:
 
     .. code-block:: css
 
@@ -502,8 +502,8 @@ def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use
 
     .. _field-search-fields:
 
-    How do I specify which model fields the search of a choice_queryset use?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    How do I specify which model fields the search of a choice_queryset uses?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Field.search_fields
 
     `Form.choice_queryset` uses the registered search fields for filtering and ordering.
@@ -639,7 +639,7 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
     When you do that you will get English language relative date parsing
     (e.g. "yesterday", "3 days ago") for free, because iommi used to use a
     text based input control and the parser is applied no matter what
-    (its just that when using the default date picker control it will
+    (it's just that when using the default date picker control it will
     always only see ISO-8601 dates).
     """
 
@@ -859,7 +859,7 @@ def test_non_rendered(black_sabbath):
 
     # language=rst
     """
-    Accessing this create form with `?year=1999` in the title will create this object on submit:
+    Accessing this create form with `?year=1999` in the URL will create this object on submit:
     """
 
     # @test
@@ -895,7 +895,7 @@ def test_grouped_fields():
 
     .. uses Field.group
 
-    Use the `group` field:
+    Use the `group` parameter:
     """
 
     form = Form(
@@ -1113,7 +1113,7 @@ def test_how_do_i_make_a_form_to_create_or_edit(black_sabbath, album):
     .. uses Form.create_or_edit
 
     If you don't know until runtime if you want `Form.create` or `Form.edit`,
-    you can use the `Form.create_or_edit` shortcut. Ff the `instance` is `None`
+    you can use the `Form.create_or_edit` shortcut. If the `instance` is `None`
     it will become a create form, otherwise an edit form:
     """
 
@@ -1238,7 +1238,7 @@ def test_how_do_i_access_errors():
 
     # language=rst
     """
-    You can get the errors on a given `Field` like this (not that you get a `set`!):
+    You can get the errors on a given `Field` like this (note that you get a `set`!):
     """
 
     # @test

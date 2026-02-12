@@ -31,7 +31,7 @@ def test_equivalence():
     Declarative/programmatic hybrid API
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    The programmatic API is pretty straight forward: you have a class constructor that takes some arguments. The interesting part is how we can mirror that *exactly* into a declarative style.
+    The programmatic API is pretty straightforward: you have a class constructor that takes some arguments. The interesting part is how we can mirror that *exactly* into a declarative style.
 
     """
 
@@ -65,7 +65,7 @@ def test_equivalence():
     Double underscore short form
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-    In iommi you can have very deeply nested object structures, and because you want to customize something deep inside a graph it would be cumbersome to nest dicts a lot. So `__` is used a separator.
+    In iommi you can have very deeply nested object structures, and because you want to customize something deep inside a graph it would be cumbersome to nest dicts a lot. So `__` is used as a separator.
     
     Say we have a table, where we want to turn on filtering for a column, but we want to insert a special CSS class (called `special`) on the label of the search field:          
     """

@@ -101,7 +101,7 @@ def test_installation():
 
     # language=rst
     """
-    Now you have the iommi admin gui for your app!
+    Now you have the iommi admin GUI for your app!
     """
 
 
@@ -130,9 +130,9 @@ def test_add_a_model_to_the_admin():
 
     # language=rst
     """
-    This is especially useful for adding config to a third party app that doesn't have built in iommi admin configuration.
+    This is especially useful for adding config to a third party app that doesn't have built-in iommi admin configuration.
 
-    You can also add the config in the app, by creating a `iommi_admin.py` file in your app, and putting the configuration there:
+    You can also add the config in the app, by creating an `iommi_admin.py` file in your app, and putting the configuration there:
 
 
     """

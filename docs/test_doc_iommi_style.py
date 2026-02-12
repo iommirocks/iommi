@@ -5,7 +5,7 @@
 `iommi_style`
 -------------
 
-The :ref:`style` system is what you normally use to specify how your product should look and behave, but something you want something more limited for just one or a few places. You can then specify a :doc:`Style` object directly on a component:
+The :ref:`style` system is what you normally use to specify how your product should look and behave, but sometimes you want something more limited for just one or a few places. You can then specify a :doc:`Style` object directly on a component:
 
 """
 from docs.models import Album

@@ -59,7 +59,7 @@ def test_refine_done():
     you call `bind()` on an object that hasn't had `refine_done()` called yet),
     or you can do it explicitly yourself.
 
-    The refine done step does a lot of of the work that is needed for the final
+    The refine done step does a lot of the work that is needed for the final
     traversal step, so if possible you want to make sure this is done before.
     If this step is done on an object that is then kept around, all this work
     doesn't need to be redone. Examples of work that is done in this step include
@@ -128,7 +128,7 @@ def test_bind():
     1. Copy of the part. (We set a member `_declared` to point to the original definition if you need to refer to it for debugging purposes.)
     2. Set the `parent` and set `_is_bound` to `True`
     3. Style application
-    4. Call the parts `on_bind` method
+    4. Call the part's `on_bind` method
 
     The parts are responsible for calling `bind(parent=self)` on all their children in `on_bind`.
 
@@ -203,7 +203,7 @@ def test_namespace_dispatching():
     # language=rst
     """
     This is really useful for the `Table` class as it means we can expose the full
-    feature set of the underling `Query` and `Form` classes by just
+    feature set of the underlying `Query` and `Form` classes by just
     dispatching keyword arguments downstream. It also enables us to bundle
     commonly used features in what we call "shortcuts", which are pre-packaged sets of defaults.
     """

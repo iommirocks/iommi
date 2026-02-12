@@ -103,8 +103,8 @@ def test_how_do_I_set_the_name_for_a_filter(big_discography):
 
     .. uses Filter.query_name
 
-    By default the name of filters are derived from the name you specify or from the model field name
-    For deeply nested names double underscores are replaced with single underscores, and those names
+    By default the names of filters are derived from the name you specify or from the model field name.
+    For deeply nested names, double underscores are replaced with single underscores, and those names
     can become a bit unwieldy. You can then override this with `query_name`:
     """
 

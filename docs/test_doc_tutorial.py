@@ -104,7 +104,7 @@ def test_setup_data():
     Example data
     ------------
     
-    If you want it to get the same example data as in this tutorial, run `this code`_.
+    If you want to get the same example data as in this tutorial, run `this code`_.
 
     .. _this code: https://raw.githubusercontent.com/iommirocks/iommi/master/docs/custom/big_discography.py
     """
@@ -243,7 +243,7 @@ def test_path_decoding():
     Path decoders in iommi can be more convenient compared to Django path
     decoders, as instead of writing `<artist:artist>` everywhere, you can instead
     write `<artist_name>` or `<artist_pk>`. They are also easier to set up and 
-    gives you hook points for access control if needed. 
+    give you hook points for access control if needed. 
     """
 
 
@@ -383,7 +383,7 @@ def test__foo():
     links to a table. In our example app we want to add a create button for staff.
 
     While we're at it, let's add some new columns for edit and delete links. There
-    are special shortcuts in iommi prebuild for that too: `Column.edit` and `Column.delete`.
+    are special shortcuts in iommi prebuilt for that too: `Column.edit` and `Column.delete`.
     """
 
     albums = Table(
@@ -454,7 +454,7 @@ def test__foo():
     row__template
     =============
     
-    To override the rendering of an entire row we use `cell__template`. We also
+    To override the rendering of an entire row we use `row__template`. We also
     change the table from rendering a `table` tag to a `div`, and turn off the 
     table header:
     
@@ -581,7 +581,7 @@ def test_forms():
 
     # language=rst
     """
-    No template needed, and this is the view too with `Form.edit` or `Form.createcookbook-forms`.
+    No template needed, and this is the view too with `Form.edit` or `Form.create`.
     
     In iommi you always get a form encoding specified on the form, so they all work
     with file uploads. Missing form encoding on the form tag is a very common 
@@ -618,7 +618,7 @@ def test_forms():
     an error message.
 
 
-    There are many many more customizations options available, you can find more
+    There are many more customization options available, you can find more
     in the :ref:`form cookbook <cookbook-forms>` and the docs for `Field`.
 
 
@@ -642,7 +642,7 @@ def test_forms():
     """ 
     There are four built in forms/views like this: `create`, `edit`, `create_and_edit` and `delete`.
     The `delete` view is a read only form with some styling for the submit button
-    and a submit handler that delete the object. We find this to be really nice as
+    and a submit handler that deletes the object. We find this to be really nice as
     a confirmation page because you can see what you are about to delete.
     """
 

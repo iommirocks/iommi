@@ -103,5 +103,5 @@ def test_semantic_models():
 
     # language=rst
     """
-    It requires a little bit more initial setup, but for commonly used field types, it will make new views correct by default and super easy to setup.
+    It requires a little bit more initial setup, but for commonly used field types, it will make new views correct by default and super easy to set up.
     """

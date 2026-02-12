@@ -24,7 +24,7 @@ def test_edit_tables(really_big_discography):
     Edit tables
     ===========
 
-    iommi edit tables builds on top of iommi tables but enable editing of cells too.
+    iommi edit tables build on top of iommi tables but enable editing of cells too.
 
     A simple example:
     """
@@ -57,7 +57,7 @@ def test_orderable_edit_tables(fav_artists):
     Orderable edit tables
     ~~~~~~~~~~~~~~~~~~~~~
 
-    iommi edit tables also support manual ordering. That can be especially useful for editing reverse FK's in nested forms.
+    iommi edit tables also support manual ordering. That can be especially useful for editing reverse FKs in nested forms.
     """
 
     # language=rst

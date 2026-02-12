@@ -23,7 +23,7 @@ def test_tables(really_big_discography):
     Tables
     ======
 
-    iommi tables makes it easy to create full featured HTML tables easily:
+    iommi tables make it easy to create full featured HTML tables:
 
     * generates header, rows and cells
     * sorting
@@ -161,7 +161,7 @@ def test_table_csv(small_discography):
     Table as CSV
     ------------
 
-    Tables are able to render as CSV files. This is enabled if there is specified a name to use on the resulting file,
+    Tables are able to render as CSV files. This is enabled if a name is specified for the resulting file,
     as a value of the table parameter `extra_evaluated__report_name`, and a file header name for each column that is
     to be included, specified by the column parameter `extra_evaluated__report_name`.
 

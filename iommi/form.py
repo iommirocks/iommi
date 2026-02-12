@@ -764,25 +764,25 @@ class Field(Part, Tag):
 
                 Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
 
-        :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks//cookbook_forms.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
+        :param after: Set the order of fields, see the `howto <https://docs.iommi.rocks/cookbook_forms.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
         :param initial: Initial value of the field
-        :param attr: The attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Setting this to `None` will mean no attribute is read or written by `apply()`. Defaults to same as `name`.
+        :param attr: The attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` being set by the `apply()` function. Setting this to `None` will mean no attribute is read or written by `apply()`. Defaults to same as `name`.
         :param attrs: A dict containing any custom html attributes to be sent to the `input__template`.
         :param display_name: The text in the HTML label tag. Default: `capitalize(name).replace('_', ' ')`
         :param template: Django template filename or `Template` instance for the entire row. Normally you shouldn't need to override on this level. Prefer overriding `input__template`, `label__template` or `error__template` as needed.
         :param input__template: Django template filename or `Template` instance for the template for just the input control.
-        :param label__template: Django template filename or `Template` instance for the template for just the label tab.
+        :param label__template: Django template filename or `Template` instance for the template for just the label tag.
         :param required: If the field is a required field. Default: `True`
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
         :param editable: Is this field editable.
         :param strip_input: Runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: `True`
-        :param is_list: Interpret request data as a list (can NOT be a callable). Default: `False``
+        :param is_list: Interpret request data as a list (can NOT be a callable). Default: `False`
         :param read_from_instance: Callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: Callback to write value to instance. Invoked with parameters field, instance and value.
         :param choice_id_formatter: Callback given the keyword argument `choice` in addition to standard parameters, to obtain the string value to represent the identity of a given `choice`. Default implementation will use `str(choice)`
         :param choice_display_name_formatter: Callback given the keyword argument `choice` in addition to standard parameters, to obtain the display name representing a given choice to the end user. Default implementation will use `str(choice)`
-        :param choice_to_optgroup Callback to generate the optgroup for the given choice. It will get the keyword argument `choice`. It should return None if the choice should not be grouped.
+        :param choice_to_optgroup: Callback to generate the optgroup for the given choice. It will get the keyword argument `choice`. It should return None if the choice should not be grouped.
         """
         super(Field, self).__init__(**kwargs)
 
@@ -2126,7 +2126,7 @@ class Form(Part, Tag):
     def add_error(self, msg):
         # language=rst
         """
-        Explicitly add an error message to the forms global error set.
+        Explicitly add an error message to the form's global error set.
 
         Example:
 

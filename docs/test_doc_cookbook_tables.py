@@ -538,7 +538,7 @@ def test_how_do_i_specify_which_columns_to_show():
     """
     This will show the column `name` only if the GET parameter `some_parameter` is set to `hello!`.
 
-    To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead. This is useful to for example turn on filtering for a column, but not render it:
+    To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead. This is useful for example to turn on filtering for a column, but not render it:
     """
 
     table = Table(
@@ -553,7 +553,7 @@ def test_how_do_i_specify_which_columns_to_show():
 
     # language=rst
     """
-    Use `auto__include`, to specify the complete list of columns you want:
+    Use `auto__include` to specify the complete list of columns you want:
     """
 
     table = Table(
@@ -708,7 +708,7 @@ def test_how_do_i_turn_off_sorting(small_discography):
     .. uses EditTable.sortable
     .. uses EditColumn.sortable
 
-    To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
+    To turn off sorting on a column pass it `sortable=False` (you can also use a lambda here!):
     """
 
     table = Table(
@@ -956,7 +956,7 @@ def test_how_do_i_enable_bulk_editing(small_discography):
     .. uses EditColumn.bulk
 
     Editing multiple items at a time is easy in iommi with the built in bulk
-    editing. Enable it for a columns by passing `bulk__include=True`:
+    editing. Enable it for a column by passing `bulk__include=True`:
     """
 
     table = Table(
@@ -972,7 +972,7 @@ def test_how_do_i_enable_bulk_editing(small_discography):
     behavior and look of the bulk editing for the column.
 
     You also need to enable the select column, otherwise you can't select
-    the columns you want to bulk edit.
+    the rows you want to bulk edit.
     """
 
     # @test
@@ -1003,7 +1003,7 @@ def test_how_do_i_enable_bulk_delete(small_discography):
     To enable the bulk delete, enable the `delete` action.
 
     You also need to enable the select column, otherwise you can't select
-    the columns you want to delete.
+    the rows you want to delete.
     """
 
     # @test
@@ -1222,7 +1222,7 @@ def test_render_additional_rows(small_discography):
     .. uses EditTable.rows
     .. uses RowConfig.template
 
-    Using `rows__template` you can render the default row with `{{ cells.render }}` and then your own custom data:
+    Using `row__template` you can render the default row with `{{ cells.render }}` and then your own custom data:
 
 
     """

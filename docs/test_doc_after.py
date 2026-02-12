@@ -5,7 +5,7 @@
 `after`
 -------
 
-Ordering of fields and columns is based on the declared order, the order in the model (when using :ref:`auto`), and the `after` configuration. The last takes precedent over the others.
+Ordering of fields and columns is based on the declared order, the order in the model (when using :ref:`auto`), and the `after` configuration. The last takes precedence over the others.
 
 To order fields, set `after` to:
 

@@ -237,5 +237,5 @@ def test_path_decoders_for_access_control():
 
     # language=rst
     """
-    The beauty of this approach is that if you do this consistently in your product, all views get decoded objects that are safe to user without further checks.
+    The beauty of this approach is that if you do this consistently in your product, all views get decoded objects that are safe to use without further checks.
     """

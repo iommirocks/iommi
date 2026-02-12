@@ -56,7 +56,7 @@ def test_foo():
 
     # language=rst
     """
-    The iommi middleware will handle if you return an iommi type and render it properly.
+    The iommi middleware will detect when you return an iommi type and render it properly.
     
     At this point you might think "Hold on! Where is the template?". There isn't one. We don't need a template. iommi works at a higher level of abstraction. Don't worry, you can drop down to templates if you need to though. This will be covered later.
     

@@ -118,14 +118,14 @@ def test_how_do_i_set_the_title_of_my_page():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Page.title
 
-    As in the text shown in the browser status bar?
+    The title of a the page is text shown in the browser tab.
 
     """
     Page(title='The title in the browser')
 
     # language=rst
     """
-    Note that this is different from
+    Note that this is different from:
     """
 
     class MyPage(Page):
