@@ -61,8 +61,18 @@ def live_edit_dispatch(request):
     }[request.GET['_iommi_live_edit']]
 
 
+def _is_localhost(request):
+    host = request.META.get('HTTP_HOST', request.META.get('SERVER_NAME', ''))
+    # Strip port — for IPv6 like [::1]:8000, rsplit on ]:
+    if host.startswith('['):
+        host = host.split(']')[0] + ']'
+    else:
+        host = host.partition(':')[0]
+    return host in ('localhost', '127.0.0.1', '[::1]')
+
+
 def should_edit(request):
-    return settings.DEBUG and '_iommi_live_edit' in request.GET
+    return settings.DEBUG and _is_localhost(request) and '_iommi_live_edit' in request.GET
 
 
 def include_decorators(node):

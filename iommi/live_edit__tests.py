@@ -53,6 +53,7 @@ def test_live_edit_dispatch_error(settings):
     settings.DEBUG = True
     m = Middleware(lambda _: 'response')
     request = req('get', _iommi_live_edit='bad data')
+    request.META['SERVER_NAME'] = 'localhost'
     assert m(request) == 'response'
     with pytest.raises(KeyError):
         m.process_view(request, None, None, None)
@@ -68,7 +69,14 @@ def test_should_edit(settings):
     assert not should_edit(req('get', _iommi_live_edit=''))
 
     settings.DEBUG = True
-    assert should_edit(req('get', _iommi_live_edit=''))
+
+    # Non-localhost is rejected even in DEBUG mode
+    assert not should_edit(req('get', _iommi_live_edit=''))
+
+    # Localhost is allowed
+    r = req('get', _iommi_live_edit='')
+    r.META['SERVER_NAME'] = 'localhost'
+    assert should_edit(r)
 
 
 @pytest.mark.parametrize('view', [function_based_view, part_based_view])
