@@ -176,6 +176,16 @@ def setup_db_compat_iommi():
     register_edit_column_factory(SortOrderField, shortcut_name='reorder_handle')
 
 
+def choices_from_model_field(model, model_field):
+    queryset = model.objects.all()
+    limit_choices_to = model_field.remote_field.limit_choices_to
+    if limit_choices_to:
+        if callable(limit_choices_to):
+            limit_choices_to = limit_choices_to()
+        queryset = queryset.complex_filter(limit_choices_to)
+    return queryset
+
+
 def base_defaults_factory(model_field):
     from iommi.base import capitalize
 

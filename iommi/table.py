@@ -44,6 +44,7 @@ from django.utils.html import (
 )
 from django.utils.translation import gettext_lazy
 
+from iommi._db_compat import choices_from_model_field
 from iommi._web_compat import (
     HttpResponse,
     HttpResponseRedirect,
@@ -1008,7 +1009,7 @@ class Column(Part):
     def many_to_many(cls, model_field, **kwargs):
         setdefaults_path(
             kwargs,
-            choices=model_field.remote_field.model.objects.all(),
+            choices=choices_from_model_field(model_field.remote_field.model, model_field),
             model_field=model_field,
         )
         return cls.multi_choice_queryset(**kwargs)
@@ -1038,7 +1039,7 @@ class Column(Part):
             )
         setdefaults_path(
             kwargs,
-            choices=remote_model.objects.all(),
+            choices=choices_from_model_field(remote_model, model_field),
         )
         return cls.choice_queryset(model_field=model_field, **kwargs)
 

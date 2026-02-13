@@ -1592,6 +1592,47 @@ def test_field_from_model_foreign_key():
 
 
 @pytest.mark.django_db
+def test_field_from_model_foreign_key_limit_choices_to():
+    from tests.models import Foo, LimitChoicesToFKTest
+
+    Foo.objects.create(foo=2)
+    b = Foo.objects.create(foo=3)
+    c = Foo.objects.create(foo=5)
+
+    class MyForm(Form):
+        foo_fk = Field.from_model(LimitChoicesToFKTest, 'foo_fk')
+
+    form = MyForm().bind(request=req('get'))
+    assert set(form.fields.foo_fk.choices) == {b, c}
+
+
+@pytest.mark.django_db
+def test_field_from_model_many_to_many_limit_choices_to():
+    from tests.models import Foo, LimitChoicesToM2MTest
+
+    Foo.objects.create(foo=2)
+    b = Foo.objects.create(foo=3)
+    c = Foo.objects.create(foo=5)
+
+    class MyForm(Form):
+        foo_m2m = Field.from_model(LimitChoicesToM2MTest, 'foo_m2m')
+
+    form = MyForm().bind(request=req('get'))
+    assert set(form.fields.foo_m2m.choices) == {b, c}
+
+
+@pytest.mark.django_db
+def test_field_from_model_foreign_key_to_proxy_model():
+    from tests.models import FKToFooProxyTest, Foo
+
+    class MyForm(Form):
+        foo_fk = Field.from_model(FKToFooProxyTest, 'foo_fk')
+
+    form = MyForm().bind(request=req('get'))
+    assert form.fields.foo_fk.choices.model is Foo
+
+
+@pytest.mark.django_db
 def test_field_from_model_many_to_many():
     from django.db.models import QuerySet
 

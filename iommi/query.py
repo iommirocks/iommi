@@ -39,6 +39,7 @@ from pyparsing import (
     ZeroOrMore
 )
 
+from iommi._db_compat import choices_from_model_field
 from iommi._web_compat import (
     render_template,
     Template,
@@ -546,7 +547,7 @@ class Filter(Part):
     def foreign_key(cls, model_field, **kwargs):
         setdefaults_path(
             kwargs,
-            choices=model_field.foreign_related_fields[0].model.objects.all(),
+            choices=choices_from_model_field(model_field.foreign_related_fields[0].model, model_field),
         )
         return cls.choice_queryset(model_field=model_field, **kwargs)
 
@@ -569,7 +570,7 @@ class Filter(Part):
     def many_to_many(cls, model_field, **kwargs):
         setdefaults_path(
             kwargs,
-            choices=model_field.remote_field.model.objects.all(),
+            choices=choices_from_model_field(model_field.remote_field.model, model_field),
             extra__django_related_field=True,
         )
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)

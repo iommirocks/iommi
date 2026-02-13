@@ -327,3 +327,20 @@ class UuidPKModel(Model):
 
 class AttachmentModel(Model):
     file = FileField(null=True)
+
+
+class LimitChoicesToFKTest(Model):
+    foo_fk = ForeignKey(Foo, on_delete=CASCADE, limit_choices_to={'foo__gte': 3})
+
+
+class LimitChoicesToM2MTest(Model):
+    foo_m2m = ManyToManyField(Foo, limit_choices_to={'foo__gte': 3})
+
+
+class FooProxy(Foo):
+    class Meta:
+        proxy = True
+
+
+class FKToFooProxyTest(Model):
+    foo_fk = ForeignKey(FooProxy, on_delete=CASCADE)

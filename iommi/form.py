@@ -46,7 +46,10 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 from django.templatetags.static import static
 
-from iommi._db_compat import field_defaults_factory
+from iommi._db_compat import (
+    choices_from_model_field,
+    field_defaults_factory,
+)
 from iommi._web_compat import (
     csrf,
     format_html,
@@ -1517,7 +1520,7 @@ class Field(Part, Tag):
         del model
         setdefaults_path(
             kwargs,
-            choices=model_field.foreign_related_fields[0].model.objects.all(),
+            choices=choices_from_model_field(model_field.foreign_related_fields[0].model, model_field),
         )
         return cls.choice_queryset(model_field=model_field, **kwargs)
 
@@ -1541,7 +1544,7 @@ class Field(Part, Tag):
     def many_to_many(cls, model_field, **kwargs):
         setdefaults_path(
             kwargs,
-            choices=model_field.remote_field.model.objects.all(),
+            choices=choices_from_model_field(model_field.remote_field.model, model_field),
             read_from_instance=many_to_many_factory_read_from_instance,
             write_to_instance=many_to_many_factory_write_to_instance,
             extra__django_related_field=True,
