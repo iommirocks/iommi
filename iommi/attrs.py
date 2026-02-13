@@ -82,7 +82,7 @@ def _render_attrs_parts(attrs):
             raise TypeError(
                 f"Attributes can't be callable, you sent {get_docs_callable_description(value)} for key {key}"
             )
-        v = f'{value}'.replace('"', '&quot;')
+        v = f'{value}'.replace('&', '&amp;').replace('"', '&quot;')
         yield f'{key}="{v}"'
 
 
