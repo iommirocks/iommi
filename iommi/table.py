@@ -52,6 +52,7 @@ from iommi._web_compat import (
     format_html,
     mark_safe,
     render_template,
+    safe_redirect_url,
     smart_str,
 )
 from iommi.action import (
@@ -1444,7 +1445,8 @@ def bulk__post_handler(table, form, **_):
     if response is not None:
         return response
 
-    return HttpResponseRedirect(form.get_request().META.get('HTTP_REFERER', '/'))
+    request = form.get_request()
+    return HttpResponseRedirect(safe_redirect_url(request.META.get('HTTP_REFERER', '/'), request))
 
 
 def bulk_delete__post_handler(table, form, **_):
@@ -1491,7 +1493,7 @@ def bulk_delete__post_handler(table, form, **_):
 
     if request.POST.get(p.parts.confirm.bulk.fields.confirmed.iommi_path) == 'confirmed':
         queryset.delete()
-        return HttpResponseRedirect(form.get_request().META.get('HTTP_REFERER', '/'))
+        return HttpResponseRedirect(safe_redirect_url(request.META.get('HTTP_REFERER', '/'), request))
 
     return HttpResponse(render_root(part=p))
 

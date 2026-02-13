@@ -20,6 +20,7 @@ from iommi import (
     Page,
     Table,
 )
+from iommi._web_compat import safe_redirect_url
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
@@ -118,7 +119,9 @@ class LoginForm(Form):
                 if user is not None:
                     request = form.get_request()
                     auth.login(request, user)
-                    return HttpResponseRedirect(request.GET.get('next', getattr(settings, 'LOGIN_REDIRECT_URL', '/')))
+                    fallback = getattr(settings, 'LOGIN_REDIRECT_URL', '/')
+                    redirect_to = safe_redirect_url(request.GET.get('next', fallback), request, fallback=fallback)
+                    return HttpResponseRedirect(redirect_to)
 
                 form.add_error(gettext_lazy('Unknown username or password'))
 

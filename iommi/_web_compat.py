@@ -11,6 +11,7 @@ from django.http import (
     QueryDict,  # noqa: F401
 )
 from django.http.response import HttpResponseBase  # noqa: F401
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.shortcuts import render  # noqa: F401
 from django.template import RequestContext
 from django.template.backends.django import Template as DjangoLoadedTemplate
@@ -67,6 +68,12 @@ class Template:
 
 
 template_types = template_types + (Template,)
+
+
+def safe_redirect_url(url, request, fallback='/'):
+    if url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}):
+        return url
+    return fallback
 
 
 def csrf(request):

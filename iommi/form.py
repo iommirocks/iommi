@@ -55,6 +55,7 @@ from iommi._web_compat import (
     format_html,
     HttpResponseRedirect,
     render_template,
+    safe_redirect_url,
     Template,
     template_types,
     URLValidator,
@@ -254,7 +255,7 @@ def save_nested_forms(form, request, **_):
 
         return create_or_edit_object_redirect(
             is_create=False,
-            redirect_to=form.extra.get('redirect_to', lambda **_: request.POST.get('next', '.')),
+            redirect_to=form.extra.get('redirect_to', lambda **_: safe_redirect_url(request.POST.get('next', '.'), request, fallback='.')),
             redirect=form.extra.get('redirect', lambda redirect_to, **_: HttpResponseRedirect(redirect_to)),
             form=form,
         )

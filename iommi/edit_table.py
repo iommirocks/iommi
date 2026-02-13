@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy
 
 from iommi._web_compat import (
     render_template,
+    safe_redirect_url,
     Template,
 )
 from iommi.action import (
@@ -397,7 +398,7 @@ def edit_table__post_handler(table, request, **_):
     if 'post_save' in table.extra:
         table.invoke_callback(table.extra.post_save)
 
-    return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    return HttpResponseRedirect(safe_redirect_url(request.META.get('HTTP_REFERER', '/'), request))
 
 
 class _EditTable_Lazy_tbody:
