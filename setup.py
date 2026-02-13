@@ -7,7 +7,8 @@ from setuptools import (
     setup,
 )
 
-readme = open('README.rst', encoding='utf8').readlines()
+with open('README.rst', encoding='utf8') as f:
+    readme = f.readlines()
 
 assert 'Your first pick for a django power chord' in readme[4]
 
