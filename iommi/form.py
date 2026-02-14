@@ -23,8 +23,8 @@ from typing import (
 )
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
-from django.core.validators import EMPTY_VALUES
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, ValidationError
+from django.core.validators import EMPTY_VALUES, URLValidator, validate_email
 from django.db import (
     IntegrityError,
     models,
@@ -38,29 +38,22 @@ from django.db.models import (
     QuerySet,
     When,
 )
+from django.http import HttpResponseRedirect
 from django.http.response import HttpResponseBase
 from django.template import Context
+from django.template.context_processors import csrf as csrf_
+from django.templatetags.static import static
 from django.utils import timezone
 from django.utils.functional import Promise
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
-from django.templatetags.static import static
 
-from iommi._db_compat import (
-    choices_from_model_field,
-    field_defaults_factory,
-)
 from iommi._web_compat import (
-    csrf,
+    Template,
     format_html,
-    HttpResponseRedirect,
     render_template,
     safe_redirect_url,
-    Template,
     template_types,
-    URLValidator,
-    validate_email,
-    ValidationError
 )
 from iommi.action import (
     Action,
@@ -69,14 +62,14 @@ from iommi.action import (
 )
 from iommi.attrs import Attrs
 from iommi.base import (
+    MISSING,
+    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     items,
     keys,
-    MISSING,
-    NOT_BOUND_MESSAGE,
-    values
+    values,
 )
 from iommi.datetime_parsing import (
     parse_relative_date,
@@ -84,33 +77,22 @@ from iommi.datetime_parsing import (
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
-from iommi.declarative.namespace import (
-    EMPTY,
-    flatten,
-    getattr_path,
-    Namespace,
-    setattr_path,
-    setdefaults_path
-)
+from iommi.declarative.namespace import EMPTY, Namespace, flatten, getattr_path, setattr_path, setdefaults_path
 from iommi.endpoint import DISPATCH_PREFIX
 from iommi.error import Errors
 from iommi.evaluate import (
     evaluate,
     evaluate_strict,
 )
-from iommi.fragment import (
-    build_and_bind_h_tag,
-    Fragment,
-    Header,
-    Tag,
-    TransientFragment
-)
+from iommi.fragment import Fragment, Header, Tag, TransientFragment, build_and_bind_h_tag
 from iommi.from_model import (
     AutoConfig,
+    NoRegisteredSearchFieldException,
+    base_defaults_factory,
+    choices_from_model_field,
     create_members_from_model,
     get_search_fields,
     member_from_model,
-    NoRegisteredSearchFieldException
 )
 from iommi.member import (
     bind_member,
@@ -127,24 +109,38 @@ from iommi.part import (
     request_data,
 )
 from iommi.refinable import (
-    evaluated_refinable,
     EvaluatedRefinable,
     Prio,
     Refinable,
-    refinable,
     RefinableMembers,
-    SpecialEvaluatedRefinable
+    SpecialEvaluatedRefinable,
+    evaluated_refinable,
+    refinable,
 )
-from iommi.shortcut import (
-    Shortcut,
-    with_defaults
-)
+from iommi.shortcut import Shortcut, with_defaults
 from iommi.sort_after import sort_after
 from iommi.struct import Struct
 from iommi.traversable import Traversable
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
+
+def field_defaults_factory(model_field):
+    from django.db.models import BooleanField, ManyToManyField
+
+    r = base_defaults_factory(model_field)
+
+    if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
+        r['required'] = not model_field.null and not model_field.blank
+
+    if isinstance(model_field, ManyToManyField):
+        r['required'] = False
+
+    if hasattr(model_field, 'null'):
+        r['parse_empty_string_as_none'] = model_field.null
+
+    return r
+
 
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
@@ -2215,7 +2211,7 @@ class Form(Part, Tag):
         )
 
         request = self.get_request()
-        render.context.update(csrf(request))
+        render.context.update({} if request is None else csrf_(request))
 
         return render(request=request)
 

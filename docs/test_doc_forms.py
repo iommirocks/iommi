@@ -10,9 +10,10 @@ from tests.helpers import (
 
 request = req('get')
 
-from django.contrib.auth.models import User
-from iommi._web_compat import HttpResponseRedirect
 import pytest
+from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
+
 pytestmark = pytest.mark.django_db
 
 

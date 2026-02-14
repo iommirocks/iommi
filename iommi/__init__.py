@@ -5,10 +5,6 @@ from functools import wraps
 import django
 from django.core.exceptions import ImproperlyConfigured
 
-from iommi._db_compat import (
-    register_factory,
-    setup_db_compat,
-)
 from iommi.action import Action
 from iommi.asset import Asset
 from iommi.base import MISSING
@@ -29,15 +25,17 @@ from iommi.fragment import (
     html,
 )
 from iommi.from_model import (
+    register_factory,
     register_search_fields,
-)
-from iommi.menu import (
-    Menu,
-    MenuItem,
+    setup_db_compat,
 )
 from iommi.main_menu import (
     M,
     MainMenu,
+)
+from iommi.menu import (
+    Menu,
+    MenuItem,
 )
 from iommi.page import (
     Page,

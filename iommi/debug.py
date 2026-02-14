@@ -6,19 +6,17 @@ from os.path import (
     join,
 )
 
-from django.http import HttpResponse
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse
 from django.template.loader import get_template
+from django.utils.safestring import mark_safe
 
 from iommi._web_compat import (
-    HttpRequest,
     Template,
     format_html,
-    mark_safe,
 )
 from iommi.base import items
 from iommi.struct import Struct
-
-from ._web_compat import settings
 
 
 def iommi_debug_on():

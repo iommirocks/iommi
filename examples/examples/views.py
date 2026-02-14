@@ -7,6 +7,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import OperationalError
+from django.http import HttpResponseRedirect
 from django.urls import (
     reverse,
 )
@@ -24,7 +25,6 @@ from iommi import (
     Table,
     html,
 )
-from iommi._web_compat import HttpResponseRedirect
 from iommi.admin import (
     Admin,
 )

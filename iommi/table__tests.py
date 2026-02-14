@@ -17,6 +17,7 @@ from django.db.models import (
 from django.http import HttpResponse
 from django.test import override_settings
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from docs.models import (
     Album,
@@ -24,16 +25,13 @@ from docs.models import (
     Track,
 )
 from iommi import (
+    LAST,
     Action,
     Fragment,
-    html,
-    LAST,
     Page,
+    html,
 )
-from iommi._web_compat import (
-    mark_safe,
-    Template,
-)
+from iommi._web_compat import Template
 from iommi.base import (
     items,
     keys,
@@ -41,8 +39,8 @@ from iommi.base import (
 from iommi.declarative import get_members
 from iommi.declarative.namespace import getattr_path
 from iommi.endpoint import (
-    find_target,
     InvalidEndpointPathException,
+    find_target,
     perform_ajax_dispatch,
 )
 from iommi.form import (
@@ -58,25 +56,25 @@ from iommi.query import (
     Query,
 )
 from iommi.shortcut import (
-    get_shortcuts_by_name,
-    is_shortcut,
     Namespace,
     Shortcut,
+    get_shortcuts_by_name,
+    is_shortcut,
     with_defaults,
 )
 from iommi.sql_trace import (
-    set_sql_debug,
     SQL_DEBUG_LEVEL_ALL,
+    set_sql_debug,
 )
 from iommi.table import (
-    bulk_delete__post_handler,
     Column,
     DataRetrievalMethods,
+    Struct,
+    Table,
+    bulk_delete__post_handler,
     datetime_formatter,
     ordered_by_on_list,
     register_cell_formatter,
-    Struct,
-    Table,
     yes_no_formatter,
 )
 from tests.helpers import (
@@ -88,6 +86,8 @@ from tests.helpers import (
     verify_table_html,
 )
 from tests.models import (
+    T1,
+    T2,
     AutomaticUrl,
     AutomaticUrl2,
     Bar,
@@ -101,8 +101,6 @@ from tests.models import (
     QueryFromIndexesTestModel,
     Qux,
     SortKeyOnForeignKeyB,
-    T1,
-    T2,
     TBar,
     TBar2,
     TBaz,

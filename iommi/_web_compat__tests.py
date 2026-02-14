@@ -1,4 +1,5 @@
 from django.template import RequestContext
+from django.utils.safestring import SafeText
 
 from iommi._web_compat import (
     Template,
@@ -9,7 +10,6 @@ from iommi.form import (
     Field,
     Form,
 )
-from tests.compat import SafeText
 from tests.helpers import req
 
 

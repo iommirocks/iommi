@@ -1,9 +1,7 @@
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
-from iommi._web_compat import (
-    format_html,
-    mark_safe,
-)
+from iommi._web_compat import format_html
 from iommi.fragment import html
 from iommi.style import Style
 

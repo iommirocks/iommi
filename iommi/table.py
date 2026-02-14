@@ -36,24 +36,23 @@ from django.db.models import (
 )
 from django.http import (
     FileResponse,
+    HttpResponse,
+    HttpResponseRedirect,
 )
 from django.utils import timezone
+from django.utils.encoding import smart_str
 from django.utils.formats import date_format
 from django.utils.html import (
     conditional_escape,
 )
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
-from iommi._db_compat import choices_from_model_field
 from iommi._web_compat import (
-    HttpResponse,
-    HttpResponseRedirect,
     Template,
     format_html,
-    mark_safe,
     render_template,
     safe_redirect_url,
-    smart_str,
 )
 from iommi.action import (
     Action,
@@ -109,6 +108,7 @@ from iommi.fragment import (
 from iommi.from_model import (
     AutoConfig,
     NoRegisteredSearchFieldException,
+    choices_from_model_field,
     create_members_from_model,
     get_search_fields,
     member_from_model,
@@ -155,8 +155,8 @@ from iommi.traversable import (
     Traversable,
 )
 
-from ._db_compat import base_defaults_factory
 from .declarative.util import strip_prefix
+from .from_model import base_defaults_factory
 
 LAST = LAST
 

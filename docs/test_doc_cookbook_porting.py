@@ -1,10 +1,8 @@
+from django.http import HttpResponse
 from django.template import RequestContext
 
 from iommi import Page
-from iommi._web_compat import (
-    HttpResponse,
-    Template,
-)
+from iommi._web_compat import Template
 from iommi.docs import show_output
 from tests.helpers import req
 

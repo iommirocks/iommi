@@ -4,9 +4,8 @@ from datetime import (
     timedelta,
 )
 
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
-
-from iommi._web_compat import ValidationError
 
 
 def parse_relative_datetime(s, start_date=None):

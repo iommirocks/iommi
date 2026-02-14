@@ -19,14 +19,15 @@ import django
 import pytest
 import time_machine
 from bs4 import BeautifulSoup
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models.fields.files import FieldFile
 from django.http.response import HttpResponseBase
-from django.test import override_settings
+from django.test import RequestFactory, override_settings
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.encoding import smart_str
 from django.utils.translation import gettext_lazy
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from docs.models import (
     Album,
@@ -36,15 +37,10 @@ from docs.models import (
 from iommi import (
     Action,
     EditTable,
-    html,
     Style,
+    html,
 )
-from iommi._db_compat import field_defaults_factory
-from iommi._web_compat import (
-    Template,
-    ValidationError,
-    smart_str,
-)
+from iommi._web_compat import Template
 from iommi.attrs import render_attrs
 from iommi.base import (
     items,
@@ -78,6 +74,7 @@ from iommi.form import (
     duration_parse,
     duration_render_value,
     email_parse,
+    field_defaults_factory,
     find_unique_prefixes,
     float_parse,
     int_parse,
@@ -103,7 +100,6 @@ from iommi.shortcut import (
 from iommi.struct import (
     Struct,
 )
-from tests.compat import RequestFactory
 from tests.helpers import (
     do_post,
     get_attrs,
@@ -113,6 +109,7 @@ from tests.helpers import (
     verify_part_html,
 )
 from tests.models import (
+    AttachmentModel,
     Bar,
     BooleanFromModelTestModel,
     ChoicesModel,
@@ -127,7 +124,6 @@ from tests.models import (
     TFoo,
     UniqueConstraintAlternativeTest,
     UniqueConstraintTest,
-    AttachmentModel,
 )
 
 

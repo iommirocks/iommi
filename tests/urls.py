@@ -1,9 +1,9 @@
+from django.http import HttpResponse
 from django.urls import (
     include,
     path,
 )
 
-from iommi._web_compat import HttpResponse
 from iommi.admin import Admin
 
 

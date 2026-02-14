@@ -1,14 +1,15 @@
-from iommi._web_compat import mark_safe
+from django.utils.safestring import mark_safe
+
 from iommi.base import items
+from iommi.debug import iommi_debug_on
 from iommi.declarative.namespace import (
-    flatten,
     Namespace,
+    flatten,
 )
 from iommi.evaluate import (
     evaluate_as_needed_recursively,
     evaluate_strict,
 )
-from iommi.debug import iommi_debug_on
 
 
 def evaluate_attrs(obj, **kwargs):

@@ -7,13 +7,15 @@ from typing import (
     Union,
 )
 
+from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse, QueryDict
+from django.http.response import HttpResponseBase
+from django.template import engines
+from django.template.utils import InvalidTemplateEngineError
 
 from iommi._web_compat import (
-    HttpResponse,
-    HttpResponseBase,
     Template,
-    get_template_from_string,
     render_template,
 )
 from iommi.base import (
@@ -45,11 +47,7 @@ from iommi.shortcut import with_defaults
 from iommi.style import get_style_object
 from iommi.traversable import Traversable
 
-from ._web_compat import (
-    QueryDict,
-    settings,
-    template_types,
-)
+from ._web_compat import template_types
 from .refinable import (
     EvaluatedRefinable,
     Refinable,
@@ -250,7 +248,11 @@ def render_root(*, part, context, **render):
         + content_block_name
         + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     )
-    return get_template_from_string(template_string).render(context=context, request=request)
+    try:
+        engine = engines['django']
+    except InvalidTemplateEngineError:
+        engine = engines.all()[0]
+    return engine.from_string(template_string).render(context=context, request=request)
 
 
 PartType = Union[Part, str, Template]

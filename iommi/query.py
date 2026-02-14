@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import (
     MultipleObjectsReturned,
     ObjectDoesNotExist,
+    ValidationError,
 )
 from django.db.models import (
     F,
@@ -24,69 +25,48 @@ from django.utils.translation import (
     pgettext,
 )
 from pyparsing import (
-    alphanums,
-    alphas,
     Char,
     Forward,
     Group,
     Keyword,
-    one_of,
     ParseException,
     ParseResults,
     QuotedString,
-    quotedString,
     Word,
-    ZeroOrMore
+    ZeroOrMore,
+    alphanums,
+    alphas,
+    one_of,
+    quotedString,
 )
 
-from iommi._db_compat import choices_from_model_field
 from iommi._web_compat import (
-    render_template,
     Template,
-    ValidationError
+    render_template,
 )
 from iommi.action import (
     Action,
 )
-from iommi.base import (
-    items,
-    keys,
-    MISSING,
-    model_and_rows,
-    NOT_BOUND_MESSAGE,
-    values
-)
+from iommi.base import MISSING, NOT_BOUND_MESSAGE, items, keys, model_and_rows, values
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
-from iommi.declarative.namespace import (
-    EMPTY,
-    getattr_path,
-    Namespace,
-    setdefaults_path
-)
+from iommi.declarative.namespace import EMPTY, Namespace, getattr_path, setdefaults_path
 from iommi.endpoint import path_join
 from iommi.evaluate import (
     evaluate,
     evaluate_strict,
 )
-from iommi.form import (
-    bool_parse,
-    boolean_tristate__parse,
-    date_parse,
-    float_parse,
-    Form,
-    int_parse,
-    time_parse
-)
+from iommi.form import Form, bool_parse, boolean_tristate__parse, date_parse, float_parse, int_parse, time_parse
 from iommi.fragment import (
     Fragment,
 )
 from iommi.from_model import (
     AutoConfig,
+    NoRegisteredSearchFieldException,
+    choices_from_model_field,
     create_members_from_model,
     get_search_fields,
     member_from_model,
-    NoRegisteredSearchFieldException
 )
 from iommi.member import (
     bind_member,
@@ -97,14 +77,7 @@ from iommi.member import (
 from iommi.part import (
     Part,
 )
-from iommi.refinable import (
-    EvaluatedRefinable,
-    Prio,
-    Refinable,
-    refinable,
-    RefinableMembers,
-    SpecialEvaluatedRefinable
-)
+from iommi.refinable import EvaluatedRefinable, Prio, Refinable, RefinableMembers, SpecialEvaluatedRefinable, refinable
 from iommi.shortcut import (
     Shortcut,
     with_defaults,

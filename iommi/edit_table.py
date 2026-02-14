@@ -1,5 +1,5 @@
-from collections import defaultdict
 import json
+from collections import defaultdict
 from typing import (
     Any,
     Dict,
@@ -15,17 +15,15 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
 from iommi._web_compat import (
+    Template,
     render_template,
     safe_redirect_url,
-    Template,
 )
 from iommi.action import (
     Action,
     Actions,
     group_actions,
 )
-from iommi.error import Errors
-from iommi.sort_after import LAST
 from iommi.base import (
     MISSING,
     NOT_BOUND_MESSAGE,
@@ -36,8 +34,8 @@ from iommi.base import (
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
-    getattr_path,
     Namespace,
+    getattr_path,
     setdefaults_path,
 )
 from iommi.declarative.util import strip_prefix
@@ -45,16 +43,17 @@ from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     path_join,
 )
+from iommi.error import Errors
 from iommi.evaluate import evaluate_strict
 from iommi.form import (
-    default_input_id,
-    find_unique_prefixes,
     FULL_FORM_FROM_REQUEST,
     Field,
     Form,
+    default_input_id,
+    find_unique_prefixes,
     int_parse,
 )
-from iommi.from_model import member_from_model
+from iommi.from_model import base_defaults_factory, member_from_model
 from iommi.member import (
     bind_member,
     bind_members,
@@ -62,25 +61,24 @@ from iommi.member import (
     reify_conf,
 )
 from iommi.refinable import (
+    EvaluatedRefinable,
     Refinable,
     RefinableMembers,
     refinable,
-    EvaluatedRefinable,
 )
 from iommi.shortcut import (
     Shortcut,
     with_defaults,
 )
+from iommi.sort_after import LAST
 from iommi.struct import Struct
 from iommi.table import (
-    _column_factory_by_field_type,
     Cell,
     Cells,
     Column,
     Table,
+    _column_factory_by_field_type,
 )
-
-from iommi._db_compat import base_defaults_factory
 
 _edit_column_factory_by_field_type = {}
 

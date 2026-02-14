@@ -1,4 +1,4 @@
-from iommi._web_compat import HttpResponse
+from django.http import HttpResponse
 
 
 def foo_view(request):

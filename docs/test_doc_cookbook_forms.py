@@ -1,17 +1,15 @@
 from pathlib import Path
 
-from django.core.files import File
-from django.db.models import FileField, ImageField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.files import File
+from django.db.models import FileField, ImageField
+from django.http import HttpResponseRedirect
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
 from docs.models import *
 from iommi import *
-from iommi._web_compat import (
-    HttpResponseRedirect,
-    mark_safe,
-)
 from iommi.docs import (
     show_output,
     show_output_collapsed,
@@ -19,12 +17,12 @@ from iommi.docs import (
 from iommi.struct import Struct
 from tests.helpers import req
 
-
 request = req('get')
 
-from tests.helpers import req, user_req, staff_req
-from django.template import Template
 import pytest
+from django.template import Template
+
+from tests.helpers import req, staff_req, user_req
 
 pytestmark = pytest.mark.django_db
 

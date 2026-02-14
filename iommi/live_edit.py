@@ -8,6 +8,7 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.utils import autoreload
+from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
 from iommi import (
@@ -19,7 +20,6 @@ from iommi import (
     render_if_needed,
     render_part,
 )
-from iommi._web_compat import mark_safe
 from iommi.base import get_wrapped_view, items
 from iommi.struct import Struct
 from iommi.style import (

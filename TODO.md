@@ -12,7 +12,7 @@ Formsets
 
 json endpoints for table contents, paginator. General purpose end point for accessing any part of a part?
 
-No imports to django outside _*_compat, statically checked in CI. flask.current_app.config == django.conf.settings
+No imports to django outside _*_compat, statically checked in CI.
 
 fiddle.iommi.rocks would be damn cool - just redirect to a repl.it session?
 

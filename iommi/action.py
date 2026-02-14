@@ -7,12 +7,10 @@ from typing import (
     Tuple,
 )
 
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
 
-from iommi._web_compat import (
-    format_html,
-    slugify,
-)
+from iommi._web_compat import format_html
 from iommi.attrs import (
     Attrs,
     render_attrs,

@@ -6,9 +6,9 @@ from datetime import (
 
 import pytest
 import time_machine
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 
-from iommi._web_compat import ValidationError
 from iommi.datetime_parsing import (
     parse_relative_date,
     parse_relative_datetime,

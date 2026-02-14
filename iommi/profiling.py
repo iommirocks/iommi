@@ -9,18 +9,15 @@ from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from django.conf import settings
+from django.http import HttpResponse
 from django.http.response import (
     HttpResponseBase,
     StreamingHttpResponse,
 )
 from django.utils.html import escape
 
-from iommi._web_compat import (
-    HttpResponse,
-    settings,
-)
 from iommi.debug import src_debug_url_builder
-
 
 MEDIA_PREFIXES = ['/static/']
 

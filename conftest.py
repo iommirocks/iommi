@@ -21,13 +21,6 @@ def pytest_runtest_setup(item):
         except ImportError:
             pytest.skip("test requires django")
 
-    flask_marker = item.get_closest_marker("flask")
-    if flask_marker is not None:
-        try:
-            import flask  # noqa: F401
-        except ImportError:
-            pytest.skip('test requires flask')
-
 
 @pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(session, config, items):

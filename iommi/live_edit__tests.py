@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+from django.http import HttpResponse
 from django.test import override_settings
 from django.views.decorators.csrf import csrf_exempt
 
@@ -9,7 +10,6 @@ from iommi import (
     Page,
     register_style,
 )
-from iommi._web_compat import HttpResponse
 from iommi.live_edit import (
     Middleware,
     dangerous_execute_code,
@@ -101,7 +101,7 @@ def test_edit(capsys):
     path = Path(__file__).parent.parent / 'tests' / 'edit_views_temp.py'
 
     orig_code = """
-from iommi._web_compat import HttpResponse
+from django.http import HttpResponse
 
 def foo_view(request):
     return HttpResponse('foo view data')

@@ -9,16 +9,15 @@ from urllib.parse import (
     urlparse,
 )
 
+from django.conf import settings
+
 from iommi import Fragment
-from iommi._web_compat import (
-    Template,
-    settings,
-)
+from iommi._web_compat import Template
 from iommi.attrs import Attrs
 from iommi.base import (
+    NOT_BOUND_MESSAGE,
     capitalize,
     items,
-    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
@@ -26,8 +25,8 @@ from iommi.declarative.namespace import EMPTY
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate_strict
 from iommi.fragment import (
-    TransientFragment,
     Tag,
+    TransientFragment,
 )
 from iommi.member import (
     bind_members,
