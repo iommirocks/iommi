@@ -28,6 +28,52 @@ from iommi.thread_locals import (
 )
 
 
+EXPLAINABLE_PREFIXES = ('SELECT', 'INSERT', 'UPDATE', 'DELETE')
+
+
+def is_explainable(sql):
+    return sql.strip().upper().startswith(EXPLAINABLE_PREFIXES)
+
+
+def format_explain_output(headers, rows):
+    parts = ['<table style="border-collapse: collapse; margin: 8px 0; font-size: 13px">']
+    parts.append('<tr>')
+    for h in headers:
+        parts.append(f'<th style="border: 1px solid #666; padding: 4px 8px; text-align: left">{h}</th>')
+    parts.append('</tr>')
+    for row in rows:
+        parts.append('<tr>')
+        for cell in row:
+            parts.append(f'<td style="border: 1px solid #666; padding: 4px 8px">{cell}</td>')
+        parts.append('</tr>')
+    parts.append('</table>')
+    return ''.join(parts)
+
+
+def run_explain(entry):
+    sql = entry['sql']
+    if not is_explainable(sql):
+        return None
+
+    using = entry.get('using', DEFAULT_DB_ALIAS)
+    params = entry.get('params')
+
+    conn = connections[using]
+    is_sqlite = conn.vendor == 'sqlite'
+    explain_sql = f'EXPLAIN QUERY PLAN {sql}' if is_sqlite else f'EXPLAIN {sql}'
+
+    with no_sql_debug():
+        cursor = conn.cursor()
+        try:
+            cursor.execute(explain_sql, params)
+            rows = cursor.fetchall()
+            headers = [desc[0] for desc in cursor.description] if cursor.description else []
+        except Exception as e:
+            return f'<div style="color: red; margin: 8px 0">EXPLAIN failed: {e}</div>'
+
+    return format_explain_output(headers, rows)
+
+
 def no_coloring(text, color=None, on_color=None, attrs=None):
     return text
 
@@ -119,6 +165,20 @@ class Middleware:
                 iommi_sql_debug_log = getattr(request, 'iommi_sql_debug_log', None)
                 if iommi_sql_debug_log is not None:
                     total_duration = float(sum(x['duration'] for x in iommi_sql_debug_log))
+
+                    explain_index = None
+                    explain_output = None
+                    explain_raw = request.GET.get('_iommi_sql_explain')
+                    if explain_raw is not None:
+                        try:
+                            explain_index = int(explain_raw)
+                            if 0 <= explain_index < len(iommi_sql_debug_log):
+                                explain_output = run_explain(iommi_sql_debug_log[explain_index])
+                            else:
+                                explain_index = None
+                        except (ValueError, TypeError):
+                            pass
+
                     result = [
                         # language=HTML
                         '''
@@ -184,9 +244,16 @@ class Middleware:
 
                         result.append(f'<a name="query_{i}">')
                         result.append(format_sql(sql, duration=x['duration']))
+                        if is_explainable(x['sql']):
+                            result.append(f' <a href="?_iommi_sql_trace={sql_trace}&_iommi_sql_explain={i}#query_{i}">[EXPLAIN]</a>')
                         if sql_trace == SQL_DEBUG_LEVEL_ALL_WITH_STACKS:
                             result.append('\n\n')
                             result.append(linkify(x['stack']))
+                        if i == explain_index and explain_output:
+                            result.append('\n')
+                            result.append('</pre>')
+                            result.append(explain_output)
+                            result.append('<pre>')
                         result.append('\n\n')
                     result.append('</pre>')
                     return HttpResponse(''.join(result))

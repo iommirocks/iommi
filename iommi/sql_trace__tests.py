@@ -19,8 +19,10 @@ from iommi.sql_trace import (
     format_clickable_filename,
     format_sql,
     get_sql_debug,
+    is_explainable,
     linkify,
     no_sql_debug,
+    run_explain,
     safe_unicode_literal,
     set_sql_debug,
     sql_debug_format_stack_trace,
@@ -269,3 +271,78 @@ def test_format_clickable_line_nones():
     assert (
         format_clickable_filename(None, None, None) == '  File "<unknown>", line <unknown>, in <unknown> => <unknown>'
     )
+
+
+@pytest.mark.django_db
+def test_explain_links_appear_in_trace(settings, client):
+    settings.ROOT_URLCONF = __name__
+    settings.DEBUG = True
+    settings.SQL_DEBUG = SQL_DEBUG_LEVEL_WORST
+
+    response = client.get('/?_iommi_sql_trace=worst')
+    content = response.content.decode()
+    assert '[EXPLAIN]' in content
+    assert '_iommi_sql_explain=' in content
+
+
+@pytest.mark.django_db
+def test_explain_output_renders(settings, client):
+    settings.ROOT_URLCONF = __name__
+    settings.DEBUG = True
+    settings.SQL_DEBUG = SQL_DEBUG_LEVEL_WORST
+
+    response = client.get('/?_iommi_sql_trace=worst&_iommi_sql_explain=0')
+    content = response.content.decode()
+    # EXPLAIN QUERY PLAN output should be rendered as a table
+    assert '<table' in content
+    assert '<th' in content
+
+
+@pytest.mark.django_db
+def test_explain_invalid_index(settings, client):
+    settings.ROOT_URLCONF = __name__
+    settings.DEBUG = True
+    settings.SQL_DEBUG = SQL_DEBUG_LEVEL_WORST
+
+    # Out of bounds index - should render normally without EXPLAIN output
+    response = client.get('/?_iommi_sql_trace=worst&_iommi_sql_explain=999')
+    content = response.content.decode()
+    assert '4 queries' in content
+    assert '[EXPLAIN]' in content
+
+    # Non-integer index - should render normally
+    response = client.get('/?_iommi_sql_trace=worst&_iommi_sql_explain=abc')
+    content = response.content.decode()
+    assert '4 queries' in content
+
+
+def test_is_explainable():
+    assert is_explainable('SELECT * FROM foo') is True
+    assert is_explainable('INSERT INTO foo VALUES (1)') is True
+    assert is_explainable('UPDATE foo SET x=1') is True
+    assert is_explainable('DELETE FROM foo') is True
+    assert is_explainable('BEGIN') is False
+    assert is_explainable('COMMIT') is False
+    assert is_explainable('ROLLBACK') is False
+    assert is_explainable('SAVEPOINT x') is False
+
+
+@pytest.mark.django_db
+def test_run_explain_with_select():
+    # Create the table first by accessing the model
+    User.objects.exists()
+
+    entry = {
+        'sql': 'SELECT "auth_user"."id" FROM "auth_user" WHERE "auth_user"."username" = %s',
+        'params': ('foo',),
+        'using': 'default',
+    }
+    result = run_explain(entry)
+    assert result is not None
+    assert '<table' in result
+
+
+def test_run_explain_non_explainable():
+    entry = {'sql': 'BEGIN', 'params': None, 'using': 'default'}
+    result = run_explain(entry)
+    assert result is None
