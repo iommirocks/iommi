@@ -35,16 +35,56 @@ def is_explainable(sql):
     return sql.strip().upper().startswith(EXPLAINABLE_PREFIXES)
 
 
+_pg_cost_re = re.compile(r'\(cost=[\d.]+\.\.([\d.]+)')
+
+
+def _cell_cost(cell):
+    """Extract the total cost from a PostgreSQL EXPLAIN cell, or numeric value from a plain numeric cell."""
+    cell_str = str(cell)
+    m = _pg_cost_re.search(cell_str)
+    if m:
+        return float(m.group(1))
+    if isinstance(cell, (int, float)):
+        return abs(float(cell))
+    if isinstance(cell, str):
+        try:
+            return abs(float(cell))
+        except (ValueError, TypeError):
+            pass
+    return None
+
+
 def format_explain_output(headers, rows):
+    # Find max cost per column to scale bars
+    num_cols = len(headers) if headers else (len(rows[0]) if rows else 0)
+    col_max = [0.0] * num_cols
+
+    for row in rows:
+        for j, cell in enumerate(row):
+            cost = _cell_cost(cell)
+            if cost is not None:
+                col_max[j] = max(col_max[j], cost)
+
+    base_style = 'border: 1px solid #666; padding: 4px 8px; white-space: pre'
+
     parts = ['<table style="border-collapse: collapse; margin: 8px 0; font-size: 13px">']
     parts.append('<tr>')
     for h in headers:
-        parts.append(f'<th style="border: 1px solid #666; padding: 4px 8px; text-align: left">{h}</th>')
+        parts.append(f'<th style="{base_style}; text-align: left">{h}</th>')
     parts.append('</tr>')
     for row in rows:
         parts.append('<tr>')
-        for cell in row:
-            parts.append(f'<td style="border: 1px solid #666; padding: 4px 8px">{cell}</td>')
+        for j, cell in enumerate(row):
+            cost = _cell_cost(cell) if j < num_cols else None
+            if cost is not None and col_max[j] > 0:
+                pct = cost / col_max[j] * 100
+                parts.append(
+                    f'<td style="{base_style};'
+                    f' background: linear-gradient(to right, rgba(79,79,255,0.3) {pct:.1f}%, transparent {pct:.1f}%)"'
+                    f'>{cell}</td>'
+                )
+            else:
+                parts.append(f'<td style="{base_style}">{cell}</td>')
         parts.append('</tr>')
     parts.append('</table>')
     return ''.join(parts)
