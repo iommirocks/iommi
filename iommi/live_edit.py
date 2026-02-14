@@ -222,9 +222,11 @@ def live_edit_view(request, view, args=None, kwargs=None):
         filename = view.__globals__['__file__']
     except AttributeError:
         # view is an iommi class
-        from iommi.debug import filename_and_line_num_from_part
+        filename = inspect.getsourcefile(type(view))
+        if filename is None:
+            from iommi.debug import filename_and_line_num_from_part
 
-        filename, _ = filename_and_line_num_from_part(view)
+            filename, _ = filename_and_line_num_from_part(view)
 
     def build_params(entire_file, **_):
         ast_of_entire_file = parso.parse(entire_file)
@@ -298,6 +300,9 @@ def live_edit_view_impl(
         return live_edit_post_handler(**params)
 
     code = get_code(**params)
+
+    # Don't render the main menu in the live edit view
+    request.iommi_main_menu = None
 
     return LiveEditPage(
         title='iommi live edit',
@@ -435,6 +440,32 @@ def dangerous_execute_code(code, request, view, args, kwargs, create_response=cr
     return final_result
 
 
+class DummyRow:
+    def __init__(self, idx):
+        self.idx = idx
+
+    def __getattr__(self, attr):
+        _, _, shortcut = attr.partition('column_of_type_')
+        s = f'{shortcut} #{self.idx}'
+        if shortcut == 'link' or attr == 'link':
+
+            class Link:
+                def get_absolute_url(self):
+                    return '#'
+
+                def __str__(self):
+                    return 'title'
+
+            return Link()
+        if shortcut == 'number':
+            return f'{self.idx}'
+        return s
+
+    @staticmethod
+    def get_absolute_url():
+        return '#'
+
+
 def style_showcase(request, style=None, **_):
     from django.contrib.auth.models import User
 
@@ -442,31 +473,6 @@ def style_showcase(request, style=None, **_):
         from iommi.style import DEFAULT_STYLE
 
         style = getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
-
-    class DummyRow:
-        def __init__(self, idx):
-            self.idx = idx
-
-        def __getattr__(self, attr):
-            _, _, shortcut = attr.partition('column_of_type_')
-            s = f'{shortcut} #{self.idx}'
-            if shortcut == 'link' or attr == 'link':
-
-                class Link:
-                    def get_absolute_url(self):
-                        return '#'
-
-                    def __str__(self):
-                        return 'title'
-
-                return Link()
-            if shortcut == 'number':
-                return f'{self.idx}'
-            return s
-
-        @staticmethod
-        def get_absolute_url():
-            return '#'
 
     from iommi import (
         Action,
