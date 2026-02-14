@@ -703,6 +703,8 @@ def test_from_model_with_model_class():
         'fieldfrommodelforeignkeytest_set',
         'fieldfrommodelonetoonetest',
         'createoreditobjecttest_set',
+        'limitchoicestofktest_set',
+        'fktofooproxytest_set',
     }
     assert list(t.filters.keys()) == ['foo']
 
@@ -718,6 +720,8 @@ def test_from_model_with_queryset():
         'fieldfrommodelforeignkeytest_set',
         'fieldfrommodelonetoonetest',
         'createoreditobjecttest_set',
+        'limitchoicestofktest_set',
+        'fktofooproxytest_set',
     }
     assert list(t.filters.keys()) == ['foo']
 

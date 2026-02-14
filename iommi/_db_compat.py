@@ -176,9 +176,17 @@ def setup_db_compat_iommi():
     register_edit_column_factory(SortOrderField, shortcut_name='reorder_handle')
 
 
+def get_limit_choices_to(model_field):
+    if hasattr(model_field, 'get_limit_choices_to'):
+        return model_field.get_limit_choices_to()
+    if hasattr(model_field, 'limit_choices_to'):
+        return model_field.limit_choices_to
+    return model_field.remote_field.limit_choices_to
+
+
 def choices_from_model_field(model, model_field):
     queryset = model.objects.all()
-    limit_choices_to = model_field.remote_field.limit_choices_to
+    limit_choices_to = get_limit_choices_to(model_field)
     if limit_choices_to:
         if callable(limit_choices_to):
             limit_choices_to = limit_choices_to()
