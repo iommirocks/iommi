@@ -19,7 +19,7 @@ def staff_req(method, url='/', **data):
 @pytest.mark.django_db
 def test_album_table_renders(album):
     from examples.models import Album
-    from examples.supernaut import AlbumTable
+    from examples.views import AlbumTable
 
     table = AlbumTable(auto__model=Album).bind(request=req('get'))
     response = table.render_to_response()
@@ -75,7 +75,7 @@ def test_table_filter(discography):
 
 @pytest.mark.django_db
 def test_index_page_renders(album):
-    from examples.supernaut import IndexPage
+    from examples.views import IndexPage
 
     page = IndexPage().bind(request=req('get'))
     response = page.render_to_response()

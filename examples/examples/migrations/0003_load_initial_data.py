@@ -13,7 +13,7 @@ def load_initial_data(apps, schema_editor):
     if not User.objects.filter(username='admin').exists():
         User.objects.create(username='admin', is_staff=True, first_name='Tony', last_name='Iommi')
 
-    if not Album.objects.exists():
+    if not Track.objects.exists():
         json_path = Path(__file__).parent.parent.parent / 'scraped_data.json'
         with open(json_path) as f:
             artists = json.loads(f.read())

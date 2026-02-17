@@ -14,7 +14,7 @@ class Artist(models.Model):
         verbose_name_plural = _('artists')
 
     def get_absolute_url(self):
-        return f'/supernaut/artists/{self.pk}/'
+        return f'/artists/{self.pk}/'
 
 
 class Album(models.Model):
@@ -31,7 +31,7 @@ class Album(models.Model):
         verbose_name_plural = _('albums')
 
     def get_absolute_url(self):
-        return f'/supernaut/albums/{self.pk}/'
+        return f'/albums/{self.pk}/'
 
 
 class Track(models.Model):
