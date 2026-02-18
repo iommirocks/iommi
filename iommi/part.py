@@ -131,20 +131,31 @@ class Part(Traversable):
             else:
                 return HttpResponse(json.dumps(r, cls=DjangoJSONEncoder), content_type='application/json')
 
-        if request.method == 'GET':
-            dispatch_prefix = DISPATCH_PATH_SEPARATOR
+        # allowing endpoint requests via POST too
+        ajax_dispatch_commands = {
+            **{key: value for key, value in items(request.GET) if key.startswith(DISPATCH_PATH_SEPARATOR)},
+            **{key: value for key, value in items(request.POST) if key.startswith(DISPATCH_PATH_SEPARATOR)},
+        }
+
+        if ajax_dispatch_commands:
             dispatcher = perform_ajax_dispatch
             dispatch_error = 'Invalid endpoint path'
+            dispatch_commands = ajax_dispatch_commands
+
+        elif request.method == 'GET':
+            dispatcher = None
+            dispatch_error = None
+            dispatch_commands = {}
 
         elif request.method == 'POST':
             dispatch_prefix = '-'
             dispatcher = perform_post_dispatch
             dispatch_error = 'Invalid post path'
+            dispatch_commands = {key: value for key, value in items(req_data) if key.startswith(dispatch_prefix)}
 
         else:  # pragma: no cover
             assert False  # This has already been checked in request_data()
 
-        dispatch_commands = {key: value for key, value in items(req_data) if key.startswith(dispatch_prefix)}
         assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'
         if dispatch_commands:
             dispatch_target, value = next(iter(dispatch_commands.items()))

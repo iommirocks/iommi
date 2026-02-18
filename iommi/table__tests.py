@@ -2439,6 +2439,24 @@ def test_ajax_custom_endpoint():
     assert actual == dict(baz='bar')
 
 
+def test_ajax_custom_endpoint_via_post():
+    class TestTable(Table):
+        class Meta:
+            @staticmethod
+            def endpoints__foo__func(value, **_):
+                return dict(baz=value)
+
+        spam = Column()
+
+    result = request_with_middleware(
+        Page(
+            parts__table=TestTable(rows=[]),
+        ),
+        req('post', **{'/foo': 'bar'}),
+    )
+    assert json.loads(result.content) == {'baz': 'bar'}
+
+
 def test_table_extra_namespace():
     class TestTable(Table):
         class Meta:
