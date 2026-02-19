@@ -1,5 +1,7 @@
 from typing import Callable
 
+from django.http import HttpResponseNotAllowed
+
 from iommi.base import keys
 from iommi.refinable import (
     EvaluatedRefinable,
@@ -51,16 +53,19 @@ class Endpoint(Traversable):
 
     func: Callable = Refinable()
     include: bool = EvaluatedRefinable()
+    http_methods: set = EvaluatedRefinable()
 
     @with_defaults(
         func=None,
         include=True,
+        http_methods={"GET"},
     )
     def __init__(self, **kwargs):
         super(Endpoint, self).__init__(**kwargs)
 
     def on_bind(self) -> None:
         assert callable(self.func)
+        assert self.http_methods and isinstance(self.http_methods, set) and self.http_methods.issubset({'GET', 'POST'})
 
     @property
     def endpoint_path(self):
@@ -107,6 +112,11 @@ def perform_ajax_dispatch(*, root, path, value):
     func = getattr(target, 'func', None)
     if not isinstance(target, Endpoint) or func is None:
         raise InvalidEndpointPathException(f'Target "{target!r}" is not a valid endpoint handler')
+
+    request = root.get_request()
+
+    if request is not None and request.method not in target.http_methods:  # in tests called without request
+        return HttpResponseNotAllowed(list(target.http_methods))
 
     return target.invoke_callback(func, root=root, value=value)
 
