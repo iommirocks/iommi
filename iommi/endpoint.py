@@ -49,6 +49,8 @@ class Endpoint(Traversable):
         # @end
 
     This page will respond to `?/echo=foo` by returning a json response `"foo"`.
+
+    If you want to allow POST requests, you can set `endpoints__echo__http_methods = {'POST'}` or `{'GET', 'POST'}` to allow both.
     """
 
     func: Callable = Refinable()
