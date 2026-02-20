@@ -1,6 +1,30 @@
 Changelog
 ---------
 
+7.23.0 (2026-02-20)
+~~~~~~~~~~~~~~~~~~~
+
+* SECURITY: Fixed open redirect vulnerability
+
+* SECURITY: Further security checks for live edit. It will now only allow localhost connections.
+
+* Endpoints can now be called via POST
+
+* `Query` is now a `Tag`, meaning its outer HTML element is configurable (tag, attrs, id, etc.) instead of being hard-coded to a `div` with a fixed id
+
+* New semantic registration functions for FK/M2M relations: `register_related_factory`, `register_related_field_factory`, `register_related_filter_factory`, `register_related_column_factory`, `register_related_multiple_factory`, `register_related_multiple_field_factory`, `register_related_multiple_filter_factory`, `register_related_multiple_column_factory`
+
+* SQL Trace: click to trigger `explain` for individual queries directly from the SQL trace output
+
+* Fixed `limit_choices_to` for ForeignKey relations - both forward and reverse now work (fixes #441)
+
+* Fixed attribute escape correctness (`&` was not being escaped to `&amp;`). This should not affect anything, but the old code was strictly speaking not following the HTML spec.
+
+* Fixed `MainMenu` bug when `template` is present in style and also passed as an argument
+
+* Live edit works for classes
+
+
 7.22.1 (2026-01-19)
 ~~~~~~~~~~~~~~~~~~~
 
