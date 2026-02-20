@@ -57,8 +57,10 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.form import Form, bool_parse, boolean_tristate__parse, date_parse, float_parse, int_parse, time_parse
+from iommi.attrs import Attrs
 from iommi.fragment import (
     Fragment,
+    Tag,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -641,7 +643,7 @@ class Advanced(Fragment):
 
 
 @declarative(Filter, '_filters_dict', add_init_kwargs=False)
-class Query(Part):
+class Query(Part, Tag):
     # language=rst
     """
     Declare a query language. Example:
@@ -658,6 +660,8 @@ class Query(Part):
     """
 
     auto: QueryAutoConfig = Refinable()
+    attrs: Attrs = SpecialEvaluatedRefinable()
+    tag: str = EvaluatedRefinable()
     form: Namespace = Refinable()
     advanced: Namespace = Refinable()
     model: Type[Model] = SpecialEvaluatedRefinable()
@@ -678,6 +682,8 @@ class Query(Part):
         auto = EMPTY
 
     @with_defaults(
+        tag='div',
+        attrs__id=lambda query, **_: 'iommi_' + query.iommi_dunder_path,
         endpoints__errors__func=default_endpoint__errors,
         form__attrs={'data-iommi-errors': lambda query, **_: query.endpoints.errors.iommi_path},
         form_container__call_target=Fragment,

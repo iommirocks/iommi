@@ -1,5 +1,5 @@
 {% load i18n %}
-<div id="iommi_{{ query.iommi_dunder_path }}">
+{{ query.iommi_open_tag }}
     {{ query.form.iommi_open_tag }}
 
         {% if query.advanced %}
@@ -20,4 +20,4 @@
 
         {{ query.form.render_actions }}
     {{ query.form.iommi_close_tag }}
-</div>
+{{ query.iommi_close_tag }}
