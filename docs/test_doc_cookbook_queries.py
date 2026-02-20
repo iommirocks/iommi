@@ -156,3 +156,28 @@ def test_how_do_I_filter_on_the_thing_itself(big_discography):
     # @test
     show_output(albums, '')
     # @end
+
+
+def test_how_do_i_style_the_query_container(big_discography):
+    # language=rst
+    """
+    How do I style the query container?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Query.attrs
+    .. uses Query.tag
+
+    The `Query` component renders a container element that wraps the filter form.
+    You can configure its tag and attributes directly:
+    """
+
+    albums = Table(
+        auto__model=Album,
+        auto__include=['name', 'artist', 'year'],
+        columns__name__filter__include=True,
+        query__attrs__style__border='2px solid red',
+    )
+
+    # @test
+    show_output(albums, '')
+    # @end
