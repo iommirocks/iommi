@@ -275,7 +275,7 @@ class Menu(MenuBase):
                     parts = PurePosixPath(unquote(parsed_url)).parts
                     matching_parts = 0
                     for item in range(min(len(parts), len(path_parts))):
-                        if parts[item] is path_parts[item]:
+                        if parts[item] == path_parts[item]:
                             matching_parts += 1
 
                     if matching_parts > current_parts_matching:
