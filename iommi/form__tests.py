@@ -2944,8 +2944,10 @@ def test_help_text_for_boolean_tristate():
     assert '$$$$' in str(form)
 
 
-def test_boolean_tristate_none_parse():
+def test_boolean_tristate_parsing():
     assert boolean_tristate__parse(string_value='') is None
+    assert boolean_tristate__parse(string_value='1') is True
+    assert boolean_tristate__parse(string_value='0') is False
 
 
 @pytest.mark.django_db
@@ -3590,7 +3592,7 @@ def test_create_or_edit_object_full_template_1():
         # language=HTML
         expected_html="""
             <!DOCTYPE html>
-            <html lang="en">
+            <html lang="en-us">
                 <head>
                     <title> Create foo </title>
                 </head>
@@ -4487,3 +4489,293 @@ def test_choice_searchable(medium_discography):
             </select>
         """,
     )
+
+
+def test_register_related_field_factory_with_factory():
+    from iommi.form import _related_field_factory_by_model, register_related_field_factory
+
+    class MyRelatedModel:
+        pass
+
+    factory = Shortcut(call_target__attribute='text')
+    register_related_field_factory(MyRelatedModel, factory=factory)
+    assert _related_field_factory_by_model[MyRelatedModel] is factory
+
+
+def test_register_related_field_factory_factory_and_kwargs_raises():
+    from iommi.form import register_related_field_factory
+
+    class MyRelatedModel:
+        pass
+
+    with pytest.raises(AssertionError):
+        register_related_field_factory(MyRelatedModel, factory=Shortcut(), display_name='foo')
+
+
+def test_register_related_multiple_field_factory_with_factory():
+    from iommi.form import _related_multiple_field_factory_by_model, register_related_multiple_field_factory
+
+    class MyRelatedMultipleModel:
+        pass
+
+    factory = Shortcut(call_target__attribute='multi_choice')
+    register_related_multiple_field_factory(MyRelatedMultipleModel, factory=factory)
+    assert _related_multiple_field_factory_by_model[MyRelatedMultipleModel] is factory
+
+
+def test_register_related_field_factory_with_shortcut_name():
+    from iommi.form import _related_field_factory_by_model, register_related_field_factory
+
+    class MyRelatedModel2:
+        pass
+
+    register_related_field_factory(MyRelatedModel2, shortcut_name='text')
+    assert MyRelatedModel2 in _related_field_factory_by_model
+
+
+def test_register_related_multiple_field_factory_with_shortcut_name():
+    from iommi.form import _related_multiple_field_factory_by_model, register_related_multiple_field_factory
+
+    class MyRelatedMultipleModel2:
+        pass
+
+    register_related_multiple_field_factory(MyRelatedMultipleModel2, shortcut_name='multi_choice')
+    assert MyRelatedMultipleModel2 in _related_multiple_field_factory_by_model
+
+
+@pytest.mark.django_db
+def test_save_nested_forms_action_post_handler_none():
+    artist = Artist.objects.create(name='Coverage Artist')
+
+    # The inner form has an action with post_handler=None (which should be skipped, hitting line 263)
+    # and an action that succeeds, so save_nested_forms completes without failure
+    form = Form(
+        fields__inner=Form(
+            fields__name=Field(initial=artist.name, attr=None),
+            actions__noop=Action(post_handler=None),
+            actions__succeed=Action.primary(post_handler=lambda **_: True),
+        ),
+        actions__save=Action.primary(post_handler=save_nested_forms),
+        extra__redirect_to=lambda **_: '.',
+    )
+    response = form.bind(request=req('POST', **{'-save': '', 'inner/name': artist.name})).render_to_response()
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_save_nested_forms_post_save_callback():
+    post_save_called = []
+
+    form = Form(
+        fields__inner=Form(
+            fields__name=Field(attr=None),
+            actions__succeed=Action.primary(post_handler=lambda **_: True),
+        ),
+        actions__save=Action.primary(post_handler=save_nested_forms),
+        extra__redirect_to=lambda **_: '.',
+        extra__post_save=lambda **_: post_save_called.append(True),
+    )
+    form.bind(request=req('POST', **{'-save': '', 'inner/name': 'test'})).render_to_response()
+    assert post_save_called == [True]
+
+
+def test_choice_is_valid_empty_string_not_parse_as_none():
+    from iommi.form import choice_is_valid
+
+    class MockField:
+        parse_empty_string_as_none = False
+        choices = ['a', 'b']
+
+    valid, msg = choice_is_valid(field=MockField(), parsed_data='')
+    assert valid is True
+    assert msg == ''
+
+
+@override_settings(USE_TZ=True)
+def test_datetime_parse_tz_aware():
+    form = Form(
+        fields__foo=Field.datetime(),
+    ).bind(request=req('post', **{'-': '', 'foo': '2020-01-02 03:04:05'}))
+    assert form.fields.foo.value is not None
+    assert form.fields.foo.value.tzinfo is not None
+
+
+def test_duration_parse_empty_string():
+    assert duration_parse(string_value='  ') is None
+
+
+def test_field_help_is_none_when_no_help_text():
+    form = Form(fields__name=Field(help__include=False)).bind(request=req('get'))
+    assert form.fields['name'].help == ''
+
+
+@pytest.mark.django_db
+def test_read_initial_reraises_for_saved_instance():
+    artist = Artist.objects.create(name='Reraise Test Artist')
+
+    def always_raise(**_):
+        raise AttributeError('no such attribute')
+
+    with pytest.raises(AttributeError, match='no such attribute'):
+        Form(
+            instance=artist,
+            fields__name=Field(read_from_instance=always_raise),
+        ).bind(request=req('get'))
+
+
+@pytest.mark.django_db
+def test_delete_object_integrity_error_no_restricted_objects():
+    from django.db import IntegrityError as DjIntegrityError
+    from iommi.form import delete_object__post_handler
+
+    artist = Artist.objects.create(name='Doomed Artist')
+    form = Form.delete(auto__instance=artist).bind(request=req('post', **{'-submit': ''}))
+
+    original_delete = form.instance.delete
+
+    def failing_delete():
+        raise DjIntegrityError('foreign key constraint failed')
+
+    form.instance.delete = failing_delete
+    result = delete_object__post_handler(form=form)
+    assert result is None
+    errors = form.get_errors()
+    assert 'global' in errors
+
+
+@pytest.mark.django_db
+def test_delete_object_integrity_error_with_restricted_objects():
+    from django.db.models.deletion import ProtectedError
+    from iommi.form import delete_object__post_handler
+
+    artist = Artist.objects.create(name='Protected Artist')
+    album = Album.objects.create(name='Protected Album', artist=artist, year=2000)
+
+    form = Form.delete(auto__instance=artist).bind(request=req('post', **{'-submit': ''}))
+
+    def failing_delete_with_protected():
+        error = ProtectedError('cannot delete', protected_objects=[album])
+        raise error
+
+    form.instance.delete = failing_delete_with_protected
+    result = delete_object__post_handler(form=form)
+    assert result is None
+    errors = form.get_errors()
+    assert 'global' in errors
+
+
+def test_form_with_panel_layout():
+    from iommi.panel import Panel
+
+    form = Form(
+        fields__name=Field(),
+        layout=Panel(dict(
+            name=Panel.field(),
+        )),
+    ).bind(request=req('get'))
+    assert 'name' in form.fields
+    assert form.layout is not None
+    # Render to also cover render_fields with layout (line 2229)
+    html = form.__html__()
+    assert html is not None
+
+
+def test_form_with_namespace_layout_children():
+    from iommi.panel import Panel
+
+    form = Form(
+        fields__name=Field(),
+        layout__children__name=Panel.field(),
+    ).bind(request=req('get'))
+    assert form.layout is not None
+
+
+def test_form_layout_unused_fields_raises():
+    from django.core.exceptions import ImproperlyConfigured
+    from iommi.panel import Panel
+
+    with pytest.raises(ImproperlyConfigured):
+        Form(
+            fields__name=Field(),
+            fields__extra=Field(),
+            layout=Panel(dict(
+                name=Panel.field(),
+            )),
+        ).bind(request=req('get'))
+
+
+def test_form_layout_render_unused_fields():
+    from iommi.panel import Panel
+
+    form = Form(
+        fields__name=Field(),
+        fields__extra=Field(),
+        layout=Panel(dict(
+            name=Panel.field(),
+        )),
+        layout_render_unused_fields=True,
+    ).bind(request=req('get'))
+    assert form.layout is not None
+
+
+@pytest.mark.django_db
+def test_create_or_edit_auto_detect_is_create():
+    response = Form.create_or_edit(
+        auto__model=Artist,
+    ).bind(request=req('post', **{'-submit': '', 'name': 'Auto Detected Band'})).render_to_response()
+    assert response.status_code == 302
+    assert Artist.objects.filter(name='Auto Detected Band').exists()
+
+
+def test_get_field_raises_field_name_error():
+    from iommi.form import FieldNameError
+
+    form = Form(fields__name=Field()).bind(request=req('get'))
+    with pytest.raises(FieldNameError):
+        form.get_field('nonexistent')
+
+
+def test_get_nested_form_raises():
+    from iommi.form import NestedFormNameError
+
+    form = Form(fields__name=Field()).bind(request=req('get'))
+    with pytest.raises(NestedFormNameError):
+        form.get_nested_form('nonexistent')
+
+
+def test_get_field_from_nested_form_with_dunder():
+    parent = Form(
+        fields__name=Field(),
+        fields__nested=Form(fields__x=Field()),
+    ).bind(request=req('get'))
+    result = parent.get_field('nested__x')
+    assert result is parent.nested_forms['nested'].fields['x']
+
+
+def test_get_field_from_nested_form_without_dunder():
+    parent = Form(
+        fields__name=Field(),
+        fields__nested=Form(fields__unique_field=Field()),
+    ).bind(request=req('get'))
+    result = parent.get_field('unique_field')
+    assert result is parent.nested_forms['nested'].fields['unique_field']
+
+
+def test_get_field_searches_multiple_nested_forms():
+    # Tests lines 2395-2396: FieldNameError is caught and search continues
+    parent = Form(
+        fields__name=Field(),
+        fields__nested1=Form(fields__alpha=Field()),
+        fields__nested2=Form(fields__beta=Field()),
+    ).bind(request=req('get'))
+    # 'beta' is not in nested1, so FieldNameError is caught, then found in nested2
+    result = parent.get_field('beta')
+    assert result is parent.nested_forms['nested2'].fields['beta']
+
+
+def test_form_field_none_in_namespace():
+    # Tests line 1945: as_fragment_if_needed returns None when v is None
+    form = Form(
+        fields__name=None,
+    ).bind(request=req('get'))
+    assert 'name' not in form.fields
