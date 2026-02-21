@@ -12,30 +12,37 @@ The iommi admin only allows access to users with the `is_staff` flag. Other than
 - The `LoginRequiredMiddleware <https://docs.djangoproject.com/en/5.1/ref/middleware/#django.contrib.auth.middleware.LoginRequiredMiddleware>`_ can be used to default URLs to denied, where you have to mark allowed URLs with the `@login_not_required` decorator.
 
 """
+import pytest
+from django.urls import path
+
 from docs.models import Track
-from iommi.path import register_path_decoding
+from iommi import Page
+from iommi.path import decode_path_components, register_path_decoding
+from tests.helpers import req, user_req
+
+pytestmark = pytest.mark.django_db
 
 
-def test_path_decoder_for_access_control():
+def test_path_decoder_for_access_control(track):
     # language=rst
     """
     Minimal example for path decoding access control
     ================================================
     """
 
-    def has_access_decoder(model):
-        def has_access_decoder_inner(string, user, **_):
-            model = model.objects.get(pk=string.strip())
-            if not model.has_access(user):
-                raise AccessDeniedException()
-            return model
-        return has_access_decoder_inner
-
-    # @test
     class AccessDeniedException(Exception):
         pass
 
-    unregister_encoding = (
+    def has_access_decoder(model):
+        def has_access_decoder_inner(string, request, **_):
+            obj = model.objects.get(pk=string.strip())
+            if not obj.has_access(request.user):
+                raise AccessDeniedException()
+            return obj
+        return has_access_decoder_inner
+
+    # @test
+    with (
     # @end
 
     register_path_decoding(
@@ -43,6 +50,16 @@ def test_path_decoder_for_access_control():
     )
 
     # @test
-    )
-    unregister_encoding.__enter__()
-    # @end
+    ):
+        # @end
+        urlpatterns = [
+            path('<track_pk>/', Page().as_view()),
+        ]
+
+        # @test
+        result = decode_path_components(request=user_req('get'), track_pk=str(track.pk))
+        assert result['track_pk'] == track
+
+        with pytest.raises(AccessDeniedException):
+            decode_path_components(request=req('get'), track_pk=str(track.pk))
+        # @end

@@ -190,6 +190,8 @@ def test_evaluate_strict_for_def():
     def bar(foo, **_):
         return 1
 
+    assert evaluate_strict(bar, foo=7) == 1
+
     with pytest.raises(AssertionError) as e:
         evaluate_strict(bar, bar=2, baz=4)
 

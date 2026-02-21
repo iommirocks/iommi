@@ -67,6 +67,9 @@ class Track(Model):
     def __str__(self):
         return self.name
 
+    def has_access(self, user):
+        return user.is_authenticated
+
     class Meta:
         ordering = ('index',)
         app_label = 'docs'
