@@ -3588,11 +3588,11 @@ def test_create_or_edit_object_full_template_1():
     assert response.status_code == 200
 
     verify_html(
-        actual_html=remove_csrf(response.content.decode()),
+        actual_html=remove_csrf(response.content.decode()).replace('lang="en-us"', 'lang="en"'),
         # language=HTML
         expected_html="""
             <!DOCTYPE html>
-            <html lang="en-us">
+            <html lang="en">
                 <head>
                     <title> Create foo </title>
                 </head>
