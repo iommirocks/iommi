@@ -157,9 +157,11 @@ class Calendar(Part, Tag):
         from iommi.struct import Struct
 
         rows = [
-            Struct(name='Black Sabbath', artist='Black Sabbath', release=date(1970, 2, 13)),
-            Struct(name='Paranoid', artist='Black Sabbath', release=date(1970, 9, 18)),
-            Struct(name='Master Of Reality', artist='Black Sabbath', release=date(1971, 7, 21)),
+            Struct(name='Sabotage', artist='Black Sabbath', release=date(1975, 7, 28)),
+            Struct(name='Born Again', artist='Black Sabbath', release=date(1983, 8, 7)),
+            Struct(name='Captured Live!', artist='Black Sabbath', release=date(1983, 8, 7)),
+            Struct(name='Holy Diver', artist='Dio', release=date(1983, 5, 25)),
+            Struct(name='Bark At The Moon', artist='Ozzy Osbourne', release=date(1983, 11, 15)),
         ]
 
         calendar = Calendar(
@@ -171,8 +173,8 @@ class Calendar(Part, Tag):
                 f' title="{event.name}">'
             ),
             event__tag=None,
-            year=1970,
-            month=9,
+            year=1983,
+            month=8,
         )
 
         # @test
