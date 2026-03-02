@@ -142,27 +142,18 @@ class Calendar(Part, Tag):
     .. code-block:: python
 
         # @test
-        from datetime import date
-        from django.utils.safestring import mark_safe
-
-        from iommi.struct import Struct
-
-        rows = [
-            Struct(name='Sabotage', artist='Black Sabbath', release=date(1975, 7, 28)),
-            Struct(name='Born Again', artist='Black Sabbath', release=date(1983, 8, 7)),
-            Struct(name='Captured Live!', artist='Black Sabbath', release=date(1983, 8, 7)),
-            Struct(name='Holy Diver', artist='Dio', release=date(1983, 5, 25)),
-            Struct(name='Bark At The Moon', artist='Ozzy Osbourne', release=date(1983, 11, 15)),
-        ]
+        from conftest import really_big_discography
+        really_big_discography.__pytest_wrapped__.obj()
         # @end
 
         calendar = Calendar(
             auto__model=Album,
-            event__attr='release',
-            event__display_name=lambda event, **_: mark_safe(
-                f'<img src="/_static/album_art/{event.artist}/{event.name}.jpg"'
-                f' width="30" height="30"'
-                f' title="{event.name}">'
+            event__attr='published_date',
+            event__display_name=lambda event, **_: format_html(
+                '<img src="/_static/album_art/{}/{}.jpg" width="30" height="30" title="{}">',
+                event.artist,
+                 event.name,
+                 event.name
             ),
             event__tag=None,
             year=1983,

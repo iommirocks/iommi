@@ -1,6 +1,7 @@
 from django.db.models import (
     CASCADE,
     CharField,
+    DateField,
     ForeignKey,
     IntegerField,
     ManyToManyField,
@@ -46,6 +47,7 @@ class Album(Model):
     artist = ForeignKey(Artist, on_delete=CASCADE, related_name='albums')
     year = IntegerField(default=1980)
     genres = ManyToManyField(Genre, related_name='albums')
+    published_date = DateField(null=True, blank=True)
 
     def __str__(self):
         return self.name

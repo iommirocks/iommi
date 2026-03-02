@@ -482,7 +482,7 @@ def test_how_do_i_change_the_order_of_the_fields():
 
     # @test
     form = form.bind(request=req('get'))
-    assert list(form.fields.keys()) == ['artist', 'year', 'genres', 'name']
+    assert list(form.fields.keys()) == ['artist', 'year', 'published_date', 'genres', 'name']
     show_output(form)
     # @end
 

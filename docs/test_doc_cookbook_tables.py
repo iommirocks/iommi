@@ -845,7 +845,7 @@ def test_how_do_i_set_the_default_sort_order_on_a_table(really_big_discography):
     with pytest.raises(AssertionError) as e:
         table.bind(request=req('get'))
 
-    assert str(e.value) == 'default_sort_order must be the name of a column. `artist__name` specified. Valid values:\n    name\n    artist\n    year\n    genres'
+    assert str(e.value) == 'default_sort_order must be the name of a column. `artist__name` specified. Valid values:\n    name\n    artist\n    year\n    published_date\n    genres'
     # @end
 
 
