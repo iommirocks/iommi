@@ -142,6 +142,7 @@ class Calendar(Part, Tag):
     .. code-block:: python
 
         # @test
+        from django.utils.html import format_html
         from conftest import really_big_discography
         really_big_discography.__pytest_wrapped__.obj()
         # @end
