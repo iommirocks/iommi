@@ -225,6 +225,9 @@ bootstrap5_base = Style(
         ),
     ),
     Errors__attrs__class={'with-errors': True},
+    Calendar=dict(
+        attrs__class={'table': True, 'table-bordered': True},
+    ),
 )
 bootstrap5 = Style(
     bootstrap5_base,

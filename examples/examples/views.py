@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 import iommi.style
 from iommi import (
+    Calendar,
     Header,
     Page,
     html,
@@ -113,6 +114,27 @@ class AlbumPage(Page):
         auto__model=Track,
         rows=lambda params, **_: Track.objects.filter(album=params.album),
         columns__album__include=False,
+    )
+
+
+def _latest_album_year(**_):
+    latest = Album.objects.latest('published_date')
+    return latest.published_date.year
+
+
+def _latest_album_month(**_):
+    latest = Album.objects.latest('published_date')
+    return latest.published_date.month
+
+
+class AlbumCalendar(Page):
+    title = Header('Album releases')
+    calendar = Calendar(
+        rows=Album.objects.all(),
+        event__attr='published_date',
+        event__display_name=lambda event, **_: event.name,
+        year=_latest_album_year,
+        month=_latest_album_month,
     )
 
 

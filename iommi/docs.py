@@ -128,6 +128,7 @@ def get_default_classes():
         iommi.middleware,
         iommi.Panel,
         iommi.PanelCol,
+        iommi.experimental.calendar.Calendar,
         # Private-ish APIs
         iommi.endpoint.Endpoint,
         iommi.part.Part,

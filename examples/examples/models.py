@@ -21,6 +21,7 @@ class Album(models.Model):
     name = models.CharField(max_length=255, db_index=True, verbose_name=_('name'))
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums', verbose_name=_('artist'))
     year = models.IntegerField(verbose_name=_('year'))
+    published_date = models.DateField(null=True, blank=True, verbose_name=_('published date'))
 
     def __str__(self):
         return self.name

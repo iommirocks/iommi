@@ -44,6 +44,7 @@ main_menu = MainMenu(
             ),
         ),
         tracks=M(view=views.TrackTable(auto__model=Track)),
+        calendar=M(view=views.AlbumCalendar()),
         storybook=M(view=storybook.storybook),
         playground=M(view=playground.PlaygroundPage),
         iommi_admin=Admin.m(),
