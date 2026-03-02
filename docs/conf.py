@@ -42,7 +42,7 @@ if os.environ.get("READTHEDOCS", "") == "True":
     html_context["READTHEDOCS"] = True
 
 
-check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs -q -n 4", shell=True)
+check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs -q", shell=True)
 
 
 def build_finished(app, exception):
@@ -180,7 +180,7 @@ html_favicon = 'favicon.ico'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static', '../iommi/static/']
+html_static_path = ['_static', '../iommi/static/', '../examples/examples/static/']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

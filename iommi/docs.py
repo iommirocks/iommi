@@ -387,11 +387,14 @@ request = req('get')
                 w(0, '')
             type_hint = type_hints.get(refinable)
             if type_hint:
-                name = str(type_hint)
-                if name.startswith('typing.'):
-                    name = name.replace('typing.', '')
-                else:
+                if hasattr(type_hint, '__args__'):
+                    # Generic or union type — use str() and strip module paths
+                    import re
+                    name = re.sub(r'[a-z_][a-z0-9_.]*\.', '', str(type_hint))
+                elif hasattr(type_hint, '__name__'):
                     name = type_hint.__name__
+                else:
+                    name = str(type_hint)
 
                 if type_hint in classes:
                     w(0, f'Type: :doc:`{name}`')

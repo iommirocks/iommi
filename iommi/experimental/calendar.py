@@ -154,32 +154,25 @@ class Calendar(Part, Tag):
         from datetime import date
         from django.utils.safestring import mark_safe
 
-        albums = [
-            dict(name='Black Sabbath', artist='Black Sabbath', release=date(1970, 2, 13)),
-            dict(name='Paranoid', artist='Black Sabbath', release=date(1970, 2, 18)),
-            dict(name='Master of Reality', artist='Black Sabbath', release=date(1970, 2, 21)),
+        from iommi.struct import Struct
+
+        rows = [
+            Struct(name='Black Sabbath', artist='Black Sabbath', release=date(1970, 2, 13)),
+            Struct(name='Paranoid', artist='Black Sabbath', release=date(1970, 9, 18)),
+            Struct(name='Master Of Reality', artist='Black Sabbath', release=date(1971, 7, 21)),
         ]
-
-        class AlbumRow:
-            def __init__(self, **kwargs):
-                self.__dict__.update(kwargs)
-
-            def __str__(self):
-                return self.name
-
-        rows = [AlbumRow(**a) for a in albums]
 
         calendar = Calendar(
             rows=rows,
             event__attr='release',
             event__display_name=lambda event, **_: mark_safe(
-                f'<img src="/static/album_art/{event.artist}/{event.name}.jpg"'
+                f'<img src="/_static/album_art/{event.artist}/{event.name}.jpg"'
                 f' width="30" height="30"'
                 f' title="{event.name}">'
             ),
             event__tag=None,
             year=1970,
-            month=2,
+            month=9,
         )
 
         # @test
