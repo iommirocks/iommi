@@ -239,6 +239,10 @@ class M:
         assert path is MISSING or path is None or isinstance(path, str), f'`path` must be `MISSING`, `None` or a `str`. Got {type(self.path)} ({self.path}).'
         self.paths = paths or []
         assert isinstance(self.paths, list), f'`paths` must be of type list. Got type {type(self.paths)} ({self.paths}).'
+
+        if path is not MISSING:
+            assert url, "If you configure `path` you must also configure `url`. `path` is the Django path mapping and `url` is how to make a link the user can click on. You probably want the url to be an absolute url (starting with a /)."
+
         self.view = view
         self.view_kwargs = view_kwargs
         self.include = include
