@@ -222,7 +222,6 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     if default_classes is None:
         from iommi import (
             Action,
-            Calendar,
             Column,
             EditColumn,
             EditTable,
@@ -237,6 +236,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Table,
         )
         from iommi.action import Actions
+        from iommi.experimental.calendar import Calendar
         from iommi.admin import Admin
         from iommi.error import Errors
         from iommi.form import FieldGroup
