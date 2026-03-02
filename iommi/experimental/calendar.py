@@ -141,16 +141,7 @@ class Calendar(Part, Tag):
 
     .. code-block:: python
 
-        calendar = Calendar(
-            auto__model=Album,
-            event__attr='event_date',
-        )
-
-    Here's a more complete example that renders album releases as 30x30 px
-    thumbnails:
-
-    .. code-block:: python
-
+        # @test
         from datetime import date
         from django.utils.safestring import mark_safe
 
@@ -163,9 +154,10 @@ class Calendar(Part, Tag):
             Struct(name='Holy Diver', artist='Dio', release=date(1983, 5, 25)),
             Struct(name='Bark At The Moon', artist='Ozzy Osbourne', release=date(1983, 11, 15)),
         ]
+        # @end
 
         calendar = Calendar(
-            rows=rows,
+            auto__model=Album,
             event__attr='release',
             event__display_name=lambda event, **_: mark_safe(
                 f'<img src="/_static/album_art/{event.artist}/{event.name}.jpg"'
