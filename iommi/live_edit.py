@@ -467,7 +467,7 @@ class DummyRow:
 
 
 def style_showcase(request, style=None, **_):
-    from django.contrib.auth.models import User
+    from django.contrib.auth import get_user_model
 
     if style is None:
         from iommi.style import DEFAULT_STYLE
@@ -522,7 +522,7 @@ def style_showcase(request, style=None, **_):
             ),
             table=Table(
                 title='Table',
-                model=User,
+                model=get_user_model(),
                 columns={
                     t.__name__: dict(call_target=t, display_name=t.__name__)
                     for t in [
