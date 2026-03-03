@@ -72,6 +72,18 @@ class CalendarCellConfig(RefinableObject):
         super(CalendarCellConfig, self).__init__(**kwargs)
 
 
+class CalendarNavigationConfig(RefinableObject):
+    tag: str = Refinable()
+    attrs: Attrs = Refinable()
+
+    @dispatch(
+        attrs__class=EMPTY,
+        attrs__style=EMPTY,
+    )
+    def __init__(self, **kwargs):
+        super(CalendarNavigationConfig, self).__init__(**kwargs)
+
+
 class CalendarAutoConfig(RefinableObject):
     model: type[Model] = SpecialEvaluatedRefinable()
     rows = Refinable()
@@ -136,6 +148,10 @@ class Calendar(Part, Tag):
     # language=rst
     """
     A calendar component that renders a month-grid calendar.
+
+    .. note::
+
+        This component is experimental. The API may change in future versions.
 
     Example:
 
@@ -518,18 +534,27 @@ class Calendar(Part, Tag):
         ns = getattr(self, namespace) if isinstance(namespace, str) else namespace
         return dict(ns.get('attrs', {}).get('class', {}))
 
+    def _config_parent(self, name, cls=CalendarCellConfig):
+        parent = object.__new__(cls)
+        parent._name = name
+        parent.iommi_dunder_path = path_join(self.iommi_dunder_path, name, separator='__')
+        return parent
+
     def _build_attrs(self, namespace, extra_class=None):
         ns = getattr(self, namespace) if isinstance(namespace, str) else namespace
+        namespace_name = namespace if isinstance(namespace, str) else None
         attrs_ns = ns.get('attrs', {})
+        cls = CalendarNavigationConfig if namespace_name == 'navigation' else CalendarCellConfig
+        parent = self._config_parent(namespace_name, cls=cls) if namespace_name else self
         if extra_class:
             class_dict = dict(attrs_ns.get('class', {}))
             class_dict.update(extra_class)
             return Attrs(
-                _parent=self,
+                _parent=parent,
                 **{k: v for k, v in attrs_ns.items() if k != 'class'},
                 **{'class': class_dict},
             )
-        return Attrs(_parent=self, **{k: v for k, v in attrs_ns.items()})
+        return Attrs(_parent=parent, **{k: v for k, v in attrs_ns.items()})
 
     @property
     def render_body(self):
@@ -542,7 +567,7 @@ class Calendar(Part, Tag):
         last_url = self.get_last_with_data_url()
 
         nav_row_attrs_ns = self.navigation.get('row_attrs', {})
-        nav_row_attrs = Attrs(_parent=self, **{k: v for k, v in nav_row_attrs_ns.items()})
+        nav_row_attrs = Attrs(_parent=self._config_parent('navigation', cls=CalendarNavigationConfig), **{k: v for k, v in nav_row_attrs_ns.items()})
         nav_tag = self.navigation.get('tag', 'td')
         nav_attrs = self._build_attrs('navigation')
         lines.append(f'<tr{render_attrs(nav_row_attrs)}><{nav_tag}{render_attrs(nav_attrs)}><div>')
