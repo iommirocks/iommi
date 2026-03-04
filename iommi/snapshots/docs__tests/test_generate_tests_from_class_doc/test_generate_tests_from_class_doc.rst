@@ -30,7 +30,6 @@ request = req('get')
 Foo
 ===
 
-Base class: `RefinableObject`
 
 """
 def test_base():
@@ -41,26 +40,30 @@ def test_base():
     # language=rst
     """
 
-Refinable members
------------------
+Initialize self.  See help(type(self)) for accurate signature.
+
+Constructor arguments
++++++++++++++++++++++
+
+* `args`
+* `kwargs`
+
+Methods
+-------
+
+`bar`
+^^^^^
 
 
-`a`
-^^^
 
-Type: `int`
+Bla bla
 
+    """
 
-`b`
-^^^
+    assert False
 
-Type: `Dict`
-
-
-`c`
-^^^
-
-Type: :doc:`Fragment`
+    # language=rst
+    """
 
 
     """
