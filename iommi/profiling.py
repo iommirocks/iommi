@@ -234,6 +234,63 @@ class Middleware:
 
                         gprof2dot.wait()
 
+            elif prof_command == 'flame':
+                from django.templatetags.static import static
+
+                from iommi._vendored_flameprof import (
+                    calc_callers,
+                    prepare,
+                )
+
+                threshold = float(request.GET.get('_iommi_prof_threshold', 0.00001)) / 100
+                funcs, calls = calc_callers(ps.stats)
+                blocks, bblocks, maxw = prepare(funcs, calls, threshold=threshold)
+
+                lines = []
+                for block in blocks:
+                    count = int(block['ww'] * 1_000_000)
+                    if count <= 0:
+                        continue
+                    stack = ';'.join(f'{func[2]} ({func[0]}:{func[1]})' for func in block['trace'])
+                    lines.append(f'{stack} {count}')
+
+                folded_data = '\n'.join(lines)
+
+                formatter_url = 'pycharm://open?file={filename}&line={lineno}'
+
+                # language=html
+                response.content = f'''\
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>iommi profiler</title>
+        <style>
+            html {{ color-scheme: light dark; }}
+            body {{ background: light-dark(white, #1e1e1e); color: light-dark(black, #ccc); }}
+            .flame-graph span {{
+                background-color: #305830;
+                border-radius: 3px;
+                margin: 1px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div id="elm"></div>
+        <script src="{static('js/flame_graph.js')}"></script>
+        <script>
+            Elm.Main.init({{
+                node: document.getElementById('elm'),
+                flags: {{
+                    data: {folded_data!r},
+                    urlFormat: {formatter_url!r}
+                }}
+            }});
+        </script>
+    </body>
+</html>'''
+                response['Content-Type'] = 'text/html'
+
             elif prof_command == 'snake':
                 # noinspection PyPackageRequirements
                 try:
