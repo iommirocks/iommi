@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+7.24.0 (2026-03-06)
+~~~~~~~~~~~~~~~~~~~
+
+* Async environment support. This just means that the iommi middlewares are compatible with an async worker model, so they won't force your entire app into sync mode.
+
+* New profiler flame graph visualizer
+
+* New experimental `Calendar` component
+
+* Added error message when using an `MainMenu` `M` item with `path` but without `url`
+
+* Live edit of styles now work for projects with a custom user model
+
+* Fixed a `Menu` active marker issue on Python 3.14
+
+
 7.23.0 (2026-02-20)
 ~~~~~~~~~~~~~~~~~~~
 
