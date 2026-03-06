@@ -9,6 +9,12 @@ from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from asgiref.sync import (
+    async_to_sync,
+    iscoroutinefunction,
+    markcoroutinefunction,
+    sync_to_async,
+)
 from django.conf import settings
 from django.http import HttpResponse
 from django.http.response import (
@@ -156,10 +162,15 @@ class HTMLStats(pstats.Stats):
 
 
 class Middleware:
+    async_capable = True
+    sync_capable = True
+
     def __init__(self, get_response):
         self.get_response = get_response
+        if iscoroutinefunction(self.get_response):
+            markcoroutinefunction(self)
 
-    def __call__(self, request):
+    def _setup_request(self, request):
         # Disable profiling early on /media requests since touching request.user will add a
         # "Vary: Cookie" header to the response.
         request.profiler_disabled = False
@@ -168,15 +179,7 @@ class Middleware:
                 request.profiler_disabled = True
                 break
 
-        if not should_profile(request):
-            return self.get_response(request)
-
-        prof = cProfile.Profile()
-        prof.enable()
-        request._iommi_prof = [prof]
-
-        response = self.get_response(request)
-
+    def _process_response(self, request, response):
         if not isinstance(response, HttpResponseBase):
             assert False, f'Got a response of type {type(response)}, expected an HttpResponse object. Middlewares are in the wrong order.'
 
@@ -319,6 +322,7 @@ class Middleware:
 
                     <div>
                         <a href="?_iommi_prof=graph">graph</a>
+                        <a href="?_iommi_prof=flame">flamegraph</a>
                         <a href="?_iommi_prof=snake">snakeviz</a>
                     </div>
 
@@ -330,3 +334,33 @@ class Middleware:
                 response['Content-Type'] = 'text/html'
 
         return response
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        request._iommi_view_is_async = iscoroutinefunction(view_func)
+
+    def __call__(self, request):
+        if iscoroutinefunction(self):
+            return self.__acall__(request)
+        self._setup_request(request)
+        if not should_profile(request):
+            return self.get_response(request)
+        prof = cProfile.Profile()
+        prof.enable()
+        request._iommi_prof = [prof]
+        response = self.get_response(request)
+        return self._process_response(request, response)
+
+    def _sync_profile(self, request):
+        if not should_profile(request):
+            return async_to_sync(self.get_response)(request)
+        if getattr(request, '_iommi_view_is_async', False):
+            return HttpResponse('Profiling is not supported for async views. Use an async-aware profiler instead.')
+        prof = cProfile.Profile()
+        prof.enable()
+        request._iommi_prof = [prof]
+        response = async_to_sync(self.get_response)(request)
+        return self._process_response(request, response)
+
+    async def __acall__(self, request):
+        self._setup_request(request)
+        return await sync_to_async(self._sync_profile)(request)

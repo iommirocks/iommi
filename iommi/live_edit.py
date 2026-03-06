@@ -2,6 +2,10 @@ import inspect
 import json
 from pathlib import Path
 
+from asgiref.sync import (
+    iscoroutinefunction,
+    markcoroutinefunction,
+)
 from django.conf import settings
 from django.http import (
     HttpResponse,
@@ -37,11 +41,21 @@ class Middleware:
     Note: This middleware needs to go *first* in the middleware list.
     """
 
+    async_capable = True
+    sync_capable = True
+
     def __init__(self, get_response):
         self.get_response = get_response
+        if iscoroutinefunction(self.get_response):
+            markcoroutinefunction(self)
 
     def __call__(self, request):
+        if iscoroutinefunction(self):
+            return self.__acall__(request)
         return self.get_response(request)
+
+    async def __acall__(self, request):
+        return await self.get_response(request)
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
         if should_edit(request):

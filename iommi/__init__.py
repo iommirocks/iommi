@@ -3,6 +3,11 @@ __version__ = '7.23.0'
 from functools import wraps
 
 import django
+from asgiref.sync import (
+    iscoroutinefunction,
+    markcoroutinefunction,
+    sync_to_async,
+)
 from django.core.exceptions import ImproperlyConfigured
 
 from iommi.action import Action
@@ -100,30 +105,48 @@ def render_part(request, part: Part):
 
 # noinspection PyPep8Naming
 class middleware:
+    async_capable = True
+    sync_capable = True
+
     def __init__(self, get_response):
         from django.db import connections
 
         self.get_response = get_response
         self.atomic_db_aliases = {db.alias for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']}
+        if iscoroutinefunction(self.get_response):
+            markcoroutinefunction(self)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         request.iommi_not_atomic_for = getattr(view_func, '_non_atomic_requests', set())
 
-    def __call__(self, request):
+    def _setup_request(self, request):
         # For plain FBVs that want to extend iommi/base.html, we need to insert some assets and container
         request.iommi_fallback_assets = lambda: Page().bind(request=get_current_request()).iommi_collected_assets()
         request.iommi_fallback_container = lambda: Container(_name='Container').bind(request=get_current_request())
+
+    def _render_part(self, request, response):
+        from django.db import transaction
+
+        render = render_part
+        for alias in self.atomic_db_aliases:
+            if alias not in request.iommi_not_atomic_for:
+                render = transaction.atomic(using=alias)(render)
+        return render(request, response)
+
+    def __call__(self, request):
+        if iscoroutinefunction(self):
+            return self.__acall__(request)
+        self._setup_request(request)
         response = self.get_response(request)
-
         if isinstance(response, Part):
-            from django.db import transaction
+            return self._render_part(request, response)
+        return response
 
-            render = render_part
-            for alias in self.atomic_db_aliases:
-                if alias not in request.iommi_not_atomic_for:
-                    render = transaction.atomic(using=alias)(render)
-            return render(request, response)
-
+    async def __acall__(self, request):
+        self._setup_request(request)
+        response = await self.get_response(request)
+        if isinstance(response, Part):
+            return await sync_to_async(self._render_part)(request, response)
         return response
 
 

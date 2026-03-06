@@ -13,6 +13,10 @@ from datetime import (
 from logging import addLevelName
 from time import monotonic
 
+from asgiref.sync import (
+    iscoroutinefunction,
+    markcoroutinefunction,
+)
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils as django_db_utils
@@ -169,11 +173,16 @@ def linkify(s):
 
 
 class Middleware:
+    async_capable = True
+    sync_capable = True
+
     def __init__(self, get_response):
         self.get_response = get_response
         self.prof = None
+        if iscoroutinefunction(self.get_response):
+            markcoroutinefunction(self)
 
-    def __call__(self, request):
+    def _setup_request(self, request):
         set_current_request(request)
         request.iommi_start_time = now()
         sql_trace = request.GET.get('_iommi_sql_trace')
@@ -188,11 +197,11 @@ class Middleware:
 
         old_state = get_sql_debug()
         set_sql_debug(sql_trace)
+        request.iommi_sql_debug_log = []
+        return sql_trace, old_state
+
+    def _process_response(self, request, response, sql_trace, old_state):
         try:
-            request.iommi_sql_debug_log = []
-
-            response = self.get_response(request)
-
             sql_debug_last_call(response)
 
             if '_iommi_sql_trace' not in request.GET:
@@ -301,6 +310,26 @@ class Middleware:
             return response
         finally:
             set_sql_debug(old_state)
+
+    def __call__(self, request):
+        if iscoroutinefunction(self):
+            return self.__acall__(request)
+        sql_trace, old_state = self._setup_request(request)
+        try:
+            response = self.get_response(request)
+        except Exception:
+            set_sql_debug(old_state)
+            raise
+        return self._process_response(request, response, sql_trace, old_state)
+
+    async def __acall__(self, request):
+        sql_trace, old_state = self._setup_request(request)
+        try:
+            response = await self.get_response(request)
+        except Exception:
+            set_sql_debug(old_state)
+            raise
+        return self._process_response(request, response, sql_trace, old_state)
 
 
 def colorize(text, fg, bold=False):

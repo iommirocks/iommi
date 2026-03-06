@@ -2,6 +2,7 @@ from functools import cached_property
 from pathlib import PurePosixPath
 from urllib.parse import urlparse
 
+import django.utils.decorators
 from django.conf import settings
 from django.conf.urls import handler403
 from django.core.exceptions import PermissionDenied
@@ -473,8 +474,11 @@ class BoundM:
             item.check_access()
 
 
+@django.utils.decorators.sync_and_async_middleware
 def main_menu_middleware(get_response):
-    def main_menu_middleware_inner(request):
+    from asgiref.sync import iscoroutinefunction
+
+    def _setup_main_menu(request):
         if request.resolver_match is None:
             request.resolver_match = get_resolver().resolve(request.path_info)
 
@@ -501,6 +505,21 @@ def main_menu_middleware(get_response):
         except PermissionDenied as exception:
             return handler403(request, exception=exception)
 
-        return get_response(request)
+        return None
+
+    if iscoroutinefunction(get_response):
+        from asgiref.sync import sync_to_async
+
+        async def main_menu_middleware_inner(request):
+            error_response = await sync_to_async(_setup_main_menu)(request)
+            if error_response is not None:
+                return error_response
+            return await get_response(request)
+    else:
+        def main_menu_middleware_inner(request):
+            error_response = _setup_main_menu(request)
+            if error_response is not None:
+                return error_response
+            return get_response(request)
 
     return main_menu_middleware_inner
