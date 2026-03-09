@@ -1,8 +1,7 @@
 {% if item.include %}
-    <li{{ item.rendered_attrs }}>
+    {{  item.iommi_open_tag }}
         {% if item.has_rendered_items %}
-            <details {% if item.open %}open{% endif %}>
-
+            {{ item.iommi_open_details_tag }}
                 <summary>
                     <div class="menu_open_close"></div>
                     {{ item.link }}
@@ -10,9 +9,9 @@
                 <ul>
                     {% include "iommi/main_menu/menu_items.html" with items=item.items.values %}
                 </ul>
-            </details>
+            {{ item.iommi_close_details_tag }}
         {% else %}
             {{ item.link }}
         {% endif %}
-    </li>
+    {{ item.iommi_close_tag }}
 {% endif %}

@@ -34,6 +34,7 @@ from iommi.evaluate import (
     evaluate_as_needed,
     evaluate_strict,
 )
+from iommi.fragment import Tag
 from iommi.path import decode_path_components
 from iommi.refinable import RefinableNamespace
 from iommi.struct import Struct
@@ -319,8 +320,9 @@ class M:
         return '.'.join([self.parent._name_path(), self.name])
 
 
-class BoundM:
+class BoundM(Tag):
     def __init__(self, m, *, request, parent, root):
+        self.tag = 'li'
         self.m = m
         self.request = request
         self.parent = parent
@@ -383,6 +385,12 @@ class BoundM:
 
     def __repr__(self):
         return f'<BoundM {self.m.name}>'
+
+    def iommi_open_details_tag(self):
+        return format_html('<details{}>', " open" if self.open else '')
+
+    def iommi_close_details_tag(self):
+        return format_html('</details>', )
 
     def is_active(self):
         return self.root.active_item is self or any([item.is_active() for item in self.raw_items.values()])
