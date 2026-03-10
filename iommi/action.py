@@ -141,6 +141,8 @@ class Action(Fragment):
 
     def on_bind(self):
         super().on_bind()
+        if self.post_handler and not self.attrs.get('name'):
+            self.attrs.name = self.own_target_marker()
 
     def own_evaluate_parameters(self):
         return dict(action=self)

@@ -85,6 +85,31 @@ def test_render_button():
     )
 
 
+def test_button_with_post_handler_gets_name():
+    from iommi import Form
+
+    was_called = False
+
+    def my_handler(form, **_):
+        nonlocal was_called
+        was_called = True
+
+    form = Form(
+        actions__confirm=Action.button(
+            post_handler=my_handler,
+        ),
+    )
+    bound = form.bind(request=req('post', **{'-confirm': ''}))
+    assert 'name="-confirm"' in bound.actions.confirm.__html__()
+    bound.render_to_response()
+    assert was_called
+
+
+def test_button_without_post_handler_has_no_name():
+    submit = Action.button(_name='do_it').bind()
+    assert 'name=' not in submit.__html__()
+
+
 def test_render_submit():
     submit = Action.submit(display_name='Do it').bind()
     assert_renders(
