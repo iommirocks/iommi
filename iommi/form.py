@@ -786,7 +786,7 @@ class Field(Part, Tag):
         non_editable_input=dict(
             call_target=Fragment,
             children__text=lambda fragment, field, **_: None if fragment.tag == 'input' else field.rendered_value,
-            attrs__value=lambda fragment, field, **_: field.rendered_value if fragment.tag == 'input' else None,
+            attrs__value=lambda fragment, field, **_: field.rendered_value if fragment.tag == 'input' and not fragment.template else None,
         ),
         initial=MISSING,
         choice_to_optgroup=None,

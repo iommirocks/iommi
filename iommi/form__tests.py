@@ -726,6 +726,16 @@ def test_non_editable_other_tag():
     )
 
 
+def test_non_editable_choice():
+    form = Form(
+        fields__foo=Field.choice(editable=False, choices=['a', 'b', 'c'], initial='b'),
+    ).bind(request=req('get'))
+    html = form.fields.foo.input.__html__()
+    # The select element itself should not have a value attribute (issue #663)
+    assert '<select disabled' in html
+    assert '<select disabled id="id_foo" name="foo">' in html
+
+
 def test_editable():
     verify_part_html(
         part=Form(
