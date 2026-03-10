@@ -2329,6 +2329,22 @@ class Table(Part, Tag):
                 for x in values(self.columns)
                 if x.data_retrieval_method == DataRetrievalMethods.select and x.attr
             ]
+            # For columns accessing nested forward relations (e.g. attr='bar__foo'),
+            # add select_related for the relation path even if the column
+            # itself is not a FK column (e.g. it's a text field on the related model)
+            model = self.sorted_and_filtered_rows.model
+            for x in values(self.columns):
+                if x.attr and '__' in x.attr and x.data_retrieval_method != DataRetrievalMethods.select:
+                    first_segment = x.attr.split('__')[0]
+                    try:
+                        field = model._meta.get_field(first_segment)
+                    except FieldDoesNotExist:
+                        continue
+                    if field.many_to_one or field.one_to_one:
+                        relation_path = x.attr.rsplit('__', 1)[0]
+                        if relation_path not in select:
+                            select.append(relation_path)
+
             if prefetch:
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.prefetch_related(*prefetch)
                 self.rows = self.sorted_and_filtered_rows

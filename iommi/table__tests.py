@@ -3814,6 +3814,8 @@ def test_auto_model_dunder_path():
     ).bind(request=req('get'))
 
     assert 'bar_foo' in keys(table.columns)
+    # Nested FK access should trigger select_related (#586)
+    assert 'bar' in table.sorted_and_filtered_rows.query.select_related
     table.__html__()
 
 
