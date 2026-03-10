@@ -52,8 +52,7 @@ def uses_from_cookbooks():
     from iommi.declarative.util import strip_prefix
 
     parser = docutils.parsers.rst.Parser()
-    components = (docutils.parsers.rst.Parser,)
-    settings = docutils.frontend.OptionParser(components=components).get_default_values()
+    settings = docutils.frontend.get_default_settings(docutils.parsers.rst.Parser)
 
     backrefs = defaultdict(set)
 
