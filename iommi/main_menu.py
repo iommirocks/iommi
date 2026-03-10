@@ -386,6 +386,11 @@ class BoundM(Tag):
     def __repr__(self):
         return f'<BoundM {self.m.name}>'
 
+    def iommi_open_tag(self):
+        if self.is_active():
+            self.attrs['class']['is_active'] = True
+        return super().iommi_open_tag()
+
     def iommi_open_details_tag(self):
         return format_html('<details{}>', " open" if self.open else '')
 
