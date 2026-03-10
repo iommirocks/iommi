@@ -5,6 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
+from django.views.decorators.cache import never_cache
 from django.urls import (
     include,
     path,
@@ -98,7 +99,7 @@ class LogoutForm(Form):
             return HttpResponseRedirect(resolve_url(settings.LOGOUT_REDIRECT_URL or '/'))
 
 
-logout = LogoutForm().as_view()
+logout = never_cache(LogoutForm().as_view())
 
 
 class LoginForm(Form):
@@ -130,7 +131,7 @@ class LoginPage(Page):
     form = LoginForm()
 
 
-login = LoginPage().as_view()
+login = never_cache(LoginPage().as_view())
 
 
 def current_password__is_valid(form, parsed_data, **_):
@@ -190,4 +191,4 @@ class ChangePasswordPage(Page):
     form = ChangePasswordForm()
 
 
-change_password = ChangePasswordPage().as_view()
+change_password = never_cache(ChangePasswordPage().as_view())
