@@ -992,7 +992,12 @@ class Field(Part, Tag):
                 self.input.attrs.checked = ''
                 self.input.attrs.pop('value', None)
         else:
-            if 'value' not in self.input.attrs:
+            if self.input.tag == 'textarea':
+                if 'value' in self.input.attrs:
+                    self.input.attrs.pop('value')
+                if not self.input.children.get('text'):
+                    self.input.children['text'] = self.rendered_value
+            elif 'value' not in self.input.attrs:
                 self.input.attrs.value = self.rendered_value
 
     def on_bind(self) -> None:

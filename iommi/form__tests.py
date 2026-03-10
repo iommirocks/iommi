@@ -797,6 +797,15 @@ def test_textarea_field():
     assert 'value="test">' not in rendered_form
 
 
+def test_input_tag_changed_to_textarea():
+    form = Form(fields__foo=Field(initial='test', input__tag='textarea')).bind(request=req('get'))
+    rendered_form = str(form)
+    foo = BeautifulSoup(rendered_form, 'html.parser').find(id='id_foo')
+    assert foo.name == 'textarea', rendered_form
+    assert foo.text == 'test'
+    assert 'value="test"' not in rendered_form
+
+
 def test_integer_field():
     assert (
         Form(
