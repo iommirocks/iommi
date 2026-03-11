@@ -4,8 +4,8 @@ from django.template import Template
 from django.utils.translation import gettext_lazy as _
 
 import iommi.style
+from iommi.experimental.calendar import Calendar
 from iommi import (
-    Calendar,
     Header,
     Page,
     html,
