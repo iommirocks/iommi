@@ -92,17 +92,16 @@ coverage:
 	uv run coverage xml
 
 .PHONY: docs
-docs: venv clean-docs
+docs: clean-docs
 	rm -f docs/test_doc__*
-	make -C docs clean SPHINXBUILD=../.venv/bin/sphinx-build
-	make -C docs html SPHINXBUILD=../.venv/bin/sphinx-build
+	uv run sphinx-build -b html docs docs/_build/html
 
 docs-viewer:
 	echo "http://127.0.0.1:10331"
 	cd docs/_build/html; uv run python -m http.server 10331
 
 test-docs:
-	make -C docs html
+	uv run sphinx-build -b html docs docs/_build/html
 
 .PHONY: dist
 dist: clean-build clean-pyc
