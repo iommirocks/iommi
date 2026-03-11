@@ -74,12 +74,8 @@ See `getting started <https://docs.iommi.rocks//getting_started.html>`_.
 Running tests
 -------------
 
-You need to have tox installed, then:
-
 .. code-block::
 
-    make venv
-    source venv/bin/activate
     make test
     make test-docs
 

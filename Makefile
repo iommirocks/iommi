@@ -76,7 +76,7 @@ ruff-format:
 	uv run ruff format .
 
 test-all:
-	tox --skip-missing-interpreters
+	python run_tests.py --all
 
 .PHONY: test
 test:
@@ -116,8 +116,8 @@ venv:
 
 .PHONY: run-examples
 run-examples:
-	uv run --script examples/manage.py migrate
-	uv run --script examples/manage.py runserver
+	uv run python examples/manage.py migrate
+	uv run python examples/manage.py runserver
 
 .PHONY: test-live
 test-live:
