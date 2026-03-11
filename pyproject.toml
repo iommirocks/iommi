@@ -41,6 +41,8 @@ dev = [
     "sphinx-llms-txt==0.2.2",
     "coverage>=7.8.2",
     "pytest-cov>=6.1.1",
+    "pytest-sugar>=1.0.0",
+    "pytest-xdist>=3.0.0",
     "watchdog>=6.0.0",
 ]
 

@@ -61,7 +61,10 @@ def run(python_version, django_version, jinja2=False):
         cmd += ['--with', 'jinja2']
         env_override['DJANGO_SETTINGS_MODULE'] = 'tests.settings_jinja2_only'
 
-    cmd.append('pytest')
+    cmd.extend([
+        'pytest',
+        '-n', 'auto',
+    ])
 
     return subprocess.run(cmd, env={**os.environ, **env_override}).returncode
 

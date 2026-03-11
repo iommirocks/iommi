@@ -245,7 +245,6 @@ def render_root(*, part, context, **render):
         iommi_debug_panel=(
             iommi_debug_panel(part) if iommi_debug_panel_on() and '_iommi_disable_debug_panel' not in request.GET else ''
         ),
-        iommi_language_code=getattr(request, 'LANGUAGE_CODE', settings.LANGUAGE_CODE),
         assets=assets,
         request=request,
         **(part.context if isinstance(part, Page) else {}),
