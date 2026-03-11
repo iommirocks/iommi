@@ -1,9 +1,8 @@
-.PHONY: clean-pyc clean-build docs clean lint ruff ruff-format test coverage docs dist tag release-check
 
 help:
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
-	@echo "lint - check style with flake8"
+	@echo "lint - check style with ruff check"
 	@echo "test - run tests"
 	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
@@ -11,15 +10,17 @@ help:
 	@echo "tag - set a tag with the current version number"
 	@echo "release-check - check release tag"
 
+.PHONY: clean
 clean: clean-build clean-pyc
 	rm -rf htmlcov/
-	rm -rf venv
+	rm -rf venv .venv
 
+.PHONY: clean-build
 clean-build:
 	rm -fr build/
 	rm -fr dist/
-	rm -fr lib/*.egg-info
 
+.PHONY: clean-pyc
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
@@ -63,67 +64,85 @@ clean-docs:
 	rm -f docs/TableAutoConfig.rst
 	rm -f docs/views.rst
 
+.PHONY: lint
 lint: ruff
 
+.PHONY: ruff
 ruff:
-	tox -e venv -- ruff check .
+	uv run ruff check .
 
+.PHONY: ruff-format
 ruff-format:
-	tox -e venv -- ruff format .
+	uv run ruff format .
 
 test-all:
-	tox --skip-missing-interpreters
+	python run_tests.py --all
 
+.PHONY: test
 test:
-	python -m pytest
+	uv run pytest
 
 coverage:
-	tox -e coverage
+	uv run pytest \
+        --cov iommi \
+        --cov tests \
+        --cov-config .coveragerc
+	uv run coverage report -m
+	uv run coverage html
+	uv run coverage xml
 
+.PHONY: docs
 docs: clean-docs
 	rm -f docs/test_doc__*
-	tox -e docs
+	uv run sphinx-build -b html docs docs/_build/html
 
 docs-viewer:
 	echo "http://127.0.0.1:10331"
-	cd docs/_build/html; python -m http.server 10331
+	cd docs/_build/html; uv run python -m http.server 10331
 
 test-docs:
-	tox -e docs
+	uv run sphinx-build -b html docs docs/_build/html
 
-docs-coverage:
-	tox -e coverage-from-docs
-
-dist: clean
-	python setup.py sdist
-	python setup.py bdist_wheel
+.PHONY: dist
+dist: clean-build clean-pyc
+	uv build
 	ls -l dist
 
-tag:
-	python setup.py tag
-
-release-check:
-	python setup.py release_check
-
+.PHONY: venv
 venv:
-	tox -e venv
+	uv venv
+	uv sync --dev
 
-run-examples: venv
-	venv/bin/python examples/manage.py migrate
-	venv/bin/python examples/manage.py runserver
+.PHONY: run-examples
+run-examples:
+	uv run --script examples/manage.py migrate
+	uv run --script examples/manage.py runserver
 
+.PHONY: test-live
 test-live:
-	watchmedo shell-command --patterns="*.py" --command="python -m hammett" iommi tests
+	uv run watchmedo shell-command --patterns="*.py" --command="uv run pytest" iommi tests
 
 
+.PHONY: makemessages
 makemessages:
-	(cd iommi && django-admin makemessages -a)
-	(cd examples && django-admin makemessages -a)
+	(cd iommi && uv run django-admin makemessages -a)
+	(cd examples && uv run django-admin makemessages -a)
 
-
+.PHONY: compilemessages
 compilemessages:
-	(cd iommi && django-admin compilemessages)
-	(cd examples && django-admin compilemessages)
+	(cd iommi && uv run django-admin compilemessages)
+	(cd examples && uv run django-admin compilemessages)
 
-release:
-	rm -rf dist/ build/ && django-admin compilemessages --ignore=venv --ignore=.tox --ignore=examples && python setup.py sdist bdist_wheel && twine upload dist/*
+.PHONY: tag
+tag:
+	uv run --script util.py tag
+
+.PHONY: release-check
+release-check:
+	uv run --script util.py release-check
+
+.PHONY: release
+release: clean-build release-check
+	(cd iommi && uv run django-admin compilemessages)
+	uv build
+# 	uv publish

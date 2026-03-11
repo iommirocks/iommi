@@ -109,7 +109,6 @@ pip-log.txt
 
 # Unit test / coverage reports
 .coverage
-.tox
 testreport.xml
 htmlcov
 

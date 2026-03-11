@@ -4,11 +4,14 @@ import pytest
 
 
 def pytest_sessionstart(session):
-    from iommi.docs import generate_api_docs_tests, write_rst_from_pytest
+    if not hasattr(session.config, 'workerinput'):
+        # Only run on controller if under xdist
 
-    write_rst_from_pytest()
-    generate_api_docs_tests((Path(__file__).parent).absolute(), verbose=True)
-    write_rst_from_pytest()
+        from iommi.docs import generate_api_docs_tests, write_rst_from_pytest
+
+        write_rst_from_pytest()
+        generate_api_docs_tests((Path(__file__).parent).absolute(), verbose=True)
+        write_rst_from_pytest()
 
 
 @pytest.fixture(autouse=True)
