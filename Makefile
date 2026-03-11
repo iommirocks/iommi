@@ -76,7 +76,7 @@ ruff-format:
 	uv run ruff format .
 
 test-all:
-	tox --skip-missing-interpreters
+	python run_tests.py --all
 
 .PHONY: test
 test:
