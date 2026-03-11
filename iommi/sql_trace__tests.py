@@ -134,7 +134,8 @@ def test_set_sql_debug():
     assert get_sql_debug() == 'worst'
 
 
-def test_sql_debug_format_stack_trace():
+def test_sql_debug_format_stack_trace(monkeypatch):
+    monkeypatch.setattr('iommi.sql_trace.colored', lambda text, **kwargs: text)
     frames = [
         Struct(
             f_lineno=1,

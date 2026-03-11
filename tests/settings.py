@@ -41,6 +41,8 @@ DATABASES = {
 
 USE_TZ = False
 
+LANGUAGE_CODE = 'en'
+
 IOMMI_DEFAULT_STYLE = 'test'
 IOMMI_MAIN_MENU = 'tests.main_menu.main_menu'
 
