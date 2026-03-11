@@ -42,13 +42,13 @@ if os.environ.get("READTHEDOCS", "") == "True":
     html_context["READTHEDOCS"] = True
 
 
-check_call(f"cd {(Path(__file__).parent.parent).absolute()}; uv run pytest docs -q", shell=True)
+check_call(f"cd {(Path(__file__).parent.parent).absolute()}; {sys.executable} -m pytest docs -q", shell=True)
 
 
 def build_finished(app, exception):
     print('Running build_finished')
     start = datetime.now()
-    check_call(f"cd {(Path(__file__).parent.parent).absolute()}; uv run --script insert_docs_links.py", shell=True)
+    check_call(f"cd {(Path(__file__).parent.parent).absolute()}; {sys.executable} insert_docs_links.py", shell=True)
     print('    ', (datetime.now() - start).total_seconds(), 'seconds')
 
 
@@ -102,7 +102,10 @@ copyright = u'2025, Anders Hovmöller & Johan Lübcke'
 #
 # The short X.Y version.
 from importlib import metadata
-version = metadata.version('iommi')
+try:
+    version = metadata.version('iommi')
+except metadata.PackageNotFoundError:
+    version = 'unknown'
 # The full version, including alpha/beta/rc tags.
 release = version
 
