@@ -1,13 +1,20 @@
 # Based on https://www.djangosnippets.org/snippets/186/
 
 import cProfile
+import marshal
 import os
 import pstats
 import subprocess
 import sys
+import threading
 from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+
+try:
+    import yappi
+except ImportError:
+    yappi = None
 
 from asgiref.sync import (
     async_to_sync,
@@ -161,6 +168,62 @@ class HTMLStats(pstats.Stats):
         print('</tr>', file=self.stream)
 
 
+def _yappi_generate_folded_data(func_stats, threshold):
+    """Generate folded stack data directly from yappi's native tree.
+
+    Walks yappi's parent-child relationships directly, avoiding
+    any key format mismatches from pstats conversion.
+    """
+    stats_by_idx = {}
+    for stat in func_stats:
+        stats_by_idx[stat.index] = stat
+
+    if not stats_by_idx:
+        return ''
+
+    # Use the function with the highest ttot as root.
+    # Django's middleware cycle (inner → middleware → inner → ...)
+    # means no function is truly "unparented", so we pick the top one.
+    root = max(func_stats, key=lambda s: s.ttot)
+    total_time = root.ttot
+    if total_time <= 0:
+        return ''
+
+    lines = []
+    visited = set()
+
+    def format_frame(stat):
+        return f'{stat.name} ({stat.module}:{stat.lineno})'
+
+    def walk(stat, trace):
+        for child in sorted(stat.children, key=lambda c: -c.ttot):
+            edge = (stat.index, child.index)
+            if edge in visited:
+                continue
+
+            if child.ttot / total_time < threshold:
+                continue
+
+            visited.add(edge)
+
+            child_stat = stats_by_idx.get(child.index)
+            child_trace = trace + (format_frame(child),)
+            count = int(child.tsub * 1_000_000)
+            if count > 0:
+                lines.append(f'{";".join(child_trace)} {count}')
+
+            if child_stat is not None:
+                walk(child_stat, child_trace)
+
+    root_trace = (format_frame(root),)
+    count = int(root.tsub * 1_000_000)
+    if count > 0:
+        lines.append(f'{";".join(root_trace)} {count}')
+    walk(root, root_trace)
+
+    return '\n'.join(lines)
+
+
 class Middleware:
     async_capable = True
     sync_capable = True
@@ -202,11 +265,9 @@ class Middleware:
                     print(line.decode(), file=sys.__stdout__)
 
             response = HttpResponse()
-            for prof in request._iommi_prof:
-                prof.disable()
 
             s = StringIO()
-            ps = HTMLStats(*request._iommi_prof, stream=s)
+            ps = self._build_stats(request, s)
 
             prof_command = request.GET.get('_iommi_prof')
 
@@ -237,24 +298,11 @@ class Middleware:
             elif prof_command == 'flame':
                 from django.templatetags.static import static
 
-                from iommi._vendored_flameprof import (
-                    calc_callers,
-                    prepare,
-                )
+                if not hasattr(request, '_iommi_yappi_func_stats'):
+                    return HttpResponse('You must `pip install yappi` to use the flamegraph feature')
 
                 threshold = float(request.GET.get('_iommi_prof_threshold', 0.00001)) / 100
-                funcs, calls = calc_callers(ps.stats)
-                blocks, bblocks, maxw = prepare(funcs, calls, threshold=threshold)
-
-                lines = []
-                for block in blocks:
-                    count = int(block['ww'] * 1_000_000)
-                    if count <= 0:
-                        continue
-                    stack = ';'.join(f'{func[2]} ({func[0]}:{func[1]})' for func in block['trace'])
-                    lines.append(f'{stack} {count}')
-
-                folded_data = '\n'.join(lines)
+                folded_data = _yappi_generate_folded_data(request._iommi_yappi_func_stats, threshold)
 
                 formatter_url = 'pycharm://open?file={filename}&line={lineno}'
 
@@ -290,33 +338,6 @@ class Middleware:
     </body>
 </html>'''
                 response['Content-Type'] = 'text/html'
-
-            elif prof_command == 'snake':
-                # noinspection PyPackageRequirements
-                try:
-                    import snakeviz  # noqa
-                except ImportError:
-                    return HttpResponse('You must `pip install snakeviz` to use this feature')
-
-                with NamedTemporaryFile() as stats_dump:
-                    ps.stream = stats_dump
-                    ps.dump_stats(stats_dump.name)
-
-                    subprocess.Popen(
-                        [sys.executable, str(Path(sys.executable).parent / 'snakeviz'), stats_dump.name],
-                        stdin=None,
-                        stdout=None,
-                        stderr=None,
-                    )
-
-                    # We need to wait a bit to give snakeviz time to read the file
-                    from time import sleep
-
-                    sleep(3)
-
-                return HttpResponse(
-                    'You should have gotten a new browser window with snakeviz opened to the profile data'
-                )
 
             else:
                 ps = ps.sort_stats(prof_command or 'cumulative')
@@ -378,9 +399,8 @@ class Middleware:
                     </style>
 
                     <div>
-                        <a href="?_iommi_prof=graph">graph</a>
                         <a href="?_iommi_prof=flame">flamegraph</a>
-                        <a href="?_iommi_prof=snake">snakeviz</a>
+                        <a href="?_iommi_prof=graph">graph</a>
                     </div>
 
                     <p></p>
@@ -395,15 +415,83 @@ class Middleware:
     def process_view(self, request, view_func, view_args, view_kwargs):
         request._iommi_view_is_async = iscoroutinefunction(view_func)
 
+    @staticmethod
+    def _start_profiling(request):
+        if yappi is not None:
+            yappi.set_clock_type("wall")
+            yappi.clear_stats()
+            yappi.start(builtins=True)
+            request._iommi_prof = True
+        else:
+            prof = cProfile.Profile()
+            prof.enable()
+            request._iommi_prof = [prof]
+
+    @staticmethod
+    def _yappi_stats_to_pstats_dict(func_stats):
+        """Convert yappi func stats to a pstats-compatible dict.
+
+        yappi's convert2pstats is broken on Python 3.13, so we
+        build the dict directly.
+        """
+        pdict = {}
+        for stat in func_stats:
+            key = (stat.module, stat.lineno, stat.name)
+            # tsub = time in function itself, ttot = cumulative time
+            pdict[key] = (stat.nactualcall, stat.ncall, stat.tsub, stat.ttot, {})
+
+        # Populate callers dicts from yappi children (which are callees)
+        for stat in func_stats:
+            caller_key = (stat.module, stat.lineno, stat.name)
+            for child in stat.children:
+                child_key = (child.module, child.lineno, child.name)
+                if child_key in pdict:
+                    pdict[child_key][4][caller_key] = (
+                        child.nactualcall, child.ncall, child.tsub, child.ttot
+                    )
+
+        return pdict
+
+    @staticmethod
+    def _build_stats(request, stream):
+        if yappi is not None:
+            yappi.stop()
+
+            # Find the current thread's yappi context ID
+            current_tid = threading.current_thread().ident
+            ctx_id = None
+            for thread_stat in yappi.get_thread_stats():
+                if thread_stat.tid == current_tid:
+                    ctx_id = thread_stat.id
+                    break
+
+            if ctx_id is not None:
+                func_stats = yappi.get_func_stats(filter={"ctx_id": ctx_id})
+            else:
+                func_stats = yappi.get_func_stats()
+
+            request._iommi_yappi_func_stats = func_stats
+            pdict = Middleware._yappi_stats_to_pstats_dict(func_stats)
+
+            with NamedTemporaryFile(suffix='.prof', delete=False) as f:
+                marshal.dump(pdict, f)
+                f.flush()
+                ps = HTMLStats(f.name, stream=stream)
+            os.unlink(f.name)
+            yappi.clear_stats()
+        else:
+            for prof in request._iommi_prof:
+                prof.disable()
+            ps = HTMLStats(*request._iommi_prof, stream=stream)
+        return ps
+
     def __call__(self, request):
         if iscoroutinefunction(self):
             return self.__acall__(request)
         self._setup_request(request)
         if not should_profile(request):
             return self.get_response(request)
-        prof = cProfile.Profile()
-        prof.enable()
-        request._iommi_prof = [prof]
+        self._start_profiling(request)
         response = self.get_response(request)
         return self._process_response(request, response)
 
@@ -412,9 +500,7 @@ class Middleware:
             return async_to_sync(self.get_response)(request)
         if getattr(request, '_iommi_view_is_async', False):
             return HttpResponse('Profiling is not supported for async views. Use an async-aware profiler instead.')
-        prof = cProfile.Profile()
-        prof.enable()
-        request._iommi_prof = [prof]
+        self._start_profiling(request)
         response = async_to_sync(self.get_response)(request)
         return self._process_response(request, response)
 
