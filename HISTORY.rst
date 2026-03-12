@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+7.24.1 (2026-03-12)
+~~~~~~~~~~~~~~~~~~~
+
+* Switched profiler backend to yappi and improved the processing of the data. This means we now don't get irrelevant output from django_watchfiles, and profiling async views should work.
+
+* Auto `select_related` for nested foreign key access in `Table`
+
+* Fixed handling of the value of `<textarea>` in certain situations
+
+* Fixed duplicate help/error display for checkboxes/radio inputs
+
+* Render `MainMenu` tags in a way that doesn't interfere with the code finder feature
+
+
 7.24.0 (2026-03-06)
 ~~~~~~~~~~~~~~~~~~~
 
