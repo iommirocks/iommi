@@ -54,8 +54,17 @@ Homepage = "https://github.com/iommirocks/iommi"
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.package-dir]
-iommi = "iommi"
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["iommi*"]
+
+[tool.setuptools.package-data]
+iommi = [
+    "templates/**/*",
+    "static/**/*",
+]
 
 [tool.ruff]
 exclude = [
