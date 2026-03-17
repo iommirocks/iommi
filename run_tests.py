@@ -60,10 +60,6 @@ def run(python_version, django_version, jinja2=False):
         'uv', 'run',
         '-p', python_version,
         '--with', DJANGO_CONSTRAINTS[django_version],
-        '--with', 'pytest==8.1.1',
-        '--with', 'pytest-django==4.8.0',
-        '--with', 'pytest-xdist==3.8.0',
-        '--isolated',
     ]
     env_override = {}
     if jinja2:
