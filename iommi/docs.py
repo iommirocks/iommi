@@ -1,6 +1,7 @@
 import inspect
 import os
 import re
+import warnings
 from collections import defaultdict
 from glob import glob
 from os.path import join
@@ -417,7 +418,7 @@ request = req('get')
                     w(0, '')
             else:
                 if refinable not in concepts and verbose:
-                    print(f'WARNING: {c.__name__}.{refinable} has no cookbook examples')
+                    warnings.warn(f'{c.__name__}.{refinable} has no cookbook examples')
 
         w(0, '')
 
