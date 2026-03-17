@@ -11,10 +11,6 @@ class IommiConfig(AppConfig):
     default = True
 
     def ready(self):
-        from iommi.from_model import setup_db_compat
-
-        setup_db_compat()
-
         from django.contrib.auth.models import (
             Permission,
             User,
