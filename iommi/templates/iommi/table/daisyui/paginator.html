@@ -1,0 +1,23 @@
+<div class="flex justify-center my-4">
+    <div class="join">
+        {% if show_first %}
+            <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="First Page" class="join-item btn btn-sm">&laquo;</a>
+        {% endif %}
+
+        {% if has_previous %}
+            <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="Previous Page" class="join-item btn btn-sm">&lt;</a>
+        {% endif %}
+
+        {% for num in page_numbers %}
+            <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="Page {{ num }}" class="join-item btn btn-sm{% if num == page %} btn-active{% endif %}">{{ num }}</a>
+        {% endfor %}
+
+        {% if has_next %}
+            <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="Next Page" class="join-item btn btn-sm">&gt;</a>
+        {% endif %}
+
+        {% if show_last %}
+            <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="Last Page" class="join-item btn btn-sm">&raquo;</a>
+        {% endif %}
+    </div>
+</div>
