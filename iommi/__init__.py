@@ -36,6 +36,7 @@ from iommi.from_model import (
     register_related_factory,
     register_related_multiple_factory,
     register_search_fields,
+    setup_db_compat,
 )
 from iommi.main_menu import (
     M,
@@ -71,6 +72,9 @@ from iommi.table import (
     register_related_multiple_column_factory,
 )
 from iommi.thread_locals import get_current_request
+
+
+setup_db_compat()
 
 
 def render_if_needed(request, response):
