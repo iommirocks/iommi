@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'tests',
     'docs',
     'django_fastdev',
+    'examples',
 ]
 
 

@@ -11,6 +11,7 @@ from docs.models import (
     Track,
     FavoriteArtist,
 )
+from iommi.path import _path_component_to_decode_data
 
 
 # pragma: no cover
@@ -38,6 +39,13 @@ def pytest_sessionstart(session):
             write_rst_from_pytest()
             generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
             write_rst_from_pytest()
+
+
+@pytest.fixture(autouse=True)
+def _reset_path_decoders():
+    """Clear global path decoders before each test so registrations from app.ready() (e.g. examples app) don't interfere."""
+    _path_component_to_decode_data.clear()
+    yield
 
 
 @pytest.fixture(autouse=True)
