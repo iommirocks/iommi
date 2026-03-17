@@ -75,13 +75,15 @@ ruff:
 ruff-format:
 	uv run ruff format .
 
+.PHONY: test-all
 test-all:
-	python run_tests.py --all
+	uv run python run_tests.py --all
 
 .PHONY: test
 test:
 	uv run pytest -n auto
 
+.PHONY: coverage
 coverage:
 	uv run pytest \
         --cov iommi \
@@ -96,10 +98,12 @@ docs: clean-docs
 	rm -f docs/test_doc__*
 	uv run sphinx-build -b html docs docs/_build/html
 
+.PHONY: docs-viewer
 docs-viewer:
 	echo "http://127.0.0.1:10331"
 	cd docs/_build/html; uv run python -m http.server 10331
 
+.PHONY: test-docs
 test-docs:
 	uv run sphinx-build -b html docs docs/_build/html
 

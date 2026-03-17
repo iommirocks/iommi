@@ -41,8 +41,11 @@ if os.environ.get("READTHEDOCS", "") == "True":
         html_context = {}
     html_context["READTHEDOCS"] = True
 
-
-check_call(f"cd {(Path(__file__).parent.parent).absolute()}; {sys.executable} -m pytest docs -q", shell=True)
+check_call(
+    f"cd {(Path(__file__).parent.parent).absolute()}; {sys.executable} -m pytest docs -q",
+    shell=True,
+    env={**os.environ, 'IOMMI_BUILDING_DOCS': '1'},
+)
 
 
 def build_finished(app, exception):

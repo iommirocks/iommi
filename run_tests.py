@@ -12,31 +12,37 @@ import argparse
 import os
 import subprocess
 import sys
+from itertools import product
+from pathlib import Path
 
-MATRIX = [
-    ('3.11', '3.2'),
-    ('3.11', '4.0'),
-    ('3.11', '4.1'),
-    ('3.11', '4.2'),
-    ('3.11', '5.0'),
-    ('3.11', '5.2'),
-    ('3.12', '3.2'),
-    ('3.12', '4.0'),
-    ('3.12', '4.1'),
-    ('3.12', '4.2'),
-    ('3.12', '5.0'),
-    ('3.12', '5.2'),
-    ('3.12', '6.0'),
-    ('3.13', '4.1'),
-    ('3.13', '4.2'),
-    ('3.13', '5.0'),
-    ('3.13', '5.2'),
-    ('3.13', '6.0'),
-    ('3.14', '6.0'),
-]
+import yaml
 
-LATEST_PYTHON = '3.14'
-LATEST_DJANGO = '6.0'
+
+def _load_matrix():
+    workflow_path = Path(__file__).parent / '.github' / 'workflows' / 'tests.yml'
+    with open(workflow_path) as f:
+        config = yaml.safe_load(f)
+
+    matrix = config['jobs']['build']['strategy']['matrix']
+    python_versions = matrix['python-version']
+    django_versions = matrix['django-version']
+    excludes = matrix.get('exclude', [])
+
+    exclude_set = {
+        (e['python-version'], e['django-version'])
+        for e in excludes
+    }
+
+    combos = [
+        (py, dj)
+        for py, dj in product(python_versions, django_versions)
+        if (py, dj) not in exclude_set
+    ]
+
+    return combos, python_versions[-1], django_versions[-1]
+
+
+MATRIX, LATEST_PYTHON, LATEST_DJANGO = _load_matrix()
 
 DJANGO_CONSTRAINTS = {
     '3.2': 'Django>=3.2,<3.3',
@@ -84,12 +90,9 @@ if __name__ == '__main__':
         failed = []
         for python_version, django_version in MATRIX:
             print(f'\n=== Python {python_version} | Django {django_version} ===', flush=True)
-            if run(python_version, django_version) != 0:
+            status = run(python_version, django_version)
+            if status != 0:
                 failed.append(f'Python {python_version} | Django {django_version}')
-
-        print('\n=== Python 3.12 | Django 4.2 | jinja2 ===', flush=True)
-        if run('3.12', '4.2', jinja2=True) != 0:
-            failed.append('Python 3.12 | Django 4.2 | jinja2')
 
         if failed:
             print('\nFailed combinations:')
@@ -99,4 +102,5 @@ if __name__ == '__main__':
 
         print('\nAll combinations passed!')
     else:
-        sys.exit(run(args.python, args.django, jinja2=args.jinja2))
+        status = run(args.python, args.django, jinja2=args.jinja2)
+        sys.exit(status)
