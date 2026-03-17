@@ -74,6 +74,8 @@ from iommi.table import (
 from iommi.thread_locals import get_current_request
 
 
+# it has to be here on import time
+# we tried it in AppConfig.ready(), but then custom registrations got overridden by the default ones
 setup_db_compat()
 
 
