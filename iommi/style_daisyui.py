@@ -127,16 +127,13 @@ daisyui_base = Style(
                 label__attrs__class={'label': False, 'cursor-pointer': True},
             ),
             radio=dict(
-                attrs__class={
-                    'form-control': False,
-                    'flex-row': True,
-                    'items-center': True,
-                    'gap-3': True,
-                },
+                input__template='iommi/form/daisyui/radio.html',
                 input__attrs__class={
                     'radio': True,
                     'input': False,
                     'input-bordered': False,
+                    'select': False,
+                    'select-bordered': False,
                     'w-full': False,
                 },
             ),

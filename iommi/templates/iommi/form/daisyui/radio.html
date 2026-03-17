@@ -1,0 +1,6 @@
+{% for choice in field.choice_tuples %}
+    <label class="label cursor-pointer justify-start gap-3">
+        <input type="radio" value="{{ choice.1|stringformat:'s' }}" id="{{ field.extra_evaluated.id }}_{{ choice.4 }}" {{ field.input.attrs }} {% if choice.3 %}checked{% endif %}/>
+        <span class="label-text">{{ choice.2 }}</span>
+    </label>
+{% endfor %}
