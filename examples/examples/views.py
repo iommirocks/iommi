@@ -11,6 +11,7 @@ from iommi import (
     html,
 )
 from iommi.base import items
+from iommi.experimental.calendar import Calendar
 from iommi.form import (
     Field,
     Form,

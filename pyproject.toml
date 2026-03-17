@@ -85,12 +85,14 @@ quote-style = "preserve"
 
 [tool.pytest.ini_options]
 pythonpath = [
-    ''
+    '',
+    'examples',
 ]
 testpaths = [
     'tests',
     'iommi',
     'docs',
+    'examples/examples',
 ]
 # --strict: warnings become errors.
 # -r fEsxXw: show extra test summary info for everything.
