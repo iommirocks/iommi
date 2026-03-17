@@ -24,14 +24,15 @@ class IommiConfig(AppConfig):
         from iommi.style_bootstrap import bootstrap
         from iommi.style_bootstrap5 import bootstrap5
         from iommi.style_bulma import bulma
+        from iommi.style_daisyui import daisyui
         from iommi.style_django_admin import django_admin
         from iommi.style_foundation import foundation
         from iommi.style_semantic_ui import semantic_ui
         from iommi.style_test_base import test
         from iommi.style_uikit import uikit
-        from iommi.style_water import water
         from iommi.style_us_web_design_system import us_web_design_system
         from iommi.style_vanilla_css import vanilla_css
+        from iommi.style_water import water
 
         register_style('blank', Style(internal=True))
         register_style('base', base)
@@ -47,6 +48,7 @@ class IommiConfig(AppConfig):
         register_style('us_web_design_system', us_web_design_system)
         register_style('bootstrap_docs', bootstrap_docs)
         register_style('vanilla_css', vanilla_css)
+        register_style('daisyui', daisyui)
 
         from django.contrib.contenttypes.fields import (
             GenericForeignKey,
