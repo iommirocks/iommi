@@ -36,6 +36,7 @@ def test_style():
         - bootstrap
         - bootstrap5
         - bulma
+        - daisyui
         - foundation
         - semantic_ui
         - water
