@@ -11,6 +11,11 @@ from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from django.template import (
+    Context,
+    Template,
+)
+
 try:
     import yappi
 except ImportError:
@@ -65,16 +70,29 @@ def strip_extra_path(s, token):
 
 
 class HTMLStats(pstats.Stats):
+    _get_params = None
+
+    def _build_url(self, **overrides):
+        params = self._get_params.copy() if self._get_params else {}
+        params.update(overrides)
+        from django.http import QueryDict
+        qd = QueryDict(mutable=True)
+        qd.update(params)
+        return '?' + qd.urlencode()
+
     def print_title(self):
+        ncalls_url = self._build_url(_iommi_prof='ncalls')
+        tottime_url = self._build_url(_iommi_prof='tottime')
+        cumtime_url = self._build_url(_iommi_prof='cumtime')
         print(
             # language=HTML
-            '''
+            f'''
                 <thead>
                     <tr>
-                        <th class="numeric"><a href="?_iommi_prof=ncalls">ncalls</a></th>
-                        <th class="numeric"><a href="?_iommi_prof=tottime">tottime</a></th>
+                        <th class="numeric"><a href="{ncalls_url}">ncalls</a></th>
+                        <th class="numeric"><a href="{tottime_url}">tottime</a></th>
                         <th class="numeric">percall</th>
-                        <th class="numeric"><a href="?_iommi_prof=cumtime">cumtime</a></th>
+                        <th class="numeric"><a href="{cumtime_url}">cumtime</a></th>
                         <th class="numeric">percall</th>
                         <th>function</th>
                         <th></th>
@@ -317,7 +335,7 @@ class Middleware:
             html {{ color-scheme: light dark; }}
             body {{ background: light-dark(white, #1e1e1e); color: light-dark(black, #ccc); }}
             .flame-graph span {{
-                background-color: #305830;
+                background-color: light-dark(#a8d5a8, #305830);
                 border-radius: 3px;
                 margin: 1px;
             }}
@@ -345,8 +363,14 @@ class Middleware:
 
                 result = s.getvalue()
 
+                preserved_params = request.GET.copy()
+                preserved_params['_iommi_prof'] = 'flame'
+                flame_url = '?' + preserved_params.urlencode()
+                preserved_params['_iommi_prof'] = 'graph'
+                graph_url = '?' + preserved_params.urlencode()
+
                 # language=html
-                start_html = '''
+                start_html = Template('''
                     <style>
                         html {
                             font-family: monospace;
@@ -399,12 +423,19 @@ class Middleware:
                     </style>
 
                     <div>
-                        <a href="?_iommi_prof=flame">flamegraph</a>
-                        <a href="?_iommi_prof=graph">graph</a>
+                        <a href="{{ flame_url }}">flamegraph</a>
+                        <a href="{{ graph_url }}">graph</a>
                     </div>
 
                     <p></p>
-                '''
+                ''').render(
+                    Context(
+                        dict(
+                            flame_url=flame_url,
+                            graph_url=graph_url,
+                        )
+                    )
+                )
 
                 response.content = start_html.strip() + result
 
