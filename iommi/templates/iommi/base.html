@@ -1,5 +1,5 @@
-{% load i18n %}<!DOCTYPE html>
-<html{% block iommi_html_tag_attrs %} lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}"{% endblock %}>
+{% load iommi %}<!DOCTYPE html>
+<html{% block iommi_html_tag_attrs %} lang="{% iommi_language_code %}"{% endblock %}>
 <head>
     <title>{% block title %}{% if title %}{{ title }}{% endif %}{% endblock %}</title>
     {% block iommi_head_contents %}{% endblock %}
