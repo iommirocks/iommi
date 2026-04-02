@@ -841,6 +841,58 @@ def test_boolean_column():
     )
 
 
+def test_importing_style_in_settings_should_not_trigger_circular_import():
+    """
+    Users need to be able to `from iommi import Style` in their settings.py
+    to define IOMMI_DEFAULT_STYLE = Style(...). This fails with a circular
+    import if importing Style triggers Django settings access at module level.
+
+    The real-world scenario:
+    1. Some code does `from iommi.thread_locals import ...` (or any iommi submodule)
+    2. This triggers iommi/__init__.py to start loading
+    3. __init__.py imports action.py -> _web_compat.py
+    4. _web_compat.py accesses settings.TEMPLATES at module level
+    5. Django loads settings.py to get TEMPLATES
+    6. settings.py has `from iommi import Style`
+    7. But iommi/__init__.py is only partially loaded -> ImportError
+    """
+    import subprocess
+    import sys
+    import os
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        settings_file = os.path.join(tmpdir, 'test_settings.py')
+        with open(settings_file, 'w') as f:
+            f.write(
+                "from tests.settings import *\n"
+                "from iommi import Style\n"
+                "from iommi.style_bootstrap import bootstrap\n"
+                "IOMMI_DEFAULT_STYLE = Style(\n"
+                "    bootstrap,\n"
+                "    root__assets=dict(),\n"
+                ")\n"
+            )
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                '-c',
+                'import django; django.setup()',
+            ],
+            capture_output=True,
+            text=True,
+            env={
+                **os.environ,
+                'DJANGO_SETTINGS_MODULE': 'test_settings',
+                'PYTHONPATH': tmpdir + os.pathsep + os.getcwd(),
+            },
+        )
+        assert result.returncode == 0, (
+            f"Importing Style in settings.py triggered an error (likely circular import):\n{result.stderr}"
+        )
+
+
 def test_assets_on_root_should_fail_on_traversable():
     t = Traversable(
         iommi_style=Style(

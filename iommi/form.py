@@ -59,7 +59,7 @@ from iommi._web_compat import (
     format_html,
     render_template,
     safe_redirect_url,
-    template_types,
+    get_template_types,
 )
 from iommi.action import (
     Action,
@@ -1724,7 +1724,7 @@ class FieldGroup(Fragment):
     member_class=Part,
     parameter='_fields_dict',
     add_init_kwargs=False,
-    is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
+    is_member=lambda obj: isinstance(obj, (Part, str) + get_template_types()),
 )
 class Form(Part, Tag):
     # language=rst

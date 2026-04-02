@@ -47,7 +47,7 @@ from iommi.shortcut import with_defaults
 from iommi.style import get_style_object
 from iommi.traversable import Traversable
 
-from ._web_compat import template_types
+from ._web_compat import get_template_types
 from .refinable import (
     EvaluatedRefinable,
     Refinable,
@@ -284,7 +284,7 @@ def request_data(request):
 def as_html(*, request=None, part: PartType, context):
     if isinstance(part, str):
         return part
-    elif isinstance(part, template_types):
+    elif isinstance(part, get_template_types()):
         from django.template import RequestContext
 
         assert not isinstance(context, RequestContext)

@@ -11,7 +11,39 @@ DjangoTemplate = None
 JinjaTemplate = None
 
 
-template_types = tuple()
+_template_types = tuple()
+
+_template_types_initialized = False
+
+
+def _init_template_types():
+    global DjangoTemplate, JinjaTemplate, _template_types, _template_types_initialized
+    if _template_types_initialized:
+        return
+    _template_types_initialized = True
+
+    try:
+        if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
+            from django.template import Template as DT
+
+            DjangoTemplate = DT
+            _template_types += (DjangoTemplate, DjangoLoadedTemplate)
+
+        if any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES):
+            import jinja2  # noqa: F401
+            from jinja2 import Template as JT
+
+            JinjaTemplate = JT
+            _template_types += (JinjaTemplate,)
+    except ImproperlyConfigured:
+        pass
+
+    _template_types = _template_types + (Template,)
+
+
+def get_template_types():
+    _init_template_types()
+    return _template_types
 
 
 def format_html(s, *args, **kwargs):
@@ -20,34 +52,17 @@ def format_html(s, *args, **kwargs):
     return django_format_html(s, *args, **kwargs)
 
 
-try:
-    if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
-        from django.template import Template as DjangoTemplate
-
-        template_types += (DjangoTemplate, DjangoLoadedTemplate)
-
-    if any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES):
-        import jinja2  # noqa: F401
-        from jinja2 import Template as JinjaTemplate
-
-        template_types += (JinjaTemplate,)
-except ImproperlyConfigured:
-    pass
-
-
 class Template:
     def __init__(self, template_string):
         self.s = template_string
 
     def render(self, context):
+        _init_template_types()
         if DjangoTemplate is not None:
             return DjangoTemplate(self.s).render(context=context)
         else:
             assert JinjaTemplate is not None
             return JinjaTemplate(self.s).render(**context.flatten())
-
-
-template_types = template_types + (Template,)
 
 
 def safe_redirect_url(url, request, fallback='/'):
@@ -73,8 +88,6 @@ def render_template(request, template, context):
     @type template: str|django.template.Template|django.template.backends.django.Template
     @type context: dict
     """
-    from iommi._web_compat import template_types
-
     log_used_template(request, template)
 
     if template is None:
@@ -83,7 +96,7 @@ def render_template(request, template, context):
         return mark_safe(render_to_string(template_name=template, context=context, request=request))
     elif isinstance(template, DjangoLoadedTemplate):
         return mark_safe(template.render(context=context, request=request))
-    elif isinstance(template, template_types):
+    elif isinstance(template, get_template_types()):
         return mark_safe(template.render(context=RequestContext(request, context)))
     else:
         return mark_safe(template.render(context, request))

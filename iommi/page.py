@@ -6,7 +6,7 @@ from typing import (
 
 from iommi._web_compat import (
     format_html,
-    template_types,
+    get_template_types,
 )
 from iommi.base import (
     build_as_view_wrapper,
@@ -51,7 +51,7 @@ from iommi.traversable import Traversable
 
 @declarative(
     parameter='parts_dict',
-    is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
+    is_member=lambda obj: isinstance(obj, (Part, str) + get_template_types()),
     sort_key=lambda x: 0,
     add_init_kwargs=False,
 )
