@@ -493,7 +493,7 @@ def main_menu_middleware(get_response):
 
     def _setup_main_menu(request):
         if request.resolver_match is None:
-            request.resolver_match = get_resolver().resolve(request.path_info)
+            request.resolver_match = get_resolver(getattr(request, 'urlconf', None)).resolve(request.path_info)
 
         if request.resolver_match.app_name != 'ninja':
             if not hasattr(request, 'iommi_view_params'):
