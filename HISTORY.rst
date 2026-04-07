@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+7.25.0 (2026-04-07)
+~~~~~~~~~~~~~~~~~~~
+
+* `MainMenu`: support per-request `urlconf`
+
+* Fix for defining `Style` directly in settings
+
+* Preserve GET parameters for profiler URLs
+
+* DaisyUI style added
+
+* Moved `setup_db_compat()` back to import time, as having it in `AppConfig.ready()` could cause issues with overriding iommi default behavior.
+
+
 7.24.1 (2026-03-12)
 ~~~~~~~~~~~~~~~~~~~
 
