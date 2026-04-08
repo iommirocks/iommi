@@ -175,7 +175,7 @@ def refine_done_members(
             member_by_name[key] = item.refine_done(parent=container)
 
     member_by_name = sort_after(member_by_name)
-    container.iommi_namespace[name] = member_by_name
+    container.iommi_namespace.set(name, member_by_name)
 
     m = members_cls(
         _name=name,
