@@ -223,7 +223,7 @@ class Fragment(Part, Tag):
         refine_done_members(
             self,
             name='children',
-            members_from_namespace=self.iommi_namespace.children,
+            members_from_namespace=self.iommi_namespace.get('children', {}),
             cls=Fragment,
             unknown_types_fall_through=True,
         )
