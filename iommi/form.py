@@ -838,13 +838,13 @@ class Field(Part, Tag):
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
 
-        self.iommi_namespace.non_editable_input = Namespace(
+        self.iommi_namespace.set('non_editable_input', Namespace(
             {
-                **flatten(self.iommi_namespace.input),
-                **self.iommi_namespace.non_editable_input,
+                **flatten(self.iommi_namespace.get('input', Namespace())),
+                **self.iommi_namespace.get('non_editable_input', Namespace()),
             }
-        )
-        self.non_editable_input = self.iommi_namespace.non_editable_input(_name='non_editable_input',).refine_done(parent=self)
+        ))
+        self.non_editable_input = self.iommi_namespace.get('non_editable_input')(_name='non_editable_input',).refine_done(parent=self)
         self.input = self.input(_name='input').refine_done(parent=self)
         self.label = self.label(_name='label').refine_done(parent=self)
         self.help = self.help(_name='help').refine_done(parent=self)
@@ -2370,7 +2370,7 @@ class Form(Part, Tag):
         editable=False,
         fields__iommi_default_text=dict(
             call_target=Fragment,
-            include=lambda form, **_: list(keys(form.iommi_namespace.fields)) == ['iommi_default_text'],
+            include=lambda form, **_: list(keys(form.iommi_namespace.get('fields', {}))) == ['iommi_default_text'],
             after=0,
             tag='p',
             children__text=lambda instance, **_: (
