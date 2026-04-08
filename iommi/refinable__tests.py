@@ -50,7 +50,7 @@ def test_empty():
     my_refinable = MyRefinableObject(17, x=42)
     assert my_refinable.a == 17
     assert my_refinable.x == 42
-    assert my_refinable.iommi_namespace == Namespace()
+    assert my_refinable.iommi_namespace._get_resolved() == Namespace()
 
 
 def test_refinable():
@@ -65,7 +65,7 @@ def test_refinable():
     my_refinable = MyRefinableObject(17, x=42, b=4711)
     assert my_refinable.a == 17
     assert my_refinable.x == 42
-    assert my_refinable.iommi_namespace == Namespace(b=4711)
+    assert my_refinable.iommi_namespace._get_resolved() == Namespace(b=4711)
 
 
 def test_with_meta():
@@ -78,7 +78,7 @@ def test_with_meta():
             b__c = 3
 
     my_refinable = MyRefinableObject(b=2)
-    assert my_refinable.refine_done().iommi_namespace == Namespace(a=1, b=2)
+    assert my_refinable.refine_done().iommi_namespace._get_resolved() == Namespace(a=1, b=2)
     assert my_refinable.get_meta() ==Namespace(a=1, b__c=3)
     assert my_refinable.get_meta_flat() ==dict(a=1, b__c=3)
 
@@ -92,7 +92,7 @@ def test_with_dispatch():
             super().__init__(**kwargs)
 
     my_refinable = MyRefinableObject(b=2)
-    assert my_refinable.iommi_namespace == Namespace(a=1, b=2)
+    assert my_refinable.iommi_namespace._get_resolved() == Namespace(a=1, b=2)
 
 
 def test_refine():
@@ -100,10 +100,10 @@ def test_refine():
         a = Refinable()
 
     my_refinable = MyRefinableObject(a=17)
-    assert my_refinable.iommi_namespace == Namespace(a=17)
+    assert my_refinable.iommi_namespace._get_resolved() == Namespace(a=17)
 
     my_refined_namespacey = my_refinable.refine(a=42)
-    assert my_refined_namespacey.iommi_namespace == Namespace(a=42)
+    assert my_refined_namespacey.iommi_namespace._get_resolved() == Namespace(a=42)
     assert isinstance(my_refined_namespacey, MyRefinableObject)
 
 
@@ -204,13 +204,13 @@ def test_refine_defaults():
         a = Refinable()
 
     my_refined_refinable = MyRefinableObject().refine_defaults(a=42)
-    assert my_refined_refinable.iommi_namespace == Namespace(a=42)
+    assert my_refined_refinable.iommi_namespace._get_resolved() == Namespace(a=42)
 
     my_refinable = MyRefinableObject(a=17)
-    assert my_refinable.iommi_namespace == Namespace(a=17)
+    assert my_refinable.iommi_namespace._get_resolved() == Namespace(a=17)
 
     my_refined_refinable = my_refinable.refine_defaults(a=42)
-    assert my_refined_refinable.iommi_namespace == Namespace(a=17)
+    assert my_refined_refinable.iommi_namespace._get_resolved() == Namespace(a=17)
 
 
 def test_refine_fail_on_call_target():
