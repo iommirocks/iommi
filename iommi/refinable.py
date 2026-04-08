@@ -72,6 +72,14 @@ def flatten_items(namespace, _prefix=''):
 class RefinableNamespace(Namespace):
     __iommi_refined_stack: List[Tuple[Prio, Namespace, List[Tuple[str, Any]]]]
 
+    def _get_resolved(self):
+        # shim: RefinableNamespace IS already a resolved dict
+        return self
+
+    def set(self, key, value):
+        # shim: RefinableNamespace is a dict, so plain assignment works
+        self[key] = value
+
     def print_origin(self, refinable_name):
         for prio, params in self.as_stack():
             if refinable_name in params:
@@ -264,7 +272,7 @@ class RefinableObject:
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')
-        remaining_namespace = dict(result.iommi_namespace)
+        remaining_namespace = {k: result.iommi_namespace.get(k) for k in result.iommi_namespace.keys()}
         for k, v in items(declared_items):
             if k == 'iommi_style':
                 remaining_namespace.pop(k, None)
@@ -320,5 +328,5 @@ class RefinableObject:
 
     def __repr__(self):
         return (
-            f"<{self.__class__.__name__} " + ' '.join(f'{k}={v}' for k, v in flatten_items(self.iommi_namespace)) + ">"
+            f"<{self.__class__.__name__} " + ' '.join(f'{k}={v}' for k, v in flatten_items(self.iommi_namespace._get_resolved())) + ">"
         )
