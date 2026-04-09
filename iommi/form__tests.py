@@ -220,7 +220,7 @@ def test_required_choice():
 
 def test_multi_choice_is_list():
     f = Field.multi_choice(choices=['a', 'b', 'c']).refine_done()
-    assert f.iommi_namespace.is_list
+    assert f.iommi_namespace.get('is_list')
     assert f.is_list
 
 
@@ -665,7 +665,7 @@ def test_declared_fields():
     form = form.bind(
         request=req('get'),
     )
-    assert list(form.iommi_namespace.fields.keys()) == ['foo', 'bar']
+    assert list(form.iommi_namespace.get('fields').keys()) == ['foo', 'bar']
     assert list(form.fields.keys()) == ['foo']
 
 
@@ -4112,8 +4112,8 @@ def test_form_template_override_bug():
         def case2(cls, **kwargs):
             return cls(**kwargs)
 
-    assert MyForm.case1().refine_done().iommi_namespace.template == 'case1'
-    assert MyForm.case2().refine_done().iommi_namespace.template == 'case2'
+    assert MyForm.case1().refine_done().iommi_namespace.get('template') == 'case1'
+    assert MyForm.case2().refine_done().iommi_namespace.get('template') == 'case2'
 
 
 @pytest.mark.django_db
