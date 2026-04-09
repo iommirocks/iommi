@@ -225,27 +225,6 @@ class RefinableStack:
     def __contains__(self, key):
         return key in self._get_resolved()
 
-    def __getattr__(self, key):
-        # Delegate attribute access to the resolved namespace.
-        # object.__getattribute__ is used for _stack and _resolved to avoid recursion.
-        try:
-            resolved = object.__getattribute__(self, '_resolved')
-        except AttributeError:
-            raise AttributeError(key)
-        if resolved is None:
-            resolved = self._build_resolved()
-            object.__setattr__(self, '_resolved', resolved)
-        try:
-            return getattr(resolved, key)
-        except AttributeError:
-            raise AttributeError(f"'RefinableStack' object has no attribute '{key}'")
-
-    def __eq__(self, other):
-        resolved = self._get_resolved()
-        if isinstance(other, RefinableStack):
-            return resolved == other._get_resolved()
-        return resolved == other
-
     def __repr__(self):
         return repr(self._get_resolved())
 

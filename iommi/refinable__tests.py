@@ -37,7 +37,7 @@ def test_i_stil_med2():
             ('refine', {'foo': Fragment()}),
         ]
     )
-    f.foo.refine_done()
+    f.get('foo').refine_done()
 
 
 def test_empty():
@@ -251,13 +251,13 @@ def test_no_double_done_refine():
 def test_refined_namespace():
     base = RefinableNamespace(a=1, b=2)
     refined = base._refine(Prio.refine, b=3)
-    assert refined == Namespace(a=1, b=3)
+    assert refined._get_resolved() == Namespace(a=1, b=3)
 
 
 def test_refined_defaults():
     base = RefinableNamespace(a=1, b=2)
     refined = base._refine(Prio.refine_defaults, b=3, c=4)
-    assert refined == Namespace(a=1, b=2, c=4)
+    assert refined._get_resolved() == Namespace(a=1, b=2, c=4)
 
 
 def test_refined_as_stack():
@@ -266,7 +266,7 @@ def test_refined_as_stack():
     namespace = namespace._refine(Prio.refine_defaults, c=3)
     namespace = namespace._refine(Prio.refine, d=4)
     namespace = namespace._refine(Prio.refine_defaults, e=5)
-    assert namespace == dict(a=1, b=2, c=3, d=4, e=5)
+    assert namespace._get_resolved() == dict(a=1, b=2, c=3, d=4, e=5)
     assert namespace.as_stack() == [
         ('refine_defaults', {'c': 3}),
         ('refine_defaults', {'e': 5}),  # Later defaults now shadow earlier defaults
