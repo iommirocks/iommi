@@ -136,6 +136,100 @@ class RefinableNamespace(Namespace):
         return result
 
 
+class RefinableStack:
+    """
+    Stores a refinement stack and lazily resolves it to a Namespace on first
+    dict-like access. Does not inherit from Namespace or dict.
+
+    Public interface: .get(), .keys(), .set(), __contains__, as_stack(),
+    print_origin(), _refine().
+    """
+
+    def __init__(self, **kwargs):
+        if kwargs:
+            ns = Namespace(**kwargs)
+            object.__setattr__(self, '_stack', [(Prio.base, ns, list(flatten_items(ns)))])
+        else:
+            object.__setattr__(self, '_stack', [])
+        object.__setattr__(self, '_resolved', None)
+
+    def _get_parent_stack(self):
+        return object.__getattribute__(self, '_stack')
+
+    def _get_resolved(self):
+        resolved = object.__getattribute__(self, '_resolved')
+        if resolved is None:
+            resolved = self._build_resolved()
+            object.__setattr__(self, '_resolved', resolved)
+        return resolved
+
+    def _build_resolved(self):
+        """Merge the stack into a single Namespace. Called at most once."""
+        stack = self._get_parent_stack()
+        result = Namespace()
+        missing = object()
+
+        for prio, params, flattened_params in stack:
+            for path, value in flattened_params:
+                found = False
+                for prefix in prefixes(path):
+                    existing = getattr_path(result, prefix, missing)
+                    if existing is missing:
+                        break
+                    new_updates = getattr_path(params, prefix)
+
+                    if isinstance(existing, RefinableObject):
+                        if isinstance(new_updates, dict):
+                            existing = existing.refine(prio, **new_updates)
+                        else:
+                            existing = new_updates
+                        result.setitem_path(prefix, existing)
+                        found = True
+
+                    if isinstance(new_updates, RefinableObject):
+                        result.setitem_path(prefix, new_updates)
+                        found = True
+
+                if not found:
+                    result.setitem_path(path, value)
+
+        return result
+
+    def _refine(self, prio: Prio, **kwargs):
+        params = Namespace(**kwargs)
+        stack = self._get_parent_stack() + [(prio, params, list(flatten_items(params)))]
+        stack.sort(key=lambda x: x[0].value)
+        result = object.__new__(RefinableStack)
+        object.__setattr__(result, '_stack', stack)
+        object.__setattr__(result, '_resolved', None)
+        return result
+
+    # --- Public value access ---
+
+    def get(self, key, default=None):
+        return self._get_resolved().get(key, default)
+
+    def keys(self):
+        return self._get_resolved().keys()
+
+    def set(self, key, value):
+        """Mutate the resolved namespace directly. Only for use in on_refine_done hooks."""
+        self._get_resolved()[key] = value
+
+    def __contains__(self, key):
+        return key in self._get_resolved()
+
+    # --- Stack inspection ---
+
+    def as_stack(self):
+        return [(prio.name, dict(flattened_params)) for prio, _, flattened_params in self._get_parent_stack()]
+
+    def print_origin(self, refinable_name):
+        for prio, params in self.as_stack():
+            if refinable_name in params:
+                print(prio, params[refinable_name])
+
+
 class Refinable:
     def __str__(self):
         # Prevent non-defined string conversion ending up in templates

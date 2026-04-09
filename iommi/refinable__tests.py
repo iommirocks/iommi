@@ -362,6 +362,27 @@ def test_fragment_in_fields():
     )
     assert "I see a black moon rising" in form.bind(request=req("get")).__html__()
 
+def test_refinable_stack_lazy_resolution():
+    """_refine() must not trigger resolution; first .get() resolves and caches."""
+    from iommi.refinable import RefinableStack
+
+    stack = RefinableStack(a=1)
+    stack2 = stack._refine(Prio.refine, b=2)
+    stack3 = stack2._refine(Prio.refine_defaults, a=99)  # lower prio, loses
+
+    # No resolution has happened yet
+    assert object.__getattribute__(stack3, '_resolved') is None
+
+    # First access triggers resolution
+    assert stack3.get('a') == 1   # Prio.refine wins over Prio.refine_defaults
+    assert stack3.get('b') == 2
+
+    # Subsequent access uses cache
+    resolved_id = id(object.__getattribute__(stack3, '_resolved'))
+    _ = stack3.get('a')
+    assert id(object.__getattribute__(stack3, '_resolved')) == resolved_id
+
+
 def test_with_meta_warning():
     @with_meta
     class MyPage(Page):
