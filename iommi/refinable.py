@@ -15,6 +15,7 @@ from iommi.declarative.with_meta import (
     get_meta_flat,
 )
 from iommi.evaluate import get_signature
+from iommi.struct import Struct
 
 
 def prefixes(path):
@@ -65,41 +66,20 @@ def flatten_items(namespace, _prefix=''):
 
 
 class RefinableStack:
-    """
-    Stores a refinement stack and lazily resolves it to a Namespace on first
-    dict-like access. Does not inherit from Namespace or dict.
-
-    Public interface: .get(), .keys(), .set(), __contains__, as_stack(),
-    print_origin(), _refine().
-    """
-
     def __init__(self, **kwargs):
         if kwargs:
             ns = Namespace(**kwargs)
-            object.__setattr__(self, '_stack', [(Prio.base, ns, list(flatten_items(ns)))])
+            self._stack = [(Prio.base, ns, list(flatten_items(ns)))]
         else:
-            object.__setattr__(self, '_stack', [])
-        object.__setattr__(self, '_resolved', None)
-
-    def _get_parent_stack(self):
-        return object.__getattribute__(self, '_stack')
-
-    def _get_resolved(self):
-        resolved = object.__getattribute__(self, '_resolved')
-        if resolved is None:
-            resolved = self._build_resolved()
-            object.__setattr__(self, '_resolved', resolved)
-        return resolved
+            self._stack = []
+        self._resolved = None
+        self._value_set = False
 
     def _build_resolved(self):
-        """Merge the stack into a single Namespace. Called at most once."""
-        # Note: RefinableObject is defined later in this module. Python resolves
-        # names at call time, so the isinstance checks below work correctly.
-        stack = self._get_parent_stack()
         result = Namespace()
         missing = object()
 
-        for prio, params, flattened_params in stack:
+        for prio, params, flattened_params in self._stack:
             for path, value in flattened_params:
                 found = False
                 for prefix in prefixes(path):
@@ -126,21 +106,25 @@ class RefinableStack:
         return result
 
     def _refine(self, prio: Prio, **kwargs):
+        assert not self._value_set, 'Not able to _refine() after hard value .set()'
         params = Namespace(**kwargs)
-        stack = self._get_parent_stack() + [(prio, params, list(flatten_items(params)))]
+        stack = self._stack + [(prio, params, list(flatten_items(params)))]
         stack.sort(key=lambda x: x[0].value)
-        result = object.__new__(RefinableStack)
-        object.__setattr__(result, '_stack', stack)
-        object.__setattr__(result, '_resolved', None)
+        result = RefinableStack()
+        result._stack =  stack
+        result._resolved =  None
         return result
 
-    # --- Public value access ---
+    def as_namespace(self):
+        resolved = self._resolved
+        if resolved is None:
+            resolved = self._build_resolved()
+            self._resolved=resolved
+        return resolved
 
     def get(self, key, default=None):
-        return self._get_resolved().get(key, default)
-
-    def keys(self):
-        return self._get_resolved().keys()
+        value = self.as_namespace().get(key, default)
+        return value
 
     def set(self, key, value):
         """Mutate the resolved namespace directly. Only for use in on_refine_done hooks.
@@ -148,27 +132,24 @@ class RefinableStack:
         Note: this bypasses the stack, so as_stack() and print_origin() will not
         reflect values set this way.
         """
-        self._get_resolved()[key] = value
+        self.as_namespace()[key] = value
+        self._value_set = True
 
     def __contains__(self, key):
-        return key in self._get_resolved()
+        return key in self.as_namespace()
 
     def __repr__(self):
-        return repr(self._get_resolved())
+        return repr(self.as_namespace())
 
     # --- Stack inspection ---
 
     def as_stack(self):
-        return [(prio.name, dict(flattened_params)) for prio, _, flattened_params in self._get_parent_stack()]
+        return [(prio.name, dict(flattened_params)) for prio, _, flattened_params in self._stack]
 
     def print_origin(self, refinable_name):
         for prio, params in self.as_stack():
             if refinable_name in params:
                 print(prio, params[refinable_name])
-
-
-# Backward-compat alias — old class body will be removed in the next task
-RefinableNamespace = RefinableStack
 
 
 class Refinable:
@@ -298,7 +279,7 @@ class RefinableObject:
         if hasattr(result, 'apply_style'):
             is_root = parent is None
             enclosing_style = None if is_root else parent.iommi_style
-            iommi_style = result.iommi_namespace.get('iommi_style')
+            iommi_style = result.iommi_namespace.get('iommi_style', None)
 
             from iommi.style import resolve_style
 
@@ -307,7 +288,8 @@ class RefinableObject:
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')
-        remaining_namespace = {k: result.iommi_namespace.get(k) for k in result.iommi_namespace.keys()}
+        # remaining_namespace = {k: result.iommi_namespace.get(k) for k in result.iommi_namespace.keys()}
+        remaining_namespace = dict(result.iommi_namespace.as_namespace())
         for k, v in items(declared_items):
             if k == 'iommi_style':
                 remaining_namespace.pop(k, None)
@@ -363,5 +345,5 @@ class RefinableObject:
 
     def __repr__(self):
         return (
-            f"<{self.__class__.__name__} " + ' '.join(f'{k}={v}' for k, v in flatten_items(self.iommi_namespace._get_resolved())) + ">"
+                f"<{self.__class__.__name__} " + ' '.join(f'{k}={v}' for k, v in flatten_items(self.iommi_namespace.as_namespace())) + ">"
         )

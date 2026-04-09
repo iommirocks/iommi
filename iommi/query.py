@@ -762,7 +762,11 @@ class Query(Part, Tag):
 
         declared_fields = Struct()
 
-        freetext_search_config = self.iommi_namespace.get('form', Namespace()).get('fields', {}).get(FREETEXT_SEARCH_NAME, {})
+        freetext_search_config = getattr_path(
+            self.iommi_namespace.as_namespace(),
+            f'form__fields__{FREETEXT_SEARCH_NAME}',
+            {},
+        )
         if freetext_search_config is not None:
             declared_fields[FREETEXT_SEARCH_NAME] = setdefaults_path(
                 Namespace(),

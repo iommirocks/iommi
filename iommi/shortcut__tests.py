@@ -103,7 +103,7 @@ def test_shortcut_to_superclass_two_calls_no_decorator():
             return result.refine(Prio.shortcut, y=42)
 
     result = Bar.baz()
-    assert result.iommi_namespace._get_resolved() == dict(x=17, y=42, z=4711)
+    assert result.iommi_namespace.as_namespace() == dict(x=17, y=42, z=4711)
     assert isinstance(result, Bar)
 
 
@@ -141,7 +141,7 @@ def test_shortcut_to_superclass_two_calls2():
     result = Bar.baz(v=456)
     result.refine_done()
 
-    assert result.iommi_namespace._get_resolved() == dict(v=456, w=123, x=17, y=42, z=4711)
+    assert result.iommi_namespace.as_namespace() == dict(v=456, w=123, x=17, y=42, z=4711)
     assert isinstance(result, Bar)
     assert result.iommi_namespace.as_stack() == [
         ('constructor', {'w': 123}),
@@ -284,7 +284,7 @@ def test_shortcut_to_superclass():
             return super_classmethod(**kwargs)
 
     result = Bar.baz()
-    assert result.iommi_namespace._get_resolved() == dict(x=17, y=42)
+    assert result.iommi_namespace.as_namespace() == dict(x=17, y=42)
     assert isinstance(result, Bar)
 
 
@@ -306,7 +306,7 @@ def test_superinvoking_twice():
         def foo(cls, super_classmethod, **kwargs):
             return super_classmethod(**kwargs)
 
-    assert Bar.foo().iommi_namespace._get_resolved() == dict(x=17, y=42)
+    assert Bar.foo().iommi_namespace.as_namespace() == dict(x=17, y=42)
 
     class Baz(Bar):
         @classmethod
@@ -317,7 +317,7 @@ def test_superinvoking_twice():
         def foo(cls, super_classmethod, **kwargs):
             return super_classmethod(**kwargs)
 
-    assert Baz.foo().iommi_namespace._get_resolved() == dict(x=17, y=42, z=9)
+    assert Baz.foo().iommi_namespace.as_namespace() == dict(x=17, y=42, z=9)
 
 
 def test_super_twice():
@@ -337,7 +337,7 @@ def test_super_twice():
         def foo(cls, **kwargs):
             return super().foo(**kwargs)
 
-    assert Bar.foo().iommi_namespace._get_resolved() == dict(x=17, y=42)
+    assert Bar.foo().iommi_namespace.as_namespace() == dict(x=17, y=42)
 
     class Baz(Bar):
         @classmethod
@@ -347,7 +347,7 @@ def test_super_twice():
         def foo(cls, **kwargs):
             return super().foo(**kwargs)
 
-    assert Baz.foo().iommi_namespace._get_resolved() == dict(x=17, y=42, z=9)
+    assert Baz.foo().iommi_namespace.as_namespace() == dict(x=17, y=42, z=9)
 
 
 def test_superinvoking_misconfig_no_super_warning():

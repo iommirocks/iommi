@@ -177,20 +177,32 @@ assert w2.label == "soft default"                # only value present
 
 ## Technical analysis of the internal workings
 
-### RefinableNamespace — the refinement stack
+### RefinableStack — the refinement stack
 
-`RefinableNamespace` is a `Namespace` (dict-like) that additionally carries a hidden `__iommi_refined_stack`: a list of `(Prio, raw_params, flattened_items)` tuples, one entry per `.refine()` call.
+`RefinableStack` is a standalone class (not a `Namespace` subclass) that carries `_stack`: a list of `(Prio, raw_params, flattened_items)` tuples, one entry per `.refine()` call. It also holds a `_resolved` cache and a `_value_set` flag.
 
-`_refine(prio, **kwargs)` builds a new `RefinableNamespace` by:
-1. Appending the new entry to the stack copy.
-2. Sorting the stack by `prio.value` (ascending = lowest wins if not overridden).
-3. Replaying the sorted stack onto a fresh `RefinableNamespace`:
-   - For each `(path, value)` in priority order:
-     - Walk every prefix of the path looking for an existing `RefinableObject`.
-     - If found, delegate to `existing.refine(prio, **sub_kwargs)` — recursion into nested objects.
-     - Otherwise write the value directly at the path.
+`_refine(prio, **kwargs)` builds a new `RefinableStack` by:
+1. Appending the new `(prio, params, flattened_items)` entry to a copy of the stack.
+2. Sorting the copy by `prio.value` (ascending = lowest priority first).
+3. Returning a fresh `RefinableStack` with the sorted stack and `_resolved = None`.
 
-This means the stack never collapses until `refine_done()`: every layer is preserved and the stack can be inspected for debugging:
+Resolution is **lazy**: the sorted stack is only collapsed into a final `Namespace` when `as_namespace()` is first called (which triggers `_build_resolved()`). During `_build_resolved()`:
+- For each `(path, value)` in priority order:
+  - Walk every prefix of the path looking for an existing `RefinableObject` in the result.
+  - If found and the incoming update is dict-like, delegate to `existing.refine(prio, **sub_kwargs)` — recursion into nested objects.
+  - If the incoming value is itself a `RefinableObject`, write it directly.
+  - Otherwise write the value at the path.
+
+The result is cached on `_resolved` so subsequent `as_namespace()` calls are O(1).
+
+Additional public methods on `RefinableStack`:
+- `get(key, default=None)` — read a key from the resolved namespace.
+- `set(key, value)` — mutate the resolved namespace directly; only for use in `on_refine_done()` hooks (sets `_value_set = True`, preventing further `_refine()` calls).
+- `__contains__(key)` — membership test against the resolved namespace.
+- `as_stack()` — returns the raw stack as a list of `(prio_name, flattened_dict)` pairs for debugging.
+- `print_origin(refinable_name)` — prints, for each stack layer, the value of `refinable_name` if present.
+
+The stack can be inspected for debugging:
 
 ```python
 basket = Basket(fruits__banana=Fruit(color='yellow'))
