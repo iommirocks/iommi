@@ -225,6 +225,30 @@ class RefinableStack:
     def __contains__(self, key):
         return key in self._get_resolved()
 
+    def __getattr__(self, key):
+        # Delegate attribute access to the resolved namespace.
+        # object.__getattribute__ is used for _stack and _resolved to avoid recursion.
+        try:
+            resolved = object.__getattribute__(self, '_resolved')
+        except AttributeError:
+            raise AttributeError(key)
+        if resolved is None:
+            resolved = self._build_resolved()
+            object.__setattr__(self, '_resolved', resolved)
+        try:
+            return getattr(resolved, key)
+        except AttributeError:
+            raise AttributeError(f"'RefinableStack' object has no attribute '{key}'")
+
+    def __eq__(self, other):
+        resolved = self._get_resolved()
+        if isinstance(other, RefinableStack):
+            return resolved == other._get_resolved()
+        return resolved == other
+
+    def __repr__(self):
+        return repr(self._get_resolved())
+
     # --- Stack inspection ---
 
     def as_stack(self):
@@ -234,6 +258,10 @@ class RefinableStack:
         for prio, params in self.as_stack():
             if refinable_name in params:
                 print(prio, params[refinable_name])
+
+
+# Backward-compat alias — old class body will be removed in the next task
+RefinableNamespace = RefinableStack
 
 
 class Refinable:
@@ -317,13 +345,13 @@ class RefinableMembers(Refinable):
     add_init_kwargs=False,
 )
 class RefinableObject:
-    iommi_namespace: RefinableNamespace
+    iommi_namespace: RefinableStack
     is_refine_done: bool
 
     @dispatch
     def __init__(self, **kwargs):
         self.is_refine_done = False
-        self.iommi_namespace = RefinableNamespace(**kwargs)
+        self.iommi_namespace = RefinableStack(**kwargs)
         declared_items = self.get_declared('refinable')
         unknown_args = [name for name in kwargs if name not in declared_items]
         if unknown_args:
