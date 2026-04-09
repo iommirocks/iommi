@@ -2,11 +2,6 @@ import warnings
 from copy import copy
 from enum import auto, \
     Enum
-from typing import (
-    Any,
-    List,
-    Tuple,
-)
 
 from iommi.base import items
 from iommi.declarative import declarative
@@ -67,73 +62,6 @@ def flatten_items(namespace, _prefix=''):
                 yield path, value
         else:
             yield path, value
-
-
-class RefinableNamespace(Namespace):
-    __iommi_refined_stack: List[Tuple[Prio, Namespace, List[Tuple[str, Any]]]]
-
-    def _get_resolved(self):
-        # shim: RefinableNamespace IS already a resolved dict
-        return self
-
-    def set(self, key, value):
-        # shim: RefinableNamespace is a dict, so plain assignment works
-        self[key] = value
-
-    def print_origin(self, refinable_name):
-        for prio, params in self.as_stack():
-            if refinable_name in params:
-                print(prio, params[refinable_name])
-
-    def as_stack(self):
-        return [(prio.name, dict(flattened_params)) for prio, _, flattened_params in self._get_parent_stack()]
-
-    def _get_parent_stack(self):
-        try:
-            return object.__getattribute__(self, '__iommi_refined_stack')
-        except AttributeError:
-            return [
-                (Prio.base, self, list(flatten_items(self))),
-            ]
-
-    def _refine(self, prio: Prio, **kwargs):
-        params = Namespace(**kwargs)
-
-        stack = self._get_parent_stack() + [
-            (prio, params, list(flatten_items(params))),
-        ]
-        stack.sort(key=lambda x: x[0].value)
-
-        result = RefinableNamespace()
-        object.__setattr__(result, '__iommi_refined_stack', stack)
-
-        missing = object()
-
-        for prio, params, flattened_params in stack:
-            for path, value in flattened_params:
-                found = False
-                for prefix in prefixes(path):
-                    existing = getattr_path(result, prefix, missing)
-                    if existing is missing:
-                        break
-                    new_updates = getattr_path(params, prefix)
-
-                    if isinstance(existing, RefinableObject):
-                        if isinstance(new_updates, dict):
-                            existing = existing.refine(prio, **new_updates)
-                        else:
-                            existing = new_updates
-                        result.setitem_path(prefix, existing)
-                        found = True
-
-                    if isinstance(new_updates, RefinableObject):
-                        result.setitem_path(prefix, new_updates)
-                        found = True
-
-                if not found:
-                    result.setitem_path(path, value)
-
-        return result
 
 
 class RefinableStack:
