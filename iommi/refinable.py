@@ -165,6 +165,8 @@ class RefinableStack:
 
     def _build_resolved(self):
         """Merge the stack into a single Namespace. Called at most once."""
+        # Note: RefinableObject is defined later in this module. Python resolves
+        # names at call time, so the isinstance checks below work correctly.
         stack = self._get_parent_stack()
         result = Namespace()
         missing = object()
@@ -213,7 +215,11 @@ class RefinableStack:
         return self._get_resolved().keys()
 
     def set(self, key, value):
-        """Mutate the resolved namespace directly. Only for use in on_refine_done hooks."""
+        """Mutate the resolved namespace directly. Only for use in on_refine_done hooks.
+
+        Note: this bypasses the stack, so as_stack() and print_origin() will not
+        reflect values set this way.
+        """
         self._get_resolved()[key] = value
 
     def __contains__(self, key):
