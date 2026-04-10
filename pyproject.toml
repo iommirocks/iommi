@@ -35,7 +35,7 @@ dev = [
     "pytest-snapshot==0.9.0",
     "ruff==0.3.7",
     "sphinx>=7.4.7",
-    "time-machine==2.14.1",
+    "time-machine>=2.17.0",
     "docutils>=0.21.2",
     "pyparsing>=3.2.0",
     "sphinx-llms-txt==0.2.2",
