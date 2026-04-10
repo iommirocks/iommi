@@ -82,7 +82,6 @@ fabric.properties
 
 
 *.py[cod]
-examples/db.sqlite3
 venv
 table.css.map
 :.cache
