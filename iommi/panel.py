@@ -56,7 +56,7 @@ class Panel(Fragment):
         super(Panel, self).__init__(children=children, **kwargs)
 
     def as_dict(self):
-        return self.iommi_namespace.children
+        return self.iommi_namespace.get('children')
 
     def _get_cached_ancestor(self, property_name, instance_of):
         cache_property_name = f'_parent{property_name}'

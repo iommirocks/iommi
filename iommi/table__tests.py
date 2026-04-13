@@ -2269,7 +2269,7 @@ def test_from_model():
     )
     t = t.bind(request=None)
     assert set(get_field_by_name(TFoo).keys()) == {'id', 'a', 'b', 'tbar_set'}
-    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'a', 'b', 'tbar_set'}
+    assert set(t.iommi_namespace.get('columns').keys()) == {'select', 'id', 'a', 'b', 'tbar_set'}
     assert list(t.columns.keys()) == ['a', 'b']
     assert t.columns['a'].display_name == 'Some a'
     assert t.columns['a'].extra.stuff == 'Some stuff'
@@ -2280,7 +2280,7 @@ def test_from_model_foreign_key():
     t = Table(
         auto__model=TBar,
     ).bind(request=None)
-    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'foo', 'c', 'tbar2_set'}
+    assert set(t.iommi_namespace.get('columns').keys()) == {'select', 'id', 'foo', 'c', 'tbar2_set'}
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
@@ -2290,7 +2290,7 @@ def test_select_ordering():
         auto__model=TBar,
         columns__select__include=True,
     ).bind(request=None)
-    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'foo', 'c', 'tbar2_set'}
+    assert set(t.iommi_namespace.get('columns').keys()) == {'select', 'id', 'foo', 'c', 'tbar2_set'}
     assert list(t.columns.keys()) == ['select', 'foo', 'c']
 
 
@@ -2305,14 +2305,14 @@ def test_explicit_table_does_not_use_from_model():
         )
 
     t = TestTable().bind(request=None)
-    assert list(t.iommi_namespace.columns.keys()) == ['select', 'foo']
+    assert list(t.iommi_namespace.get('columns').keys()) == ['select', 'foo']
     assert list(t.iommi_bound_members().columns._bound_members.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_implicit():
     t = Table(auto__rows=TBar.objects.all()).bind(request=None)
-    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'foo', 'c', 'tbar2_set'}
+    assert set(t.iommi_namespace.get('columns').keys()) == {'select', 'id', 'foo', 'c', 'tbar2_set'}
     assert list(t.columns.keys()) == ['foo', 'c']
 
 

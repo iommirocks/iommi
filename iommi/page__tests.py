@@ -45,7 +45,7 @@ def test_page_constructor():
 
     my_page = MyPage(parts__foo=html.div(_name='foo'), parts__bar=html.div()).refine_done()
 
-    assert list(my_page.iommi_namespace.parts.keys()) == ['h1', 'foo', 'bar']
+    assert list(my_page.iommi_namespace.get('parts').keys()) == ['h1', 'foo', 'bar']
     my_page = my_page.bind(request=None)
     assert list(my_page.parts.keys()) == ['h1', 'foo', 'bar']
 
@@ -94,7 +94,7 @@ def test_promote_str_to_fragment_for_page():
         foo = 'asd'
 
     page = MyPage().refine_done()
-    assert isinstance(page.iommi_namespace.parts.foo, Fragment)
+    assert isinstance(page.iommi_namespace.get('parts').foo, Fragment)
 
 
 def test_as_html_integer():

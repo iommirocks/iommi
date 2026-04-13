@@ -695,7 +695,7 @@ def test_multi_choice_queryset():
 @pytest.mark.django_db
 def test_from_model_with_model_class():
     t = Query(auto__model=Foo).bind(request=None)
-    assert set(t.iommi_namespace.filters.keys()) == {
+    assert set(t.iommi_namespace.get('filters').keys()) == {
         'id',
         'foo',
         'bars',
@@ -712,7 +712,7 @@ def test_from_model_with_model_class():
 @pytest.mark.django_db
 def test_from_model_with_queryset():
     t = Query(auto__rows=Foo.objects.all()).bind(request=None)
-    assert set(t.iommi_namespace.filters.keys()) == {
+    assert set(t.iommi_namespace.get('filters').keys()) == {
         'id',
         'foo',
         'bars',
@@ -733,7 +733,7 @@ def test_from_model_foreign_key():
             filters = Query.filters_from_model(model=Bar)
 
     t = MyQuery().bind(request=req('get'))
-    assert set(t.iommi_namespace.filters.keys()) == {'id', 'foo'}
+    assert set(t.iommi_namespace.get('filters').keys()) == {'id', 'foo'}
     assert isinstance(t.filters['foo'].choices, QuerySet)
 
 
@@ -977,7 +977,7 @@ def test_shortcuts_map_to_form(name, shortcut):
     if name == 'datetime':
         name = 'date'
 
-    assert shortcut(**kwargs).iommi_namespace.field.call_target.attribute == name
+    assert shortcut(**kwargs).iommi_namespace.get('field').call_target.attribute == name
 
 
 @pytest.mark.django_db

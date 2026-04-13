@@ -231,8 +231,8 @@ def prepare_headers(table):
                     params[param_path] = new_order
                     column.sort_direction = DESCENDING if is_desc else ASCENDING
                     column.is_sorting = True
-            if table.iommi_namespace.parts.page:
-                paginator_parameter_name = table.iommi_namespace.parts.page.iommi_path
+            if table.iommi_namespace.get('parts', Namespace()).get('page'):
+                paginator_parameter_name = table.iommi_namespace.get('parts').get('page').iommi_path
                 params.pop(paginator_parameter_name, None)
             column.header.url = "?" + params.urlencode()
         else:
@@ -387,7 +387,7 @@ def foreign_key__sort_key(column, **_):
 
 
 def get_choices_from_column(table, traversable, **_):
-    column_definition = table.iommi_namespace.columns[traversable.iommi_name()]
+    column_definition = table.iommi_namespace.get('columns')[traversable.iommi_name()]
     return evaluate_strict(
         column_definition.choices,
         **traversable.iommi_evaluate_parameters(),
@@ -538,7 +538,7 @@ class Column(Part):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
-        if self.table.model and self.attr is not None and (self.iommi_namespace['sortable'] is MISSING or self.iommi_namespace['sortable'] is default_sortable):
+        if self.table.model and self.attr is not None and (self.iommi_namespace.get('sortable', MISSING) is MISSING or self.iommi_namespace.get('sortable', MISSING) is default_sortable):
             if '__' not in self.attr:
                 # Only validate one level of the path for now
                 try:
@@ -2069,7 +2069,7 @@ class Table(Part, Tag):
         )
 
         if not self.sortable:
-            for column in values(self.iommi_namespace.columns):
+            for column in values(self.iommi_namespace.get('columns', {})):
                 # Special case for entire table not sortable
                 column.sortable = False
 
@@ -2099,7 +2099,7 @@ class Table(Part, Tag):
 
             field_class = self.query_class.get_meta().member_class
 
-            for name, column in items(self.iommi_namespace.columns):
+            for name, column in items(self.iommi_namespace.get('columns', {})):
                 if getattr(column, 'include', None) is False:
                     continue
                 if getattr(column.filter, 'include', None) is False:
@@ -2137,14 +2137,14 @@ class Table(Part, Tag):
             )
             self.query = self.query_class(**query_params)
 
-            declared_filters = self.query.iommi_namespace.filters
+            declared_filters = self.query.iommi_namespace.get('filters', {})
             self.query = self.query.refine(Prio.table_defaults, filters=declared_filters)
 
             # Bulk
             field_class = self.form_class.get_meta().member_class
 
             declared_bulk_fields = Struct()
-            for name, column in items(self.iommi_namespace.columns):
+            for name, column in items(self.iommi_namespace.get('columns', {})):
                 if getattr(column, 'include', None) is False:
                     continue
                 if getattr(column.bulk, 'include', None) is False:
@@ -2173,8 +2173,8 @@ class Table(Part, Tag):
 
             # x.bulk.include can be a callable here. We treat that as truthy on purpose.
             if (
-                any(x.bulk.include for x in values(self.iommi_namespace.columns))
-                or 'actions' in self.iommi_namespace.bulk
+                any(x.bulk.include for x in values(self.iommi_namespace.get('columns', {})))
+                or 'actions' in self.iommi_namespace.get('bulk', {})
             ):
                 # noinspection PyCallingNonCallable
                 self.bulk = form_class(
@@ -2200,9 +2200,9 @@ class Table(Part, Tag):
                     fields=declared_bulk_fields,
                 )
 
-        if not self.model and not self.bulk and 'actions' in self.iommi_namespace.bulk:
+        if not self.model and not self.bulk and 'actions' in self.iommi_namespace.get('bulk', {}):
             # TODO: Support custom 'bulk' actions even when there is no model
-            if any(x.bulk.include for x in values(self.iommi_namespace.columns)):
+            if any(x.bulk.include for x in values(self.iommi_namespace.get('columns', {}))):
                 assert False, "The builtin bulk actions only work on querysets."
             declared_bulk_fields = Struct()
             add_hidden_all_pks_field(declared_bulk_fields)
@@ -2308,7 +2308,7 @@ class Table(Part, Tag):
         self._bind_headers()
 
         # If the column is not included, the down stream query filters and bulk fields should also be gone
-        for name, column in items(self.iommi_namespace.columns):
+        for name, column in items(self.iommi_namespace.get('columns', {})):
             if name not in keys(self.columns):
                 if self.query and name in self.query.filters:
                     del self.query.filters[name]

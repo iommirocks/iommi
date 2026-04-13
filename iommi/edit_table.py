@@ -149,10 +149,10 @@ class EditCell(Cell):
 
 
 def bind_field_from_instance(field, instance):
-    field.input = field.iommi_namespace.input(_name='input')
-    field.non_editable_input = field.iommi_namespace.non_editable_input(_name='non_editable_input')
-    field.editable = field.iommi_namespace.editable
-    field.initial = field.iommi_namespace.initial
+    field.input = field.iommi_namespace.get('input')(_name='input')
+    field.non_editable_input = field.iommi_namespace.get('non_editable_input')(_name='non_editable_input')
+    field.editable = field.iommi_namespace.get('editable')
+    field.initial = field.iommi_namespace.get('initial')
     field.label.attrs['for'] = evaluate_strict(default_input_id, **field.label.iommi_evaluate_parameters())
     field._evaluate_parameters['instance'] = instance
 
@@ -524,7 +524,7 @@ class EditTable(Table):
 
         fields = Struct()
 
-        for name, column in items(self.iommi_namespace.columns):
+        for name, column in items(self.iommi_namespace.get('columns', {})):
             if not isinstance(column, EditColumn):
                 continue
             if getattr(column, 'include', None) is False:
@@ -546,7 +546,7 @@ class EditTable(Table):
                     attr=name if column.attr is MISSING else column.attr,
                 )
             else:
-                field = column.iommi_namespace.field
+                field = column.iommi_namespace.get('field')
 
             fields[name] = field
 
@@ -587,7 +587,7 @@ class EditTable(Table):
             members_cls=Actions,
         )
 
-        declared_fields = self.edit_form.iommi_namespace.fields
+        declared_fields = self.edit_form.iommi_namespace.get('fields', {})
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
         if self.create_form is not None:
             self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()

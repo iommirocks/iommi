@@ -19,14 +19,14 @@ from iommi.refinable import (
     Refinable,
     refinable,
     RefinableMembers,
-    RefinableNamespace,
-    RefinableObject
+    RefinableObject,
+    RefinableStack
 )
 from tests.helpers import req
 
 
 def test_i_stil_med2():
-    f = RefinableNamespace(foo__call_target__cls=Header)
+    f = RefinableStack(foo__call_target__cls=Header)
     f = f._refine(
         Prio.refine,
         foo=Fragment(),
@@ -37,7 +37,7 @@ def test_i_stil_med2():
             ('refine', {'foo': Fragment()}),
         ]
     )
-    f.foo.refine_done()
+    f.get('foo').refine_done()
 
 
 def test_empty():
@@ -50,7 +50,7 @@ def test_empty():
     my_refinable = MyRefinableObject(17, x=42)
     assert my_refinable.a == 17
     assert my_refinable.x == 42
-    assert my_refinable.iommi_namespace == Namespace()
+    assert my_refinable.iommi_namespace.as_namespace() == Namespace()
 
 
 def test_refinable():
@@ -65,7 +65,7 @@ def test_refinable():
     my_refinable = MyRefinableObject(17, x=42, b=4711)
     assert my_refinable.a == 17
     assert my_refinable.x == 42
-    assert my_refinable.iommi_namespace == Namespace(b=4711)
+    assert my_refinable.iommi_namespace.as_namespace() == Namespace(b=4711)
 
 
 def test_with_meta():
@@ -78,7 +78,7 @@ def test_with_meta():
             b__c = 3
 
     my_refinable = MyRefinableObject(b=2)
-    assert my_refinable.refine_done().iommi_namespace == Namespace(a=1, b=2)
+    assert my_refinable.refine_done().iommi_namespace.as_namespace() == Namespace(a=1, b=2)
     assert my_refinable.get_meta() ==Namespace(a=1, b__c=3)
     assert my_refinable.get_meta_flat() ==dict(a=1, b__c=3)
 
@@ -92,7 +92,7 @@ def test_with_dispatch():
             super().__init__(**kwargs)
 
     my_refinable = MyRefinableObject(b=2)
-    assert my_refinable.iommi_namespace == Namespace(a=1, b=2)
+    assert my_refinable.iommi_namespace.as_namespace() == Namespace(a=1, b=2)
 
 
 def test_refine():
@@ -100,10 +100,10 @@ def test_refine():
         a = Refinable()
 
     my_refinable = MyRefinableObject(a=17)
-    assert my_refinable.iommi_namespace == Namespace(a=17)
+    assert my_refinable.iommi_namespace.as_namespace() == Namespace(a=17)
 
     my_refined_namespacey = my_refinable.refine(a=42)
-    assert my_refined_namespacey.iommi_namespace == Namespace(a=42)
+    assert my_refined_namespacey.iommi_namespace.as_namespace() == Namespace(a=42)
     assert isinstance(my_refined_namespacey, MyRefinableObject)
 
 
@@ -204,13 +204,13 @@ def test_refine_defaults():
         a = Refinable()
 
     my_refined_refinable = MyRefinableObject().refine_defaults(a=42)
-    assert my_refined_refinable.iommi_namespace == Namespace(a=42)
+    assert my_refined_refinable.iommi_namespace.as_namespace() == Namespace(a=42)
 
     my_refinable = MyRefinableObject(a=17)
-    assert my_refinable.iommi_namespace == Namespace(a=17)
+    assert my_refinable.iommi_namespace.as_namespace() == Namespace(a=17)
 
     my_refined_refinable = my_refinable.refine_defaults(a=42)
-    assert my_refined_refinable.iommi_namespace == Namespace(a=17)
+    assert my_refined_refinable.iommi_namespace.as_namespace() == Namespace(a=17)
 
 
 def test_refine_fail_on_call_target():
@@ -249,24 +249,24 @@ def test_no_double_done_refine():
 
 
 def test_refined_namespace():
-    base = RefinableNamespace(a=1, b=2)
+    base = RefinableStack(a=1, b=2)
     refined = base._refine(Prio.refine, b=3)
-    assert refined == Namespace(a=1, b=3)
+    assert refined.as_namespace() == Namespace(a=1, b=3)
 
 
 def test_refined_defaults():
-    base = RefinableNamespace(a=1, b=2)
+    base = RefinableStack(a=1, b=2)
     refined = base._refine(Prio.refine_defaults, b=3, c=4)
-    assert refined == Namespace(a=1, b=2, c=4)
+    assert refined.as_namespace() == Namespace(a=1, b=2, c=4)
 
 
 def test_refined_as_stack():
-    namespace = RefinableNamespace(a=1)
+    namespace = RefinableStack(a=1)
     namespace = namespace._refine(Prio.refine, b=2)
     namespace = namespace._refine(Prio.refine_defaults, c=3)
     namespace = namespace._refine(Prio.refine, d=4)
     namespace = namespace._refine(Prio.refine_defaults, e=5)
-    assert namespace == dict(a=1, b=2, c=3, d=4, e=5)
+    assert namespace.as_namespace() == dict(a=1, b=2, c=3, d=4, e=5)
     assert namespace.as_stack() == [
         ('refine_defaults', {'c': 3}),
         ('refine_defaults', {'e': 5}),  # Later defaults now shadow earlier defaults
@@ -361,6 +361,27 @@ def test_fragment_in_fields():
         )
     )
     assert "I see a black moon rising" in form.bind(request=req("get")).__html__()
+
+def test_refinable_stack_lazy_resolution():
+    """_refine() must not trigger resolution; first .get() resolves and caches."""
+    from iommi.refinable import RefinableStack
+
+    stack = RefinableStack(a=1)
+    stack2 = stack._refine(Prio.refine, b=2)
+    stack3 = stack2._refine(Prio.refine_defaults, a=99)  # lower prio, loses
+
+    # No resolution has happened yet
+    assert object.__getattribute__(stack3, '_resolved') is None
+
+    # First access triggers resolution
+    assert stack3.get('a') == 1   # Prio.refine wins over Prio.refine_defaults
+    assert stack3.get('b') == 2
+
+    # Subsequent access uses cache
+    resolved_id = id(object.__getattribute__(stack3, '_resolved'))
+    _ = stack3.get('a')
+    assert id(object.__getattribute__(stack3, '_resolved')) == resolved_id
+
 
 def test_with_meta_warning():
     @with_meta

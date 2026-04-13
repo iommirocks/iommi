@@ -762,7 +762,11 @@ class Query(Part, Tag):
 
         declared_fields = Struct()
 
-        freetext_search_config = self.iommi_namespace.form.get('fields', {}).get(FREETEXT_SEARCH_NAME, {})
+        freetext_search_config = getattr_path(
+            self.iommi_namespace.as_namespace(),
+            f'form__fields__{FREETEXT_SEARCH_NAME}',
+            {},
+        )
         if freetext_search_config is not None:
             declared_fields[FREETEXT_SEARCH_NAME] = setdefaults_path(
                 Namespace(),
@@ -775,7 +779,7 @@ class Query(Part, Tag):
                 help__include=False,
             )
 
-        for name, filter in items(self.iommi_namespace.filters):
+        for name, filter in items(self.iommi_namespace.get('filters', {})):
             orig_include = getattr_path(filter, 'field__include', not filter.freetext)
             declared_fields[name] = setdefaults_path(
                 Namespace(
@@ -797,12 +801,12 @@ class Query(Part, Tag):
             )
 
         # Remove fields from the form that correspond to non-included filters
-        declared_filters = self.iommi_namespace.filters
+        declared_filters = self.iommi_namespace.get('filters', {})
         for name, field in items(declared_fields):
             if name == FREETEXT_SEARCH_NAME:
                 continue
             # We need to check if it's in declared_filters first, otherwise we remove any injected fields
-            if name in declared_filters and name not in self.iommi_namespace.filters:
+            if name in declared_filters and name not in self.iommi_namespace.get('filters', {}):
                 declared_fields[name] = field.refine_from_query(include=False)
 
         form_args = self.form

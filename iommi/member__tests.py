@@ -26,12 +26,12 @@ from tests.helpers import (
 
 
 def test_empty_collect():
-    assert Basket().refine_done().iommi_namespace.fruits == {}
+    assert Basket().refine_done().iommi_namespace.get('fruits') == {}
 
 
 def test_collect_from_arg():
     basket = Basket(fruits__banana__taste="sweet").refine_done()
-    assert basket.iommi_namespace.fruits.banana.taste == 'sweet'
+    assert basket.iommi_namespace.get('fruits').banana.taste == 'sweet'
 
 
 def test_collect_from_declarative():
@@ -39,7 +39,7 @@ def test_collect_from_declarative():
         orange = Fruit(taste='sour')
 
     basket = MyBasket().refine_done()
-    assert basket.iommi_namespace.fruits.orange.taste == 'sour'
+    assert basket.iommi_namespace.get('fruits').orange.taste == 'sour'
 
 
 def test_collect_from_both():
@@ -47,8 +47,8 @@ def test_collect_from_both():
         orange = Fruit(taste='sour')
 
     basket = MyBasket(fruits__banana__taste="sweet").refine_done()
-    assert basket.iommi_namespace.fruits.banana.taste == 'sweet'
-    assert basket.iommi_namespace.fruits.orange.taste == 'sour'
+    assert basket.iommi_namespace.get('fruits').banana.taste == 'sweet'
+    assert basket.iommi_namespace.get('fruits').orange.taste == 'sour'
 
 
 def test_collect_unapplied_config():
@@ -56,7 +56,7 @@ def test_collect_unapplied_config():
         pear = Fruit()
 
     basket = MyBasket(fruits__pear__taste='meh').refine_done()
-    assert basket.iommi_namespace.fruits.pear.taste == 'meh'
+    assert basket.iommi_namespace.get('fruits').pear.taste == 'meh'
 
 
 def test_unbound_error():
@@ -344,10 +344,10 @@ def test_collect_sets_name():
         orange = Fruit(taste='sour')
 
     basket = MyBasket().refine_done()
-    assert basket.iommi_namespace.fruits.orange._name == 'orange'
+    assert basket.iommi_namespace.get('fruits').orange._name == 'orange'
 
     basket = MyBasket(fruits__orange=Fruit(taste='sour')).refine_done()
-    assert basket.iommi_namespace.fruits.orange._name == 'orange'
+    assert basket.iommi_namespace.get('fruits').orange._name == 'orange'
 
 
 def test_none_members_should_be_discarded_after_being_allowed_through():
@@ -355,7 +355,7 @@ def test_none_members_should_be_discarded_after_being_allowed_through():
         orange = Fruit()
 
     basket = MyBasket(fruits__orange=None).refine_done()
-    assert 'orange' not in basket.iommi_namespace.fruits
+    assert 'orange' not in basket.iommi_namespace.get('fruits', {})
     assert basket.fruits.orange is None
 
 
