@@ -82,7 +82,6 @@ fabric.properties
 
 
 *.py[cod]
-examples/db.sqlite3
 venv
 table.css.map
 :.cache
@@ -109,7 +108,6 @@ pip-log.txt
 
 # Unit test / coverage reports
 .coverage
-.tox
 testreport.xml
 htmlcov
 

@@ -1,0 +1,22 @@
+services:
+  tests:
+    build: .
+    volumes:
+      - .:/app
+    command: uv run pytest -n auto
+
+  examples:
+    build: .
+    volumes:
+      - .:/app
+      - examples-db:/app/examples/db_data
+    environment:
+      - UV_LINK_MODE=copy
+    command: >
+      sh -c "uv run python examples/manage.py migrate &&
+             uv run python examples/manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+
+volumes:
+  examples-db:

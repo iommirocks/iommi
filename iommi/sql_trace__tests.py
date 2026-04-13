@@ -62,7 +62,7 @@ def test_middleware(settings, client, caplog):
     settings.SQL_DEBUG_WORST_SUSPICIOUS_CUTOFF = 0
     settings.SQL_DEBUG_WORST_QUERY_CUTOFF = 1
 
-    with time_machine.travel('1948, 2, 19', tick=True):
+    with time_machine.travel('1948-02-19', tick=True):
         client.get('/no_queries/?_iommi_sql_trace')
         assert 'GET /no_queries/?_iommi_sql_trace -> 200' in caplog.text
 
@@ -134,7 +134,8 @@ def test_set_sql_debug():
     assert get_sql_debug() == 'worst'
 
 
-def test_sql_debug_format_stack_trace():
+def test_sql_debug_format_stack_trace(monkeypatch):
+    monkeypatch.setattr('iommi.sql_trace.colored', lambda text, **kwargs: text)
     frames = [
         Struct(
             f_lineno=1,
