@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.25.1 (2026-04-18)
+~~~~~~~~~~~~~~~~~~~
+
+* Optimized refinable handling. This should lead to a general speed improvement across iommi. If you accessed `iommi_namespace` directly, you will need to treat it as a dict instead of a struct, or use `.as_namespace()` to get it flattened like before.
+
+
 7.25.0 (2026-04-07)
 ~~~~~~~~~~~~~~~~~~~
 

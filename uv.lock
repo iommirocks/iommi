@@ -668,7 +668,7 @@ wheels = [
 
 [[package]]
 name = "iommi"
-version = "7.25.0"
+version = "7.25.1"
 source = { editable = "." }
 dependencies = [
     { name = "django", version = "4.2.27", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
