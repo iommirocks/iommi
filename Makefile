@@ -149,4 +149,4 @@ release-check:
 release: clean-build release-check
 	(cd iommi && uv run django-admin compilemessages)
 	uv build
-# 	uv publish
+	uv publish

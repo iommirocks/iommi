@@ -6,7 +6,7 @@ authors = [
     { name = "Anders Hovmöller", email = "boxed@killingar.net" },
     { name = "Johan Lübcke", email = "johan@lubcke.se" },
 ]
-readme = "README.rst"
+readme = "README_pypi.rst"
 requires-python = ">=3.9"
 keywords = ["iommi"]
 license = "BSD-2-Clause"
