@@ -229,3 +229,4 @@ docs/title.rst
 .cache/pip
 
 mutants/
+/.idea/MypyPlugin.xml

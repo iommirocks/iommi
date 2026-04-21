@@ -8,8 +8,8 @@ from django.db import connection
 from docs.models import (
     Album,
     Artist,
-    Track,
     FavoriteArtist,
+    Track,
 )
 from iommi.path import _path_component_to_decode_data
 
