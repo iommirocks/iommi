@@ -324,6 +324,8 @@ class Middleware:
 
                 formatter_url = 'pycharm://open?file={filename}&line={lineno}'
 
+                base_dir_css = str(settings.BASE_DIR).replace('\\', '\\\\').replace('"', '\\"')
+
                 # language=html
                 response.content = f'''\
 <!DOCTYPE html>
@@ -334,14 +336,30 @@ class Middleware:
         <style>
             html {{ color-scheme: light dark; }}
             body {{ background: light-dark(white, #1e1e1e); color: light-dark(black, #ccc); }}
-            .flame-graph span {{
-                background-color: light-dark(#a8d5a8, #305830);
+            .flame-graph span[title] {{
+                background-color: light-dark(#d0d0d0, #404040);
                 border-radius: 3px;
                 margin: 1px;
             }}
+            .flame-graph span[title*="/site-packages/"] {{
+                background-color: light-dark(#f5d58d, #5a4420);
+            }}
+            .flame-graph span[title*="{base_dir_css}"]:not([title*="/site-packages/"]) {{
+                background-color: light-dark(#a8d5a8, #305830);
+            }}
+            .legend {{ display: flex; gap: 16px; padding: 8px 12px; font-family: monospace; font-size: 12px; }}
+            .legend-swatch {{ display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }}
+            .legend-project {{ background-color: light-dark(#a8d5a8, #305830); }}
+            .legend-thirdparty {{ background-color: light-dark(#f5d58d, #5a4420); }}
+            .legend-stdlib {{ background-color: light-dark(#d0d0d0, #404040); }}
         </style>
     </head>
     <body>
+        <div class="legend">
+            <span><span class="legend-swatch legend-project"></span>project</span>
+            <span><span class="legend-swatch legend-thirdparty"></span>third-party</span>
+            <span><span class="legend-swatch legend-stdlib"></span>stdlib</span>
+        </div>
         <div id="elm"></div>
         <script src="{static('js/flame_graph.js')}"></script>
         <script>
