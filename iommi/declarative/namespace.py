@@ -43,6 +43,7 @@ class Namespace(Struct):
     __missing__ = object.__getattribute__
 
     def setitem_path(self, path, value):
+        from iommi.refinable import RefinableObject
         key, delimiter, rest_path = path.partition('__')
         existing = Struct.get(self, key)
 
@@ -55,6 +56,8 @@ class Namespace(Struct):
                 self[key] = type_of_namespace(existing, {rest_path: value})
             elif callable(existing):
                 self[key] = Namespace(dict(call_target=existing), {rest_path: value})
+            elif isinstance(existing, RefinableObject):
+                self[key] = existing.refine(**{rest_path: value})
             else:
                 # Unable to promote to Namespace, just overwrite
                 self[key] = Namespace({rest_path: value})
