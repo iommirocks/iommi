@@ -1,6 +1,8 @@
+from django.template import Template
 import pytest
 
 from iommi import (
+    Action,
     Asset,
     Field,
     Form,
@@ -39,7 +41,7 @@ from tests.helpers import (
     prettify,
     req,
     verify_html,
-    verify_part_html,
+    verify_part_html, verify_table_html,
 )
 from tests.models import TBar
 
@@ -345,13 +347,28 @@ def test_reinvoke_new_default_change_shortcut():
     assert x.baz == 'baz'
 
 
-@pytest.mark.skip('Broken since there is no way to set things on the container of Action')
 def test_set_class_on_actions_container():  # pragma: no cover
-    t = Table()
-    style_data = Namespace(
-        actions__attrs__class={'object-tools': True},
-    )
-    assert bool(t.refine(**style_data).refine_done().actions.attrs['class']['object-tool'])
+    with register_style(
+            'my_style',
+            Style(
+                test,
+                Actions__attrs__class={'object-tools': True},
+            ),
+    ):
+        verify_part_html(
+            part=Table(
+                iommi_style='my_style',
+                rows=[],
+                actions__foo=Action(),
+            ).bind(request=req('get')),
+            find__class='links',
+            # language=HTML
+            expected_html='''
+                <div class="links object-tools">
+                    <a> Foo </a>
+                </div>
+            ''',
+        )
 
 
 def test_assets_render_from_style():

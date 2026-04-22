@@ -83,6 +83,7 @@ from tests.helpers import (
     staff_req,
     user_req,
     verify_html,
+    verify_part_html,
     verify_table_html,
 )
 from tests.models import (
@@ -1867,9 +1868,10 @@ def test_template_string(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
         class Meta:
             model = TFoo
-            actions_template = Template('What links')
-            header__template = Template('What headers')
-            query__template = Template('What filters')
+            actions_below=True
+            actions_template = Template('What links \n')
+            header__template = Template('What headers \n')
+            query__template = Template('What filters ')
 
             row__template = Template('Oh, rows: {% for cell in cells %}{{ cell }}{% endfor %}')
 
@@ -1878,24 +1880,24 @@ def test_template_string(NoSortTable):  # noqa: N803
             filter__include=True,
         )
 
-    verify_table_html(
-        table=TestTable(
+    verify_part_html(
+        part=TestTable(
             actions__foo=Action(display_name='foo', attrs__href='bar'),
         ),
         # language=html
         expected_html="""
             What filters
-            <div class="iommi-table-container">
-                <form action="." method="post">
+            <div class="iommi-table-container" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <div class="iommi-table-plus-paginator">
                     <table class="table" >
                         What headers
                         <tbody>
                             Oh, rows: Custom cell: 1
                         </tbody>
                     </table>
-                    What links
-                </form>
+                </div>
             </div>
+            What links
         """,
     )
 
