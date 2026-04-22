@@ -202,15 +202,6 @@ def test_precedence_override_style(foo_style):
     assert my_page.extra.foo == 'from declaration'
 
 
-@pytest.mark.skip(reason='Does not work yet. Is this a too acrobatic override?')
-def test_precedence_override_style_acrobatic(foo_style):
-    class MyPage(Page):
-        foo = html.div('from declaration')
-
-    my_page = MyPage(iommi_style='foo').bind()
-    assert str(my_page) == '<div>from declaration</div>'
-
-
 def test_precedence_override_meta(foo_style):
     class MyPage(Page):
         foo = html.div('from declaration')

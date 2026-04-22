@@ -517,6 +517,41 @@ def test_none_overwrite_semantics():
     assert Namespace(Namespace(foo__bar='baz'), foo=None) == Namespace(foo=None)
 
 
+def test_namespace_setitem_refinable_object():
+    from iommi.refinable import RefinableObject, Refinable
+
+    class MyObj(RefinableObject):
+        x: int = Refinable()
+        y: int = Refinable()
+
+    obj = MyObj(x=1)
+    ns = Namespace(foo=obj)
+    ns.setitem_path('foo__y', 2)
+
+    # The original RefinableObject is preserved (refined, not overwritten)
+    assert isinstance(ns.foo, MyObj)
+    assert ns.foo.iommi_namespace.get('x') == 1
+    assert ns.foo.iommi_namespace.get('y') == 2
+
+
+def test_namespace_setitem_refinable_object_is_not_overwritten():
+    from iommi.refinable import RefinableObject, Refinable
+
+    class MyObj(RefinableObject):
+        x: int = Refinable()
+        nested: Namespace = Refinable()
+
+    obj = MyObj(x=1, nested__a=10)
+    ns = Namespace(foo=obj)
+    ns.setitem_path('foo__nested__b', 20)
+
+    # The object is preserved, with the deep refinement applied alongside existing attrs
+    assert isinstance(ns.foo, MyObj)
+    assert ns.foo.iommi_namespace.get('x') == 1
+    assert ns.foo.iommi_namespace.get('nested').get('a') == 10
+    assert ns.foo.iommi_namespace.get('nested').get('b') == 20
+
+
 def test_func_from_namespace():
     def f():
         return 'f'
