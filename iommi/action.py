@@ -143,6 +143,13 @@ class Action(Fragment):
         super().on_bind()
         if self.post_handler and not self.attrs.get('name'):
             self.attrs.name = self.own_target_marker()
+        name = self.attrs.get('name')
+        if name is not None and not callable(name) and name != self.own_target_marker():
+            assert False, (
+                f'You passed attrs__name={name!r} on action {self._name!r}, but iommi '
+                f'uses attrs.name to dispatch form actions. Do not set attrs__name. '
+                f'To customize the button label, use display_name.'
+            )
 
     def own_evaluate_parameters(self):
         return dict(action=self)

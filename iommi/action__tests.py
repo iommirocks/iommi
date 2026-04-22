@@ -286,6 +286,15 @@ def test_check_for_bad_value_usage():
     assert str(e.value) == 'You passed attrs__value, but you should pass display_name'
 
 
+def test_check_for_bad_name_usage():
+    with pytest.raises(AssertionError) as e:
+        Action.button(attrs__name='reset', _name='reset').bind()
+
+    assert "attrs__name='reset'" in str(e.value)
+    assert 'Do not set attrs__name' in str(e.value)
+    assert 'display_name' in str(e.value)
+
+
 def test_action_icon_customization():
     assert 'fa-edit' in Action.icon('edit', attrs__href="edit/", display_name='Action').bind().__html__()
     assert 'Action' in Action.icon('edit', attrs__href="edit/", display_name='Action').bind().__html__()
