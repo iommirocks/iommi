@@ -2343,7 +2343,12 @@ class Table(Part, Tag):
                     if field.many_to_one or field.one_to_one:
                         relation_path = x.attr.rsplit('__', 1)[0]
                         if relation_path not in select:
-                            select.append(relation_path)
+                            if field.many_to_one:
+                                prefetch.append(relation_path)
+                            elif field.one_to_one:
+                                select.append(relation_path)
+                            else:
+                                assert False
 
             if prefetch:
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.prefetch_related(*prefetch)
