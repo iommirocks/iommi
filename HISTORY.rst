@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.25.2 (2026-05-28)
+~~~~~~~~~~~~~~~~~~~
+
+* Flamegraph color coding based on stdlib/third-party/app
+
+* Don't allow users to override the `name` html attribute of a form, this breaks dispatch
+
+* Fixed an issue where automatic select_related was triggered instead of automatic prefetch_related
+
+
 7.25.1 (2026-04-18)
 ~~~~~~~~~~~~~~~~~~~
 
