@@ -2964,7 +2964,10 @@ def test_csv_download_error_message_column():
     with pytest.raises(AssertionError) as e:
         t.render_to_response()
 
-    assert str(e.value) == 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
+    assert str(e.value) == (
+        'To get CSV output you must specify at least one column with extra_evaluated__report_name, '
+        'or set extra__report_columns_all=True on the table'
+    )
 
 
 @pytest.mark.django_db
@@ -3003,6 +3006,31 @@ def test_csv_download():
         response.getvalue().decode().replace('\r\n', '\n')
         == """\
 A,B,C,D,DANGER
+1,a,2.3,,\t=2+5+cmd|' /C calc'!A0
+2,b,5.0,,\t=2+5+cmd|' /C calc'!A0
+"""
+    )
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_csv_download_report_columns_all():
+    CSVExportTestModel.objects.create(a=1, b='a', c=2.3)
+    CSVExportTestModel.objects.create(a=2, b='b', c=5.0)
+    t = Table(
+        auto__model=CSVExportTestModel,
+        # explicit report_name still takes precedence over the column name
+        columns__danger__extra_evaluated__report_name='DANGER',
+        extra__report_columns_all=True,
+        extra_evaluated__report_name='foo',
+    ).bind(request=req('get', **{'/csv': ''}))
+    response = t.render_to_response()
+    assert response['Content-Type'] == 'text/csv'
+    assert response['Content-Disposition'] == "attachment; filename*=UTF-8''foo.csv"
+    assert (
+        response.getvalue().decode().replace('\r\n', '\n')
+        == """\
+a,b,c,d,DANGER
 1,a,2.3,,\t=2+5+cmd|' /C calc'!A0
 2,b,5.0,,\t=2+5+cmd|' /C calc'!A0
 """

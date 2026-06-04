@@ -1739,15 +1739,25 @@ def endpoint__tbody(table, **_):
 def endpoint__csv(table, **_):
     from datetime import timezone
 
-    columns = [c for c in values(table.columns) if c.extra_evaluated.get('report_name')]
+    report_columns_all = table.extra.get('report_columns_all', False)
+
+    def report_name_for(c):
+        if report_columns_all:
+            return c.extra_evaluated.get('report_name', c.iommi_name())
+        return c.extra_evaluated.get('report_name')
+
+    columns = [c for c in values(table.columns) if report_name_for(c)]
     csv_safe_column_indexes = {i for i, c in enumerate(values(table.columns)) if 'csv_whitelist' in c.extra}
-    assert columns, 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
+    assert columns, (
+        'To get CSV output you must specify at least one column with extra_evaluated__report_name, '
+        'or set extra__report_columns_all=True on the table'
+    )
     assert (
         'report_name' in table.extra_evaluated
     ), 'To get CSV output you must specify extra_evaluated__report_name on the table'
     filename = table.extra_evaluated.report_name + '.csv'
 
-    header = [c.extra_evaluated.report_name for c in columns]
+    header = [report_name_for(c) for c in columns]
 
     def smart_text2(s):
         if s is None:
@@ -1850,17 +1860,17 @@ class Table(Part, Tag):
         # @end
     """
 
-    query = Refinable()
+    query: Query = Refinable()
     bulk_filter: Namespace = EvaluatedRefinable()
     bulk_exclude: Namespace = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
     query_from_indexes: bool = Refinable()
-    default_sort_order = Refinable()
+    default_sort_order: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     tag: str = EvaluatedRefinable()
     h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
-    title: str = SpecialEvaluatedRefinable()
+    title: Optional[str] = SpecialEvaluatedRefinable()
     row: RowConfig = EvaluatedRefinable()
     cell: CellConfig = EvaluatedRefinable()
     header = Refinable()
