@@ -152,7 +152,7 @@ def test_item_rendering():
     verify_html(
         actual_html=str(menu.active_item),
         expected_html='''
-            <li class="baz is_active">        
+            <li class="baz is_active">
                 <a href="/foo/bar/baz/" title="Baz" ><span>Baz</span></a>
             </li>
         ''',

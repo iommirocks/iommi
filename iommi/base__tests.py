@@ -1,6 +1,5 @@
 import pytest
 from django.http import HttpResponse
-from django.template import RequestContext
 from django.test import override_settings
 from django.utils import translation
 from django.utils.safestring import (
@@ -15,7 +14,6 @@ from iommi import (
     Fragment,
     Page,
 )
-from iommi._web_compat import Template
 from iommi.base import (
     UnknownMissingValueException,
     build_as_view_wrapper,

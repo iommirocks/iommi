@@ -1,11 +1,7 @@
 from collections import defaultdict
 from datetime import (
     date,
-    datetime,
     time,
-)
-from datetime import (
-    timezone as datetime_timezone,
 )
 
 import pytest
@@ -16,7 +12,6 @@ from django.db.models import (
     QuerySet,
 )
 from django.test import override_settings
-from django.utils import timezone
 
 from docs.models import Album
 from iommi import (

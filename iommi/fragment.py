@@ -1,7 +1,3 @@
-from typing import (
-    List,
-    Union,
-)
 
 from iommi._web_compat import (
     Template,
@@ -204,7 +200,7 @@ class Fragment(Part, Tag):
 
     attrs: Attrs = SpecialEvaluatedRefinable()
     tag = EvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
     children = RefinableMembers()
 
     class Meta:
@@ -213,7 +209,7 @@ class Fragment(Part, Tag):
         attrs__style = EMPTY
 
     @with_defaults
-    def __init__(self, text=None, **kwargs):
+    def __init__(self, text: PartType | None = None, **kwargs):
         super().__init__(_collect_instantiated_at_info=False, **kwargs)
         if text is not None:
             self.refine(Prio.constructor, children__text=text)
@@ -333,7 +329,7 @@ class Container(Fragment):
 
 class Html:
     def __getattr__(self, tag):
-        def fragment_constructor(*parts: List[PartType], children=None, **kwargs):
+        def fragment_constructor(*parts: PartType, children=None, **kwargs):
             if parts is not None:
                 children = children or {}
                 for i, child in enumerate(parts):

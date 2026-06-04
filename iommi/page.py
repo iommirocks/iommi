@@ -1,17 +1,12 @@
-from typing import (
-    Dict,
-    Type,
-    Union,
-)
 
 from iommi._web_compat import (
     format_html,
     get_template_types,
 )
 from iommi.base import (
+    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     items,
-    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
@@ -63,10 +58,10 @@ class Page(Part):
     """
 
     title: str = EvaluatedRefinable()
-    member_class: Type[Fragment] = Refinable()
+    member_class: type[Fragment] = Refinable()
     context = SpecialEvaluatedRefinable()
-    h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
-    parts: Dict[str, PartType] = RefinableMembers()
+    h_tag: Fragment | str = SpecialEvaluatedRefinable()
+    parts: dict[str, PartType] = RefinableMembers()
 
     class Meta:
         member_class = Fragment
@@ -85,7 +80,7 @@ class Page(Part):
         def as_fragment_if_needed(k, v):
             if v is None:
                 return None
-            if not isinstance(v, (dict, Traversable)):
+            if not isinstance(v, dict | Traversable):
                 return Fragment(children__text=v, _name=k)
             else:
                 return v

@@ -1,5 +1,5 @@
-from django.db.models import PositiveIntegerField
 from django import VERSION as DJANGO_VERSION
+from django.db.models import PositiveIntegerField
 
 
 class SortOrderField(PositiveIntegerField):

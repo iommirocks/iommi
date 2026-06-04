@@ -1,12 +1,14 @@
 import csv
+from collections.abc import Callable, Iterable
 from datetime import (
+    UTC,
     date,
     datetime,
     time,
 )
 from enum import (
-    auto,
     Enum,
+    auto,
 )
 from functools import total_ordering
 from io import StringIO
@@ -14,12 +16,6 @@ from itertools import groupby
 from math import ceil
 from typing import (
     Any,
-    Callable,
-    Dict,
-    Iterable,
-    Optional,
-    Type,
-    Union,
 )
 from urllib.parse import quote_plus
 
@@ -65,23 +61,23 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.base import (
+    MISSING,
+    NOT_BOUND_MESSAGE,
     build_as_view_wrapper,
     capitalize,
     get_display_name,
     items,
     keys,
-    MISSING,
     model_and_rows,
-    NOT_BOUND_MESSAGE,
     values,
 )
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
+    Namespace,
     flatten,
     getattr_path,
-    Namespace,
     setdefaults_path,
 )
 from iommi.endpoint import (
@@ -98,17 +94,16 @@ from iommi.form import (
     Form,
 )
 from iommi.fragment import (
-    build_and_bind_h_tag,
     Fragment,
     Header,
-    html,
     Tag,
     TransientFragment,
+    build_and_bind_h_tag,
+    html,
 )
 from iommi.from_model import (
     AutoConfig,
     NoRegisteredSearchFieldException,
-    choices_from_model_field,
     create_members_from_model,
     get_search_fields,
     member_from_model,
@@ -131,14 +126,14 @@ from iommi.query import (
     Query,
 )
 from iommi.refinable import (
-    evaluated_refinable,
     EvaluatedRefinable,
     Prio,
     Refinable,
-    refinable,
     RefinableMembers,
     RefinableObject,
     SpecialEvaluatedRefinable,
+    evaluated_refinable,
+    refinable,
 )
 from iommi.shortcut import (
     Shortcut,
@@ -149,12 +144,13 @@ from iommi.sort_after import (
     sort_after,
 )
 from iommi.struct import (
-    merged,
     Struct,
+    merged,
 )
 from iommi.traversable import (
     Traversable,
 )
+
 from .declarative.util import strip_prefix
 from .from_model import base_defaults_factory
 
@@ -409,11 +405,11 @@ class Column(Part):
     attr: str = EvaluatedRefinable()
     sort_default_desc: bool = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
-    group: Optional[str] = EvaluatedRefinable()
+    group: str | None = EvaluatedRefinable()
     auto_rowspan: bool = EvaluatedRefinable()
     row_group: Namespace = EvaluatedRefinable()
     cell: Namespace = Refinable()
-    model: Type[Model] = SpecialEvaluatedRefinable()
+    model: type[Model] | None = SpecialEvaluatedRefinable()
     model_field = Refinable()
     model_field_name = Refinable()
     choices: Iterable = EvaluatedRefinable()
@@ -498,8 +494,8 @@ class Column(Part):
             self.model = None
 
         self.header = HeaderColumnConfig(**self.header).refine_done(parent=self)
-        self.is_sorting: bool = None
-        self.sort_direction: str = None
+        self.is_sorting: bool | None = None
+        self.sort_direction: str | None = None
         self.table = None
         super(Column, self).on_refine_done()
 
@@ -1107,7 +1103,7 @@ class CellConfig(TransientFragment, Tag):
             url_title: str,
             attrs: Attrs,
             tag: str,
-            template: Union[str, Template],
+            template: str | Template,
             value,
             contents,
             format: Callable,
@@ -1216,14 +1212,14 @@ class Cells(Traversable, Tag):
     You can access the current row via `.row` and the current row index via `.row_index`.
     """
 
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     tag: str = EvaluatedRefinable()
-    extra: Dict[str, Any] = Refinable()
+    extra: dict[str, Any] = Refinable()
     # not EvaluatedRefinable because this is an evaluated container so is special
-    extra_evaluated: Dict[str, Any] = Refinable()
-    cell_class: Type[Cell] = Refinable()
-    layout: Union[None, Panel] = EvaluatedRefinable()
+    extra_evaluated: dict[str, Any] = Refinable()
+    cell_class: type[Cell] = Refinable()
+    layout: Panel | None = EvaluatedRefinable()
 
     class Meta:
         cell_class = Cell
@@ -1302,9 +1298,9 @@ class TemplateConfig(RefinableObject):
 class HeaderConfig(Traversable, Tag):
     tag: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
-    extra: Dict[str, Any] = Refinable()
-    extra_evaluated: Dict[str, Any] = Refinable()
+    template: str | Template = EvaluatedRefinable()
+    extra: dict[str, Any] = Refinable()
+    extra_evaluated: dict[str, Any] = Refinable()
     include: bool = SpecialEvaluatedRefinable()
 
     class Meta:
@@ -1350,7 +1346,7 @@ class HeaderConfig(Traversable, Tag):
 
 class HeaderColumnConfig(Traversable):
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
     url = EvaluatedRefinable()
 
 
@@ -1358,10 +1354,10 @@ class RowConfig(RefinableObject, Tag):
     _name = 'row'
     attrs: Attrs = SpecialEvaluatedRefinable()
     tag = Refinable()
-    template: Union[str, Template] = Refinable()
-    extra: Dict[str, Any] = Refinable()
-    extra_evaluated: Dict[str, Any] = Refinable()
-    layout: Union[None, Panel] = SpecialEvaluatedRefinable()
+    template: str | Template = Refinable()
+    extra: dict[str, Any] = Refinable()
+    extra_evaluated: dict[str, Any] = Refinable()
+    layout: Panel | None = SpecialEvaluatedRefinable()
 
     def refine_done(self, parent=None):
         result = super(RowConfig, self).refine_done(parent=parent)
@@ -1537,7 +1533,7 @@ def paginator__count(rows, **_):
 class Paginator(Traversable, Tag):
     tag: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
     container = Refinable()
     page: int = SpecialEvaluatedRefinable()
     active_item = Refinable()
@@ -1737,7 +1733,6 @@ def endpoint__tbody(table, **_):
 
 
 def endpoint__csv(table, **_):
-    from datetime import timezone
 
     report_columns_all = table.extra.get('report_columns_all', False)
 
@@ -1806,7 +1801,7 @@ def endpoint__csv(table, **_):
     response['Content-Disposition'] = smart_str(
         "attachment; filename*=UTF-8''{value}".format(value=quote_plus(filename))
     )
-    response['Last-Modified'] = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT')
+    response['Last-Modified'] = datetime.now(UTC).strftime('%a, %d %b %Y %H:%M:%S GMT')
     return response
 
 
@@ -1860,50 +1855,50 @@ class Table(Part, Tag):
         # @end
     """
 
-    query: Query = Refinable()
+    query: Query | None = Refinable()
     bulk_filter: Namespace = EvaluatedRefinable()
     bulk_exclude: Namespace = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
     query_from_indexes: bool = Refinable()
     default_sort_order: str = Refinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
     tag: str = EvaluatedRefinable()
-    h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
-    title: Optional[str] = SpecialEvaluatedRefinable()
+    h_tag: Fragment | str = SpecialEvaluatedRefinable()
+    title: str | None = SpecialEvaluatedRefinable()
     row: RowConfig = EvaluatedRefinable()
     cell: CellConfig = EvaluatedRefinable()
     header = Refinable()
-    model: Type[Model] = SpecialEvaluatedRefinable()
+    model: type[Model] | None = SpecialEvaluatedRefinable()
     rows = SpecialEvaluatedRefinable()
-    actions: Dict[str, Action] = RefinableMembers()
+    actions: dict[str, Action] = RefinableMembers()
     parts: Namespace = RefinableMembers()
-    bulk: Optional[Form] = EvaluatedRefinable()
+    bulk: Form | None = EvaluatedRefinable()
     bulk_container: Fragment = Refinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
-    actions_template: Union[str, Template] = EvaluatedRefinable()
+    actions_template: str | Template = EvaluatedRefinable()
     actions_below: bool = EvaluatedRefinable()
     tbody: Fragment = EvaluatedRefinable()
     container: Fragment = EvaluatedRefinable()
     table_tag_wrapper: Fragment = EvaluatedRefinable()
     outer: Fragment = EvaluatedRefinable()
 
-    member_class: Type[Column] = Refinable()
-    form_class: Type[Form] = Refinable()
-    query_class: Type[Query] = Refinable()
-    action_class: Type[Action] = Refinable()
-    page_class: Type[Page] = Refinable()
-    cells_class: Type[Cells] = Refinable()
-    row_group_class: Type[RowGroup] = Refinable()
+    member_class: type[Column] = Refinable()
+    form_class: type[Form] = Refinable()
+    query_class: type[Query] = Refinable()
+    action_class: type[Action] = Refinable()
+    page_class: type[Page] = Refinable()
+    cells_class: type[Cells] = Refinable()
+    row_group_class: type[RowGroup] = Refinable()
 
     empty_message: str = EvaluatedRefinable()
     invalid_form_message: str = EvaluatedRefinable()
     auto: TableAutoConfig = Refinable()
 
     # Columns need to be at the end to not steal the short names
-    columns: Dict[str, Column] = RefinableMembers()
+    columns: dict[str, Column] = RefinableMembers()
 
     class Meta:
         member_class = Column
@@ -2088,8 +2083,8 @@ class Table(Part, Tag):
         query_args = self.query
         bulk_args = self.bulk
 
-        self.query: Query = None
-        self.bulk: Form = None
+        self.query: Query | None = None
+        self.bulk: Form | None = None
         self.header_levels = None
 
         def add_hidden_all_pks_field(declared_bulk_fields):
@@ -2508,7 +2503,7 @@ class Table(Part, Tag):
     @staticmethod
     @refinable
     def sorter(
-        rows: Union[QuerySet, list],
+        rows: QuerySet | list,
         sort_key: str,
         descending: bool,
         table,

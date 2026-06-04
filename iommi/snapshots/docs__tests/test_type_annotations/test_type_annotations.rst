@@ -54,7 +54,7 @@ Type: `int`
 `b`
 ^^^
 
-Type: `Dict`
+Type: `dict`
 
 
 `c`

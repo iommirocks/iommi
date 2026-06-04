@@ -1,22 +1,19 @@
 import pytest
-
-from django.utils.translation import gettext_lazy
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
-from django.contrib.auth.models import User
+from django.utils.translation import gettext_lazy
 
+from docs.models import FavoriteArtist
+from iommi import EditTable, Form, Fragment, Panel, html
 from iommi._web_compat import Template
-from iommi import html
-
-from iommi import Form, Panel, Fragment, EditTable
 from iommi.form import (
     Field,
     FieldNameError,
 )
 from iommi.table import Table
 from tests.helpers import req, verify_part_html, verify_table_html
-from docs.models import FavoriteArtist
 
 
 def get_user_form():

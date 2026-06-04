@@ -9,6 +9,8 @@ from django.core.exceptions import PermissionDenied
 from django.urls import (
     get_resolver,
     include,
+)
+from django.urls import (
     path as orig_path,
 )
 from django.utils.translation import gettext_lazy
@@ -36,7 +38,6 @@ from iommi.evaluate import (
 )
 from iommi.fragment import Tag
 from iommi.path import decode_path_components
-from iommi.declarative.namespace import Namespace
 from iommi.struct import Struct
 from iommi.style import resolve_style
 
@@ -99,7 +100,7 @@ class MainMenu:
         style = resolve_style(None)
         conf = Namespace(*style.resolve(self))
 
-        style_template = template = conf.pop('template', 'iommi/main_menu/menu.html')
+        style_template = conf.pop('template', 'iommi/main_menu/menu.html')
         if self.template is MISSING:
             self.template = style_template
 

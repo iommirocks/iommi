@@ -1,24 +1,19 @@
 import warnings
 from textwrap import dedent
-from typing import (
-    Dict,
-    List,
-    Type,
-)
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     Field as DjangoField,
-    ForeignKey,
-    ManyToManyField,
-    OneToOneField,
-    QuerySet,
 )
 from django.db.models import (
+    ForeignKey,
+    ManyToManyField,
     ManyToManyRel,
     ManyToOneRel,
     Model,
+    OneToOneField,
     OneToOneRel,
+    QuerySet,
 )
 
 try:
@@ -33,7 +28,6 @@ from iommi.declarative.namespace import (
     setdefaults_path,
 )
 from iommi.evaluate import (
-    evaluate,
     evaluate_strict,
 )
 from iommi.refinable import (
@@ -47,10 +41,10 @@ from iommi.struct import Struct
 def create_members_from_model(
     *,
     member_class,
-    model,
-    include: List[str] = None,
-    exclude: List[str] = None,
-    default_included=True,
+    model : type[Model],
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+    default_included: bool = True,
 ):
     members = Struct()
 
@@ -131,10 +125,10 @@ def member_from_model(
         model_field_type = type(model_field.output_field)
 
     factory = MISSING
-    if isinstance(model_field, (ForeignKey, OneToOneField, OneToOneRel)):
+    if isinstance(model_field, ForeignKey | OneToOneField | OneToOneRel):
         factory = related_factory_lookup.get(model_field.remote_field.model, MISSING)
 
-    if isinstance(model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)):
+    if isinstance(model_field, ManyToManyField | ManyToManyRel | ManyToOneRel):
         factory = related_multiple_factory_lookup.get(model_field.remote_field.model, MISSING)
 
     if factory is MISSING:
@@ -191,7 +185,7 @@ def member_from_model(
     )
 
 
-def get_field_by_name(model: Type[Model]) -> Dict[str, DjangoField]:
+def get_field_by_name(model: type[Model]) -> dict[str, DjangoField]:
     if not hasattr(model._meta, '_iommi_fields'):
         model._meta._iommi_fields = {get_field_name(field): field for field in model._meta.get_fields()}
         if None in model._meta._iommi_fields:
@@ -199,7 +193,7 @@ def get_field_by_name(model: Type[Model]) -> Dict[str, DjangoField]:
     return model._meta._iommi_fields
 
 
-def get_field_name(field: DjangoField) -> str:
+def get_field_name(field: DjangoField) -> str | None:
     if isinstance(field, ManyToManyRel):
         return field.related_name
     elif isinstance(field, ManyToOneRel):
@@ -217,7 +211,7 @@ def get_field_name(field: DjangoField) -> str:
         return field.name
 
 
-def get_field(model: Type[Model], field_name: str) -> DjangoField:
+def get_field(model: type[Model], field_name: str) -> DjangoField:
     if field_name == 'pk':
         return model._meta.auto_field
 
@@ -245,7 +239,7 @@ def get_field_path(model, path):
         raise FieldDoesNotExist(f"{model._meta.object_name} has no field with path '{path}'") from e
 
 
-def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
+def check_list(model: type[Model], paths: list[str] | None, operation: str) -> None:
     def existing_alternatives(missing_path):
         prefix = []
         current_model = model
@@ -302,7 +296,7 @@ class SearchFieldsAlreadyRegisteredException(Exception):
 
 
 def register_search_fields(*, model, search_fields, allow_non_unique=False, overwrite=False):
-    assert isinstance(search_fields, (tuple, list))
+    assert isinstance(search_fields, tuple | list)
 
     def validate_name_field(search_field, path, model):
         field = get_field(model, path[0])
@@ -333,10 +327,10 @@ def register_search_fields(*, model, search_fields, allow_non_unique=False, over
 
 
 class AutoConfig(RefinableObject):
-    model: Type[Model] = SpecialEvaluatedRefinable()
-    include = Refinable()
-    exclude = Refinable()
-    default_included = Refinable()
+    model: type[Model] | None = SpecialEvaluatedRefinable()
+    include: list[str] | None = Refinable()
+    exclude: list[str] | None = Refinable()
+    default_included : bool = Refinable()
 
     @dispatch
     def __init__(self, **kwargs):
@@ -387,9 +381,9 @@ def model_from_choices(choices):
 
 
 def related_choices_from_model_field(model_field, **_):
-    if isinstance(model_field, (ForeignKey, OneToOneField)):
+    if isinstance(model_field, ForeignKey | OneToOneField):
         model = model_field.foreign_related_fields[0].model
-    elif isinstance(model_field, (OneToOneRel, ManyToOneRel, ManyToManyField, ManyToManyRel)):
+    elif isinstance(model_field, OneToOneRel | ManyToOneRel | ManyToManyField | ManyToManyRel):
         model = model_field.remote_field.model
     else:
         assert False, f'Unknown model field type {model_field}'

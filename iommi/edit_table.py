@@ -2,10 +2,6 @@ import json
 from collections import defaultdict
 from typing import (
     Any,
-    Dict,
-    Optional,
-    Type,
-    Union,
 )
 
 from django.db.models import QuerySet
@@ -15,7 +11,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
 from iommi._web_compat import (
-    Template,
     render_template,
     safe_redirect_url,
 )
@@ -73,13 +68,13 @@ from iommi.shortcut import (
 from iommi.sort_after import LAST
 from iommi.struct import Struct
 from iommi.table import (
-    _column_factory_by_field_type,
-    _related_column_factory_by_model,
-    _related_multiple_column_factory_by_model,
     Cell,
     Cells,
     Column,
     Table,
+    _column_factory_by_field_type,
+    _related_column_factory_by_model,
+    _related_multiple_column_factory_by_model,
 )
 
 _edit_column_factory_by_field_type = {}
@@ -188,7 +183,7 @@ class EditColumn(Column):
     The column class for `EditTable`.
     """
 
-    field: Field = Refinable()
+    field: Field | None = Refinable()
 
     @classmethod
     @dispatch
@@ -451,11 +446,11 @@ class EditTable(Table):
     edit_errors = None
     create_errors = None
     edit_form: Form = Refinable()
-    create_form: Form = Refinable()
-    form_class: Type[Form] = Refinable()
-    parent_form: Optional[Form] = Refinable()
-    edit_actions: Dict[str, Action] = RefinableMembers()
-    reorderable: Union[bool, Dict[str, Any], None] = EvaluatedRefinable()
+    create_form: Form | None = Refinable()
+    form_class: type[Form] = Refinable()
+    parent_form: Form | None = Refinable()
+    edit_actions: dict[str, Action] = RefinableMembers()
+    reorderable: bool | dict[str, Any] | None = EvaluatedRefinable()
 
     class Meta:
         form_class = Form

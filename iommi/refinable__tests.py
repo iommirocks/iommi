@@ -1,5 +1,4 @@
 import re
-from typing import Dict
 
 import pytest
 from django.template import Template
@@ -13,15 +12,7 @@ from iommi import (
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
 from iommi.declarative.with_meta import with_meta
-from iommi.refinable import (
-    prefixes,
-    Prio,
-    Refinable,
-    refinable,
-    RefinableMembers,
-    RefinableObject,
-    RefinableStack
-)
+from iommi.refinable import Prio, Refinable, RefinableMembers, RefinableObject, RefinableStack, prefixes, refinable
 from tests.helpers import req
 
 
@@ -126,7 +117,7 @@ class Fruit(RefinableObject):
 
 
 class Basket(RefinableObject):
-    fruits: Dict[str, Fruit] = RefinableMembers()
+    fruits: dict[str, Fruit] = RefinableMembers()
 
 
 def test_refine_recursive():

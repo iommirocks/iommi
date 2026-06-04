@@ -1,9 +1,5 @@
 from collections import defaultdict
 from pathlib import PurePosixPath
-from typing import (
-    Dict,
-    Union,
-)
 from urllib.parse import (
     unquote,
     urlparse,
@@ -47,9 +43,9 @@ from iommi.table import params_of_request
 class MenuBase(Part, Tag):
     tag: str = EvaluatedRefinable()
     sort: bool = EvaluatedRefinable()  # only applies for submenu items
-    sub_menu: Dict = RefinableMembers()
+    sub_menu: dict = RefinableMembers()
     attrs: Attrs = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
 
     class Meta:
         sub_menu = EMPTY

@@ -1,8 +1,4 @@
 from copy import copy
-from typing import (
-    Dict,
-    Type,
-)
 
 from iommi.base import (
     items,
@@ -59,11 +55,11 @@ def refine_done_members(
     container,
     *,
     name: str,
-    members_from_namespace: Dict[str, Traversable] = None,
-    members_from_declared: Dict[str, Traversable] = None,
-    members_from_auto: Dict[str, Traversable] = None,
-    cls: Type,
-    members_cls: Type = Members,
+    members_from_namespace: dict[str, Traversable | dict | None] | None = None,
+    members_from_declared: dict[str, Traversable] | None = None,
+    members_from_auto: dict[str, Traversable] | None = None,
+    cls: type,
+    members_cls: type = Members,
     extra_member_defaults=None,
     unknown_types_fall_through=False,
 ):
@@ -216,7 +212,7 @@ class ForbiddenNamesException(Exception):
 
 # noinspection PyCallByClass
 class MemberBinder(dict):
-    def __init__(self, parent: Members, _declared_members: Dict[str, Traversable], _unknown_types_fall_through: bool):
+    def __init__(self, parent: Members, _declared_members: dict[str, Traversable], _unknown_types_fall_through: bool):
         if _unknown_types_fall_through:
             bindable_names = []
             for name, member in items(_declared_members):

@@ -58,7 +58,7 @@ from iommi.shortcut import with_defaults
 
 
 class CalendarCellConfig(RefinableObject):
-    tag: str = Refinable()
+    tag: str | None = Refinable()
     attr: str = Refinable()
     display_name: str = Refinable()
     url = Refinable()
@@ -188,7 +188,7 @@ class Calendar(Part, Tag):
     month: int = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     template: str | Template = EvaluatedRefinable()
-    title: str = SpecialEvaluatedRefinable()
+    title: str | None = SpecialEvaluatedRefinable()
     h_tag: Fragment | str = SpecialEvaluatedRefinable()
     tag: str = EvaluatedRefinable()
     day: CalendarCellConfig = Refinable()

@@ -1,11 +1,5 @@
-import warnings
+from collections.abc import Callable
 from itertools import groupby
-from typing import (
-    Callable,
-    Dict,
-    List,
-    Tuple,
-)
 
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
@@ -120,7 +114,7 @@ class Action(Fragment):
 
     group: str = EvaluatedRefinable()
     display_name: str = EvaluatedRefinable()
-    post_handler: Callable = Refinable()
+    post_handler: Callable | None = Refinable()
 
     @with_defaults(
         tag='a',
@@ -215,10 +209,10 @@ def default_action__icon__display_name(action, **_):
     return format_html('<i{}></i> {}', render_attrs(attrs), action.extra.orig_display_name or capitalize(action._name).replace('_', ' '))
 
 
-def group_actions(actions: Dict[str, Action]):
+def group_actions(actions: dict[str, Action]):
     actions_with_group = (action for action in values(actions) if action.group is not None)
 
-    grouped_actions: List[Tuple[str, str, List[Action]]] = [
+    grouped_actions: list[tuple[str, str, list[Action]]] = [
         (group_name, slugify(group_name), list(actions_in_group))
         for group_name, actions_in_group in groupby(actions_with_group, key=lambda x: x.group)
     ]

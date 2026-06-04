@@ -16,40 +16,43 @@ from uuid import uuid4
 from django.test import RequestFactory
 from django.urls import URLPattern
 
+import iommi.experimental.calendar  # noqa: F401
 from iommi import (
     MISSING,
     Page,
     Part,
     render_if_needed,
 )
-import iommi.experimental.calendar
 from iommi._web_compat import Template
 from iommi.base import items
 from iommi.declarative import get_declared
 from iommi.declarative.namespace import (
-    flatten,
     Namespace,
+    flatten,
 )
 from iommi.refinable import (
     EvaluatedRefinable,
-    is_refinable_function,
     RefinableObject,
     SpecialEvaluatedRefinable,
+    is_refinable_function,
 )
 from iommi.shortcut import (
     get_shortcuts_by_name,
     is_shortcut,
 )
-from iommi.struct import merged
-from iommi.struct import Struct  # noqa: E402
+from iommi.struct import (
+    Struct,  # noqa: E402
+    merged,
+)
 from iommi.thread_locals import set_current_request
 
 
 def uses_from_cookbooks():
+    import docutils.frontend
     import docutils.parsers.rst
     import docutils.utils
-    import docutils.frontend
-    from docutils.nodes import comment, title, target, section
+    from docutils.nodes import comment, section, target, title
+
     from iommi.declarative.util import strip_prefix
 
     parser = docutils.parsers.rst.Parser()
@@ -370,7 +373,7 @@ request = req('get')
         type_hints = get_type_hints(c)
         for refinable, value in refinable_members:
             evaluated_marker = ''
-            if isinstance(getattr(c, refinable, None), (EvaluatedRefinable, SpecialEvaluatedRefinable)):
+            if isinstance(getattr(c, refinable, None), EvaluatedRefinable | SpecialEvaluatedRefinable):
                 evaluated_marker = (
                     '  \N{NO-BREAK SPACE}\N{NO-BREAK SPACE}\N{NO-BREAK SPACE}  (:ref:`evaluated <evaluate>`)'
                 )
@@ -480,7 +483,7 @@ request = req('get')
             cookbook_usages = uses_by_field.get(f'{c.__name__}.{name}', [])
             if cookbook_usages:
                 w(0, '')
-                w(0, f'Cookbook:')
+                w(0, 'Cookbook:')
                 for id_, title in cookbook_usages:
                     w(1, f':ref:`{id_}`')
                     w(0, '')

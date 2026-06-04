@@ -1,6 +1,5 @@
 from io import StringIO
 from platform import python_implementation
-from typing import Dict
 
 import pytest
 
@@ -171,7 +170,7 @@ def test_default_classes():
 def test_type_annotations(snapshot):
     class Foo(RefinableObject):
         a: int = Refinable()
-        b: Dict = Refinable()
+        b: dict = Refinable()
         c: Fragment = Refinable()
 
     (source_filename, actual_filename, doc_generator), (_, _, _) = list(

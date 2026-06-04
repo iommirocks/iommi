@@ -518,7 +518,7 @@ def test_none_overwrite_semantics():
 
 
 def test_namespace_setitem_refinable_object():
-    from iommi.refinable import RefinableObject, Refinable
+    from iommi.refinable import Refinable, RefinableObject
 
     class MyObj(RefinableObject):
         x: int = Refinable()
@@ -535,7 +535,7 @@ def test_namespace_setitem_refinable_object():
 
 
 def test_namespace_setitem_refinable_object_is_not_overwritten():
-    from iommi.refinable import RefinableObject, Refinable
+    from iommi.refinable import Refinable, RefinableObject
 
     class MyObj(RefinableObject):
         x: int = Refinable()
