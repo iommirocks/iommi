@@ -1,21 +1,19 @@
 import warnings
 from copy import copy
-from enum import auto, \
-    Enum
+from enum import Enum, auto
 
 from iommi.base import items
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
-    getattr_path,
     Namespace,
+    getattr_path,
 )
 from iommi.declarative.with_meta import (
     get_meta,
     get_meta_flat,
 )
 from iommi.evaluate import get_signature
-from iommi.struct import Struct
 
 
 def prefixes(path):

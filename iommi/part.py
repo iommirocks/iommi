@@ -1,11 +1,7 @@
 import inspect
 import json
 from abc import abstractmethod
-from typing import (
-    Any,
-    Dict,
-    Union,
-)
+from typing import Any
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
@@ -65,10 +61,10 @@ class Part(Traversable):
     """
 
     include: bool = SpecialEvaluatedRefinable()
-    after: Union[int, str] = EvaluatedRefinable()
-    extra: Dict[str, Any] = Refinable()
+    after: int | str = EvaluatedRefinable()
+    extra: dict[str, Any] = Refinable()
     # not EvaluatedRefinable because this is an evaluated container so is special
-    extra_evaluated: Dict[str, Any] = Refinable()
+    extra_evaluated: dict[str, Any] = Refinable()
     assets: Namespace = RefinableMembers()
     endpoints: Namespace = RefinableMembers()
     # Only the assets used by this part
@@ -265,7 +261,7 @@ def render_root(*, part, context, **render):
     return engine.from_string(template_string).render(context=context, request=request)
 
 
-PartType = Union[Part, str, Template]
+PartType = Part | str | Template
 
 
 def request_data(request):

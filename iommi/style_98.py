@@ -12,7 +12,7 @@ from iommi.style_font_awesome_4 import font_awesome_4
 
 w98_base = Style(
     base,
-    base_template='iommi/style_98_base.html', 
+    base_template='iommi/style_98_base.html',
     sub_styles__horizontal=dict(
         Field=dict(
             shortcuts=dict(

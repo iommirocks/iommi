@@ -1,4 +1,5 @@
 import re
+from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import (
     datetime,
@@ -14,13 +15,6 @@ from operator import or_
 from urllib.parse import urlparse
 from typing import (
     Any,
-    Callable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
 )
 
 from django.conf import settings
@@ -33,14 +27,9 @@ from django.db import (
 )
 from django.db.models import (
     Case,
-    ForeignKey,
     IntegerField,
     ManyToManyField,
-    ManyToManyRel,
-    ManyToOneRel,
     Model,
-    OneToOneField,
-    OneToOneRel,
     Q,
     QuerySet,
     When,
@@ -58,9 +47,9 @@ from django.utils.translation import gettext_lazy
 from iommi._web_compat import (
     Template,
     format_html,
+    get_template_types,
     render_template,
     safe_redirect_url,
-    get_template_types,
 )
 from iommi.action import (
     Action,
@@ -96,7 +85,6 @@ from iommi.from_model import (
     AutoConfig,
     NoRegisteredSearchFieldException,
     base_defaults_factory,
-    choices_from_model_field,
     create_members_from_model,
     get_search_fields,
     member_from_model,
@@ -135,7 +123,7 @@ from iommi.traversable import Traversable
 Namespace.do_not_call_in_templates = True
 
 def field_defaults_factory(model_field):
-    from django.db.models import BooleanField, ManyToManyField
+    from django.db.models import BooleanField
 
     r = base_defaults_factory(model_field)
 
@@ -439,7 +427,7 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 
 def choice_queryset__extra__filter_and_sort(field, value, **_):
     assert field.search_fields is not None, f'There are no search_fields specified for {field._name}'
-    assert isinstance(field.search_fields, (tuple, list))
+    assert isinstance(field.search_fields, tuple | list)
     if not value:
         return field.choices.order_by(*field.search_fields)
 
@@ -713,7 +701,7 @@ class Field(Part, Tag):
 
     tag: str = EvaluatedRefinable()
     attr: str = EvaluatedRefinable()
-    display_name: str = EvaluatedRefinable()
+    display_name: str | None = EvaluatedRefinable()
 
     # raw_data/raw_data contains the strings grabbed directly from the request data
     # It is useful that they are evaluated for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
@@ -724,29 +712,29 @@ class Field(Part, Tag):
     parsed_data: Any = SpecialEvaluatedRefinable()
 
     initial: Any = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
 
     attrs: Attrs = SpecialEvaluatedRefinable()
     required: bool = EvaluatedRefinable()
 
     input: Fragment = Refinable()
-    label: Fragment = Refinable()
+    label: Fragment | None = Refinable()
     non_editable_input: Fragment = Refinable()
-    help: Fragment = Refinable()
+    help: Fragment | str = Refinable()
 
     is_list: bool = EvaluatedRefinable()
     is_boolean: bool = EvaluatedRefinable()
-    model: Optional[Type[Model]] = SpecialEvaluatedRefinable()
-    model_field: Optional[models.Field] = Refinable()
+    model: type[Model] | None = SpecialEvaluatedRefinable()
+    model_field: models.Field | None = Refinable()
     model_field_name = Refinable()
 
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
 
-    choices: Callable[..., List[Any]] = SpecialEvaluatedRefinable()
+    choices: Callable[..., list[Any]] = SpecialEvaluatedRefinable()
     choice_id_formatter: Callable[..., str] = Refinable()
     choice_display_name_formatter: Callable[..., str] = Refinable()
-    choice_to_optgroup: Optional[Callable[..., Optional[str]]] = Refinable()
+    choice_to_optgroup: Callable[..., str | None] | None = Refinable()
 
     search_fields = Refinable()
     errors: Errors = Refinable()
@@ -871,7 +859,7 @@ class Field(Part, Tag):
     # noinspection PyUnusedLocal
     @staticmethod
     @refinable
-    def is_valid(form: 'Form', field: 'Field', parsed_data: Any, **_) -> Tuple[bool, str]:
+    def is_valid(form: 'Form', field: 'Field', parsed_data: Any, **_) -> tuple[bool, str]:
         # language=rst
         """
         Validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise `ValidationError`.
@@ -940,7 +928,7 @@ class Field(Part, Tag):
             # @end
         """
 
-        if isinstance(value, (list, QuerySet)):
+        if isinstance(value, list | QuerySet):
             return ', '.join(field.render_value(form=form, field=field, value=v, **kwargs) for v in value)
         else:
             return f'{value}' if value is not None else ''
@@ -1007,7 +995,7 @@ class Field(Part, Tag):
                 self.input.attrs.value = self.rendered_value
 
     def on_bind(self) -> None:
-        self._errors: Set[str] = set()
+        self._errors: set[str] = set()
 
         form = self.form
         assert form is not None, "Each field needs a form."
@@ -1833,30 +1821,30 @@ class Form(Part, Tag):
     """
 
     actions: Namespace = RefinableMembers()
-    actions_template: Union[str, Template] = EvaluatedRefinable()
+    actions_template: str | Template = EvaluatedRefinable()
     # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
     attr: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
     editable: bool = Refinable()
-    h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
-    title: Fragment = SpecialEvaluatedRefinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    h_tag: Fragment | str = SpecialEvaluatedRefinable()
+    title: Fragment | str = SpecialEvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
     errors: Errors = Refinable()
 
-    model: Type[Model] = SpecialEvaluatedRefinable()
-    member_class: Type[Field] = Refinable()
-    action_class: Type[Action] = Refinable()
-    page_class: Type[Page] = Refinable()
+    model: type[Model] | None = SpecialEvaluatedRefinable()
+    member_class: type[Field] = Refinable()
+    action_class: type[Action] = Refinable()
+    page_class: type[Page] = Refinable()
     auto: FormAutoConfig = Refinable()
     fields: Namespace = RefinableMembers()
     instance: Any = Refinable()
     field_group: Namespace = Refinable()
-    fields_template: Union[str, Template] = EvaluatedRefinable()
+    fields_template: str | Template = EvaluatedRefinable()
 
-    layout_unused_fields: dict = None
+    layout_unused_fields: dict | None = None
     layout_render_unused_fields: bool = EvaluatedRefinable()
-    layout: Union[None, Panel] = EvaluatedRefinable()
-    layout_template: Union[None, str, Template] = EvaluatedRefinable()
+    layout: Panel | None = EvaluatedRefinable()
+    layout_template: str | Template | None = EvaluatedRefinable()
 
     class Meta:
         member_class = Field
@@ -1958,7 +1946,7 @@ class Form(Part, Tag):
         def as_fragment_if_needed(k, v):
             if v is None:
                 return None
-            if not isinstance(v, (dict, Traversable)):
+            if not isinstance(v, dict | Traversable):
                 return Fragment(children__text=v, _name=k)
             else:
                 return v
@@ -1988,7 +1976,7 @@ class Form(Part, Tag):
                 self.layout = None
 
     def on_bind(self) -> None:
-        self._errors: Set[str] = set()
+        self._errors: set[str] = set()
         self._valid = None
         self.mode = INITIALS_FROM_GET
         self.parent_form = None

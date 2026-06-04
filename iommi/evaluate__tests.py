@@ -1,13 +1,13 @@
 import pytest
 
 from iommi.evaluate import (
-    evaluate_as_needed_recursively,
-    find_static_items,
-    find_static_items_recursively,
     Namespace,
     evaluate,
+    evaluate_as_needed_recursively,
     evaluate_member,
     evaluate_strict,
+    find_static_items,
+    find_static_items_recursively,
     get_callable_description,
     get_signature,
     has_catch_all_kwargs,

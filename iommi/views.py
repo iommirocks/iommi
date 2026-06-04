@@ -5,19 +5,17 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
-from django.views.decorators.cache import never_cache
 from django.urls import (
     include,
     path,
 )
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
+from django.views.decorators.cache import never_cache
 
 from iommi import (
     Column,
     Field,
     Form,
-    html,
     Page,
     Table,
 )

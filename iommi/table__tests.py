@@ -5,7 +5,6 @@ from datetime import (
     datetime,
     time,
 )
-from textwrap import dedent
 from urllib.parse import urlencode
 
 import pytest

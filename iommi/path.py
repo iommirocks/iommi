@@ -1,6 +1,5 @@
 import functools
 import re
-import typing
 from contextlib import contextmanager
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -29,12 +28,12 @@ class PathDecoder:
         self.name = name
 
 
-_path_component_to_decode_data: typing.Dict[
+_path_component_to_decode_data: dict[
     str,
-    typing.Tuple[
-        typing.Optional[typing.Type[Model]],
+    tuple[
+        type[Model] | None,
         str,
-        typing.Optional[str],
+        str | None,
         PathDecoder,
     ],
 ] = {}

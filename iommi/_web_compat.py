@@ -76,7 +76,7 @@ def log_used_template(request, item):
         return
 
     if request is not None:
-        if isinstance(item, (str, DjangoLoadedTemplate)):
+        if isinstance(item, str | DjangoLoadedTemplate):
             if not hasattr(request, 'iommi_used_templates'):
                 request.iommi_used_templates = []
             request.iommi_used_templates.append(item)

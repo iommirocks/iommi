@@ -1,6 +1,5 @@
 import itertools
 from textwrap import dedent
-from typing import Dict
 from unittest import mock
 
 import pytest
@@ -394,7 +393,7 @@ def test_get_config():
 
         @declarative(Fruit, 'fruits', add_init_kwargs=False)
         class BasketBase(Traversable):
-            fruits: Dict = RefinableMembers()
+            fruits: dict = RefinableMembers()
 
             class Meta:
                 fruits__banana__attrs__class__basket_base = True
@@ -695,7 +694,7 @@ def test_evaluated_refinable_respects_order():
         nonlocal order
         order.append(name)
 
-    my_refinable = MyRefinableObject(
+    MyRefinableObject(
         a=lambda **_: register('a'),
         b=lambda **_: register('b'),
         c=lambda **_: register('c'),

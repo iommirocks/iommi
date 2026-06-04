@@ -7,6 +7,7 @@ from asgiref.sync import (
     sync_to_async,
 )
 from django.core.exceptions import ImproperlyConfigured
+from django.http import HttpRequest
 
 from iommi.action import Action
 from iommi.asset import Asset
@@ -71,7 +72,6 @@ from iommi.table import (
 )
 from iommi.thread_locals import get_current_request
 
-
 # it has to be here on import time
 # we tried it in AppConfig.ready(), but then custom registrations got overridden by the default ones
 setup_db_compat()
@@ -84,7 +84,7 @@ def render_if_needed(request, response):
         return response
 
 
-def render_part(request, part: Part):
+def render_part(request: HttpRequest, part: Part):
     try:
         if not part._is_bound:
             part = part.bind(request=request)

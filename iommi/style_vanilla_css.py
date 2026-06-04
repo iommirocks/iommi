@@ -32,7 +32,7 @@ vanilla_css_base = Style(
     Container=dict(
         tag='div',
         attrs__class={
-            
+
         },
         attrs__style__margin='1rem',
     ),

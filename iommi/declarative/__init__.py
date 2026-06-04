@@ -1,8 +1,5 @@
 from copy import copy
-from typing import (
-    Type,
-    TypeVar,
-)
+from typing import TypeVar
 
 from .util import (
     add_args_to_init_call,
@@ -32,7 +29,7 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
             "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)"
         )
 
-    def decorator(class_to_decorate: Type[T]) -> Type[T]:
+    def decorator(class_to_decorate: type[T]) -> type[T]:
         class DeclarativeMeta(class_to_decorate.__class__):  # type:ignore
             # noinspection PyTypeChecker,PyMethodParameters
             def __init__(cls, name, bases, dict_):  # noqa: N805

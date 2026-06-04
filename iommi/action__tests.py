@@ -1,4 +1,3 @@
-from typing import Dict
 
 import pytest
 
@@ -33,7 +32,6 @@ from iommi.shortcut import (
     is_shortcut,
 )
 from iommi.struct import Struct
-from iommi.traversable import Traversable
 from tests.helpers import (
     prettify,
     req,
@@ -139,7 +137,7 @@ def test_all_action_shortcuts():
             extra__fancy = True
 
     class ThingWithActions(Part):
-        actions: Dict[str, Action] = RefinableMembers()
+        actions: dict[str, Action] = RefinableMembers()
 
         def on_refine_done(self):
             refine_done_members(

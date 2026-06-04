@@ -95,7 +95,7 @@ def evaluate_strict(__func_or_value, *, __signature=None, __match_empty=True, **
 def get_signature(func):
     """
     :type func: Callable
-    :rtype: str
+    :rtype: str | None
     """
     try:
         return object.__getattribute__(func, '__iommi_declarative_signature')

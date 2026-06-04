@@ -1,5 +1,4 @@
 import functools
-from typing import Type
 from urllib.parse import urlencode
 
 from django.apps import apps as django_apps
@@ -36,7 +35,6 @@ from iommi.base import (
     items,
     values,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
@@ -44,6 +42,7 @@ from iommi.declarative.namespace import (
     flatten,
     setdefaults_path,
 )
+from iommi.declarative.with_meta import with_meta
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
@@ -120,13 +119,13 @@ class Admin(Page):
         table_class = EditTable
         form_class = Form
 
-    model: Type[Model] = Refinable()
-    instance: Model = Refinable()
-    app_name: str = Refinable()
-    model_name: str = Refinable()
+    model: type[Model] | None = Refinable()
+    instance: Model | None = Refinable()
+    app_name: str | None = Refinable()
+    model_name: str | None = Refinable()
     operation: str = Refinable()
-    table_class: Type[Table] = Refinable()
-    form_class: Type[Form] = Refinable()
+    table_class: type[Table] = Refinable()
+    form_class: type[Form] = Refinable()
 
     # Global configuration on apps level
     apps: Namespace = Refinable()
@@ -198,7 +197,7 @@ class Admin(Page):
             )
         super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
 
-    def refine_with_params(self, app_name: str = None, model_name: str = None, pk: str = None):
+    def refine_with_params(self, app_name: str | None = None, model_name: str | None = None, pk: str | None = None):
         refined_admin = self.refine(app_name=app_name, model_name=model_name)
 
         model = django_apps.all_models[app_name][model_name] if app_name and model_name else None

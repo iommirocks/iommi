@@ -3,7 +3,6 @@ import json
 import tempfile
 
 import pytest
-
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models.fields.files import FieldFile
 from django.test import override_settings
@@ -31,14 +30,14 @@ from tests.helpers import (
     do_post,
     req,
     verify_html,
-    verify_table_html,
     verify_part_html,
+    verify_table_html,
 )
 from tests.models import (
+    AttachmentModel,
     TBar,
     TBaz,
     TFoo,
-    AttachmentModel,
 )
 
 
@@ -570,7 +569,7 @@ def test_non_rendered():
         )
     )
     assert not edit_table.get_errors()
-    response = edit_table.render_to_response()
+    edit_table.render_to_response()
     assert TFoo.objects.get(pk=321).a == 10
     assert TFoo.objects.get(pk=654).a == 20
     assert TFoo.objects.get(pk=321).b == 'banana'
@@ -750,7 +749,7 @@ def test_lazy_tbody_on_fail():
                     <h1>Edit artist</h1>
                     <div><label for="id_name">Name</label><input id="id_name" name="name" type="text" value=""><ul><li>This field is required</li></ul></div>
                 </div>
-            
+
                 <h1>Albums</h1>
                 <div class="iommi-table-container" data-endpoint="/albums/tbody" data-iommi-id="albums">
                     <div action="" enctype="multipart/form-data" method="post">

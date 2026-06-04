@@ -1,4 +1,3 @@
-import re
 import traceback
 from unittest.mock import patch
 
@@ -10,9 +9,9 @@ from django.db import (
 from django.http import HttpResponse
 
 from iommi import (
+    Page,
     iommi_render,
     middleware,
-    Page,
     render_part,
 )
 from iommi.fragment import (

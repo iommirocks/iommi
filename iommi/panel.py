@@ -1,14 +1,13 @@
-from typing import Type
 
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy
 
+from iommi._web_compat import Template
+from iommi.declarative.namespace import Namespace
+from iommi.evaluate import evaluate_member
 from iommi.fragment import Fragment
 from iommi.part import Part
-from iommi.evaluate import evaluate_member
 from iommi.refinable import EvaluatedRefinable, Refinable
-from iommi.declarative.namespace import Namespace
-from iommi._web_compat import Template
 from iommi.shortcut import with_defaults
 
 
@@ -39,7 +38,7 @@ class Panel(Fragment):
     _parent_table_cells = Refinable()  # Cells|None
     parent_panel = None
     fieldset_legend: str = EvaluatedRefinable()
-    col_class: Type[PanelCol] = Refinable()
+    col_class: type[PanelCol] = Refinable()
     col = Refinable()
     nested_path: str = EvaluatedRefinable()  # path of a field in nested forms
 
@@ -52,7 +51,7 @@ class Panel(Fragment):
     @with_defaults(
         tag=None,
     )
-    def __init__(self, children: dict=None, **kwargs):
+    def __init__(self, children: dict | None=None, **kwargs):
         super(Panel, self).__init__(children=children, **kwargs)
 
     def as_dict(self):
@@ -207,7 +206,7 @@ class Panel(Fragment):
     def _get_children_as_panels(cls, children: dict):
         children_as_panels = {}
         for name, child in children.items():
-            if isinstance(child, (cls, dict, Namespace)):
+            if isinstance(child, cls | dict | Namespace):
                 assert '__' not in name
                 children_as_panels[name] = child
             elif isinstance(child, Part):
@@ -218,7 +217,7 @@ class Panel(Fragment):
                     name = name[:-10]
                 assert '__' not in name
                 children_as_panels[name] = cls.part(Fragment(template=child))
-            elif isinstance(child, (str, Promise)):  # Promise for gettext_lazy etc.
+            elif isinstance(child, str | Promise):  # Promise for gettext_lazy etc.
                 assert '__' not in name
                 children_as_panels[name] = cls.part(child)
             else:
@@ -230,7 +229,7 @@ class Panel(Fragment):
         tag='div',
         attrs__class__row=True,
     )
-    def row(cls, children: dict=None, **kwargs):
+    def row(cls, children: dict | None=None, **kwargs):
         """generates div.row"""
         return cls(children=cls._get_children_as_panels(children), **kwargs)
 
@@ -239,7 +238,7 @@ class Panel(Fragment):
         tag='fieldset',
         template='iommi/form/panel_fieldset.html',
     )
-    def fieldset(cls, children: dict=None, legend=None, **kwargs):
+    def fieldset(cls, children: dict | None=None, legend=None, **kwargs):
         """generates <fieldset><legend>{legend}</legend>{subfields/subpanels}</fieldset>"""
         kwargs.setdefault('fieldset_legend', legend)
         return cls(children=cls._get_children_as_panels(children), **kwargs)
@@ -250,7 +249,7 @@ class Panel(Fragment):
         attrs__class__card=True,
         template='iommi/form/panel_card.html',
     )
-    def card(cls, children: dict=None, header=None, footer=None, **kwargs):
+    def card(cls, children: dict | None=None, header=None, footer=None, **kwargs):
         """eg. for bootstrap div.card"""
         _children = {}
 
@@ -317,7 +316,7 @@ class Panel(Fragment):
     @with_defaults(
         tag='div',
     )
-    def div(cls, children: dict=None, **kwargs):
+    def div(cls, children: dict | None=None, **kwargs):
         return cls(children=cls._get_children_as_panels(children), **kwargs)
 
     @classmethod

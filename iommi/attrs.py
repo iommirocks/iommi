@@ -75,7 +75,7 @@ def _render_attrs_parts(attrs):
                     continue
             else:
                 raise TypeError(f'Only the class and style attributes can be dicts, you sent {value} for key {key}')
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, list | tuple):
             raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value} for key {key}")
         elif callable(value):
             from .docs import get_docs_callable_description

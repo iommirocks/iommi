@@ -4584,7 +4584,7 @@ def test_choice_searchable(medium_discography):
         part=form,
         find__name='select',
         # language=HTML
-        expected_html=f"""
+        expected_html="""
             <select class="select2_enhance" data-placeholder="" id="id_year" name="year">
                 <option label="1980" value="1980">1980</option>
                 <option label="1981" value="1981">1981</option>
@@ -4728,12 +4728,12 @@ def test_read_initial_reraises_for_saved_instance():
 @pytest.mark.django_db
 def test_delete_object_integrity_error_no_restricted_objects():
     from django.db import IntegrityError as DjIntegrityError
+
     from iommi.form import delete_object__post_handler
 
     artist = Artist.objects.create(name='Doomed Artist')
     form = Form.delete(auto__instance=artist).bind(request=req('post', **{'-submit': ''}))
 
-    original_delete = form.instance.delete
 
     def failing_delete():
         raise DjIntegrityError('foreign key constraint failed')
@@ -4748,6 +4748,7 @@ def test_delete_object_integrity_error_no_restricted_objects():
 @pytest.mark.django_db
 def test_delete_object_integrity_error_with_restricted_objects():
     from django.db.models.deletion import ProtectedError
+
     from iommi.form import delete_object__post_handler
 
     artist = Artist.objects.create(name='Protected Artist')
@@ -4794,6 +4795,7 @@ def test_form_with_namespace_layout_children():
 
 def test_form_layout_unused_fields_raises():
     from django.core.exceptions import ImproperlyConfigured
+
     from iommi.panel import Panel
 
     with pytest.raises(ImproperlyConfigured):

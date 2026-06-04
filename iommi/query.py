@@ -1,11 +1,7 @@
 import operator
+from collections.abc import Callable
 from datetime import datetime
 from functools import reduce
-from typing import (
-    Callable,
-    Type,
-    Union,
-)
 
 from django.conf import settings
 from django.core.exceptions import (
@@ -47,6 +43,7 @@ from iommi._web_compat import (
 from iommi.action import (
     Action,
 )
+from iommi.attrs import Attrs
 from iommi.base import MISSING, NOT_BOUND_MESSAGE, items, keys, model_and_rows, values
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
@@ -57,7 +54,6 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.form import Form, bool_parse, boolean_tristate__parse, date_parse, float_parse, int_parse, time_parse
-from iommi.attrs import Attrs
 from iommi.fragment import (
     Fragment,
     Tag,
@@ -65,7 +61,6 @@ from iommi.fragment import (
 from iommi.from_model import (
     AutoConfig,
     NoRegisteredSearchFieldException,
-    choices_from_model_field,
     create_members_from_model,
     get_search_fields,
     member_from_model,
@@ -236,7 +231,7 @@ class Filter(Part):
     field: Namespace = Refinable()
     query_operator_for_field: str = EvaluatedRefinable()
     freetext = EvaluatedRefinable()
-    model: Type[Model] = SpecialEvaluatedRefinable()
+    model: type[Model] | None = SpecialEvaluatedRefinable()
     model_field = Refinable()
     model_field_name = Refinable()
     choices = EvaluatedRefinable()
@@ -308,7 +303,7 @@ class Filter(Part):
 
     @staticmethod
     @refinable
-    def value_to_q(filter, op, value_string_or_f, **_) -> Q:
+    def value_to_q(filter, op, value_string_or_f, **_) -> Q | None:
         if filter.attr is None:
             return Q()
         negated = False
@@ -409,7 +404,7 @@ class Filter(Part):
         value_to_q=choice_queryset_value_to_q,
         is_valid_filter=choice_queryset__is_valid_filter,
     )
-    def choice_queryset(cls, choices: QuerySet | Callable[..., QuerySet] = None, **kwargs):
+    def choice_queryset(cls, choices: QuerySet | Callable[..., QuerySet] | None = None, **kwargs):
         """
         Field that has one value out of a set.
         """
@@ -664,13 +659,13 @@ class Query(Part, Tag):
     tag: str = EvaluatedRefinable()
     form: Namespace = Refinable()
     advanced: Namespace = Refinable()
-    model: Type[Model] = SpecialEvaluatedRefinable()
+    model: type[Model] | None = SpecialEvaluatedRefinable()
     rows = Refinable()
-    template: Union[str, Template] = EvaluatedRefinable()
+    template: str | Template = EvaluatedRefinable()
     form_container: Fragment = EvaluatedRefinable()
 
-    member_class: Type[Filter] = Refinable()
-    form_class: Type[Form] = Refinable()
+    member_class: type[Filter] = Refinable()
+    form_class: type[Form] = Refinable()
 
     # Filters need to be at the end to not steal the short names
     filters: Namespace = RefinableMembers()
@@ -1076,7 +1071,7 @@ class Query(Part, Tag):
             ],
         )
 
-    def get_query_string(self):
+    def get_query_string(self) -> str:
         """
         Based on the data in the request, return the equivalent query string that you can use with parse_query_string() to create a query set.
         """
@@ -1121,7 +1116,7 @@ class Query(Part, Tag):
         else:
             return ''
 
-    def get_q(self):
+    def get_q(self) -> Q:
         """
         Create a query set based on the data in the request.
         """

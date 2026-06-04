@@ -15,8 +15,8 @@ from iommi import (
 from iommi.attrs import Attrs
 from iommi.evaluate import evaluate_strict
 from iommi.fragment import (
-    fragment__render,
     TransientFragment,
+    fragment__render,
 )
 from iommi.struct import Struct
 from tests.helpers import (

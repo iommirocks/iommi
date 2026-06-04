@@ -1,11 +1,6 @@
 import copy
 import functools
 import inspect
-from typing import (
-    Any,
-    Dict,
-    List,
-)
 
 from iommi.attrs import (
     evaluate_attrs,
@@ -94,14 +89,14 @@ class Traversable(RefinableObject):
     _request = None
     context = None
 
-    iommi_style: str = Refinable()
+    iommi_style: str | Style | None = Refinable()
 
     @staticmethod
     @refinable
     def extra_params(**_):
         return {}
 
-    _bound_members: Dict[str, 'Traversable']
+    _bound_members: dict[str, 'Traversable'] | None
 
     def __init__(self, _name=None, **kwargs):
         self._bound_members = None
@@ -125,10 +120,10 @@ class Traversable(RefinableObject):
         description = (' ' + ' '.join(x for x in ('', n, b, p, c) if x)).rstrip()
         return f'<{type(self).__module__}.{type(self).__name__}{description}>'
 
-    def iommi_name(self) -> str:
+    def iommi_name(self) -> str | None:
         return self._name
 
-    def iommi_parent(self) -> "Traversable":
+    def iommi_parent(self) -> "Traversable | None":
         return self._parent
 
     def iommi_root(self) -> 'Traversable':
@@ -137,7 +132,7 @@ class Traversable(RefinableObject):
             node = node.iommi_parent()
         return node
 
-    def iommi_bound_members(self) -> Dict[str, 'Traversable']:
+    def iommi_bound_members(self) -> dict[str, 'Traversable']:
         assert self._is_bound, "Not bound yet"
         return self._bound_members
 
@@ -322,7 +317,7 @@ class Traversable(RefinableObject):
             return self.iommi_parent().get_context()
 
 
-def declared_members(node: Traversable) -> Any:
+def declared_members(node: Traversable) -> Namespace:
     assert node.is_refine_done, "Trying to find declared_member on RefinableObject without doing refine_done() first"
     result = Namespace()
     for k, v in items(node.get_declared('refinable')):
@@ -361,7 +356,7 @@ def get_path_by_long_path(node):
 
 
 def build_long_path(node: Traversable) -> str:
-    def _traverse(t: Traversable) -> List[str]:
+    def _traverse(t: Traversable) -> list[str]:
         assert t.iommi_name() is not None
         if t.iommi_parent() is None:
             return []
@@ -374,7 +369,7 @@ def include_in_short_path(node):
     return getattr(node, '_name', None) is not None
 
 
-def build_long_path_by_path(root) -> Dict[str, str]:
+def build_long_path_by_path(root) -> dict[str, str]:
     result = dict()
 
     def _traverse(node, long_path_segments, short_path_candidate_segments):

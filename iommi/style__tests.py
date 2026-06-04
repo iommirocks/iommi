@@ -1,4 +1,3 @@
-from django.template import Template
 import pytest
 
 from iommi import (
@@ -41,7 +40,7 @@ from tests.helpers import (
     prettify,
     req,
     verify_html,
-    verify_part_html, verify_table_html,
+    verify_part_html,
 )
 from tests.models import TBar
 
@@ -873,9 +872,9 @@ def test_importing_style_in_settings_should_not_trigger_circular_import():
     6. settings.py has `from iommi import Style`
     7. But iommi/__init__.py is only partially loaded -> ImportError
     """
+    import os
     import subprocess
     import sys
-    import os
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmpdir:

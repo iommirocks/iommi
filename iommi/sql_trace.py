@@ -31,7 +31,6 @@ from iommi.thread_locals import (
     set_current_request,
 )
 
-
 EXPLAINABLE_PREFIXES = ('SELECT', 'INSERT', 'UPDATE', 'DELETE')
 
 
@@ -48,7 +47,7 @@ def _cell_cost(cell):
     m = _pg_cost_re.search(cell_str)
     if m:
         return float(m.group(1))
-    if isinstance(cell, (int, float)):
+    if isinstance(cell, int | float):
         return abs(float(cell))
     if isinstance(cell, str):
         try:
@@ -399,11 +398,11 @@ def safe_unicode_literal(obj):
     if obj is None:
         return 'NULL'
 
-    if isinstance(obj, (list, tuple)):
+    if isinstance(obj, list | tuple):
         return tuple([safe_unicode_literal(x) for x in obj])
-    elif isinstance(obj, (float, int)):
+    elif isinstance(obj, float | int):
         return repr(obj)
-    elif isinstance(obj, (date, datetime)):
+    elif isinstance(obj, date | datetime):
         return repr(obj.isoformat())
     elif isinstance(obj, dict):
         return dict((k, safe_unicode_literal(v)) for k, v in obj.items())

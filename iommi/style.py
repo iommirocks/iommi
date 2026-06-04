@@ -1,11 +1,11 @@
 import warnings
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import (
+    AbstractContextManager,
+    contextmanager,
+)
 from typing import (
     Any,
-    List,
-    Type,
-    Union,
 )
 
 from django.conf import settings
@@ -158,7 +158,7 @@ class Style:
 _styles = {}
 
 
-def register_style(name, style, allow_overwrite=False):
+def register_style(name: str, style: 'Style', allow_overwrite: bool = False) -> 'AbstractContextManager[Style]':
     if not allow_overwrite:
         assert name not in _styles, f'{name} is already registered'
     assert style.name is None
@@ -205,7 +205,7 @@ class InvalidStyleConfigurationException(Exception):
     pass
 
 
-def validate_styles(*, additional_classes: List[Type] = None, default_classes=None, styles=None):
+def validate_styles(*, additional_classes: list[type] | None = None, default_classes: list[type] | None = None, styles: dict[str, 'Style'] | None = None):
     """
     This function validates all registered styles against all standard
     classes. If you have more classes you need to have checked against,
@@ -236,22 +236,21 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Table,
         )
         from iommi.action import Actions
-        from iommi.experimental.calendar import Calendar
         from iommi.admin import Admin
         from iommi.error import Errors
+        from iommi.experimental.calendar import Calendar
         from iommi.form import FieldGroup
         from iommi.fragment import Container, Header
         from iommi.live_edit import LiveEditPage
-        from iommi.table import HeaderConfig
+        from iommi.main_menu import (
+            M,
+            MainMenu,
+        )
         from iommi.menu import (
             MenuBase,
             get_debug_menu,
         )
-        from iommi.table import Paginator
-        from iommi.main_menu import (
-            MainMenu,
-            M,
-        )
+        from iommi.table import HeaderConfig, Paginator
 
         default_classes = [
             Action,
@@ -331,7 +330,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         raise InvalidStyleConfigurationException('\n\n'.join([invalid_class_names_str, invalid_shortcut_names_str]))
 
 
-def resolve_style(iommi_style: Union[str, Style], enclosing_style: Style = None):
+def resolve_style(iommi_style: str | Style | None, enclosing_style: Style | None = None):
     if isinstance(iommi_style, Style):
         return iommi_style
 

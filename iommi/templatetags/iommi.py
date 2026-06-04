@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from django import template
 from django.conf import settings
 
