@@ -7,7 +7,7 @@ authors = [
     { name = "Johan Lübcke", email = "johan@lubcke.se" },
 ]
 readme = "README_pypi.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 keywords = ["iommi"]
 license = "BSD-2-Clause"
 
