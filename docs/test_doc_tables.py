@@ -198,8 +198,13 @@ def test_table_csv(small_discography):
 
     # language=rst
     """
-    You can also pass kwargs to the `csv.writer` such as `delimiter`, `quotechar`, etc. 
+    You can also pass kwargs to the `csv.writer` such as `delimiter`, `quotechar`, etc.
     with `extra_evaluated__csv_writer_kwargs = {'delimiter': ';', ...}`.
+
+    Instead of specifying `extra_evaluated__report_name` on each column, you can set
+    `extra__report_columns_all=True` on the table to include all columns, using each
+    column's name as its header. An explicit `extra_evaluated__report_name` on a column
+    still takes precedence over the column name.
     """
 
 

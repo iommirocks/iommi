@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.26.0 (2026-06-04)
+~~~~~~~~~~~~~~~~~~~
+
+* `extra__report_columns_all=True` option for Table to dump all visible columns into a report
+
+
 7.25.2 (2026-05-28)
 ~~~~~~~~~~~~~~~~~~~
 
