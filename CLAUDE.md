@@ -5,21 +5,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Testing
-- `python -m pytest` - Run all tests
-- `python -m pytest <module>__tests.py` - Run tests for a specific module (e.g., `python -m pytest iommi/form__tests.py`)
-- `python -m pytest docs/test_doc_<name>.py` - Run documentation tests for a specific module
-- `make test` - Alternative test runner using make
-- `make test-docs` - Run documentation tests specifically
+- `uv run pytest` - Run all tests
+- `uv run pytest <module>__tests.py` - Run tests for a specific module (e.g., `uv run pytest iommi/form__tests.py`)
+- `uv run pytest docs/test_doc_<name>.py` - Run documentation tests for a specific module
+- `make test` - Alternative test runner using make (runs pytest in parallel with `-n auto`)
+- `make test-docs` - Build the docs with sphinx, which validates them
 - `make coverage` - Run tests with coverage report
-- `tox` - Run tests across multiple Django versions
+- `make test-all` or `python run_tests.py --all` - Run tests across the full Python/Django version matrix
 
 ### Code Quality
 - `make lint` or `make ruff` - Run linting with ruff
 - `make ruff-format` - Format code with ruff
 
 ### Development Environment
-- `make venv` - Create virtual environment using tox
-- `source venv/bin/activate` - Activate virtual environment
+- `make venv` - Create virtual environment and install dev dependencies using uv
+- `source .venv/bin/activate` - Activate virtual environment
 - `make run-examples` - Run the examples Django project for testing
 
 ### Documentation
@@ -64,7 +64,7 @@ Tests follow a pattern where each module `foo.py` has corresponding `foo__tests.
 
 ### Development Settings
 
-Test settings are in `tests/settings.py` with iommi-specific middleware and test configurations. The project uses tox for testing across Django versions and includes mutation testing with mutmut.
+Test settings are in `tests/settings.py` with iommi-specific middleware and test configurations. The project uses uv for environment management, `run_tests.py` for testing across Django versions, and includes mutation testing with mutmut.
 
 ### Documentation and Testing
 
