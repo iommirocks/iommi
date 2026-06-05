@@ -1,13 +1,12 @@
 from django.conf import settings
 
 import iommi.style
+from examples.views import StyleSelector
 from iommi import (
     Page,
     html,
 )
 from iommi.live_edit import style_showcase
-
-from examples.views import StyleSelector
 
 
 def storybook(request):

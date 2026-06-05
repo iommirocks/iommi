@@ -892,7 +892,7 @@ def test_weekend_class_on_weekday_headers():
     assert 'iommi-calendar-weekend' in html
     # Mon-Fri headers should not — check that at least one weekday header lacks it
     lines = html.split('\n')
-    weekday_lines = [l for l in lines if '>Mon<' in l or '>Fri<' in l]
+    weekday_lines = [line for line in lines if '>Mon<' in line or '>Fri<' in line]
     for line in weekday_lines:
         assert 'iommi-calendar-weekend' not in line
 

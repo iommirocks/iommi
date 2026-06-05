@@ -1,15 +1,14 @@
-from iommi import (
-    Header,
-    html,
-)
 from examples.iommi import (
     Field,
     Form,
     Page,
     Table,
 )
-
 from examples.models import Album
+from iommi import (
+    Header,
+    html,
+)
 
 
 class PlaygroundPage(Page):
