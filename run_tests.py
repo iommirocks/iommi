@@ -44,22 +44,16 @@ def _load_matrix():
 
 MATRIX, LATEST_PYTHON, LATEST_DJANGO = _load_matrix()
 
-DJANGO_CONSTRAINTS = {
-    '3.2': 'Django>=3.2,<3.3',
-    '4.0': 'Django>=4.0,<4.1',
-    '4.1': 'Django>=4.1,<4.2',
-    '4.2': 'Django>=4.2,<4.3',
-    '5.0': 'Django>=5.0,<5.1',
-    '5.2': 'Django>=5.2,<5.3',
-    '6.0': 'Django>=6.0,<6.1',
-}
+def django_constraint(django_version):
+    major, minor = django_version.split('.')
+    return f'Django>={django_version},<{major}.{int(minor) + 1}'
 
 
 def run(python_version, django_version, jinja2=False):
     cmd = [
         'uv', 'run',
         '-p', python_version,
-        '--with', DJANGO_CONSTRAINTS[django_version],
+        '--with', django_constraint(django_version),
     ]
     env_override = {}
     if jinja2:
