@@ -11,6 +11,7 @@ from decimal import (
 from functools import reduce
 from itertools import groupby
 from operator import or_
+from urllib.parse import urlparse
 from typing import (
     Any,
     Callable,
@@ -838,13 +839,18 @@ class Field(Part, Tag):
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
 
-        self.iommi_namespace.set('non_editable_input', Namespace(
-            {
-                **flatten(self.iommi_namespace.get('input', Namespace())),
-                **self.iommi_namespace.get('non_editable_input', Namespace()),
-            }
-        ))
-        self.non_editable_input = self.iommi_namespace.get('non_editable_input')(_name='non_editable_input',).refine_done(parent=self)
+        self.iommi_namespace.set(
+            'non_editable_input',
+            Namespace(
+                {
+                    **flatten(self.iommi_namespace.get('input', Namespace())),
+                    **self.iommi_namespace.get('non_editable_input', Namespace()),
+                }
+            ),
+        )
+        self.non_editable_input = self.iommi_namespace.get('non_editable_input')(
+            _name='non_editable_input',
+        ).refine_done(parent=self)
         self.input = self.input(_name='input').refine_done(parent=self)
         self.label = self.label(_name='label').refine_done(parent=self)
         self.help = self.help(_name='help').refine_done(parent=self)
@@ -1630,6 +1636,10 @@ def create_or_edit_object_redirect(is_create, redirect_to, redirect, form):
         redirect_to is None or isinstance(redirect_to, str) or is_django_promise_with_string_proxy(redirect_to)
     ), 'redirect_to must be a str or callable'
     if redirect_to is None:
+        next_url = form.get_request().POST.get('next')
+        if next_url:
+            redirect_to = safe_redirect_url(next_url, form.get_request(), fallback=None)
+    if redirect_to is None:
         if is_create:
             redirect_to = "../"
         else:
@@ -2192,6 +2202,24 @@ class Form(Part, Tag):
         self._errors.add(msg)
         self._valid = False
 
+    def next_value(self):
+        # The value to redirect to after a successful save. Only relevant for forms that redirect
+        # (create/edit/delete), and never for nested forms (the redirect is handled by the parent).
+        if self.is_nested_form or 'crud_type' not in self.extra:
+            return None
+        request = self.get_request()
+        # An explicit `next` from the query string or a re-submitted POST wins, otherwise fall
+        # back to the referrer so the user is returned to wherever they came from.
+        explicit = request.POST.get('next') or request.GET.get('next')
+        if explicit:
+            return explicit
+        referer = request.META.get('HTTP_REFERER')
+        # Don't use the referrer if it points back at this same page (e.g. a reload), since
+        # redirecting there after save would just dump the user back on the form.
+        if referer and urlparse(referer).path != request.path:
+            return referer
+        return None
+
     # property for jinja2 compatibility
     @property
     def render_fields(self):
@@ -2225,10 +2253,18 @@ class Form(Part, Tag):
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.iommi_path for f in values(self.fields)}
+
+        # On CRUD forms we render `next` explicitly below (with the referrer fallback), so don't let the generic GET parameter preservation render it a second time.
+        next_url = self.next_value()
         hidden_fields = []
         for k, v in items(self.get_request().GET):
+            if k == 'next' and next_url:
+                continue
             if k not in own_field_paths and not k.startswith('-') and not k.startswith(DISPATCH_PREFIX):
                 hidden_fields.append(format_html('<input type="hidden" name="{}" value="{}">', k, v))
+
+        if next_url:
+            hidden_fields.append(format_html('<input type="hidden" name="next" value="{}">', next_url))
 
         if self.layout is not None:
             html = render_template(request=self.get_request(), template=self.layout_template, context=context)
