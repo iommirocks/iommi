@@ -3273,6 +3273,90 @@ def test_edit_object():
     assert response['Location'] == '../../'
 
 
+def test_next_filled_from_referrer():
+    from tests.models import Foo
+
+    request = RequestFactory(HTTP_REFERER='/the/referrer/').get('/')
+    request.user = Struct(is_staff=False, is_authenticated=False, is_superuser=False)
+    html = Form.create(auto__model=Foo).bind(request=request).__html__()
+    assert '<input type="hidden" name="next" value="/the/referrer/">' in html
+
+
+def test_next_filled_from_get_overrides_referrer():
+    from tests.models import Foo
+
+    request = RequestFactory(HTTP_REFERER='/the/referrer/').get('/', dict(next='/explicit/'))
+    request.user = Struct(is_staff=False, is_authenticated=False, is_superuser=False)
+    html = Form.create(auto__model=Foo).bind(request=request).__html__()
+    assert '<input type="hidden" name="next" value="/explicit/">' in html
+    # And it should not be duplicated by the generic GET parameter preservation
+    assert html.count('name="next"') == 1
+
+
+def test_next_not_rendered_without_referrer_or_get():
+    from tests.models import Foo
+
+    request = RequestFactory().get('/')
+    request.user = Struct(is_staff=False, is_authenticated=False, is_superuser=False)
+    html = Form.create(auto__model=Foo).bind(request=request).__html__()
+    assert 'name="next"' not in html
+
+
+def test_next_ignores_referrer_pointing_at_current_page():
+    from tests.models import Foo
+
+    # The referrer is this same page (e.g. a reload), so it must not be used - redirecting there
+    # after save would just dump the user back on the form.
+    request = RequestFactory(HTTP_REFERER='http://testserver/foo/create/').get('/foo/create/')
+    request.user = Struct(is_staff=False, is_authenticated=False, is_superuser=False)
+    html = Form.create(auto__model=Foo).bind(request=request).__html__()
+    assert 'name="next"' not in html
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_next_respected_on_redirect():
+    from tests.models import Foo
+
+    request = req('post', foo='7', next='/where/i/came/from/', **{'-submit': ''})
+    form = Form.create(auto__model=Foo).bind(request=request)
+    response = form.render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == '/where/i/came/from/'
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_next_unsafe_falls_back_to_default():
+    from tests.models import Foo
+
+    request = req('post', foo='7', next='https://evil.example.com/', **{'-submit': ''})
+    form = Form.create(auto__model=Foo).bind(request=request)
+    response = form.render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == '../'
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_next_on_delete_form():
+    from tests.models import Foo
+
+    # Delete forms are not editable, but the hidden input is rendered at the form level so it still works.
+    foo = Foo.objects.create(foo=7)
+    request = RequestFactory(HTTP_REFERER='/the/listing/').get('/')
+    request.user = Struct(is_staff=False, is_authenticated=False, is_superuser=False)
+    html = Form.delete(auto__instance=foo).bind(request=request).__html__()
+    assert '<input type="hidden" name="next" value="/the/listing/">' in html
+
+    request = req('post', next='/the/listing/', **{'-submit': ''})
+    response = Form.delete(auto__instance=foo).bind(request=request).render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == '/the/listing/'
+    with pytest.raises(Foo.DoesNotExist):
+        foo.refresh_from_db()
+
+
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_edit_object_foreign_related_attribute():
@@ -3365,7 +3449,6 @@ def test_custom_save():
     assert instance.f_bool is False
     assert instance.f_float == 0.0
     assert instance.f_int == 1
-
 
 
 def test_redirect_default_case():
