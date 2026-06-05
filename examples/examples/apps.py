@@ -11,8 +11,8 @@ class ExampleConfig(AppConfig):
 
     def ready(self):
         from examples.models import (
-            Artist,
             Album,
+            Artist,
         )
         from iommi import register_search_fields
 

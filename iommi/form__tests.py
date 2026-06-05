@@ -4406,7 +4406,10 @@ def test_nested_forms_abort_save_on_fail():
         class Meta:
             auto__instance = dark_funeral
             auto__include = ['id', 'name']
-            actions__submit__post_handler = lambda **_: None  # return None, so save_nested_forms takes it as a fail
+
+            @staticmethod
+            def actions__submit__post_handler(**_):
+                return None  # So save_nested_forms takes it as a fail
 
     class AlbumsEditTable(EditTable):
         class Meta:

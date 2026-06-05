@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from django.test import RequestFactory
 
 from iommi import (
-    middleware,
     Table,
+    middleware,
 )
 from iommi.base import keys
 from iommi.declarative import declarative

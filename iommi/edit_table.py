@@ -478,7 +478,10 @@ class EditTable(Table):
         reorderable = False
 
         extra_evaluated__render_inputs_only = False
-        extra_evaluated__input_labels_include = lambda table, **_: table.row.layout is not None
+
+        @staticmethod
+        def extra_evaluated__input_labels_include(table, **_):
+            return table.row.layout is not None
 
         bulk__include = True
 

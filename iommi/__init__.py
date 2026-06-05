@@ -170,6 +170,8 @@ __all__ = [
     'Form',
     'Fragment',
     'Header',
+    'M',
+    'MainMenu',
     'Menu',
     'MenuItem',
     'middleware',
@@ -205,7 +207,6 @@ __all__ = [
 
 if django.VERSION[:2] < (3, 2):
     default_app_config = 'iommi.apps.IommiConfig'
-
 
 try:
     from django.conf import settings

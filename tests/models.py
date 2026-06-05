@@ -4,6 +4,7 @@ from django.db.models import (
     CASCADE,
     BooleanField,
     CharField,
+    Field,
     FileField,
     FloatField,
     ForeignKey,
@@ -11,11 +12,10 @@ from django.db.models import (
     ManyToManyField,
     Model,
     OneToOneField,
-    UUIDField,
-    UniqueConstraint,
-    TextChoices,
     PositiveSmallIntegerField,
-    Field,
+    TextChoices,
+    UniqueConstraint,
+    UUIDField,
 )
 
 from iommi import register_search_fields

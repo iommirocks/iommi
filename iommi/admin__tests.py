@@ -355,7 +355,7 @@ class TableAdmin(Admin):
         (TableAdmin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
     ],
 )
-def test_redirect_to_login(admin, kwargs):
+def test_redirect_to_login_2(admin, kwargs):
     if 'pk' in kwargs:
         Foo.objects.create(pk=kwargs['pk'], foo=1)
     request = req('get')

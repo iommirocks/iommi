@@ -248,7 +248,10 @@ def test_nested_forms(john_doe_user, fav_artists):
         class Meta:
             auto__model = get_user_model()
             auto__include = ["username", "email", "last_login"]
-            fields__last_login__include = lambda form, **_: form.instance is not None
+
+            @staticmethod
+            def fields__last_login__include(form, **_):
+                return form.instance is not None
 
     class FavoriteArtistsEditTable(EditTable):
         class Meta:
@@ -507,7 +510,11 @@ def test_table_row_layout(john_doe_user, fav_artists):
             auto__rows = john_doe_user.favorite_artists.all()
             auto__include = ['user__username', 'artist', 'comment']
             columns__artist__cell__url = None
-            columns__comment__cell__url = lambda row, **_: f'/favorite_artist/{row.pk}/'
+
+            @staticmethod
+            def columns__comment__cell__url(row, **_):
+                return f'/favorite_artist/{row.pk}/'
+
             row__layout = Panel.div(
                 dict(
                     artist=Panel.cell(),

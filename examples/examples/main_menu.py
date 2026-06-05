@@ -9,11 +9,11 @@ from examples.models import (
     Artist,
     Track,
 )
-from iommi.admin import Admin
 from iommi import (
     M,
     MainMenu,
 )
+from iommi.admin import Admin
 from iommi.main_menu import EXTERNAL
 
 main_menu = MainMenu(

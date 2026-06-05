@@ -10,7 +10,6 @@ from django.utils.safestring import mark_safe
 DjangoTemplate = None
 JinjaTemplate = None
 
-
 _template_types = tuple()
 
 _template_types_initialized = False
@@ -24,16 +23,14 @@ def _init_template_types():
 
     try:
         if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
-            from django.template import Template as DT
+            from django.template import Template as DjangoTemplate  # Overwrite None
 
-            DjangoTemplate = DT
             _template_types += (DjangoTemplate, DjangoLoadedTemplate)
 
         if any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES):
             import jinja2  # noqa: F401
-            from jinja2 import Template as JT
+            from jinja2 import Template as JinjaTemplate  # Overwrite None
 
-            JinjaTemplate = JT
             _template_types += (JinjaTemplate,)
     except ImproperlyConfigured:
         pass

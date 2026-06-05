@@ -28,8 +28,8 @@ def test_album_table_renders(album):
 
 @pytest.mark.django_db
 def test_table_with_preprocess_rows(discography):
-    from examples.models import Album
     from examples.iommi import Table
+    from examples.models import Album
 
     table = Table(
         auto__model=Album,
@@ -61,8 +61,8 @@ def test_form_create(artist):
 
 @pytest.mark.django_db
 def test_table_filter(discography):
-    from examples.models import Album
     from examples.iommi import Table
+    from examples.models import Album
 
     table = Table(
         auto__model=Album,

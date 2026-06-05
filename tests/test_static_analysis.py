@@ -3,6 +3,7 @@ from os import walk
 from pathlib import Path
 
 from django.conf import settings
+
 from iommi.sql_trace import format_clickable_filename
 
 

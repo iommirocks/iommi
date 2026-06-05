@@ -4,7 +4,16 @@ from django.template import Template
 from django.utils.translation import gettext_lazy as _
 
 import iommi.style
-from iommi.experimental.calendar import Calendar
+from examples.iommi import (
+    Action,
+    Column,
+    Table,
+)
+from examples.models import (
+    Album,
+    Artist,
+    Track,
+)
 from iommi import (
     Header,
     Page,
@@ -17,17 +26,6 @@ from iommi.form import (
     Form,
 )
 from iommi.style import validate_styles
-
-from examples.models import (
-    Album,
-    Artist,
-    Track,
-)
-from examples.iommi import (
-    Action,
-    Column,
-    Table,
-)
 
 # Use this function in your code to check that the style is configured correctly. Pass in all stylable classes in your system. For example if you have subclasses for Field, pass these here.
 validate_styles()

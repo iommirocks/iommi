@@ -1,4 +1,3 @@
-from django.template import Template
 
 import iommi
 from iommi.shortcut import with_defaults
