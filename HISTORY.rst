@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.27.0 (2026-05-05)
+~~~~~~~~~~~~~~~~~~~
+
+* Smarter form "next" redirect
+
+* Fixed typing information
+
+* Dropped support for Python 3.11
+
+
 7.26.0 (2026-06-04)
 ~~~~~~~~~~~~~~~~~~~
 
