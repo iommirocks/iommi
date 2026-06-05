@@ -5,14 +5,11 @@ from iommi.declarative.util import add_args_to_init_call
 from iommi.struct import Struct
 
 
-def with_meta(class_to_decorate=None, add_init_kwargs=True):
+def with_meta(class_to_decorate: type | None = None, add_init_kwargs=True) -> type | functools.partial:
     """
     Class decorator to enable a class (and it's sub-classes) to have a 'Meta' class attribute.
 
-    :type class_to_decorate: class
     :param bool add_init_kwargs: Pass Meta class members to constructor
-
-    :rtype: class
     """
 
     if class_to_decorate is None:
@@ -33,13 +30,10 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
     return class_to_decorate
 
 
-def get_meta(cls):
+def get_meta(cls: type) -> Namespace:
     """
     Collect all members of any contained :code:`Meta` class declarations from the given class or any of its base classes.
     (Sub class values take precedence.)
-
-    :type cls: class
-    :rtype: Struct
     """
     merged_attributes = Namespace()
     for class_ in reversed(cls.mro()):

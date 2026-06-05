@@ -1,4 +1,5 @@
 import inspect
+from collections.abc import Callable
 
 from iommi.base import (
     items,
@@ -92,11 +93,7 @@ def evaluate_strict(__func_or_value, *, __signature=None, __match_empty=True, **
     return evaluate(__func_or_value, __signature=None, __strict=True, __match_empty=__match_empty, **kwargs)
 
 
-def get_signature(func):
-    """
-    :type func: Callable
-    :rtype: str | None
-    """
+def get_signature(func: Callable) -> str | None:
     try:
         return object.__getattribute__(func, '__iommi_declarative_signature')
     except AttributeError:
