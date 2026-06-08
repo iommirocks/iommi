@@ -359,8 +359,11 @@ def float_parse(string_value: str, **_):
         raise ValueError(gettext_lazy("Could not convert string to float: {}").format(string_value))
 
 
-def int_parse(string_value, **_):
-    return int(string_value)
+def int_parse(string_value: str, **_) -> int:
+    try:
+        return int(string_value)
+    except ValueError:
+        raise ValueError(gettext_lazy("Could not convert string to int: {}").format(string_value))
 
 
 def choice_is_valid(field, parsed_data, **_):
