@@ -256,6 +256,9 @@ def test_django_table():
             <table class="table" >
                 <thead>
                     <tr>
+                        <th class="first_column subheader" title="Select all">
+                            <i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, false)"> </i>
+                        </th>
                         <th class="first_column iommi_sort_header subheader">
                             <a href="?order=foo_a"> Foo a </a>
                         </th>
@@ -269,12 +272,14 @@ def test_django_table():
                 </thead>
                 <tbody>
                     <tr data-pk="{b1.pk}">
+                        <td> <input class="checkbox" name="pk_{b1.pk}" type="checkbox"/> </td>
                         <td class="rj"> 17 </td>
                         <td> Hej </td>
                         <td> Foo(17, Hej) </td>
 
                     </tr>
                     <tr data-pk="{b2.pk}">
+                        <td> <input class="checkbox" name="pk_{b2.pk}" type="checkbox"/> </td>
                         <td class="rj"> 42 </td>
                         <td> Hopp </td>
                         <td> Foo(42, Hopp) </td>

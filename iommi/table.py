@@ -713,8 +713,10 @@ class Column(Part):
     @with_defaults(
         header__template='iommi/table/select_column_header.html',
         sortable=False,
+        filter__include=False,
         filter__is_valid_filter=lambda **_: (True, ''),
         filter__field__include=False,
+        bulk__include=False,
         attr=None,
         cell__value=lambda table, cells, row, **_: (
             row.pk
@@ -743,8 +745,9 @@ class Column(Part):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
-        By default tables have a column named `select` that is hidden that is used for this purpose, so you only
-        need to turn it on to get it. See the example below.
+        By default tables have a column named `select` that is used for this purpose. It is shown
+        automatically when bulk editing or a bulk action is enabled, and is otherwise hidden. You can
+        force it on (or off) by setting `columns__select__include`. See the example below.
 
         To implement a custom post handler that operates on the selected rows, do
 
@@ -758,7 +761,6 @@ class Column(Part):
 
             table = Table(
                 auto__model=Album,
-                columns__select__include=True,
                 bulk__actions__submit=Action.submit(post_handler=my_handler)
             )
 
@@ -2010,7 +2012,9 @@ class Table(Part, Tag):
             call_target__attribute='select',
             attr=None,
             after=-1,
-            include=False,
+            # Default to showing the select column when bulk editing/actions are
+            # enabled, so there's a way to pick the rows to operate on.
+            include=lambda table, **_: table.bulk is not None and table._bulk_actions_enabled,
         )
 
         model = self.model
@@ -2085,6 +2089,9 @@ class Table(Part, Tag):
 
         self.query: Query | None = None
         self.bulk: Form | None = None
+        # Set to True below when a bulk form with bulk-edit fields/actions is
+        # created. The `select` column uses this to default to being shown.
+        self._bulk_actions_enabled = False
         self.header_levels = None
 
         def add_hidden_all_pks_field(declared_bulk_fields):
@@ -2181,6 +2188,7 @@ class Table(Part, Tag):
                 any(x.bulk.include for x in values(self.iommi_namespace.get('columns', {})))
                 or 'actions' in self.iommi_namespace.get('bulk', {})
             ):
+                self._bulk_actions_enabled = True
                 # noinspection PyCallingNonCallable
                 self.bulk = form_class(
                     **setdefaults_path(
