@@ -1,7 +1,13 @@
 Changelog
 ---------
 
-7.27.0 (2026-05-05)
+7.27.1 (2026-06-08)
+~~~~~~~~~~~~~~~~~~~
+
+* `Table`: the select column should be shown by default if bulk editing is active
+
+
+7.27.0 (2026-06-05)
 ~~~~~~~~~~~~~~~~~~~
 
 * Smarter form "next" redirect
