@@ -4639,13 +4639,13 @@ def test_invalid_query_results_in_no_rows():
     )
 
     t_b = t.bind(request=req('get', a='not a number'))
-    assert t_b.query.form.get_errors() == {'fields': {'a': {"invalid literal for int() with base 10: 'not a number'"}}}
+    assert t_b.query.form.get_errors() == {'fields': {'a': {"Could not convert string to int: not a number"}}}
     assert not t_b.rows
 
     t_b = t.bind(request=req('get', **{'-query/query': 'a="not a number"'}))
     assert (
         t_b.query.query_error
-        == """Invalid value for filter "a": invalid literal for int() with base 10: 'not a number'"""
+        == """Invalid value for filter "a": Could not convert string to int: not a number"""
     )
     assert not t_b.rows
 
