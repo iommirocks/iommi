@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-10 17:09+0000\n"
+"POT-Creation-Date: 2026-06-10 21:46+0000\n"
 "Last-Translator: PierreMDL <pierre@lepinay.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -67,7 +67,8 @@ msgstr "« {} » ne peut pas être interprété comme une valeur booléenne"
 #: form.py:359
 #, python-brace-format
 msgid "Could not convert string to float: {}"
-msgstr "« {} » ne peut pas être inteprété comme un nombre décimal à virgule flottante"
+msgstr ""
+"« {} » ne peut pas être inteprété comme un nombre décimal à virgule flottante"
 
 #: form.py:366
 #, python-brace-format
@@ -111,12 +112,14 @@ msgid ""
 "{formats}"
 msgstr ""
 "La valeur donnée « {string_value} » ne correspond ni à « now » ni aux "
-"« now » ni aux formats suivants : {formats}"
+"formats suivants : {formats}"
 
 #: form.py:574
 #, python-brace-format
 msgid "Invalid literal for Decimal: '{string_value}'"
-msgstr "« {string_value} » ne peut pas être interprété comme un nombre décimal à virgule fixe"
+msgstr ""
+"« {string_value} » ne peut pas être interprété comme un nombre décimal à "
+"virgule fixe"
 
 #: form.py:599
 msgid ""
