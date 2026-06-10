@@ -1,0 +1,388 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-10 17:09+0000\n"
+"Last-Translator: PierreMDL <pierre@lepinay.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n>1;\n"
+
+#: action.py:171
+msgid "Submit"
+msgstr "Envoyer"
+
+#: admin.py:138
+msgid "iommi administration"
+msgstr "administration iommi"
+
+#: admin.py:142 views.py:161
+msgid "Change password"
+msgstr "Changer le mot de passe"
+
+#: admin.py:146
+msgid "Logout"
+msgstr "Se déconnecter"
+
+#: admin.py:435
+msgid "Add models to admin"
+msgstr "Ajouter des modèles à administrer"
+
+#: admin.py:478
+#, python-format
+msgid "Create %(model_name)s"
+msgstr "Créer %(model_name)s"
+
+#: admin.py:577
+msgid "admin"
+msgstr "admin"
+
+#: base__tests.py:66 form.py:1704
+msgid "edit"
+msgstr "modifier"
+
+#: edit_table.py:230 style_base.py:116 table.py:642
+#: templates/iommi/form/file_item.html:15
+msgid "Delete"
+msgstr "Supprimer"
+
+#: edit_table.py:280 panel.py:332
+msgid "Drag and drop to reorder"
+msgstr "Glisser-déposer pour réordonner"
+
+#: edit_table.py:462 form.py:1923 style_base.py:114
+msgid "Save"
+msgstr "Enregistrer"
+
+#: edit_table.py:468
+msgid "Add row"
+msgstr "Ajouter une ligne"
+
+#: form.py:170
+#, python-brace-format
+msgid "{} is not a valid boolean value"
+msgstr "« {} » ne peut pas être interprété comme une valeur booléenne"
+
+#: form.py:359
+#, python-brace-format
+msgid "Could not convert string to float: {}"
+msgstr "« {} » ne peut pas être inteprété comme un nombre décimal à virgule flottante"
+
+#: form.py:366
+#, python-brace-format
+msgid "Could not convert string to int: {}"
+msgstr "« {} » ne peut pas être inteprété comme un nombre entier"
+
+#: form.py:373 form.py:391
+#, python-brace-format
+msgid "{} not in available choices"
+msgstr "« {} » ne fait pas partie des choix disponibles"
+
+#: form.py:491
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks ago\""
+msgstr ""
+"La valeur donnée « {string_value} » ne correspond ni à « now » ni à une date "
+"relative telle que « 2d » ou « 2 weeks ago » ni aux formats suivants : "
+"{formats}"
+
+#: form.py:519
+msgid "out of range"
+msgstr "date trop éloignée"
+
+#: form.py:526
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks "
+"ago\"{extra_information}"
+msgstr ""
+"La valeur donnée « {string_value} » ne correspond ni à « now » ni à une date "
+"relative telle que « 2d » ou « 2 weeks ago » ni aux formats suivants : "
+"{formats}{extra_information}"
+
+#: form.py:558
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\" or "
+"{formats}"
+msgstr ""
+"La valeur donnée « {string_value} » ne correspond ni à « now » ni aux "
+"« now » ni aux formats suivants : {formats}"
+
+#: form.py:574
+#, python-brace-format
+msgid "Invalid literal for Decimal: '{string_value}'"
+msgstr "« {string_value} » ne peut pas être interprété comme un nombre décimal à virgule fixe"
+
+#: form.py:599
+msgid ""
+"Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
+"123 4567 or +1 212 123 4567"
+msgstr ""
+"Assurez-vous de saisir un numéro au format international : +<indicatif pays> "
+"(indicatif régional) numéro. Par exemple pour USA : +1 (212) 123 4567 ou "
+"bien +1 212 123 4567"
+
+#: form.py:1110
+msgid "This field is required"
+msgstr "Ce champ est obligatoire"
+
+#: form.py:1376 style_bootstrap_icons.py:30
+#: style_daisyui.py:31 style_font_awesome_4.py:29
+#: style_font_awesome_6.py:32 table.py:274 table.py:782
+msgid "Yes"
+msgstr "Oui"
+
+#: form.py:1376 table.py:276
+msgid "No"
+msgstr "Non"
+
+#: form.py:1657
+#, python-format
+msgid "Cannot delete %(name)s"
+msgstr "%(name)s ne peut être supprimé"
+
+#: form.py:1703
+msgid "create"
+msgstr "créer"
+
+#: form.py:1705
+msgid "delete"
+msgstr "supprimer"
+
+#: form.py:1914
+#, python-format
+msgid "%(crud_type)s %(model_name)s"
+msgstr "%(crud_type)s %(model_name)s"
+
+#: form.py:2404
+#, python-format
+msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
+msgstr "Confirmer la suppression de %(model_name)s \"%(instance)s\"?"
+
+#: form__tests.py:4358
+msgid "yes"
+msgstr "oui"
+
+#: panel__tests.py:59
+msgid "Permissions"
+msgstr "Permissions"
+
+#: query.py:631 templates/iommi/query/form_toggle_script.html:26
+msgid "Switch to advanced search"
+msgstr "Passer à la recherche avancée"
+
+#: query.py:771
+msgid "Search"
+msgstr "Rechercher"
+
+#: query.py:820
+msgctxt "verb"
+msgid "Filter"
+msgstr "Filtrer"
+
+#: style_98.py:136 style_base.py:163 style_bootstrap.py:141
+#: style_bootstrap5.py:158 style_bulma.py:126
+#: style_daisyui.py:217 style_semantic_ui.py:87
+#: style_us_web_design_system.py:138 style_vanilla_css.py:94
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+#: style_base.py:115
+msgid "Create"
+msgstr "Créer"
+
+#: style_base.py:150
+msgid "Drop files here, or click to upload."
+msgstr "Déposer des fichiers ici ou cliquer pour téléverser."
+
+#: style_base.py:151
+msgid "Drop file here, or click to upload."
+msgstr "Déposer un fichier ici ou cliquer pour téléverser."
+
+#: style_base.py:152
+msgid "Upload from this field is disabled."
+msgstr "Le téléversement est désactivé pour ce champ."
+
+#: table.py:619
+msgid "Edit"
+msgstr "Modifier"
+
+#: table.py:667
+msgid "Download"
+msgstr "Télécharger"
+
+#: table.py:691
+msgid "Run"
+msgstr "Exécuter"
+
+#: table.py:1489
+#, python-brace-format
+msgid "Are you sure you want to delete these {count} items?"
+msgstr "Confirmer la suppression de ces {count} éléments ?"
+
+#: table.py:1505
+msgid "Yes, delete all!"
+msgstr "Oui, tout supprimer"
+
+#: table.py:1969 table.py:2201
+msgid "Bulk change"
+msgstr "Changer en masse"
+
+#: table.py:2207
+msgid "Bulk delete"
+msgstr "Supprimer en masse"
+
+#: templates/iommi/form/file_item.html:16
+msgid "Do you really want to delete this file?"
+msgstr "Confirmer la suppression de ce fichier ?"
+
+#: templates/iommi/query/advanced.html:4
+#: templates/iommi/query/daisyui/advanced.html:4
+msgid "Search query"
+msgstr "Requête de recherche"
+
+#: templates/iommi/query/advanced.html:8
+#: templates/iommi/query/daisyui/advanced.html:8
+#: templates/iommi/query/form_toggle_script.html:48
+msgid "Show help"
+msgstr "Afficher l'aide"
+
+#: templates/iommi/query/advanced.html:13
+#: templates/iommi/query/daisyui/advanced.html:13
+msgid "Available fields"
+msgstr "Champs disponibles"
+
+#: templates/iommi/query/advanced.html:21
+#: templates/iommi/query/daisyui/advanced.html:21
+msgid "Queries"
+msgstr "Opérateurs de recherche"
+
+#: templates/iommi/query/advanced.html:23
+#: templates/iommi/query/daisyui/advanced.html:23
+msgid "Search for an exact value: <code>field_name=value</code>"
+msgstr "Par valeur exacte : <code>nom_du_champ=valeur</code>"
+
+#: templates/iommi/query/advanced.html:24
+#: templates/iommi/query/daisyui/advanced.html:24
+msgid ""
+"Search for an exact value containing space: <code>field_name=\"value with "
+"space\"</code>"
+msgstr ""
+"Par valeur exacte contenant des espaces : <code>nom_du_champ=\"valeur avec "
+"espaces\"</code>"
+
+#: templates/iommi/query/advanced.html:25
+#: templates/iommi/query/daisyui/advanced.html:25
+msgid "Containing a text: <code>field_name:val</code>"
+msgstr "Contenant un texte : <code>nom_du_champ:valeur</code>"
+
+#: templates/iommi/query/advanced.html:26
+#: templates/iommi/query/daisyui/advanced.html:26
+msgid "Exclude a value: <code>field_name!=value</code>"
+msgstr "Excluant une valeur : <code>nom_du_champ!=valeur</code>"
+
+#: templates/iommi/query/advanced.html:27
+#: templates/iommi/query/daisyui/advanced.html:27
+msgid ""
+"You can also use <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
+"and <code>&gt;=</code> to find ranges of values: <code>field_name&lt;10</"
+"code>"
+msgstr ""
+"Les symboles <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> et "
+"<code>&gt;=</code> peuvent être utilisés pour des plages de valeurs : "
+"<code>nom_du_champ&lt;10</code>"
+
+#: templates/iommi/query/advanced.html:28
+#: templates/iommi/query/daisyui/advanced.html:28
+msgid ""
+"To search for dates, use ISO8601 format: <code>field_name>1969-07-20</code>"
+msgstr ""
+"Le format ISO8601 est utilisé pour la recherche par date : "
+"<code>nom_du_champ>1969-07-20</code>"
+
+#: templates/iommi/query/advanced.html:29
+#: templates/iommi/query/daisyui/advanced.html:29
+msgid ""
+"You can filter for relative dates: <code>field_name < \"10 days ago\"</"
+"code>. Supported fields are <code>days</code>, <code>months</code>, "
+"<code>years</code>, <code>quarters</code> and <code>weekdays</code>. They "
+"can be negative and abbreviated from <code>\"10 days ago\"</code> to "
+"<code>\"-10d\"</code>."
+msgstr ""
+"La recherche peut être effectuée par date relative : <code>nom_du_champ<\"10 "
+"days ago\"</code>. Les fragments disponibles sont <code>days</code>, "
+"<code>months</code>, <code>years</code>, <code>quarters</code> et "
+"<code>weekdays</code>. Ces fragments peuvent être abrégés de cette sorte : "
+"<code>\"-10d\"</code> pour <code>\"10 days ago\"</code>."
+
+#: templates/iommi/query/form_toggle_script.html:17
+msgid "Switch to basic search"
+msgstr "Passer à la recherche simple"
+
+#: templates/iommi/query/form_toggle_script.html:42
+msgid "Hide help"
+msgstr "Masquer l'aide"
+
+#: templates/iommi/table/js_select_all.html:15
+msgid "All items on this page are selected."
+msgstr "Toutes les lignes de cette page sont sélectionnées."
+
+#: templates/iommi/table/js_select_all.html:15
+msgid "Select all items"
+msgstr "Sélectionner les lignes de toutes les pages ?"
+
+#: templates/iommi/table/js_select_all.html:32
+msgid "All items selected"
+msgstr "Les lignes de toutes les pages sont sélectionnées"
+
+#: views.py:90
+msgid "Confirm log out"
+msgstr "Confirmer la déconnexion ?"
+
+#: views.py:92
+msgid "Log out"
+msgstr "Se déconnecter"
+
+#: views.py:104
+msgid "Username"
+msgstr "Pseudonyme"
+
+#: views.py:105
+msgid "Password"
+msgstr "Mot de passe"
+
+#: views.py:108
+msgid "Login"
+msgstr "Se connecter"
+
+#: views.py:125
+msgid "Unknown username or password"
+msgstr "Paire pseudonyme / mot de passe invalide"
+
+#: views.py:139
+msgid "Incorrect password"
+msgstr "Mot de passe incorrect"
+
+#: views.py:155
+msgid "New passwords do not match"
+msgstr "Le mot de passe et sa confirmation ne correspondent pas"
+
+#: views.py:173
+msgid "Current password"
+msgstr "Mot de passe actuel"
+
+#: views.py:179
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+#: views.py:184
+msgid "Confirm password"
+msgstr "Confirmation du nouveau mot de passe"
+
+#~ msgid "All models"
+#~ msgstr "Tous les modèles"
