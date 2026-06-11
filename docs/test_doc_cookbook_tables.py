@@ -971,7 +971,6 @@ def test_how_do_i_enable_bulk_editing(small_discography):
     can pass any parameter you can pass to `Field` there to customize the
     behavior and look of the bulk editing for the column.
 
-    You also need to enable the select column, otherwise you can't select
     the rows you want to bulk edit.
     """
 

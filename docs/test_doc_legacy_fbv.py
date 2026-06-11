@@ -28,6 +28,10 @@ pytestmark = pytest.mark.django_db
 Add iommi to a FBV
 ~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+    You probably don't want to do this. It's better to go full iommi.
+
 """
 
 
@@ -55,7 +59,7 @@ def test_legacy_fbv(small_discography, black_sabbath):
 
     # language=rst
     """
-    There's a table in the template for the tracks but it's all manual written `<table>`, `<tr>`, etc tags and so doesn't have sorting, and it's just a lot of code in that template. It would be nicer to use an iommi table! 
+    There's a table in the template for the tracks but it's all manual written `<table>`, `<tr>`, etc tags and so doesn't have sorting, and it's just a lot of code in that template. It would be nicer to use an iommi table!
     """
 
 
