@@ -961,7 +961,6 @@ def test_how_do_i_enable_bulk_editing(small_discography):
 
     table = Table(
         auto__model=Album,
-        columns__select__include=True,
         columns__year__bulk__include=True,
     )
 
@@ -971,7 +970,8 @@ def test_how_do_i_enable_bulk_editing(small_discography):
     can pass any parameter you can pass to `Field` there to customize the
     behavior and look of the bulk editing for the column.
 
-    the rows you want to bulk edit.
+    The `select` column, used to pick the rows to bulk edit, is shown
+    automatically when bulk editing is enabled.
     """
 
     # @test
@@ -993,7 +993,6 @@ def test_how_do_i_enable_bulk_delete(small_discography):
 
     table = Table(
         auto__model=Album,
-        columns__select__include=True,
         bulk__actions__delete__include=True,
     )
 
@@ -1001,8 +1000,8 @@ def test_how_do_i_enable_bulk_delete(small_discography):
     """
     To enable the bulk delete, enable the `delete` action.
 
-    You also need to enable the select column, otherwise you can't select
-    the rows you want to delete.
+    The `select` column, used to pick the rows to delete, is shown
+    automatically when a bulk action is enabled.
     """
 
     # @test
@@ -1021,9 +1020,9 @@ def test_how_do_i_make_a_custom_bulk_action(album):
     .. uses Table.bulk
     .. uses EditTable.bulk
 
-    You need to first show the select column by passing
-    `columns__select__include=True`, then define a submit `Action` with a post
-    handler:
+    Define a submit `Action` with a post handler. The `select` column, used to
+    pick the rows to operate on, is shown automatically when a bulk action is
+    enabled:
     """
 
     def my_action_post_handler(table, request, **_):
@@ -1033,7 +1032,6 @@ def test_how_do_i_make_a_custom_bulk_action(album):
 
     t = Table(
         auto__model=Album,
-        columns__select__include=True,
         bulk__actions__my_action=Action.submit(
             post_handler=my_action_post_handler,
         )
