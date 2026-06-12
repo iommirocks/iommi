@@ -141,6 +141,70 @@ def test_exclude_not_existing_error():
     )
 
 
+# `auto__include` may be a dict mapping a field path to additional configuration that is passed
+# to that entry, instead of only a list of strings.
+
+
+def test_include_as_dict():
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__include={
+            'f_bool': dict(display_name='Boolean!'),
+            'f_int': dict(display_name='Integer!'),
+        },
+    ).bind(request=req('get'))
+    assert list(f.fields.keys()) == ['f_bool', 'f_int']
+    assert f.fields.f_bool.display_name == 'Boolean!'
+    assert f.fields.f_int.display_name == 'Integer!'
+
+
+def test_include_as_dict_respects_ordering():
+    # The dict form must preserve insertion order (like the list form does) *and* apply the
+    # per-entry config.
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__include={
+            'f_float': dict(display_name='Float!'),
+            'f_bool': {},
+            'f_int': {},
+        },
+    ).bind(request=req('get'))
+    assert list(f.fields.keys()) == ['f_float', 'f_bool', 'f_int']
+    assert f.fields.f_float.display_name == 'Float!'
+
+
+def test_include_as_dict_dunder_path():
+    f = Form(
+        auto__model=SomeModel,
+        auto__include={'foo__bar': dict(display_name='Bar!')},
+    ).bind()
+    assert list(f.fields.keys()) == ['foo_bar']
+    assert f.fields.foo_bar.attr == 'foo__bar'
+    assert f.fields.foo_bar.display_name == 'Bar!'
+
+
+def test_include_as_dict_dunder_path_empty_config():
+    # A dunder path with an empty config dict behaves just like including it in the list form.
+    f = Form(
+        auto__model=SomeModel,
+        auto__include=dict(foo__bar={}),
+    ).bind()
+    assert list(f.fields.keys()) == ['foo_bar']
+    assert f.fields.foo_bar.attr == 'foo__bar'
+
+
+def test_include_as_dict_config_merges_with_fields_override():
+    # An explicit `fields__...` override should win over the config supplied inline in the
+    # `auto__include` dict, while config keys not overridden still come from the dict.
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__include={'f_bool': dict(display_name='From include', help_text='From include')},
+        fields__f_bool__display_name='From fields override',
+    ).bind(request=req('get'))
+    assert f.fields.f_bool.display_name == 'From fields override'
+    assert f.fields.f_bool.help_text == 'From include'
+
+
 @pytest.mark.django
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_factory_error_message():
