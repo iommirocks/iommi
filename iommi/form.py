@@ -95,7 +95,6 @@ from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
-    reify_conf,
 )
 from iommi.page import (
     Page,
@@ -783,6 +782,9 @@ class Field(Part, Tag):
     model: type[Model] | None = SpecialEvaluatedRefinable()
     model_field: models.Field | None = Refinable()
     model_field_name = Refinable()
+    # Set by `from_model()`/`auto__` to a Namespace of deferred `_from_model` arguments; resolved
+    # by `resolve_config_from_model` when the container is refined. See `iommi/from_model.py`.
+    config_from_model: Namespace = Refinable()
 
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
@@ -1291,7 +1293,41 @@ class Field(Part, Tag):
     @classmethod
     @dispatch
     def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
-        return reify_conf(cls._from_model(model=model, model_field_name=model_field_name, model_field=model_field, **kwargs))
+        """
+        Create a `Field` from a Django model field.
+
+        When used declaratively inside a `Form`, you normally don't need to pass anything:
+        the model is taken from the containing form and the model field name from the field's
+        own name. This works because resolution is deferred until the form is bound, by which
+        point both are known.
+
+        .. code-block:: python
+
+            class AlbumForm(Form):
+                name = Field.from_model()
+
+        Pass `attr` (using `__` to drill down) to read a field from a related model:
+
+        .. code-block:: python
+
+            class AlbumForm(Form):
+                artist_name = Field.from_model(attr='artist__name')
+
+        The explicit `model`, `model_field_name` and `model_field` parameters are still
+        accepted for the rare cases where the field can't be inferred from context (e.g. when
+        not declared on a form), but are no longer required.
+        """
+        # Resolution is deferred: we store the arguments in `config_from_model` and return a bare
+        # placeholder. The actual field type is resolved by `resolve_config_from_model` once the
+        # containing `Form` is refined and its model (and this field's name) are known.
+        return cls(
+            config_from_model=Namespace(
+                model=model,
+                model_field_name=model_field_name,
+                model_field=model_field,
+                **kwargs,
+            ),
+        )
 
     @classmethod
     @dispatch

@@ -35,7 +35,7 @@ from tests.models import (
     Foo,
     FormFromModelTest,
     OtherModel,
-    SomeModel,
+    SomeModel, Bar,
 )
 
 
@@ -153,8 +153,10 @@ def test_field_from_model_factory_error_message():
     class FooFromModelTestModel(Model):
         foo = CustomField()
 
+    # Resolution (and therefore the missing-factory error) is now deferred until the containing
+    # Form is refined, so we trigger it by binding a Form built from the model.
     with pytest.raises(AssertionError) as error:
-        Field.from_model(FooFromModelTestModel, 'foo')
+        Form(auto__model=FooFromModelTestModel, auto__include=['foo']).bind()
 
     assert (
         str(error.value)
@@ -183,17 +185,16 @@ def test_from_model_declarative_style():
     assert declared_fields['foo_bar'].attr == 'foo__bar'
 
 
-@pytest.mark.skip('This would require major reshuffle of how auto__ is done...')
 def test_from_model_using_attr():
     class MyForm(Form):
         foo = Field.from_model()
-        foo_bar = Field.from_model(attr='foo__bar')
+        dunder = Field.from_model(attr='foo__foo')
 
-    f = MyForm().bind()
+    f = MyForm(model=Bar).bind()
     declared_fields = f.fields
-    assert list(declared_fields.keys()) == ['foo', 'foo_bar']
-    assert declared_fields['foo_bar'].attr == 'foo__bar'
-
+    assert list(declared_fields.keys()) == ['foo', 'dunder']
+    assert declared_fields['dunder'].attr == 'foo__foo'
+    assert f.fields.dunder.help_text == 'foo_help_text'
 
 def test_from_model_missing_subfield():
     with pytest.raises(Exception) as e:

@@ -1415,14 +1415,18 @@ def test_field_from_model_required():
         c = TextField(blank=False, null=True)
         d = TextField(blank=False, null=False)
 
-    assert not Field.from_model(FooModel, 'a').refine_done().required
-    assert not Field.from_model(FooModel, 'b').refine_done().required
-    assert not Field.from_model(FooModel, 'c').refine_done().required
-    assert Field.from_model(FooModel, 'd').refine_done().required
+    # Resolution of a `from_model` placeholder happens when the containing Form is refined.
+    def resolve(*args, **kwargs):
+        return Form(fields__x=Field.from_model(*args, **kwargs)).bind().fields.x
+
+    assert not resolve(FooModel, 'a').required
+    assert not resolve(FooModel, 'b').required
+    assert not resolve(FooModel, 'c').required
+    assert resolve(FooModel, 'd').required
 
     # Conf overrides default
-    assert Field.from_model(FooModel, 'a', required=True).refine_done().required
-    assert not Field.from_model(FooModel, 'd', required=False).refine_done().required
+    assert resolve(FooModel, 'a', required=True).required
+    assert not resolve(FooModel, 'd', required=False).required
 
 
 @pytest.mark.django
@@ -1433,7 +1437,7 @@ def test_field_from_model_label():
     class FieldFromModelModel(Model):
         a = TextField(verbose_name='FOOO bar FOO')
 
-    assert Field.from_model(FieldFromModelModel, 'a').refine_done().display_name == 'FOOO bar FOO'
+    assert Form(fields__x=Field.from_model(FieldFromModelModel, 'a')).bind().fields.x.display_name == 'FOOO bar FOO'
 
 
 @pytest.mark.django_db
@@ -1555,10 +1559,10 @@ def test_field_from_model_blank_handling():
 
     from tests.models import Foo
 
-    subject = Field.from_model(model=Foo, model_field=CharField(null=True, blank=False)).refine_done()
+    subject = Form(fields__x=Field.from_model(model=Foo, model_field=CharField(null=True, blank=False))).bind().fields.x
     assert True is subject.parse_empty_string_as_none
 
-    subject = Field.from_model(model=Foo, model_field=CharField(null=False, blank=True)).refine_done()
+    subject = Form(fields__x=Field.from_model(model=Foo, model_field=CharField(null=False, blank=True))).bind().fields.x
     assert False is subject.parse_empty_string_as_none
 
 
@@ -1712,11 +1716,11 @@ def test_field_from_model_many_to_one_foreign_key():
 def test_register_field_factory():
     from tests.models import FooField, RegisterFieldFactoryTest
 
-    f = Field()
+    register_field_factory(FooField, factory=lambda **kwargs: Field(extra__from_factory='yes'))
 
-    register_field_factory(FooField, factory=lambda **kwargs: f)
-
-    assert Field.from_model(RegisterFieldFactoryTest, 'foo') is f
+    # A factory may return a Field instance directly; it is resolved when the Form is refined.
+    field = Form(fields__foo=Field.from_model(RegisterFieldFactoryTest, 'foo')).bind().fields.foo
+    assert field.extra.from_factory == 'yes'
 
 
 @pytest.mark.django
@@ -1726,7 +1730,7 @@ def test_register_field_factory_disallow_non_dict_non_field():
     register_field_factory(FooField, factory=lambda **kwargs: 7)
 
     with pytest.raises(AssertionError) as e:
-        assert Field.from_model(RegisterFieldFactoryTest, 'foo')
+        Form(fields__foo=Field.from_model(RegisterFieldFactoryTest, 'foo')).bind()
 
     assert str(e.value) == 'Factories must return a configuration dict or an instance of Field. Got int: "7"'
 
@@ -2734,7 +2738,6 @@ def test_field_from_model_path_minimal():
     class FooForm(Form):
         baz = Field.from_model(model=Bar, model_field_name='foo__foo', help_text='another help text')
 
-    assert FooForm.baz.refine().refine_done().attr == 'foo__foo'
     assert FooForm().bind(request=req('get', baz='1')).fields.baz.attr == 'foo__foo'
 
 
@@ -2768,7 +2771,7 @@ def test_field_from_model_subtype():
     class FromModelSubtype(models.Model):
         foo = Foo()
 
-    result = Field.from_model(model=FromModelSubtype, model_field_name='foo').refine_done()
+    result = Form(fields__foo=Field.from_model(model=FromModelSubtype, model_field_name='foo')).bind().fields.foo
 
     assert result.parse is int_parse
 
