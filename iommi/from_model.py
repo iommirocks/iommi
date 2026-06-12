@@ -71,7 +71,7 @@ def create_members_from_model(
         name = model_field_name.replace('__', '_')
         # The arguments destined for `member_class._from_model` are stored under
         # `config_from_model` rather than resolved here. The actual factory lookup happens in
-        # `resolve_config_from_model` when the container is refined, so declared and
+        # `resolve_config_from_model` when the container is refine_done'd, so declared and
         # auto-generated members share one resolution path. We emit a plain `Namespace` (not an
         # instance) so any container override merges into it through the normal machinery.
         config = Namespace(
@@ -253,10 +253,11 @@ def _resolve_config_from_model_member(container_model, member_cls, member_name, 
     model_field = kwargs.pop('model_field', None)
     model_field_name = kwargs.pop('model_field_name', None)
     explicit_model = kwargs.pop('model', None)
+
     attr = kwargs.get('attr', None)
 
     if model_field is None and model_field_name is None:
-        # `attr` doubles as the model field path when no explicit field name is given (e.g.
+        # `attr` is used as the model field path when no explicit field name is given (e.g.
         # `Field.from_model(attr='foo__bar')`), otherwise fall back to the member's own name.
         if isinstance(attr, str):
             model_field_name = attr

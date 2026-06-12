@@ -184,10 +184,6 @@ class EditColumn(Column):
 
     field: Field | None = Refinable()
 
-    # `from_model` is inherited from `Column`: it returns a deferred `config_from_model`
-    # placeholder which is resolved (via this `_from_model`, picking up the edit-column
-    # factories below) once the containing `EditTable` is refined.
-
     @classmethod
     @dispatch(
         filter__call_target__attribute='from_model',

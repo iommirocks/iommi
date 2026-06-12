@@ -35,7 +35,8 @@ from tests.models import (
     Foo,
     FormFromModelTest,
     OtherModel,
-    SomeModel, Bar,
+    SomeModel,
+    Bar,
 )
 
 
@@ -218,7 +219,7 @@ def test_field_from_model_factory_error_message():
         foo = CustomField()
 
     # Resolution (and therefore the missing-factory error) is now deferred until the containing
-    # Form is refined, so we trigger it by binding a Form built from the model.
+    # Form is refine_done'd, so we trigger it by binding a Form built from the model.
     with pytest.raises(AssertionError) as error:
         Form(auto__model=FooFromModelTestModel, auto__include=['foo']).bind()
 
