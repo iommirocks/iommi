@@ -1,8 +1,8 @@
 Changelog
 ---------
 
-Unreleased
-~~~~~~~~~~
+7.28.0 (2026-06-12)
+~~~~~~~~~~~~~~~~~~~
 
 * `Form` create/edit now runs Django model validation (`Model.full_clean`), so a model's custom `clean()`/`clean_fields()` is called on save. Errors are routed to the matching field, or to the form for non-field errors. Related model instances reached through a nested `attr` (e.g. `attr='artist__name'`) are validated too.
 
