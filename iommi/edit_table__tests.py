@@ -853,6 +853,56 @@ def test_lazy_tbody_on_fail():
     )
 
 
+@pytest.mark.xfail(reason='https://github.com/iommirocks/iommi/issues/673', strict=True)
+@pytest.mark.django_db
+def test_required_field_in_edit_table_does_not_invalidate_parent_form():
+    # https://github.com/iommirocks/iommi/issues/673
+    #
+    # When an EditTable column field is required (or has a validator), the
+    # edit_form/create_form fields get validated during bind. Because the actual
+    # per-row data lives under paths like `albums/name/<pk>` and not under the bare
+    # field name, the field value is None at bind time, so the required validator
+    # fires and marks edit_form/create_form as invalid. That `_valid=False` then
+    # propagates up so that `parent_form.is_valid()` returns False even though all
+    # the submitted data is valid (and EditTable.is_valid() itself is True).
+    dark_funeral = Artist.objects.create(name='Dark Funeral')
+    album = Album.objects.create(name='Where Shadows Forever Reign', artist=dark_funeral, year=2016)
+
+    class AlbumsEditTable(EditTable):
+        class Meta:
+            auto__model = Album
+            auto__include = ['name', 'year']
+            columns__name__field__include = True
+            columns__name__field__required = True
+            columns__year__field__include = True
+
+    class ParentForm(Form):
+        albums = AlbumsEditTable()
+
+        class Meta:
+            actions__submit__post_handler = save_nested_forms
+
+    parent_form = ParentForm().bind(
+        request=req(
+            'post',
+            **{
+                # Valid data for the existing row
+                f'albums/name/{album.pk}': 'Where Shadows Forever Reign',
+                f'albums/year/{album.pk}': '2016',
+                '-submit': '',
+            },
+        )
+    )
+
+    edit_table = parent_form.nested_forms.albums
+
+    # The EditTable itself reports valid (no edit/create errors from the post handler)...
+    assert edit_table.is_valid()
+
+    # ...but the bug is that the required field made the parent form invalid.
+    assert parent_form.is_valid(), parent_form.nested_forms.albums.edit_form.get_errors()
+
+
 @pytest.mark.django_db
 def test_orderable_edit_table(fav_artists):
     class FavoriteArtists(EditTable):
