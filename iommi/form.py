@@ -18,7 +18,7 @@ from typing import (
 )
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured, ObjectDoesNotExist, ValidationError
 from django.core.validators import EMPTY_VALUES, URLValidator, validate_email
 from django.db import (
     IntegrityError,
@@ -158,6 +158,65 @@ def validation_errors_reported_on(obj):
     except ValidationError as e:
         for msg in e.messages:
             obj.add_error(msg)
+
+
+def full_clean_object(form):
+    """
+    Run Django model validation (`Model.full_clean`) on `form.instance` and on any related
+    model instances reached through a nested `attr` (e.g. a field with `attr='artist__name'`
+    validates the `artist` instance too, since iommi saves it). Errors are routed onto the
+    matching iommi fields (or the form for non-field errors).
+
+    For each instance, model fields that aren't represented by a field on the form are
+    excluded, mirroring how Django's `ModelForm` validates the model instance. Fields that
+    iommi saves in a second phase (m2m, file fields) are also excluded: their values aren't
+    on the instance yet when creating, and iommi handles their validation separately.
+
+    Errors are routed by the model field's name (`field.model_field.name`), which is what
+    `full_clean` keys `message_dict` by, so routing works regardless of what the iommi field
+    is named. A `clean()` error keyed by a model field that has no corresponding field on the
+    form (e.g. an excluded field) falls back to the form's global errors.
+    """
+    # Group the fields by the attr prefix that points at the model instance they write to.
+    # `''` is `form.instance`; `'artist'` is `form.instance.artist`, etc.
+    fields_by_prefix = {}
+    for field in values(form.fields):
+        if field.model_field is None or field.attr is None or field.extra.get('django_related_field', False):
+            continue
+        prefix, _, _ = field.attr.rpartition('__')
+        fields_by_prefix.setdefault(prefix, {})[field.model_field.name] = field
+
+    for prefix, fields_by_model_field_name in fields_by_prefix.items():
+        if prefix:
+            try:
+                instance = getattr_path(form.instance, prefix)
+            except (ObjectDoesNotExist, AttributeError):
+                instance = None
+        else:
+            instance = form.instance
+        if instance is None:
+            continue
+
+        exclude = [
+            model_field.name
+            for model_field in (*instance._meta.fields, *instance._meta.many_to_many)
+            if model_field.name not in fields_by_model_field_name
+        ]
+        try:
+            instance.full_clean(exclude=exclude)
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                for model_field_name, messages in e.message_dict.items():
+                    target = (
+                        form
+                        if model_field_name == NON_FIELD_ERRORS
+                        else fields_by_model_field_name.get(model_field_name, form)
+                    )
+                    for msg in messages:
+                        target.add_error(msg)
+            else:
+                for msg in e.messages:
+                    form.add_error(msg)
 
 
 def bool_parse(string_value, **_):
@@ -303,10 +362,7 @@ def create_or_edit_object__post_handler(*, form, is_create=None, **_):
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
-        with validation_errors_reported_on(form):
-            form.instance.validate_unique()
-            if hasattr(form.instance, 'validate_constraints'):
-                form.instance.validate_constraints()
+        full_clean_object(form)
         if not form.is_valid():
             return
 
@@ -318,10 +374,7 @@ def create_or_edit_object__post_handler(*, form, is_create=None, **_):
     form.apply(form.instance)
 
     if not is_create:
-        with validation_errors_reported_on(form):
-            form.instance.validate_unique()
-            if hasattr(form.instance, 'validate_constraints'):
-                form.instance.validate_constraints()
+        full_clean_object(form)
         if not form.is_valid():
             return
 
