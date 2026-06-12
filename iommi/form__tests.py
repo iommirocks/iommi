@@ -3681,6 +3681,110 @@ def test_create_or_edit_object_validate_unique():
 
 
 @pytest.mark.django_db
+def test_create_object_calls_model_clean_global_error():
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(auto__model=ModelWithCleanMethod)
+    bound = form.bind(request=req('post', **{'name': 'global-invalid', 'other': '', '-submit': ''}))
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert bound.get_errors()['global'] == {'name is globally invalid'}
+    assert not ModelWithCleanMethod.objects.exists()
+
+
+@pytest.mark.django_db
+def test_create_object_calls_model_clean_field_error():
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(auto__model=ModelWithCleanMethod)
+    bound = form.bind(request=req('post', **{'name': 'field-invalid', 'other': '', '-submit': ''}))
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert bound.fields.name.get_errors() == {'name is field invalid'}
+    assert not ModelWithCleanMethod.objects.exists()
+
+
+@pytest.mark.django_db
+def test_create_object_passes_model_clean():
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(auto__model=ModelWithCleanMethod)
+    response = form.bind(request=req('post', **{'name': 'fine', 'other': '', '-submit': ''})).render_to_response()
+    assert response.status_code == 302
+    assert ModelWithCleanMethod.objects.filter(name='fine').exists()
+
+
+@pytest.mark.django_db
+def test_edit_object_calls_model_clean():
+    from tests.models import ModelWithCleanMethod
+
+    instance = ModelWithCleanMethod.objects.create(name='fine')
+    form = Form.edit(auto__instance=instance)
+    bound = form.bind(request=req('post', **{'name': 'field-invalid', 'other': '', '-submit': ''}))
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert bound.fields.name.get_errors() == {'name is field invalid'}
+    instance.refresh_from_db()
+    assert instance.name == 'fine'
+
+
+@pytest.mark.django_db
+def test_create_object_model_clean_error_routes_by_model_field_name_not_iommi_name():
+    # The iommi field is named `renamed`, but writes to (and validates) the `name` model field
+    # via `attr`. A `clean()` error keyed by the model field name `name` must still be routed to
+    # this field, not dropped or sent to the form globally.
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(
+        auto__model=ModelWithCleanMethod,
+        auto__include=['other'],
+        fields__renamed=Field.from_model(model=ModelWithCleanMethod, model_field_name='name', attr='name'),
+    )
+    bound = form.bind(request=req('post', **{'renamed': 'field-invalid', 'other': '', '-submit': ''}))
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert bound.fields.renamed.get_errors() == {'name is field invalid'}
+    assert bound.get_errors().get('global') is None
+    assert not ModelWithCleanMethod.objects.exists()
+
+
+@pytest.mark.django_db
+def test_edit_object_calls_model_clean_on_nested_attr_related_model():
+    # The `related_name` field writes to `related.name` (a related model) via a nested attr.
+    # That related instance is saved by iommi, so its `clean()` must run and route the error to
+    # the field.
+    from tests.models import ModelWithCleanMethod, ModelWithCleanMethodParent
+
+    related = ModelWithCleanMethod.objects.create(name='fine')
+    parent = ModelWithCleanMethodParent.objects.create(title='hi', related=related)
+
+    form = Form.edit(
+        auto__instance=parent,
+        auto__include=['title', 'related__name'],
+    )
+    bound = form.bind(request=req('post', **{'title': 'hi', 'related_name': 'field-invalid', '-submit': ''}))
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert bound.fields.related_name.get_errors() == {'name is field invalid'}
+    related.refresh_from_db()
+    assert related.name == 'fine'
+
+
+@pytest.mark.django_db
+def test_create_object_model_clean_error_for_field_not_on_form_falls_back_to_global():
+    # `other` is not included on the form, so a `clean()` error keyed by `other` has no field to
+    # route to. It must fall back to the form's global errors rather than crash or be lost.
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(auto__model=ModelWithCleanMethod, auto__include=['name'])
+    bound = form.bind(request=req('post', **{'name': 'other-invalid', '-submit': ''}))
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert bound.get_errors()['global'] == {'other is field invalid'}
+    assert not ModelWithCleanMethod.objects.exists()
+
+
+@pytest.mark.django_db
 def test_create_or_edit_object_full_template_1():
     from tests.models import Foo
 

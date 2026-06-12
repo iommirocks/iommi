@@ -133,6 +133,27 @@ class Baz(Model):
         unique_together = ('a', 'b')
 
 
+class ModelWithCleanMethod(Model):
+    name = CharField(max_length=255, blank=True)
+    other = CharField(max_length=255, blank=True)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        super().clean()
+        if self.name == 'global-invalid':
+            raise ValidationError('name is globally invalid')
+        if self.name == 'field-invalid':
+            raise ValidationError({'name': 'name is field invalid'})
+        if self.name == 'other-invalid':
+            raise ValidationError({'other': 'other is field invalid'})
+
+
+class ModelWithCleanMethodParent(Model):
+    title = CharField(max_length=255, blank=True)
+    related = ForeignKey(ModelWithCleanMethod, on_delete=CASCADE)
+
+
 class FromModelWithInheritanceTest(Model):
     value = FloatField()
 
