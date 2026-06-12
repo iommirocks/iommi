@@ -53,7 +53,6 @@ from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
-    reify_conf,
 )
 from iommi.refinable import (
     EvaluatedRefinable,
@@ -184,11 +183,6 @@ class EditColumn(Column):
     """
 
     field: Field | None = Refinable()
-
-    @classmethod
-    @dispatch
-    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
-        return reify_conf(cls._from_model(model=model, model_field_name=model_field_name, model_field=model_field, **kwargs))
 
     @classmethod
     @dispatch(
@@ -540,6 +534,11 @@ class EditTable(Table):
                     Namespace(),
                     edit_conf,
                     model=self.model,
+                    # Pass the already-resolved model field so deferred `config_from_model`
+                    # resolution uses it directly. `model_field_name` is the leaf name (e.g.
+                    # `name` for an `artist__name` column) which would not resolve against
+                    # `self.model` on its own.
+                    model_field=column.model_field,
                     model_field_name=column.model_field_name,
                     attr=name if column.attr is MISSING else column.attr,
                 )

@@ -1118,7 +1118,7 @@ def test_help_text_from_model():
     assert (
         Form(
             model=Foo,
-            fields__foo=Field.from_model(model=Foo, model_field_name='foo'),
+            fields__foo=Field.from_model(),
         )
         .bind(
             request=req('get', foo='1'),
@@ -1332,7 +1332,7 @@ def test_field_from_model():
     from tests.models import Foo
 
     class FooForm(Form):
-        foo = Field.from_model(Foo, 'foo')
+        foo = Field.from_model()
 
         class Meta:
             model = Foo
@@ -1344,7 +1344,7 @@ def test_field_from_model():
 @pytest.mark.django
 def test_fields_from_model():
     class TestForm(Form):
-        f_float = Field.from_model(FormFromModelTest, 'f_float')
+        f_float = Field.from_model()
 
         class Meta:
             auto__model = FormFromModelTest
@@ -1363,8 +1363,11 @@ def test_field_from_model_foreign_key_choices():
     Bar.objects.create(foo=foo2)
 
     class FooForm(Form):
+        class Meta:
+            model = Bar
+
         # Choices is a lambda here to avoid Field.field_choice_queryset grabbing the model from the queryset object
-        foo = Field.from_model(Bar, 'foo', choices=lambda form, field, **_: Foo.objects.all())
+        foo = Field.from_model(choices=lambda form, field, **_: Foo.objects.all())
 
     assert list(FooForm().bind(request=req('get')).fields.foo.choices) == list(Foo.objects.all())
     form = FooForm().bind(request=req('post', foo=str(foo2.pk)))
@@ -1415,14 +1418,15 @@ def test_field_from_model_required():
         c = TextField(blank=False, null=True)
         d = TextField(blank=False, null=False)
 
-    assert not Field.from_model(FooModel, 'a').refine_done().required
-    assert not Field.from_model(FooModel, 'b').refine_done().required
-    assert not Field.from_model(FooModel, 'c').refine_done().required
-    assert Field.from_model(FooModel, 'd').refine_done().required
+    fields = Form(auto__model=FooModel).bind().fields
+    assert not fields.a.required
+    assert not fields.b.required
+    assert not fields.c.required
+    assert fields.d.required
 
     # Conf overrides default
-    assert Field.from_model(FooModel, 'a', required=True).refine_done().required
-    assert not Field.from_model(FooModel, 'd', required=False).refine_done().required
+    assert Form(auto__model=FooModel, fields__a__required=True).bind().fields.a.required
+    assert not Form(auto__model=FooModel, fields__d__required=False).bind().fields.d.required
 
 
 @pytest.mark.django
@@ -1433,7 +1437,66 @@ def test_field_from_model_label():
     class FieldFromModelModel(Model):
         a = TextField(verbose_name='FOOO bar FOO')
 
-    assert Field.from_model(FieldFromModelModel, 'a').refine_done().display_name == 'FOOO bar FOO'
+    assert Form(fields__x=Field.from_model(FieldFromModelModel, 'a')).bind().fields.x.display_name == 'FOOO bar FOO'
+    # With the model on the form the field resolves against it, so no arguments to `from_model`:
+    assert Form(model=FieldFromModelModel, fields__a=Field.from_model()).bind().fields.a.display_name == 'FOOO bar FOO'
+
+
+# NOTE: The `test_deprecated_style_from_model_*` tests below exercise the *legacy* way of calling
+# `from_model()` — passing the model (and field name / model_field) directly to `from_model`. This
+# is NOT the idiomatic way anymore: prefer putting the model on the container
+# (`Form(model=X, fields__foo=Field.from_model())`) and letting the field resolve lazily against
+# it. These tests only exist to guarantee the old calling conventions keep working.
+
+
+@pytest.mark.django_db
+def test_deprecated_style_from_model_positional_model_and_field_name():
+    from tests.models import Foo
+
+    field = Form(fields__foo=Field.from_model(Foo, 'foo')).bind().fields.foo
+    assert field.model_field is Foo._meta.get_field('foo')
+    assert field.help_text == 'foo_help_text'
+
+
+@pytest.mark.django_db
+def test_deprecated_style_from_model_keyword_model_and_field_name():
+    from tests.models import Foo
+
+    field = Form(fields__foo=Field.from_model(model=Foo, model_field_name='foo')).bind().fields.foo
+    assert field.model_field is Foo._meta.get_field('foo')
+    assert field.help_text == 'foo_help_text'
+
+
+@pytest.mark.django
+def test_deprecated_style_from_model_explicit_model_field():
+    from django.db.models import CharField
+
+    from tests.models import Foo
+
+    field = Form(
+        fields__x=Field.from_model(model=Foo, model_field=CharField(null=True, blank=False)),
+    ).bind().fields.x
+    assert field.parse_empty_string_as_none is True
+
+
+@pytest.mark.django_db
+def test_deprecated_style_from_model_dunder_path():
+    from tests.models import Bar
+
+    field = Form(fields__baz=Field.from_model(Bar, 'foo__foo')).bind().fields.baz
+    assert field.attr == 'foo__foo'
+    assert field.help_text == 'foo_help_text'
+
+
+@pytest.mark.django_db
+def test_deprecated_style_from_model_declarative_without_model_on_form():
+    from tests.models import Foo
+
+    # No `model` on the form; the field carries the model itself.
+    class MyForm(Form):
+        foo = Field.from_model(Foo, 'foo')
+
+    assert MyForm().bind(request=req('get', foo='1')).fields.foo.value == 1
 
 
 @pytest.mark.django_db
@@ -1555,10 +1618,10 @@ def test_field_from_model_blank_handling():
 
     from tests.models import Foo
 
-    subject = Field.from_model(model=Foo, model_field=CharField(null=True, blank=False)).refine_done()
+    subject = Form(fields__x=Field.from_model(model=Foo, model_field=CharField(null=True, blank=False))).bind().fields.x
     assert True is subject.parse_empty_string_as_none
 
-    subject = Field.from_model(model=Foo, model_field=CharField(null=False, blank=True)).refine_done()
+    subject = Form(fields__x=Field.from_model(model=Foo, model_field=CharField(null=False, blank=True))).bind().fields.x
     assert False is subject.parse_empty_string_as_none
 
 
@@ -1600,7 +1663,10 @@ def test_field_from_model_foreign_key():
     Foo.objects.create(foo=5)
 
     class MyForm(Form):
-        c = Field.from_model(FieldFromModelForeignKeyTest, 'foo_fk')
+        class Meta:
+            model = FieldFromModelForeignKeyTest
+
+        c = Field.from_model(model_field_name='foo_fk')
 
     form = MyForm().bind(request=req('get'))
     choices = form.fields.c.choices
@@ -1617,7 +1683,10 @@ def test_field_from_model_foreign_key_limit_choices_to():
     c = Foo.objects.create(foo=5)
 
     class MyForm(Form):
-        foo_fk = Field.from_model(LimitChoicesToFKTest, 'foo_fk')
+        class Meta:
+            model = LimitChoicesToFKTest
+
+        foo_fk = Field.from_model()
 
     form = MyForm().bind(request=req('get'))
     assert set(form.fields.foo_fk.choices) == {b, c}
@@ -1632,7 +1701,10 @@ def test_field_from_model_many_to_many_limit_choices_to():
     c = Foo.objects.create(foo=5)
 
     class MyForm(Form):
-        foo_m2m = Field.from_model(LimitChoicesToM2MTest, 'foo_m2m')
+        class Meta:
+            model = LimitChoicesToM2MTest
+
+        foo_m2m = Field.from_model()
 
     form = MyForm().bind(request=req('get'))
     assert set(form.fields.foo_m2m.choices) == {b, c}
@@ -1643,7 +1715,10 @@ def test_field_from_model_foreign_key_to_proxy_model():
     from tests.models import FKToFooProxyTest, Foo
 
     class MyForm(Form):
-        foo_fk = Field.from_model(FKToFooProxyTest, 'foo_fk')
+        class Meta:
+            model = FKToFooProxyTest
+
+        foo_fk = Field.from_model()
 
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo_fk.choices.model is Foo
@@ -1660,7 +1735,10 @@ def test_field_from_model_many_to_many():
     c = Foo.objects.create(foo=5)
 
     class MyForm(Form):
-        foo_many_to_many = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many')
+        class Meta:
+            model = FieldFromModelManyToManyTest
+
+        foo_many_to_many = Field.from_model()
 
     form = MyForm().bind(request=req('get'))
     choices = form.fields.foo_many_to_many.choices
@@ -1684,8 +1762,11 @@ def test_field_from_model_many_to_many_editable():
     Foo.objects.create(foo=2)
 
     class MyForm(Form):
-        foo_many_to_many = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many')
-        foo_many_to_many_read_only = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many', editable=False)
+        class Meta:
+            model = FieldFromModelManyToManyTest
+
+        foo_many_to_many = Field.from_model()
+        foo_many_to_many_read_only = Field.from_model(model_field_name='foo_many_to_many', editable=False)
 
     form = MyForm().bind(request=req('get'))
     choices = form.fields.foo_many_to_many.choices
@@ -1712,11 +1793,11 @@ def test_field_from_model_many_to_one_foreign_key():
 def test_register_field_factory():
     from tests.models import FooField, RegisterFieldFactoryTest
 
-    f = Field()
+    register_field_factory(FooField, factory=lambda **kwargs: Field(extra__from_factory='yes'))
 
-    register_field_factory(FooField, factory=lambda **kwargs: f)
-
-    assert Field.from_model(RegisterFieldFactoryTest, 'foo') is f
+    # A factory may return a Field instance directly; it is resolved when the Form is refined.
+    field = Form(model=RegisterFieldFactoryTest, fields__foo=Field.from_model()).bind().fields.foo
+    assert field.extra.from_factory == 'yes'
 
 
 @pytest.mark.django
@@ -1726,7 +1807,7 @@ def test_register_field_factory_disallow_non_dict_non_field():
     register_field_factory(FooField, factory=lambda **kwargs: 7)
 
     with pytest.raises(AssertionError) as e:
-        assert Field.from_model(RegisterFieldFactoryTest, 'foo')
+        Form(model=RegisterFieldFactoryTest, fields__foo=Field.from_model()).bind()
 
     assert str(e.value) == 'Factories must return a configuration dict or an instance of Field. Got int: "7"'
 
@@ -2732,9 +2813,11 @@ def test_field_from_model_path_minimal():
     from tests.models import Bar
 
     class FooForm(Form):
-        baz = Field.from_model(model=Bar, model_field_name='foo__foo', help_text='another help text')
+        baz = Field.from_model(model_field_name='foo__foo', help_text='another help text')
 
-    assert FooForm.baz.refine().refine_done().attr == 'foo__foo'
+        class Meta:
+            model = Bar
+
     assert FooForm().bind(request=req('get', baz='1')).fields.baz.attr == 'foo__foo'
 
 
@@ -2743,7 +2826,7 @@ def test_field_from_model_path():
     from tests.models import Bar
 
     class FooForm(Form):
-        baz = Field.from_model(Bar, 'foo__foo', help_text='another help text')
+        baz = Field.from_model(model_field_name='foo__foo', help_text='another help text')
 
         class Meta:
             model = Bar
@@ -2768,7 +2851,7 @@ def test_field_from_model_subtype():
     class FromModelSubtype(models.Model):
         foo = Foo()
 
-    result = Field.from_model(model=FromModelSubtype, model_field_name='foo').refine_done()
+    result = Form(model=FromModelSubtype, fields__foo=Field.from_model()).bind().fields.foo
 
     assert result.parse is int_parse
 
@@ -2779,7 +2862,6 @@ def test_create_members_from_model_path():
 
     class BarForm(Form):
         foo_foo = Field.from_model(
-            model=Bar,
             model_field_name='foo__foo',
         )
 
@@ -3738,7 +3820,7 @@ def test_create_object_model_clean_error_routes_by_model_field_name_not_iommi_na
     form = Form.create(
         auto__model=ModelWithCleanMethod,
         auto__include=['other'],
-        fields__renamed=Field.from_model(model=ModelWithCleanMethod, model_field_name='name', attr='name'),
+        fields__renamed=Field.from_model(model_field_name='name', attr='name'),
     )
     bound = form.bind(request=req('post', **{'renamed': 'field-invalid', 'other': '', '-submit': ''}))
     response = bound.render_to_response()

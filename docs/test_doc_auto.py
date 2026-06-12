@@ -50,3 +50,21 @@ def test_auto():
     # @test
     show_output(form)
     # @end
+
+    # language=rst
+    """
+    `auto__include` can also be a dict. The keys are the fields to include (just like the list form), and the values are extra configuration passed to that field/column/etc. This is a more compact alternative to configuring each generated member separately via `fields__<name>__...`:
+    """
+
+    form = Form(
+        auto__model=Album,
+        auto__include={
+            'name': dict(display_name='Album name'),
+            'artist': {},
+            'year': dict(help_text='The year the album was released'),
+        },
+    )
+
+    # @test
+    show_output(form)
+    # @end

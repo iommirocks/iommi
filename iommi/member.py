@@ -9,6 +9,7 @@ from iommi.declarative.namespace import (
     Namespace,
     setdefaults_path,
 )
+from iommi.from_model import resolve_config_from_model
 from iommi.refinable import (
     Prio,
     RefinableMembers,
@@ -133,6 +134,10 @@ def refine_done_members(
                     unknown_types_fall_through or item is None
                 ), f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
                 member_by_name[key] = item
+
+    resolve_config_from_model(
+        container, member_by_name, member_class=cls, unapplied_config=_unapplied_config
+    )
 
     for k, v in items(Namespace(_unapplied_config)):
         m = member_by_name[k]
