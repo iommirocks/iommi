@@ -80,7 +80,7 @@ def test_path_url_mapping():
 
     # language=rst
     """
-    This simple view will take the `name` path parameter and print it on the page. This is sometimes useful, but it's more common to need some more complex lookup on our parameters, so that leads us to path decoders: 
+    This simple view will take the `name` path parameter and print it on the page. This is sometimes useful, but it's more common to need some more complex lookup on our parameters, so that leads us to path decoders:
     """
 
     # @test
@@ -95,7 +95,7 @@ iommi path decoders
 
 In iommi we have a powerful and easy to use system for path decoding that also
 works smoothly with iommi views. It builds on top of the params feature
-described above. Let's look at an example: 
+described above. Let's look at an example:
 
 Register your models:
 """
@@ -136,11 +136,11 @@ def test_path_decoder(black_sabbath, album):
     assumes your name field is called `name` on the model. There's an advanced
     registration system for more complex lookups, but this should cover most
     usages.
-    
-    
+
+
     Use iommi decoders on a function based view
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   
+
     You can use the iommi path decoders on a normal FBV too:
     """
 
@@ -172,7 +172,6 @@ For cases where you want to decode something other than a pk or name you need th
 """
 
 
-@pytest.mark.skipif(not django.VERSION[:2] >= (4, 0), reason='Requires django 4.0+')
 def test_path_advanced_decoder(track):
     # @test
     unregister_encoding = (
@@ -192,11 +191,11 @@ def test_path_advanced_decoder(track):
 
     # language=rst
     """
-    This will allow you to do `<user_pk>`, `<user_username>`, `<user_email>` in your url pattern for the `User` model, and `track_foo` for the `Track` model.  
-    
-    The first example just maps `pk`, `username` and `email` one to one to the model. So for an email lookup it will run `User.objects.get(email=params.email)` to get the `User` object. 
-    
-    The second example is for more complex use cases. As you have access to `request`, `decoded_kwargs` and `kwargs` in addition to the model you can perform path decoding that is not possible with Django path decoders. 
+    This will allow you to do `<user_pk>`, `<user_username>`, `<user_email>` in your url pattern for the `User` model, and `track_foo` for the `Track` model.
+
+    The first example just maps `pk`, `username` and `email` one to one to the model. So for an email lookup it will run `User.objects.get(email=params.email)` to get the `User` object.
+
+    The second example is for more complex use cases. As you have access to `request`, `decoded_kwargs` and `kwargs` in addition to the model you can perform path decoding that is not possible with Django path decoders.
     """
 
     # @test
