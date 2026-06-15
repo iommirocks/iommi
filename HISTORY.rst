@@ -4,6 +4,12 @@ Changelog
 Unreleased
 ~~~~~~~~~~
 
+* `.from_model()` no longer require upfront `model`/`model_field` params when declared inside a container but can be inferred.
+
+  Note: As a consequence, resolution is now deferred until the container is built, so the result is now just a lazy placeholder and any exceptions will now only occur durin `refine_done()` on the container.
+
+* `auto__include` may now be a dict mapping each field path to extra configuration passed to that generated member, e.g. `auto__include={'name': dict(display_name='Album name'), 'year': {}}`.
+
 * `Form` create/edit now runs Django model validation (`Model.full_clean`), so a model's custom `clean()`/`clean_fields()` is called on save. Errors are routed to the matching field, or to the form for non-field errors. Related model instances reached through a nested `attr` (e.g. `attr='artist__name'`) are validated too.
 
 * French translation (Thanks new contributor Pierre de Lépinay!)
