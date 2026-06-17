@@ -162,6 +162,10 @@ def value_to_str_for_query(filter, v):
 
 def build_query_expression(*, filter, value):
     if isinstance(value, Model):
+        if filter.attr == 'pk':
+            # The filter targets the model itself (e.g. a choice_queryset on the
+            # same model as the table), so the query name is just `pk`.
+            return f'pk={value.pk}'
         return f'{filter.query_name}.pk={value.pk}'
 
     return f'{filter.query_name}{filter.query_operator_for_field}{value_to_str_for_query(filter, value)}'
@@ -1008,6 +1012,17 @@ class Query(Part, Tag):
         if query_name.endswith('.pk'):
             query_name = query_name[: -len('.pk')]
             pk_lookup = True
+
+        if query_name == 'pk' and query_name not in self.filter_name_by_query_name:
+            # Direct primary key lookup against the table's own model, e.g. `pk=3`.
+            # This is what build_query_expression() emits for a filter on the model itself.
+            if op != '=':
+                raise QueryException('Only = is supported for primary key lookup')
+            try:
+                pk = int(value_string_or_filter_name)
+            except ValueError:
+                pk = value_string_or_filter_name  # pk might be non-int
+            return Q(pk=pk)
 
         filter_name = self.filter_name_by_query_name.get(query_name)
         if filter_name is None:

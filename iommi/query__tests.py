@@ -837,6 +837,29 @@ def test_build_query_expression_for_model_with_search_fields():
 
 
 @pytest.mark.django_db
+def test_build_query_expression_for_filter_on_model_itself():
+    # A choice_queryset filter on the same model as the table targets `pk`, so
+    # the expression must be `pk=...`, not `<query_name>.pk=...`.
+    foo = Foo.objects.create(foo=17)
+    filter = Filter(query_name='self_filter', attr='pk').refine_done()
+    assert build_query_expression(filter=filter, value=foo) == f'pk={foo.pk}'
+
+
+@pytest.mark.django_db
+def test_filter_on_model_itself_round_trip():
+    foo = Foo.objects.create(foo=17)
+    Foo.objects.create(foo=18)
+
+    class MyQuery(Query):
+        self_filter = Filter.choice_queryset(attr='pk', model=Foo, choices=Foo.objects.all())
+
+    query = MyQuery().bind(request=req('get'))
+    expression = build_query_expression(filter=query.filters['self_filter'], value=foo)
+    assert expression == f'pk={foo.pk}'
+    assert repr(query.parse_query_string(expression)) == repr(Q(pk=foo.pk))
+
+
+@pytest.mark.django_db
 def test_choice_queryset_value_to_q_multiple_hits_takes_first():
     a = Foo.objects.create(foo=42)
     assert a.pk != a.foo
