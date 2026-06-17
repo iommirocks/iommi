@@ -1,13 +1,11 @@
 import re
 
-from bs4 import BeautifulSoup
 from django.test import RequestFactory
 
 from iommi import (
     Table,
     middleware,
 )
-from iommi.base import keys
 from iommi.declarative import declarative
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import Namespace
@@ -19,7 +17,14 @@ from iommi.refinable import (
     Refinable,
     RefinableMembers,
 )
-from iommi.struct import Struct
+from iommi.test_helpers import (  # noqa: F401  -- re-exported for backwards compatibility
+    do_post,
+    extract_form_data,
+    no_auth_middleware_req,
+    req,
+    staff_req,
+    user_req,
+)
 from iommi.traversable import (
     Traversable,
 )
@@ -118,68 +123,6 @@ def call_view_through_middleware(view, request, *args, **kwargs):
     m = middleware(get_response)
     m.process_view(request, view, args, kwargs)
     return m(request=request)
-
-
-def no_auth_middleware_req(method, url='/', **data):
-    return getattr(RequestFactory(HTTP_REFERER='/'), method.lower())(url, data=data)
-
-
-def req(method, url='/', **data):
-    request = no_auth_middleware_req(method, url=url, **data)
-    request.user = Struct(is_staff=False, is_authenticated=False, is_superuser=False)
-    return request
-
-
-def user_req(method, **data):
-    request = req(method, **data)
-    request.user = Struct(is_staff=False, is_authenticated=True, is_superuser=False)
-    return request
-
-
-def staff_req(method, **data):
-    request = req(method, **data)
-    request.user = Struct(is_staff=True, is_authenticated=True, is_superuser=True)
-    return request
-
-
-def extract_form_data(content):
-    soup = BeautifulSoup(content)
-
-    r = {}
-    for input in soup.find_all('input'):
-        r[input.get('name')] = input.get('value', '')
-
-    for select in soup.find_all('select'):
-        selected = select.find('option', selected='selected')
-        if not selected:
-            r[select.get('name')] = ''
-        else:
-            r[select.get('name')] = selected.get('value', '')
-
-    for textarea in soup.find_all('textarea'):
-        r[textarea.get('name')] = ''.join(textarea.contents)
-
-    for button in soup.find_all('button'):
-        if button.get('name'):
-            r[button.get('name')] = button.get('value', '')
-
-    return r
-
-
-def do_post(form, do_post_key_validation=True, **user_data):
-    foo = form.bind(request=req('get')).render_to_response()
-    default_data = extract_form_data(foo.content.decode())
-
-    assert 'do_post_key_validation' not in default_data, 'Name collision.'
-
-    if do_post_key_validation:
-        for key in user_data.keys():
-            virtual_key_for_edit_table_insert = '/-' in key  # keys like "foo/-1"
-            assert key in default_data or virtual_key_for_edit_table_insert, f'{key} is not a valid key. Valid keys are: {user_data.keys()}'
-
-    post_data = {**default_data, **user_data}
-    assert any(k.startswith('-') for k in keys(post_data)), 'Must be at least one post target. Maybe you forgot .create()/.edit()?'
-    return form.bind(request=req('post', **post_data))
 
 
 def get_attrs(x, attrs):

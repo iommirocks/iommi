@@ -29,6 +29,7 @@ Contents:
    production_use
    registrations
    styles
+   testing
    views
 
    imports
