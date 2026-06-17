@@ -88,6 +88,15 @@ def test_how_do_you_turn_off_pagination(small_discography):
     show_output(MyTable(rows=Album.objects.all()))
     # @end
 
+    # language=rst
+    """
+    .. uses Table.parts
+    .. uses EditTable.parts
+
+    The paginator itself is a `part` of the table named `page`, so you can configure
+    it through the `parts` namespace, e.g. `parts__page__title='Page'`.
+    """
+
 
 def test_how_do_i_customize_the_rendering_of_a_cell():
     # language=rst
@@ -165,6 +174,7 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
     .. uses Column.cell
     .. uses EditColumn.cell
     .. uses Table.columns
+    .. uses EditTable.columns
     .. uses TableAutoConfig.model
 
     Let's say we have a model like this:
@@ -520,6 +530,7 @@ def test_how_do_i_specify_which_columns_to_show():
     .. uses Column.include
     .. uses EditColumn.include
     .. uses Column.render_column
+    .. uses EditColumn.render_column
     .. uses TableAutoConfig.model
     .. uses TableAutoConfig.include
     .. uses TableAutoConfig.exclude
@@ -791,6 +802,7 @@ def test_how_do_i_set_the_default_sort_order_on_a_table(really_big_discography):
     How do I set the default sorting column of a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.default_sort_order
+    .. uses EditTable.default_sort_order
 
     Tables are sorted by default on the order specified in the models `Meta` and then on `pk`. Set `default_sort_order` to set another default ordering:
     """
@@ -986,7 +998,7 @@ def test_how_do_i_enable_bulk_delete(small_discography):
     .. _bulk-delete:
 
     How do I enable bulk delete?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.bulk
     .. uses EditTable.bulk
     """
@@ -1016,7 +1028,7 @@ def test_how_do_i_make_a_custom_bulk_action(album):
     .. _custom-bulk-action:
 
     How do I make a custom bulk action?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.bulk
     .. uses EditTable.bulk
 
@@ -1038,6 +1050,7 @@ def test_how_do_i_make_a_custom_bulk_action(album):
     )
 
     # @test
+    show_output(t)
     t.bind(request=req('post', **{'-my_action': '', '_all_pks_': '1'})).render_to_response()
     album.refresh_from_db()
     assert album.name == 'Paranoid'
@@ -1453,7 +1466,9 @@ def test_render_table_as_div(medium_discography):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Table.tag
     .. uses Table.tbody
+    .. uses EditTable.tbody
     .. uses Table.cell
+    .. uses EditTable.cell
     .. uses CellConfig.tag
     .. uses RowConfig.tag
     .. uses Table.header
@@ -1587,7 +1602,15 @@ def test_row_layout_with_panels(small_discography):
     How do I make complex layouts for table rows?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    You can have more complex layout using the `panel` system:
+    .. uses Cells.layout
+    .. uses Panel._parent_table
+    .. uses Panel._parent_table_cells
+
+    You can have more complex layout using the `panel` system. Set `row__layout` to a
+    `Panel` and each row's `Cells` is rendered using it (its `layout`). The
+    `Panel.cell` entries are linked to the matching table column for each row
+    automatically - iommi tracks the owning table and row in `_parent_table` and
+    `_parent_table_cells`:
     """
 
     class AlbumTable(Table):
@@ -1626,3 +1649,355 @@ def test_row_layout_with_panels(small_discography):
 
     The same way you can also use layouts for `EditTable`.
     """
+
+
+def test_how_do_i_group_columns_under_a_superheader(small_discography):
+    # language=rst
+    """
+    .. _superheader:
+
+    How do I group columns under a superheader?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.superheader
+    .. uses EditTable.superheader
+    .. uses Column.superheader
+    .. uses EditColumn.superheader
+
+    Set `group` to the same value on adjacent columns and they get a shared header
+    cell, a "superheader", that spans them. Customize how that superheader renders
+    via the table's `superheader` namespace (its `attrs` and `template`):
+    """
+
+    table = Table(
+        auto__model=Album,
+        columns__name__group='Details',
+        columns__year__group='Details',
+        superheader__attrs__class={'text-center': True},
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+
+def test_how_do_i_change_what_a_column_sorts_by(small_discography):
+    # language=rst
+    """
+    .. _custom-sort-key:
+
+    How do I change what a column sorts by?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.sort_key
+    .. uses EditColumn.sort_key
+    .. uses Table.sorter
+    .. uses EditTable.sorter
+
+    By default a column sorts on its `attr`. Set `sort_key` to sort on something
+    else, like a field across a relationship:
+    """
+
+    table = Table(
+        auto__model=Album,
+        columns__artist__sort_key='artist__name',
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+    # language=rst
+    """
+    If you need to change the actual sorting algorithm (for example to sort a table
+    built from a plain list in a special way), override the table's `sorter`.
+    """
+
+
+def test_how_do_i_avoid_extra_queries_for_a_column(small_discography):
+    # language=rst
+    """
+    .. _data-retrieval-method:
+
+    How do I avoid extra queries for a column across a relationship?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.data_retrieval_method
+    .. uses EditColumn.data_retrieval_method
+
+    When a column reads data across a foreign key, iommi can tell the `QuerySet` to
+    fetch that data efficiently instead of doing one query per row. Set
+    `data_retrieval_method` to `select` (a SQL join via `select_related`) or
+    `prefetch` (a second query via `prefetch_related`):
+    """
+
+    from iommi.table import DataRetrievalMethods
+
+    table = Table(
+        auto__model=Album,
+        columns__artist__data_retrieval_method=DataRetrievalMethods.select,
+    )
+
+    # @test
+    show_output(table)
+
+    # The `select` method joins the artist in, so rendering the column doesn't do one
+    # extra query per row (the classic N+1 problem):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    def query_count(method):
+        t = Table(
+            auto__model=Album,
+            columns__artist__data_retrieval_method=method,
+        ).bind(request=req('get'))
+        with CaptureQueriesContext(connection) as queries:
+            t.__html__()
+        return len(queries.captured_queries)
+
+    assert query_count(DataRetrievalMethods.select) < query_count(DataRetrievalMethods.attribute_access)
+    # @end
+
+
+def test_how_do_i_limit_the_choices_for_a_column(small_discography):
+    # language=rst
+    """
+    .. _column-choices:
+
+    How do I limit the choices for a column?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Column.choices
+    .. uses EditColumn.choices
+
+    `Column.choice` takes a `choices` list. The same list is used to limit the
+    options offered in the column's filter and bulk editing field:
+    """
+
+    table = Table(
+        auto__model=Album,
+        columns__year=Column.choice(
+            choices=[1980, 1981],
+            filter__include=True,
+        ),
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+
+def test_how_do_i_read_the_model_information_of_a_table(small_discography):
+    # language=rst
+    """
+    .. _table-model-introspection:
+
+    How do I read the model information iommi found?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.model
+    .. uses EditTable.model
+    .. uses Column.model
+    .. uses EditColumn.model
+    .. uses Column.model_field
+    .. uses EditColumn.model_field
+    .. uses Column.model_field_name
+    .. uses EditColumn.model_field_name
+
+    When you build a table with `auto__model`, iommi introspects the model and fills
+    in `model` on the table and `model_field`/`model_field_name` on each column for
+    you. Reading these lets you write generic code that adapts to the model. For a
+    column based on a foreign key, `model` is the *related* model, so you can build a
+    link to that object's admin page without hard-coding the model name:
+    """
+
+    def admin_url(column, value, **_):
+        if value is None:
+            return None
+        meta = column.model._meta
+        return f'/admin/{meta.app_label}/{meta.model_name}/{value.pk}/change/'
+
+    table = Table(
+        auto__model=Album,
+        columns__artist__cell__url=admin_url,
+    )
+
+    # @test
+    show_output(table)
+
+    bound = table.bind(request=req('get'))
+    assert bound.model is Album
+    assert bound.columns.artist.model is Artist
+    assert bound.columns.year.model_field is Album._meta.get_field('year')
+    assert bound.columns.year.model_field_name == 'year'
+    assert '/admin/docs/artist/' in bound.__html__()
+    # @end
+
+
+def test_how_do_i_use_custom_classes_for_a_tables_internal_parts(small_discography):
+    # language=rst
+    """
+    .. _table-internal-classes:
+
+    How do I use custom classes for a table's internal parts?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.cells_class
+    .. uses EditTable.cells_class
+    .. uses Table.page_class
+    .. uses EditTable.page_class
+    .. uses Table.action_class
+    .. uses EditTable.action_class
+    .. uses Table.row_group_class
+    .. uses EditTable.row_group_class
+    .. uses Cells.cell_class
+
+    Besides `member_class` (see :ref:`custom-member-class`), a `Table` builds several
+    other objects that you can swap out by setting the matching `*_class`:
+    `cells_class` for each rendered row, `action_class` for its actions, `page_class`
+    for when the table is rendered as a standalone page, and `row_group_class` for
+    grouped rows. Each `Cells` object in turn builds its individual `Cell` objects
+    from its own `cell_class`:
+    """
+
+    from iommi.table import Cells
+
+    class MyCells(Cells):
+        pass
+
+    class MyTable(Table):
+        class Meta:
+            cells_class = MyCells
+
+    table = MyTable(auto__model=Album)
+
+    # @test
+    show_output(table)
+    bound = table.bind(request=req('get'))
+    assert isinstance(list(bound.cells_for_rows())[0], MyCells)
+    # @end
+
+
+def test_how_do_i_render_the_actions_below_the_table(small_discography):
+    # language=rst
+    """
+    .. _actions-below-table:
+
+    How do I render the table actions below the table?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.actions_below
+    .. uses EditTable.actions_below
+    .. uses Table.actions_template
+    .. uses EditTable.actions_template
+
+    By default a table's actions are rendered above the table. Set
+    `actions_below=True` to render them below it instead. To take full control of
+    how the actions are laid out, point `actions_template` at your own template:
+    """
+
+    table = Table(
+        auto__model=Album,
+        actions__foo=Action(display_name='Foo', attrs__href='#'),
+        actions_below=True,
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
+
+def test_how_do_i_run_code_after_a_bulk_edit(small_discography):
+    # language=rst
+    """
+    .. _post-bulk-edit:
+
+    How do I run code after a bulk edit, or limit which rows it touches?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.post_bulk_edit
+    .. uses EditTable.post_bulk_edit
+    .. uses Table.bulk_filter
+    .. uses EditTable.bulk_filter
+    .. uses Table.bulk_exclude
+    .. uses EditTable.bulk_exclude
+    .. uses Table.bulk_container
+    .. uses EditTable.bulk_container
+
+    `post_bulk_edit` is a hook called with the `queryset` and `updates` after a bulk
+    edit has been saved - handy for logging or to keep a denormalized value in sync.
+    `bulk_filter` and `bulk_exclude` restrict which rows a bulk operation is allowed to
+    touch, and the whole bulk form is wrapped in a `bulk_container` fragment you can
+    configure:
+    """
+
+    log = []
+
+    def post_bulk_edit(table, queryset, updates, **_):
+        log.append(f'Updated {queryset.count()} album(s): {updates}')
+
+    table = Table(
+        auto__model=Album,
+        columns__year__bulk__include=True,
+        post_bulk_edit=post_bulk_edit,
+    )
+
+    # @test
+    show_output(table)
+
+    # Bulk edit the year of all selected rows...
+    table.bind(
+        request=req('post', _all_pks_='1', **{'bulk/year': '1999', '-bulk/submit': ''}),
+    ).render_to_response()
+
+    # ...the rows were updated and our hook ran:
+    assert set(Album.objects.values_list('year', flat=True)) == {1999}
+    assert log == ['Updated 2 album(s): {\'year\': 1999}']
+    # @end
+
+
+def test_how_do_i_customize_the_invalid_form_message_of_a_table(small_discography):
+    # language=rst
+    """
+    .. _table-invalid-form-message:
+
+    How do I customize the message shown for an invalid filter?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.invalid_form_message
+    .. uses EditTable.invalid_form_message
+
+    When the filter form has invalid input (for example a value that isn't one of the
+    valid choices), iommi shows a message above the table. Override its text with
+    `invalid_form_message`:
+    """
+
+    table = Table(
+        auto__model=Album,
+        columns__artist__filter__include=True,
+        invalid_form_message='Your filter is invalid, please try again.',
+    )
+
+    # @test
+    # `artist=99999` is not a valid artist, so the filter form is invalid.
+    bound = table.bind(request=req('get', artist='99999'))
+    assert not bound.query.form.is_valid()
+    assert 'Your filter is invalid, please try again.' in bound.__html__()
+    show_output(table, '?artist=99999')
+    # @end
+
+
+def test_how_do_i_wrap_the_table_tag(small_discography):
+    # language=rst
+    """
+    .. _table-tag-wrapper:
+
+    How do I wrap just the table tag (e.g. for responsive scrolling)?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Table.table_tag_wrapper
+    .. uses EditTable.table_tag_wrapper
+
+    The `<table>` tag is wrapped in a `Fragment` (separate from the actions and
+    paginator). Configure it with `table_tag_wrapper`, for example to get Bootstrap's
+    responsive horizontal scrolling around the table only:
+    """
+
+    table = Table(
+        auto__model=Album,
+        table_tag_wrapper__attrs__class={'table-responsive': True},
+    )
+
+    # @test
+    show_output(table)
+    # @end

@@ -7,6 +7,7 @@ API Reference
    Action
    Asset
    Attrs
+   Calendar
    Cell
    Cells
    Column

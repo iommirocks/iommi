@@ -44,7 +44,7 @@ def test_how_do_i_specify_which_fields_to_show():
     .. _show-fields:
 
     How do I specify which fields to show?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Field.include
     .. uses FormAutoConfig.model
     .. uses FormAutoConfig.include
@@ -64,7 +64,7 @@ def test_how_do_i_specify_which_fields_to_show():
     """
     This will show the field `name` only if the GET parameter `some_parameter` is set to `hello!`.
 
-    To be more precise, `include` turns off the entire field. See :ref:`field-non-editable` and :ref:`field-hidden`  
+    To be more precise, `include` turns off the entire field. See :ref:`field-non-editable` and :ref:`field-hidden`
     """
 
     # language=rst
@@ -303,10 +303,38 @@ def test_how_do_i_validate_multiple_fields_together():
     How do I validate multiple fields together?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Field.is_valid
+    .. uses Form.post_validation
+    .. uses Field.post_validation
 
     Refine the `post_validation` hook on the `form`. It is run after all the individual fields validation
-    has run. But note that it is run even if the individual fields validation was not successful.
+    has run, so you can read the parsed `value` of each field and call `form.add_error()` to report a
+    problem that spans more than one field. Note that it is run even if the individual fields validation
+    was not successful.
+    """
 
+    def post_validation(form, **_):
+        if form.fields.password.value != form.fields.password_confirm.value:
+            form.add_error('The passwords do not match')
+
+    form = Form(
+        fields__password=Field.password(),
+        fields__password_confirm=Field.password(display_name='Confirm password'),
+        post_validation=post_validation,
+        actions__submit__post_handler=lambda form, **_: None,
+    )
+
+    # @test
+    bound = form.bind(
+        request=req('post', password='abc', password_confirm='xyz', **{'-submit': ''}),
+    )
+    assert bound.get_errors() == {'global': {'The passwords do not match'}}
+    show_output(bound)
+    # @end
+
+    # language=rst
+    """
+    There is a matching `post_validation` hook on each `Field` if you only need to look at a single field
+    after it has been parsed and validated.
     """
 
 
@@ -738,6 +766,7 @@ def test_how_do_I_make_a_fields_choices_depend_on_another_field():
         # @test
     )
     form.bind(request=req('get')).render_to_response()
+    show_output(form)
     # @end
 
 
@@ -892,14 +921,37 @@ def test_grouped_fields():
     ~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Field.group
+    .. uses Form.field_group
 
-    Use the `group` parameter:
+    Use the `group` parameter. Adjacent fields with the same `group` are wrapped
+    together; customize how that wrapper renders via the form's `field_group`
+    namespace:
     """
 
     form = Form(
         auto__model=Album,
         fields__year__group='metadata',
         fields__artist__group='metadata',
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+    # language=rst
+    """
+    The wrapper around each group is a `field_group` fragment, so you can style it via
+    its `attrs`. For example, to put a red border around the group:
+    """
+
+    form = Form(
+        auto__model=Album,
+        fields__year__group='metadata',
+        fields__artist__group='metadata',
+        field_group__attrs__style={
+            'border': '1px solid red',
+            'padding': '0.5rem',
+        },
     )
 
     # @test
@@ -955,8 +1007,15 @@ def test_nested_forms(medium_discography):
     .. uses Form.fields
     .. uses save_nested_forms
     .. uses Action.post_handler
+    .. uses Form.read_nested_form_from_instance
+    .. uses Form.write_nested_form_to_instance
 
-    You need to use the ``save_nested_forms`` post handler to have a single save button for all the nested forms and edit tables:
+    You need to use the ``save_nested_forms`` post handler to have a single save button for all the nested forms and edit tables.
+
+    When a nested form is bound to an instance, iommi reads the nested instance via
+    `read_nested_form_from_instance` and writes it back via
+    `write_nested_form_to_instance`. Override these if a nested form's instance isn't
+    simply an attribute of the parent's instance:
     """
     from iommi.form import save_nested_forms
 
@@ -1096,6 +1155,7 @@ def test_dependent_fields(small_discography):
 
     # @test
     form.bind(request=req('get')).render_to_response()
+    show_output(form)
     # @end
 
 
@@ -1109,6 +1169,8 @@ def test_how_do_i_make_a_form_to_create_or_edit(black_sabbath, album):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     .. uses Field.editable
     .. uses Form.create_or_edit
+    .. uses Form.instance
+    .. uses FormAutoConfig.type
 
     If you don't know until runtime if you want `Form.create` or `Form.edit`,
     you can use the `Form.create_or_edit` shortcut. If the `instance` is `None`
@@ -1385,7 +1447,29 @@ def test_layout_with_panels():
     How do I make complex layouts for forms?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    You can have more complex layout using the `panel` system:
+    .. uses Form.layout
+    .. uses Form.layout_template
+    .. uses Form.layout_render_unused_fields
+    .. uses Panel.children
+    .. uses Panel.col
+    .. uses Panel.col_class
+    .. uses Panel.fieldset_legend
+    .. uses Panel.nested_path
+    .. uses Panel._parent_form
+    .. uses PanelCol.children
+
+    You can have more complex layout using the `panel` system. Set `layout` to a
+    `Panel` describing how the fields are arranged. By default any field you didn't
+    place in the layout raises an error; set `layout_render_unused_fields=True` to
+    render them after the layout instead, and point `layout_template` at your own
+    template to control the surrounding markup.
+
+    The pieces of a layout are `Panel` shortcuts: `Panel.row` lays out its `children`
+    side by side (each wrapped in a `col`, whose class is `col_class`), `Panel.field`
+    places a single field, and `Panel.fieldset` groups children under a
+    `fieldset_legend`. iommi links each `Panel` field to the matching `Form` field for
+    you - it tracks the owning form in `_parent_form` and uses `nested_path` to reach
+    fields of nested forms - and checks that every field is placed exactly once:
     """
 
     class UserForm(Form):
@@ -1439,7 +1523,7 @@ def test_layout_with_panels():
 
     # language=rst
     """
-    `Panel` fields are mapped to their corresponding `Form` fields automatically, and checked. That means that 
+    `Panel` fields are mapped to their corresponding `Form` fields automatically, and checked. That means that
     if you create a complex layout and forget a field you will get an error, and vice versa.
 
     The same way you can also use layouts for filter forms via `Table.query__form__layout`
@@ -1487,3 +1571,204 @@ def test_dropfile_dropimage_field():
 
     register_field_factory(FileField, shortcut_name='dropfile')
     register_field_factory(ImageField, shortcut_name='dropimage')
+
+
+def test_how_do_i_customize_a_forms_actions(black_sabbath):
+    # language=rst
+    """
+    .. _form-actions:
+
+    How do I customize a form's buttons?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Form.actions
+    .. uses Form.actions_template
+
+    A form's buttons live in `actions`. Add, rename or restyle them there, and point
+    `actions_template` at your own template to control how the row of buttons is laid
+    out:
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        actions__submit__display_name='Save album',
+        actions__back=Action(display_name='Back', attrs__href='/'),
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+
+def test_how_do_i_read_the_model_information_of_a_form(black_sabbath):
+    # language=rst
+    """
+    .. _form-model-introspection:
+
+    How do I read the model information iommi found for a form?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Form.model
+    .. uses Field.model
+    .. uses Field.model_field
+    .. uses Field.model_field_name
+
+    When you build a form with `auto__model`, iommi sets `model` on the form and
+    `model_field`/`model_field_name` on each field for you. You rarely set these
+    yourself, but reading them lets you write field logic that adapts to the model.
+    Here `is_valid` reads the Django field's `verbose_name` off `model_field` to build
+    an error message that stays in sync with the model:
+    """
+
+    def year_is_valid(field, parsed_data, **_):
+        if parsed_data is not None and parsed_data < 1900:
+            return False, f'The {field.model_field.verbose_name} must be 1900 or later'
+        return True, ''
+
+    form = Form.create(
+        auto__model=Album,
+        fields__year__is_valid=year_is_valid,
+    )
+
+    # @test
+    assert form.bind(request=req('get')).model is Album
+
+    bound = form.bind(
+        request=req('post', name='Paranoid', artist=str(black_sabbath.pk), year='1880', **{'-submit': ''}),
+    )
+    assert bound.fields.year.get_errors() == {'The year must be 1900 or later'}
+    assert bound.fields.year.model_field is Album._meta.get_field('year')
+    assert bound.fields.year.model_field_name == 'year'
+    show_output(bound)
+    # @end
+
+
+def test_how_do_i_customize_how_choices_are_displayed():
+    # language=rst
+    """
+    .. _customize-choices-display:
+
+    How do I customize how choices are displayed?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.choice_display_name_formatter
+    .. uses Field.choice_id_formatter
+    .. uses Field.choice_to_optgroup
+    .. uses Field.empty_label
+    .. uses Field.is_list
+    .. uses Field.is_boolean
+
+    For a `Field.choice` (and the multi-select `Field.multi_choice`, which sets
+    `is_list`), control how each choice is shown with `choice_display_name_formatter`,
+    which value identifies it with `choice_id_formatter`, and how the options are
+    grouped with `choice_to_optgroup`. `empty_label` sets the text of the blank option
+    of a non-required choice. Boolean fields set `is_boolean`:
+    """
+
+    form = Form(
+        fields__color=Field.choice(
+            choices=['red', 'green', 'blue'],
+            required=False,
+            choice_display_name_formatter=lambda choice, **_: choice.upper(),
+            empty_label='(pick a color)',
+        ),
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+
+def test_how_do_i_customize_the_label_and_help_text(black_sabbath):
+    # language=rst
+    """
+    .. _field-label-help:
+
+    How do I customize a field's label and help text?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.label
+    .. uses Field.help
+    .. uses Field.help_text
+
+    Set `display_name` for the label text (or configure the `label` fragment for its
+    markup). `help_text` sets the help string - it defaults to the Django model
+    field's help text - and `help` is the fragment that renders it:
+    """
+
+    form = Form(
+        auto__model=Album,
+        fields__name__display_name='Album title',
+        fields__name__help_text='The name as printed on the cover',
+    )
+
+    # @test
+    show_output(form)
+    # @end
+
+
+def test_how_do_i_control_how_input_is_parsed_and_rendered():
+    # language=rst
+    """
+    .. _field-raw-data:
+
+    How do I control how a field's input is read and rendered?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.raw_data
+    .. uses Field.strip_input
+    .. uses Field.parse_empty_string_as_none
+    .. uses Field.render_value
+    .. uses Field.render_value_on_error
+    .. uses Field.non_editable_input
+
+    Several hooks control the round trip between the raw request string and the value
+    shown to the user:
+
+    - `strip_input` (default `True`) runs `.strip()` on the incoming string.
+    - `parse_empty_string_as_none` (default `True`) turns an empty string into `None` before parsing.
+    - `render_value` turns the parsed value back into a string for display.
+    - `render_value_on_error` decides what to show when parsing failed (defaults to the raw input).
+    - `raw_data` is the unparsed string from the request.
+    - `non_editable_input` is the fragment used to render the value when the field is not editable.
+
+    For example, to always display the value upper-cased:
+    """
+
+    form = Form(
+        fields__foo=Field(
+            initial='hello',
+            render_value=lambda form, field, value, **_: value.upper(),
+        ),
+    )
+
+    # @test
+    show_output(form)
+    assert 'HELLO' in form.bind(request=req('get')).__html__()
+    # @end
+
+
+def test_how_do_i_change_how_a_field_reads_from_the_instance(album):
+    # language=rst
+    """
+    .. _field-read-from-instance:
+
+    How do I change how a field reads its value from the instance?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.read_from_instance
+
+    By default a field reads its value as `getattr_path(instance, field.attr)`.
+    Override `read_from_instance` to compute the value some other way (the matching
+    write hook is `write_to_instance`):
+    """
+
+    form = Form.edit(
+        auto__model=Album,
+        instance=album,
+        fields__name__read_from_instance=lambda field, instance, **_: instance.name.upper(),
+    )
+
+    # @test
+    show_output(form)
+    # @end

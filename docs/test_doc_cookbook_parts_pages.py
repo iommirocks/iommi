@@ -180,3 +180,172 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
     # @test
     show_output(my_page(req('get')))
     # @end
+
+
+def test_how_do_i_make_a_menu():
+    # language=rst
+    """
+    .. _cookbook-menu:
+
+    How do I make a menu?
+    ~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Menu.sub_menu
+    .. uses Menu.items_container
+    .. uses Menu.sort
+    .. uses MenuItem.url
+    .. uses MenuItem.sub_menu
+    .. uses MenuItem.regex
+    .. uses MenuItem.group
+    .. uses MenuItem.sort
+    .. uses MenuItem.a
+    .. uses MenuItem.active_class
+    .. uses MenuItem.active_class_on_item
+
+    A `Menu` is built from `MenuItem` s in its `sub_menu`. Each item's `url` defaults
+    to ``/<name>/``, and the item whose `regex` matches the current URL gets the
+    `active_class` (put that class on the item itself instead of its link with
+    `active_class_on_item`). Nest items by giving a `MenuItem` its own `sub_menu`. By
+    default items keep their declared order; set `sort=True` to sort them by name. The
+    ``<a>`` tag of an item is configured via `a`, and the element wrapping the whole
+    list of items via `items_container`:
+    """
+
+    menu = Menu(
+        sub_menu=dict(
+            root=MenuItem(url='/', display_name='Home'),
+            albums=MenuItem(),
+            artists=MenuItem(
+                active_class_on_item=True,
+                sub_menu=dict(
+                    black_sabbath=MenuItem(),
+                    ozzy=MenuItem(),
+                ),
+            ),
+        ),
+    )
+
+    # @test
+    show_output(menu)
+    # @end
+
+
+def test_how_do_i_add_a_custom_endpoint():
+    # language=rst
+    """
+    .. _custom-endpoint:
+
+    How do I add a custom endpoint?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Endpoint.func
+    .. uses Endpoint.http_methods
+
+    Any `Part` can have custom endpoints under `endpoints`. Give an endpoint a `func`
+    that returns the response - an `HttpResponse`, a `Part` (which is rendered for
+    you), or anything JSON-serializable. It answers ``?/<name>``. Allow POST by setting
+    `http_methods`:
+    """
+
+    page = Page(
+        parts__h1=html.h1('Hi!'),
+        endpoints__echo__func=lambda value, **_: value,
+    )
+
+    # @test
+    import json
+
+    request = req('get', **{'/echo': 'foo'})
+    response = page.bind(request=request).render_to_response()
+    assert json.loads(response.content) == 'foo'
+    # @end
+
+
+def test_how_do_i_add_css_or_js_assets():
+    # language=rst
+    """
+    .. _custom-assets:
+
+    How do I add CSS or JavaScript assets to a page?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Asset.children
+    .. uses Asset.in_body
+
+    Add `Asset` s under `assets` (on any `Part`, or in your `Style`). An `Asset` is a
+    `Fragment`, so you set its tag and `children` like any other fragment. By default
+    assets render in the ``<head>``; set `in_body=True` to render them at the end of
+    the ``<body>`` instead, which is handy for scripts:
+    """
+
+    page = Page(
+        assets__custom_css=Asset.css(attrs__href='/static/custom.css'),
+        assets__custom_script=Asset(
+            tag='script',
+            children__text='console.log("hi");',
+            in_body=True,
+        ),
+    )
+
+    # @test
+    show_output(page)
+    # @end
+
+
+def test_how_do_i_set_the_content_of_a_fragment():
+    # language=rst
+    """
+    .. _fragment-children:
+
+    How do I set the content of a fragment-like part?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Action.children
+    .. uses Header.children
+    .. uses Container.children
+
+    Many parts are `Fragment` s - an HTML tag plus a dict of `children`. `Action`,
+    `Header` and a table's `container` all work this way, so you build up their
+    contents through `children`:
+    """
+
+    page = Page(
+        parts__heading=Header(
+            children__text='Albums',
+            children__count=html.span(' (2)'),
+        ),
+        parts__link=Action(
+            children__text='Add album',
+            children__icon=html.i(attrs__class={'fa': True, 'fa-plus': True}),
+            attrs__href='/albums/create/',
+        ),
+    )
+
+    # @test
+    show_output(page)
+    # @end
+
+
+def test_how_do_i_group_actions_together():
+    # language=rst
+    """
+    .. _action-group:
+
+    How do I group actions together?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Action.group
+
+    Give actions the same `group` and they are rendered together (for example in a
+    dropdown):
+    """
+
+    form = Form(
+        fields__name=Field(),
+        actions__save=Action.submit(group='Manage'),
+        actions__reset=Action.button(display_name='Reset', group='Manage'),
+    )
+
+    # @test
+    show_output(form)
+    # @end

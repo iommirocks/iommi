@@ -12,3 +12,4 @@ Cookbook
    cookbook_queries
    cookbook_porting
    cookbook_main_menu
+   cookbook_calendar

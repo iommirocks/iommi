@@ -162,13 +162,15 @@ def test_how_do_i_style_the_query_container(big_discography):
     # language=rst
     """
     How do I style the query container?
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Query.attrs
     .. uses Query.tag
+    .. uses Query.form_container
 
     The `Query` component renders a container element that wraps the filter form.
-    You can configure its tag and attributes directly:
+    You can configure its tag and attributes directly. The simple (GUI) form itself
+    is wrapped in `form_container`, which you can configure the same way:
     """
 
     albums = Table(
@@ -176,6 +178,179 @@ def test_how_do_i_style_the_query_container(big_discography):
         auto__include=['name', 'artist', 'year'],
         columns__name__filter__include=True,
         query__attrs__style__border='2px solid red',
+    )
+
+    # @test
+    show_output(albums, '')
+    # @end
+
+
+def test_how_does_a_query_filter_the_rows(big_discography):
+    # language=rst
+    """
+    .. _query-filter-rows:
+
+    How does a query filter the rows, and how do I post-process them?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Query.filter
+    .. uses Query.filters
+    .. uses Query.rows
+    .. uses Query.model
+    .. uses Query.postprocess
+
+    A `Query` holds a set of `filters` and the `rows` (and `model`) it filters. When
+    bound it builds a `Q` from the request, and its `filter` method applies that to
+    the `rows`. Use `postprocess` to operate on the resulting rows afterwards. A
+    `Query` is usually created for you by a `Table`, but you can declare and use one
+    on its own:
+    """
+
+    class AlbumQuery(Query):
+        name = Filter()
+        year = Filter.integer()
+
+    query = AlbumQuery(rows=Album.objects.all())
+
+    # @test
+    show_output(query)
+
+    bound = query.bind(request=req('get'))
+    assert set(bound.filters.keys()) == {'name', 'year'}
+    assert bound.get_q() == Q()
+    assert repr(Album.objects.filter(bound.parse_query_string('name="Mob Rules"'))) == repr(
+        Album.objects.filter(name__iexact='Mob Rules')
+    )
+    # @end
+
+
+def test_how_do_i_choose_which_filters_are_generated(big_discography):
+    # language=rst
+    """
+    .. _query-auto-config:
+
+    How do I choose which filters are generated from a model?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses QueryAutoConfig.model
+    .. uses QueryAutoConfig.exclude
+    .. uses QueryAutoConfig.default_included
+    .. uses QueryAutoConfig.rows
+
+    Like tables and forms, a `Query` can introspect a model. Pass `auto__model` (or
+    `auto__rows`) and pick the filters with `auto__include`/`auto__exclude`, or flip
+    the default with `auto__default_included`:
+    """
+
+    query = Query(
+        auto__model=Album,
+        auto__exclude=['year'],
+    )
+
+    # @test
+    show_output(query)
+    bound = query.bind(request=req('get'))
+    assert 'year' not in bound.filters
+    # @end
+
+
+def test_how_do_i_configure_a_filters_gui_field(big_discography):
+    # language=rst
+    """
+    .. _filter-gui-field:
+
+    How do I configure a filter's GUI field?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Filter.field
+    .. uses Filter.choices
+    .. uses Filter.search_fields
+
+    Each filter has a GUI form field, configured through the filter's `field`
+    namespace. For choice filters `choices` is the list of options, and
+    `search_fields` controls which model fields the autocomplete of a
+    `choice_queryset` filter searches:
+    """
+
+    albums = Table(
+        auto__model=Album,
+        columns__year__filter=dict(
+            include=True,
+            field__include=True,
+        ),
+        columns__artist__filter=dict(
+            include=True,
+            search_fields=['name'],
+        ),
+    )
+
+    # @test
+    show_output(albums, '')
+    # @end
+
+
+def test_how_do_i_customize_how_a_filter_matches(big_discography):
+    # language=rst
+    """
+    .. _filter-matching:
+
+    How do I customize how a single filter matches?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Filter.query_operator_for_field
+    .. uses Filter.unary
+    .. uses Filter.parse
+    .. uses Filter.is_valid_filter
+    .. uses Filter.pk_lookup_to_q
+    .. uses Filter.model
+    .. uses Filter.model_field
+    .. uses Filter.model_field_name
+
+    Lower-level hooks change how an individual filter behaves:
+
+    - `query_operator_for_field` is the operator used for the simple (GUI) form, e.g. `=` for exact-ish matching or `:` for "contains".
+    - `parse` parses the user's input string into a value.
+    - `unary` marks a filter as usable without a value in the advanced query language.
+    - `is_valid_filter` decides whether a filter is allowed to be part of a query at all.
+    - `pk_lookup_to_q` controls how a lookup by primary key is turned into a `Q`.
+
+    Filters generated from a model also carry `model`, `model_field` and
+    `model_field_name` (the same introspection you get on columns and fields), so a
+    custom hook can read the Django field's metadata when it needs to.
+    """
+
+    albums = Table(
+        auto__model=Album,
+        columns__name__filter=dict(
+            include=True,
+            query_operator_for_field=':',
+        ),
+    )
+
+    # @test
+    show_output(albums, '')
+    # @end
+
+
+def test_how_do_i_customize_the_advanced_query_toggle(big_discography):
+    # language=rst
+    """
+    .. _advanced-query:
+
+    How do I customize the advanced query language area?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Query.advanced
+
+    A `Query` with filters offers an "advanced" free-text query language alongside
+    the GUI form, with a link to toggle between them. Configure that toggle (and the
+    advanced area) through the `advanced` namespace:
+    """
+
+    albums = Table(
+        auto__model=Album,
+        columns__name__filter__include=True,
+        query__advanced__toggle__attrs__class__advanced_toggle=True,
     )
 
     # @test
