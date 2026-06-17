@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.29.0 (2026-06-17)
+~~~~~~~~~~~~~~~~~~~
+
+* Filtering: special case for when you want to have a filter on the pk column of the table you based the model on
+
+
 7.28.0 (2026-06-12)
 ~~~~~~~~~~~~~~~~~~~
 
