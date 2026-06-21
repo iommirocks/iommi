@@ -13,6 +13,7 @@ from iommi.debug import (
     local_debug_url_builder,
     should_ignore_frame,
     source_url_from_part,
+    source_url_from_view_function,
 )
 from iommi.endpoint import find_target
 from iommi.struct import Struct
@@ -164,6 +165,50 @@ def test_source_url_from_part(settings):
     p = debug_tests_stuff.MyPage()
     filename = source_url_from_part(part=p)
     assert __file__ in filename
+
+
+def test_source_url_from_view_function_points_at_the_view(settings):
+    # For a plain FBV rendering a template extending iommi/base.html, the debug
+    # panel "jump to code" must resolve to the view function, not into iommi.
+    settings.DEBUG = True
+
+    def my_plain_fbv(request):  # the line this def is on is what we expect to jump to
+        pass
+
+    request = req('get')
+    request.resolver_match = Struct(func=my_plain_fbv)
+
+    expected_line = my_plain_fbv.__code__.co_firstlineno
+    source_url = source_url_from_view_function(request)
+    assert __file__ in source_url
+    assert source_url.endswith(f'&line={expected_line}')
+
+
+def test_source_url_from_view_function_no_resolver_match():
+    assert source_url_from_view_function(req('get')) is None
+
+
+def test_fbv_fallback_debug_panel_points_at_view(settings):
+    # End to end: the middleware captures the view function and exposes a fallback
+    # debug panel (used by iommi/base.html) whose "jump to code" link resolves to
+    # the plain FBV, not into iommi.
+    from django.http import HttpResponse
+
+    from tests.helpers import call_view_through_middleware
+
+    settings.DEBUG = True
+
+    def my_plain_fbv(request):
+        return HttpResponse('hello')
+
+    expected_line = my_plain_fbv.__code__.co_firstlineno
+
+    request = req('get')
+    call_view_through_middleware(my_plain_fbv, request)
+
+    panel = request.iommi_fallback_debug_panel()
+    assert __file__ in panel
+    assert f'line={expected_line}' in panel
 
 
 def test_get_instantiated_at_info_base_case():

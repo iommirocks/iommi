@@ -118,11 +118,17 @@ class middleware:
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         request.iommi_not_atomic_for = getattr(view_func, '_non_atomic_requests', set())
+        # Remember the view function so the debug panel for plain FBVs can point "jump to code" at it
+        request.iommi_view_func = view_func
 
     def _setup_request(self, request):
         # For plain FBVs that want to extend iommi/base.html, we need to insert some assets and container
         request.iommi_fallback_assets = lambda: Page().bind(request=get_current_request()).iommi_collected_assets()
         request.iommi_fallback_container = lambda: Container(_name='Container').bind(request=get_current_request())
+        # ...and the debug panel, with "jump to code" pointing at the view function
+        from iommi.debug import iommi_debug_panel_for_view_function
+
+        request.iommi_fallback_debug_panel = lambda: iommi_debug_panel_for_view_function(request)
 
     def _render_part(self, request, response):
         from django.db import transaction

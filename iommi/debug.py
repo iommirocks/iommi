@@ -297,7 +297,20 @@ def iommi_debug_panel_on():
 
 
 def iommi_debug_panel(part):
-    source_url = source_url_from_part(part)
+    return _iommi_debug_panel(request=part.get_request(), source_url=source_url_from_part(part))
+
+
+def iommi_debug_panel_for_view_function(request):
+    """Build the debug panel for a plain function based view that renders a template extending ``iommi/base.html``."""
+    if not iommi_debug_panel_on() or '_iommi_disable_debug_panel' in request.GET:
+        return ''
+    source_url = source_url_from_view_function(request)
+    if source_url is None:
+        return ''
+    return _iommi_debug_panel(request=request, source_url=source_url)
+
+
+def _iommi_debug_panel(*, request, source_url):
     # language=js
     script = r"""
         window.iommi_start_pick = function() {
@@ -389,7 +402,7 @@ def iommi_debug_panel(part):
 
     from iommi.menu import get_debug_menu
 
-    return get_debug_menu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(
+    return get_debug_menu(sub_menu__code__url=source_url).bind(request=request).__html__() + mark_safe(
         f'<script>{script}</script>'
     )
 
@@ -401,3 +414,21 @@ def source_url_from_part(part):
     else:
         source_url = None
     return source_url
+
+
+def source_url_from_view_function(request):
+    func = getattr(request, 'iommi_view_func', None)
+    if func is None:
+        resolver_match = getattr(request, 'resolver_match', None)
+        func = resolver_match.func if resolver_match is not None else None
+    if func is None:
+        return None
+    func = inspect.unwrap(func)
+    try:
+        filename = inspect.getsourcefile(func)
+        lineno = func.__code__.co_firstlineno
+    except (TypeError, AttributeError):
+        return None
+    if filename is None:
+        return None
+    return src_debug_url_builder(filename, lineno)

@@ -47,6 +47,6 @@
         {% endfor %}
     {% endif %}
 
-    {% if iommi_debug_panel %}{{ iommi_debug_panel }}{% endif %}
+    {% if iommi_debug_panel %}{{ iommi_debug_panel }}{% elif request.iommi_fallback_debug_panel %}{{ request.iommi_fallback_debug_panel }}{% endif %}
 </body>
 </html>
