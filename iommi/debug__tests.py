@@ -211,6 +211,25 @@ def test_fbv_fallback_debug_panel_points_at_view(settings):
     assert f'line={expected_line}' in panel
 
 
+def test_debug_menu_hides_tree_and_pick_without_part():
+    # Tree and pick require an iommi Part (debug_tree walks the bound part tree,
+    # pick highlights data-iommi-path elements), so they must not appear for a
+    # plain function based view.
+    from iommi.menu import get_debug_menu
+
+    menu = get_debug_menu(has_iommi_part=False).bind(request=req('get')).__html__()
+    assert '?/debug_tree' not in menu
+    assert 'window.iommi_start_pick()' not in menu
+
+
+def test_debug_menu_shows_tree_and_pick_with_part():
+    from iommi.menu import get_debug_menu
+
+    menu = get_debug_menu(has_iommi_part=True).bind(request=req('get')).__html__()
+    assert '?/debug_tree' in menu
+    assert 'window.iommi_start_pick()' in menu
+
+
 def test_get_instantiated_at_info_base_case():
     frame = Struct(f_back=None)
     assert get_instantiated_at_info(frame) == (None, None)

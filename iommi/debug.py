@@ -307,10 +307,10 @@ def iommi_debug_panel_for_view_function(request):
     source_url = source_url_from_view_function(request)
     if source_url is None:
         return ''
-    return _iommi_debug_panel(request=request, source_url=source_url)
+    return _iommi_debug_panel(request=request, source_url=source_url, has_iommi_part=False)
 
 
-def _iommi_debug_panel(*, request, source_url):
+def _iommi_debug_panel(*, request, source_url, has_iommi_part=True):
     # language=js
     script = r"""
         window.iommi_start_pick = function() {
@@ -402,7 +402,9 @@ def _iommi_debug_panel(*, request, source_url):
 
     from iommi.menu import get_debug_menu
 
-    return get_debug_menu(sub_menu__code__url=source_url).bind(request=request).__html__() + mark_safe(
+    return get_debug_menu(has_iommi_part=has_iommi_part, sub_menu__code__url=source_url).bind(
+        request=request
+    ).__html__() + mark_safe(
         f'<script>{script}</script>'
     )
 

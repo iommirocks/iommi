@@ -291,7 +291,7 @@ def add_get_parameter_to_current_url(request, **new_params):
     return '?' + params.urlencode()
 
 
-def get_debug_menu(**kwargs):
+def get_debug_menu(*, has_iommi_part=True, **kwargs):
     class DebugMenu(Menu):
         code = MenuItem(
             tag='li',
@@ -301,14 +301,19 @@ def get_debug_menu(**kwargs):
             tag='li',
             include=lambda request, **_: getattr(request, 'iommi_used_templates', None),
         )
+        # Tree and pick both require an iommi Part to be present (debug_tree walks
+        # the bound part tree, pick highlights elements with data-iommi-path), so
+        # they are useless for plain function based views.
         tree = MenuItem(
             url='?/debug_tree',
             tag='li',
+            include=has_iommi_part,
         )
         pick = MenuItem(
             url='#',
             attrs__onclick='window.iommi_start_pick()',
             tag='li',
+            include=has_iommi_part,
         )
         code_finder = MenuItem(
             url=lambda request, **_: add_get_parameter_to_current_url(request, _iommi_code_finder=''),
