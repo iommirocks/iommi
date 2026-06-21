@@ -21,7 +21,10 @@ try:
 except ImportError:
     GeneratedField = None
 
-from iommi.base import MISSING
+from iommi.base import (
+    MISSING,
+    items,
+)
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     Namespace,
@@ -48,6 +51,23 @@ def create_members_from_model(
 ):
     members = Struct()
 
+    # `include` is a list whose items are either a field path string (e.g. `'foo__bar'`) or a dict.
+    # A dict item carries the field path under its `attr` key, and any remaining keys are additional
+    # configuration passed to that entry (e.g. `dict(attr='foo', display_name='Foo!')`). We normalize
+    # to a list of paths plus a path -> config lookup so the rest of the logic is shared.
+    include_config = {}
+    if include is not None:
+        normalized_include = []
+        for entry in include:
+            if isinstance(entry, dict):
+                entry = Namespace(entry)
+                path = entry.pop('attr')
+                include_config[path] = entry
+                normalized_include.append(path)
+            else:
+                normalized_include.append(entry)
+        include = normalized_include
+
     check_list(model, include, 'include')
     check_list(model, exclude, 'exclude')
 
@@ -57,23 +77,33 @@ def create_members_from_model(
         if exclude is not None and model_field_name in exclude:
             continue
         name = model_field_name.replace('__', '_')
-        conf = Namespace(
-            _name=name,
+        # The arguments destined for `member_class._from_model` are stored under
+        # `config_from_model` rather than resolved here. The actual factory lookup happens in
+        # `resolve_config_from_model` when the container is refine_done'd, so declared and
+        # auto-generated members share one resolution path. We emit a plain `Namespace` (not an
+        # instance) so any container override merges into it through the normal machinery.
+        config = Namespace(
             model_field_name=model_field_name,
             model=model,
         )
         if default_included is False:
             setdefaults_path(
-                conf,
+                config,
                 include=False,
             )
         if include is not None and name in include:
             setdefaults_path(
-                conf,
+                config,
                 include=True,
             )
+        # Per-entry config from a dict item in `include` is merged in as defaults for the
+        # `_from_model` kwargs. Container overrides (`fields__foo__...`) still win because they
+        # are merged with higher precedence in `_resolve_config_from_model_member`.
+        entry_config = include_config.get(model_field_name)
+        if entry_config:
+            config = setdefaults_path(Namespace(entry_config), config)
 
-        members[name] = member_class._from_model(**conf)
+        members[name] = Namespace(_name=name, config_from_model=config)
 
     return members
 
@@ -183,6 +213,85 @@ def member_from_model(
         model_field_name=model_field_name,
         model=model,
     )
+
+
+def _config_from_model_kwargs(member):
+    """The `from_model()` / `auto__` machinery stores the arguments destined for
+    `cls._from_model` in the `config_from_model` refinable (as a `Namespace`) instead of
+    resolving the field type eagerly. Return those kwargs, or `None` for a normal member.
+
+    Auto members are plain `Namespace`s; declared `from_model()` members are instances that
+    carry the kwargs in their (not-yet-applied) namespace."""
+    if isinstance(member, RefinableObject):
+        return member.iommi_namespace.get('config_from_model')
+    if isinstance(member, Namespace):
+        return member.get('config_from_model')
+    return None
+
+
+def resolve_config_from_model(container, member_by_name, *, member_class, unapplied_config):
+    """Resolve any members created via `from_model()` (or by the `auto__` machinery) whose
+    field/column/filter type could not be determined until the container's model was known.
+
+    Now that the model and member name are available we run the factory lookup
+    (`member_from_model` via `cls._from_model`). `from_model_kwargs` holds the original
+    `from_model` arguments; `unapplied_config` holds the container's per-member overrides (e.g.
+    `fields__foo__call_target=...`) which we consume here so they are merged *before* the
+    shortcut is reified rather than applied to the finished instance."""
+    container_model = getattr(container, 'model', None)
+    for member_name, member in list(items(member_by_name)):
+        from_model_kwargs = _config_from_model_kwargs(member)
+        if from_model_kwargs is None:
+            continue
+        member_cls = type(member) if isinstance(member, RefinableObject) else member_class
+        member_by_name[member_name] = _resolve_config_from_model_member(
+            container_model,
+            member_cls,
+            member_name,
+            from_model_kwargs,
+            unapplied_config.pop(member_name, None) or {},
+        )
+
+
+def _resolve_config_from_model_member(container_model, member_cls, member_name, from_model_kwargs, overrides):
+    # Container overrides win over the original `from_model` arguments.
+    kwargs = setdefaults_path(Namespace(), overrides, from_model_kwargs)
+    kwargs.pop('config_from_model', None)
+
+    model_field = kwargs.pop('model_field', None)
+    model_field_name = kwargs.pop('model_field_name', None)
+    explicit_model = kwargs.pop('model', None)
+
+    attr = kwargs.get('attr', None)
+
+    if model_field is None and model_field_name is None:
+        # `attr` is used as the model field path when no explicit field name is given (e.g.
+        # `Field.from_model(attr='foo__bar')`), otherwise fall back to the member's own name.
+        if isinstance(attr, str):
+            model_field_name = attr
+        else:
+            model_field_name = member_name
+
+    if model_field is not None:
+        # The model belongs to `model_field`; only honor an explicitly passed model (which may
+        # differ, e.g. a synthetic field), never the container's — that would pair this field
+        # name with the wrong model. When None, `member_from_model` derives it from model_field.
+        model = explicit_model
+    else:
+        # An explicit model wins; otherwise inherit the container's.
+        model = explicit_model if explicit_model is not None else container_model
+
+    resolved = member_cls._from_model(
+        model=model,
+        model_field_name=model_field_name,
+        model_field=model_field,
+        **kwargs,
+    )
+
+    if resolved is not None:
+        resolved._name = member_name
+
+    return resolved
 
 
 def get_field_by_name(model: type[Model]) -> dict[str, DjangoField]:
@@ -328,7 +437,7 @@ def register_search_fields(*, model, search_fields, allow_non_unique=False, over
 
 class AutoConfig(RefinableObject):
     model: type[Model] | None = SpecialEvaluatedRefinable()
-    include: list[str] | None = Refinable()
+    include: list[str | dict] | None = Refinable()
     exclude: list[str] | None = Refinable()
     default_included : bool = Refinable()
 
@@ -336,7 +445,7 @@ class AutoConfig(RefinableObject):
     def __init__(self, **kwargs):
         """
         :param model: A Django model class
-        :param include: A list of attribute names to include, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`
+        :param include: A list of attribute names to include, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`. A list item may also be a dict carrying the attribute path under its `attr` key, with the remaining keys passed as additional configuration to that entry. Example: `['album', dict(attr='album__year', display_name='Year')]`
         :param exclude: A list of attribute names to exclude, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`
         """
         super(AutoConfig, self).__init__(**kwargs)

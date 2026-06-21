@@ -71,7 +71,6 @@ from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
-    reify_conf,
 )
 from iommi.part import (
     Part,
@@ -238,6 +237,9 @@ class Filter(Part):
     model: type[Model] | None = SpecialEvaluatedRefinable()
     model_field = Refinable()
     model_field_name = Refinable()
+    # Set by `from_model()`/`auto__` to a Namespace of deferred `_from_model` arguments; resolved
+    # by `resolve_config_from_model` when the container is refined. See `iommi/from_model.py`.
+    config_from_model: Namespace = Refinable()
     choices = EvaluatedRefinable()
     search_fields = Refinable()
     unary = Refinable()
@@ -329,7 +331,41 @@ class Filter(Part):
     @classmethod
     @dispatch
     def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
-        return reify_conf(cls._from_model(model=model, model_field_name=model_field_name, model_field=model_field, **kwargs))
+        """
+        Create a `Filter` from a Django model field.
+
+        When used declaratively inside a `Query`, you normally don't need to pass anything:
+        the model is taken from the containing query and the model field name from the filter's
+        own name. This works because resolution is deferred until the query is bound, by which
+        point both are known.
+
+        .. code-block:: python
+
+            class AlbumQuery(Query):
+                name = Filter.from_model()
+
+        Pass `attr` (using `__` to drill down) to read a field from a related model:
+
+        .. code-block:: python
+
+            class AlbumQuery(Query):
+                artist_name = Filter.from_model(attr='artist__name')
+
+        The explicit `model`, `model_field_name` and `model_field` parameters are still
+        accepted for the rare cases where the field can't be inferred from context (e.g. when
+        not declared on a query), but are no longer required.
+        """
+        # Resolution is deferred: we store the arguments in `config_from_model` and return a bare
+        # placeholder. The actual filter type is resolved by `resolve_config_from_model` once the
+        # containing `Query` is refined and its model (and this filter's name) are known.
+        return cls(
+            config_from_model=Namespace(
+                model=model,
+                model_field_name=model_field_name,
+                model_field=model_field,
+                **kwargs,
+            ),
+        )
 
     @classmethod
     @dispatch

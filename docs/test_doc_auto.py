@@ -50,3 +50,21 @@ def test_auto():
     # @test
     show_output(form)
     # @end
+
+    # language=rst
+    """
+    An item in the `auto__include` list can also be a dict. The `attr` key is the field to include (just like the plain string form), and the remaining keys are extra configuration passed to that field/column/etc. This is a more compact alternative to configuring each generated member separately via `fields__<name>__...`:
+    """
+
+    form = Form(
+        auto__model=Album,
+        auto__include=[
+            dict(attr='name', display_name='Album name'),
+            'artist',
+            dict(attr='year', help_text='The year the album was released'),
+        ],
+    )
+
+    # @test
+    show_output(form)
+    # @end

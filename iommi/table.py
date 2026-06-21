@@ -113,7 +113,6 @@ from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
-    reify_conf,
 )
 from iommi.page import (
     Page,
@@ -412,6 +411,9 @@ class Column(Part):
     model: type[Model] | None = SpecialEvaluatedRefinable()
     model_field = Refinable()
     model_field_name = Refinable()
+    # Set by `from_model()`/`auto__` to a Namespace of deferred `_from_model` arguments; resolved
+    # by `resolve_config_from_model` when the container is refined. See `iommi/from_model.py`.
+    config_from_model: Namespace = Refinable()
     choices: Iterable = EvaluatedRefinable()
     bulk: Namespace = Refinable()
     filter: Namespace = Refinable()
@@ -477,7 +479,10 @@ class Column(Part):
         """
 
         model_field = kwargs.get('model_field')
-        if model_field and model_field.remote_field:
+        # For deferred `config_from_model` placeholders we must not derive `model` from the
+        # related model here: it would shadow the model the field actually lives on and break the
+        # factory lookup. The resolved column gets the related model set in `on_refine_done`.
+        if model_field and model_field.remote_field and not kwargs.get('config_from_model'):
             kwargs['model'] = model_field.remote_field.model
         super(Column, self).__init__(**kwargs)
 
@@ -553,7 +558,41 @@ class Column(Part):
     @classmethod
     @dispatch
     def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
-        return reify_conf(cls._from_model(model=model, model_field_name=model_field_name, model_field=model_field, **kwargs))
+        """
+        Create a `Column` from a Django model field.
+
+        When used declaratively inside a `Table`, you normally don't need to pass anything:
+        the model is taken from the containing table and the model field name from the column's
+        own name. This works because resolution is deferred until the table is bound, by which
+        point both are known.
+
+        .. code-block:: python
+
+            class AlbumTable(Table):
+                name = Column.from_model()
+
+        Pass `attr` (using `__` to drill down) to read a field from a related model:
+
+        .. code-block:: python
+
+            class AlbumTable(Table):
+                artist_name = Column.from_model(attr='artist__name')
+
+        The explicit `model`, `model_field_name` and `model_field` parameters are still
+        accepted for the rare cases where the field can't be inferred from context (e.g. when
+        not declared on a table), but are no longer required.
+        """
+        # Resolution is deferred: we store the arguments in `config_from_model` and return a bare
+        # placeholder. The actual column type is resolved by `resolve_config_from_model` once the
+        # containing `Table` is refined and its model (and this column's name) are known.
+        return cls(
+            config_from_model=Namespace(
+                model=model,
+                model_field_name=model_field_name,
+                model_field=model_field,
+                **kwargs,
+            ),
+        )
 
     @classmethod
     @dispatch(

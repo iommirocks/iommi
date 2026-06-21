@@ -36,6 +36,7 @@ from tests.models import (
     FormFromModelTest,
     OtherModel,
     SomeModel,
+    Bar,
 )
 
 
@@ -141,6 +142,69 @@ def test_exclude_not_existing_error():
     )
 
 
+# An item in the `auto__include` list may be a dict carrying the field path under its `attr` key
+# and additional configuration passed to that entry, instead of only a plain string.
+
+
+def test_include_with_dict_items():
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__include=[
+            dict(attr='f_bool', display_name='Boolean!'),
+            dict(attr='f_int', display_name='Integer!'),
+        ],
+    ).bind(request=req('get'))
+    assert list(f.fields.keys()) == ['f_bool', 'f_int']
+    assert f.fields.f_bool.display_name == 'Boolean!'
+    assert f.fields.f_int.display_name == 'Integer!'
+
+
+def test_include_with_dict_items_respects_ordering():
+    # Mixing plain strings and dict items must preserve order *and* apply the per-entry config.
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__include=[
+            dict(attr='f_float', display_name='Float!'),
+            'f_bool',
+            'f_int',
+        ],
+    ).bind(request=req('get'))
+    assert list(f.fields.keys()) == ['f_float', 'f_bool', 'f_int']
+    assert f.fields.f_float.display_name == 'Float!'
+
+
+def test_include_with_dict_items_dunder_path():
+    f = Form(
+        auto__model=SomeModel,
+        auto__include=[dict(attr='foo__bar', display_name='Bar!')],
+    ).bind()
+    assert list(f.fields.keys()) == ['foo_bar']
+    assert f.fields.foo_bar.attr == 'foo__bar'
+    assert f.fields.foo_bar.display_name == 'Bar!'
+
+
+def test_include_with_dict_items_dunder_path_no_config():
+    # A dict item with only `attr` behaves just like including the plain string.
+    f = Form(
+        auto__model=SomeModel,
+        auto__include=[dict(attr='foo__bar')],
+    ).bind()
+    assert list(f.fields.keys()) == ['foo_bar']
+    assert f.fields.foo_bar.attr == 'foo__bar'
+
+
+def test_include_with_dict_items_config_merges_with_fields_override():
+    # An explicit `fields__...` override should win over the config supplied inline in the
+    # `auto__include` dict item, while config keys not overridden still come from the dict item.
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__include=[dict(attr='f_bool', display_name='From include', help_text='From include')],
+        fields__f_bool__display_name='From fields override',
+    ).bind(request=req('get'))
+    assert f.fields.f_bool.display_name == 'From fields override'
+    assert f.fields.f_bool.help_text == 'From include'
+
+
 @pytest.mark.django
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_factory_error_message():
@@ -153,8 +217,10 @@ def test_field_from_model_factory_error_message():
     class FooFromModelTestModel(Model):
         foo = CustomField()
 
+    # Resolution (and therefore the missing-factory error) is now deferred until the containing
+    # Form is refine_done'd, so we trigger it by binding a Form built from the model.
     with pytest.raises(AssertionError) as error:
-        Field.from_model(FooFromModelTestModel, 'foo')
+        Form(auto__model=FooFromModelTestModel, auto__include=['foo']).bind()
 
     assert (
         str(error.value)
@@ -183,17 +249,16 @@ def test_from_model_declarative_style():
     assert declared_fields['foo_bar'].attr == 'foo__bar'
 
 
-@pytest.mark.skip('This would require major reshuffle of how auto__ is done...')
 def test_from_model_using_attr():
     class MyForm(Form):
         foo = Field.from_model()
-        foo_bar = Field.from_model(attr='foo__bar')
+        dunder = Field.from_model(attr='foo__foo')
 
-    f = MyForm().bind()
+    f = MyForm(model=Bar).bind()
     declared_fields = f.fields
-    assert list(declared_fields.keys()) == ['foo', 'foo_bar']
-    assert declared_fields['foo_bar'].attr == 'foo__bar'
-
+    assert list(declared_fields.keys()) == ['foo', 'dunder']
+    assert declared_fields['dunder'].attr == 'foo__foo'
+    assert f.fields.dunder.help_text == 'foo_help_text'
 
 def test_from_model_missing_subfield():
     with pytest.raises(Exception) as e:
