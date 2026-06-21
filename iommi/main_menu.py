@@ -301,8 +301,14 @@ class M:
         if self.view is EXTERNAL:
             return []
 
+        view = self.view
+        from iommi.part import Part
+
+        if isinstance(view, type) and issubclass(view, Part):
+            view = view(_collect_instantiated_at_info=False)
+
         return [
-            path('', self.view, name=self._name_path(), kwargs=self.view_kwargs)
+            path('', view, name=self._name_path(), kwargs=self.view_kwargs)
         ] + [
             path(x.path, x.urlpatterns(), name=f'{self.name}.{self.name}')
             for x in self.items.values()

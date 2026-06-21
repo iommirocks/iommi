@@ -263,6 +263,40 @@ def test_path_type_handling():
     assert p.callback(req('get'))
 
 
+class JumpToCodePage(Form):
+    field = Field()
+
+
+def test_menu_view_class_jump_to_code_points_at_class():
+    # When a view *class* is mounted on a menu item, the prototype instance is
+    # created inside iommi's URL machinery. Its instantiation location must not
+    # leak the menu/urls plumbing; the "jump to code" feature should resolve to
+    # the view class definition instead.
+    import inspect
+
+    from iommi.debug import filename_and_line_num_from_part
+
+    expected_filename = inspect.getsourcefile(JumpToCodePage)
+    expected_line = inspect.findsource(JumpToCodePage)[1] + 1
+
+    menu = MainMenu(items=dict(foo=M(view=JumpToCodePage)))
+
+    def iommi_targets(patterns):
+        from django.urls import URLPattern, URLResolver
+        for p in patterns:
+            if isinstance(p, URLResolver):
+                yield from iommi_targets(p.url_patterns)
+            elif isinstance(p, URLPattern):
+                target = getattr(p.callback, '__iommi_target__', None)
+                if target is not None:
+                    yield target
+
+    (target,) = list(iommi_targets(menu.urlpatterns()))
+
+    filename, line_num = filename_and_line_num_from_part(target)
+    assert (filename, line_num) == (expected_filename, expected_line)
+
+
 def test_reprs():
     assert repr(menu_declaration) == '<MainMenu>'
     assert repr(menu_declaration.items['foo']) == '<M foo>'
