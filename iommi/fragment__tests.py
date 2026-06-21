@@ -369,6 +369,22 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
     assert next(counter) == 1
 
 
+def test_html_builder_jump_to_code_points_at_call_site():
+    # A bare Fragment built via the `html` shortcut (e.g. a basic FBV that does
+    # `return html.div(...)`) must resolve "jump to code" to the call site, not
+    # to Fragment's definition in fragment.py.
+    import inspect
+
+    from iommi.debug import filename_and_line_num_from_part
+
+    part = html.div('Hello world')  # keep this and the next line adjacent
+    expected_line = inspect.currentframe().f_lineno - 1
+
+    filename, line_num = filename_and_line_num_from_part(part)
+    assert filename == __file__
+    assert line_num == expected_line
+
+
 def test_transient_fragment():
     assert TransientFragment(
         tag='div',

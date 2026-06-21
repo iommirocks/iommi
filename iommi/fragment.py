@@ -209,8 +209,8 @@ class Fragment(Part, Tag):
         attrs__style = EMPTY
 
     @with_defaults
-    def __init__(self, text: PartType | None = None, **kwargs):
-        super().__init__(_collect_instantiated_at_info=False, **kwargs)
+    def __init__(self, text: PartType | None = None, _collect_instantiated_at_info=False, **kwargs):
+        super().__init__(_collect_instantiated_at_info=_collect_instantiated_at_info, **kwargs)
         if text is not None:
             self.refine(Prio.constructor, children__text=text)
 
@@ -335,7 +335,7 @@ class Html:
                 for i, child in enumerate(parts):
                     children[f'child{i+1 if i>0 else ""}'] = child
 
-            return Fragment(tag=tag, children=children, **kwargs)
+            return Fragment(tag=tag, children=children, _collect_instantiated_at_info=True, **kwargs)
 
         return fragment_constructor
 
