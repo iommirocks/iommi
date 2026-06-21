@@ -252,7 +252,7 @@ def render_root(*, part, context, **render):
         + template_name
         + '" %} {% block '
         + content_block_name
-        + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
+        + ' %}{{ content }}{% endblock %}'
     )
     try:
         engine = engines['django']
