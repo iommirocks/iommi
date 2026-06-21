@@ -142,64 +142,63 @@ def test_exclude_not_existing_error():
     )
 
 
-# `auto__include` may be a dict mapping a field path to additional configuration that is passed
-# to that entry, instead of only a list of strings.
+# An item in the `auto__include` list may be a dict carrying the field path under its `attr` key
+# and additional configuration passed to that entry, instead of only a plain string.
 
 
-def test_include_as_dict():
+def test_include_with_dict_items():
     f = Form(
         auto__model=FormFromModelTest,
-        auto__include={
-            'f_bool': dict(display_name='Boolean!'),
-            'f_int': dict(display_name='Integer!'),
-        },
+        auto__include=[
+            dict(attr='f_bool', display_name='Boolean!'),
+            dict(attr='f_int', display_name='Integer!'),
+        ],
     ).bind(request=req('get'))
     assert list(f.fields.keys()) == ['f_bool', 'f_int']
     assert f.fields.f_bool.display_name == 'Boolean!'
     assert f.fields.f_int.display_name == 'Integer!'
 
 
-def test_include_as_dict_respects_ordering():
-    # The dict form must preserve insertion order (like the list form does) *and* apply the
-    # per-entry config.
+def test_include_with_dict_items_respects_ordering():
+    # Mixing plain strings and dict items must preserve order *and* apply the per-entry config.
     f = Form(
         auto__model=FormFromModelTest,
-        auto__include={
-            'f_float': dict(display_name='Float!'),
-            'f_bool': {},
-            'f_int': {},
-        },
+        auto__include=[
+            dict(attr='f_float', display_name='Float!'),
+            'f_bool',
+            'f_int',
+        ],
     ).bind(request=req('get'))
     assert list(f.fields.keys()) == ['f_float', 'f_bool', 'f_int']
     assert f.fields.f_float.display_name == 'Float!'
 
 
-def test_include_as_dict_dunder_path():
+def test_include_with_dict_items_dunder_path():
     f = Form(
         auto__model=SomeModel,
-        auto__include={'foo__bar': dict(display_name='Bar!')},
+        auto__include=[dict(attr='foo__bar', display_name='Bar!')],
     ).bind()
     assert list(f.fields.keys()) == ['foo_bar']
     assert f.fields.foo_bar.attr == 'foo__bar'
     assert f.fields.foo_bar.display_name == 'Bar!'
 
 
-def test_include_as_dict_dunder_path_empty_config():
-    # A dunder path with an empty config dict behaves just like including it in the list form.
+def test_include_with_dict_items_dunder_path_no_config():
+    # A dict item with only `attr` behaves just like including the plain string.
     f = Form(
         auto__model=SomeModel,
-        auto__include=dict(foo__bar={}),
+        auto__include=[dict(attr='foo__bar')],
     ).bind()
     assert list(f.fields.keys()) == ['foo_bar']
     assert f.fields.foo_bar.attr == 'foo__bar'
 
 
-def test_include_as_dict_config_merges_with_fields_override():
+def test_include_with_dict_items_config_merges_with_fields_override():
     # An explicit `fields__...` override should win over the config supplied inline in the
-    # `auto__include` dict, while config keys not overridden still come from the dict.
+    # `auto__include` dict item, while config keys not overridden still come from the dict item.
     f = Form(
         auto__model=FormFromModelTest,
-        auto__include={'f_bool': dict(display_name='From include', help_text='From include')},
+        auto__include=[dict(attr='f_bool', display_name='From include', help_text='From include')],
         fields__f_bool__display_name='From fields override',
     ).bind(request=req('get'))
     assert f.fields.f_bool.display_name == 'From fields override'

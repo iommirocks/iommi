@@ -51,17 +51,25 @@ def create_members_from_model(
 ):
     members = Struct()
 
+    # `include` is a list whose items are either a field path string (e.g. `'foo__bar'`) or a dict.
+    # A dict item carries the field path under its `attr` key, and any remaining keys are additional
+    # configuration passed to that entry (e.g. `dict(attr='foo', display_name='Foo!')`). We normalize
+    # to a list of paths plus a path -> config lookup so the rest of the logic is shared.
+    include_config = {}
+    if include is not None:
+        normalized_include = []
+        for entry in include:
+            if isinstance(entry, dict):
+                entry = Namespace(entry)
+                path = entry.pop('attr')
+                include_config[path] = entry
+                normalized_include.append(path)
+            else:
+                normalized_include.append(entry)
+        include = normalized_include
+
     check_list(model, include, 'include')
     check_list(model, exclude, 'exclude')
-
-    # `include` may be a dict mapping a field path to additional configuration that is passed to
-    # that entry (e.g. `{'foo': dict(display_name='Foo!')}`), or a plain list of field paths. We
-    # normalize to a list of paths plus a path -> config lookup so the rest of the logic is shared.
-    if isinstance(include, dict):
-        include_config = include
-        include = list(include.keys())
-    else:
-        include_config = {}
 
     model_field_names = include if include is not None else list(get_field_by_name(model).keys())
 
@@ -88,7 +96,7 @@ def create_members_from_model(
                 config,
                 include=True,
             )
-        # Per-entry config from the dict form of `include` is merged in as defaults for the
+        # Per-entry config from a dict item in `include` is merged in as defaults for the
         # `_from_model` kwargs. Container overrides (`fields__foo__...`) still win because they
         # are merged with higher precedence in `_resolve_config_from_model_member`.
         entry_config = include_config.get(model_field_name)
@@ -429,7 +437,7 @@ def register_search_fields(*, model, search_fields, allow_non_unique=False, over
 
 class AutoConfig(RefinableObject):
     model: type[Model] | None = SpecialEvaluatedRefinable()
-    include: list[str] | dict[str, dict] | None = Refinable()
+    include: list[str | dict] | None = Refinable()
     exclude: list[str] | None = Refinable()
     default_included : bool = Refinable()
 
@@ -437,7 +445,7 @@ class AutoConfig(RefinableObject):
     def __init__(self, **kwargs):
         """
         :param model: A Django model class
-        :param include: A list of attribute names to include, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`. May also be a dict mapping each attribute name to additional configuration passed to that entry. Example: `{'album': dict(display_name='Album'), 'album__year': {}}`
+        :param include: A list of attribute names to include, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`. A list item may also be a dict carrying the attribute path under its `attr` key, with the remaining keys passed as additional configuration to that entry. Example: `['album', dict(attr='album__year', display_name='Year')]`
         :param exclude: A list of attribute names to exclude, use `__` to drill down to nested attributes. Example: `['album', 'album__year']`
         """
         super(AutoConfig, self).__init__(**kwargs)
