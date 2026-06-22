@@ -77,6 +77,11 @@ class Namespace(Struct):
                 else:
                     # Unable to promote to Namespace, just overwrite
                     self[key] = value
+            elif isinstance(existing, RefinableObject):
+                if isinstance(value, dict):
+                    self[key] = existing.refine(**value)
+                else:
+                    self[key] = value
             elif callable(existing):
                 if isinstance(value, dict):
                     type_of_namespace = _get_type_of_namespace(value)
