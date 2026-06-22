@@ -1,4 +1,5 @@
 import re
+import warnings
 from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import (
@@ -157,6 +158,37 @@ def validation_errors_reported_on(obj):
     except ValidationError as e:
         for msg in e.messages:
             obj.add_error(msg)
+
+
+def validate_object(form):
+    """
+    Validate `form.instance` before saving a create/edit form.
+
+    Two behaviors are available, selected by the `IOMMI_FULL_CLEAN` setting:
+
+    * `IOMMI_FULL_CLEAN = True` (opt-in): run full Django model validation
+      (`Model.full_clean`) via `full_clean_object`, so a model's custom
+      `clean()`/`clean_fields()` runs on save.
+    * Default (not set / falsy): only run `validate_unique`/`validate_constraints`,
+      the legacy behavior. A `DeprecationWarning` is emitted because the default
+      will change to full validation in a future release.
+    """
+    if getattr(settings, 'IOMMI_FULL_CLEAN', False):
+        full_clean_object(form)
+        return
+
+    warnings.warn(
+        'iommi will call Model.full_clean() on form create/edit in a future release, '
+        'which runs your model\'s clean()/clean_fields() on save. Set IOMMI_FULL_CLEAN = True '
+        'to opt in to the new behavior now and silence this warning. The current behavior only '
+        'validates uniqueness and constraints.',
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    with validation_errors_reported_on(form):
+        form.instance.validate_unique()
+        if hasattr(form.instance, 'validate_constraints'):
+            form.instance.validate_constraints()
 
 
 def full_clean_object(form):
@@ -361,7 +393,7 @@ def create_or_edit_object__post_handler(*, form, is_create=None, **_):
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
-        full_clean_object(form)
+        validate_object(form)
         if not form.is_valid():
             return
 
@@ -373,7 +405,7 @@ def create_or_edit_object__post_handler(*, form, is_create=None, **_):
     form.apply(form.instance)
 
     if not is_create:
-        full_clean_object(form)
+        validate_object(form)
         if not form.is_valid():
             return
 

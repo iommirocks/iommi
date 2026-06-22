@@ -125,6 +125,7 @@ markers = [
 ]
 filterwarnings = [
     "error",
+    "ignore:iommi will call Model.full_clean\\(\\) on form create/edit.*:DeprecationWarning",
     "ignore:Using or importing the ABCs from.*:DeprecationWarning",
     "ignore:the imp module is deprecated in favour of importlib.*:DeprecationWarning",
     "ignore:.*Django now detects this configuration automatically.*",

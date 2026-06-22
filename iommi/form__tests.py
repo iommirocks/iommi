@@ -3762,6 +3762,7 @@ def test_create_or_edit_object_validate_unique():
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
 
 
+@override_settings(IOMMI_FULL_CLEAN=True)
 @pytest.mark.django_db
 def test_create_object_calls_model_clean_global_error():
     from tests.models import ModelWithCleanMethod
@@ -3774,6 +3775,7 @@ def test_create_object_calls_model_clean_global_error():
     assert not ModelWithCleanMethod.objects.exists()
 
 
+@override_settings(IOMMI_FULL_CLEAN=True)
 @pytest.mark.django_db
 def test_create_object_calls_model_clean_field_error():
     from tests.models import ModelWithCleanMethod
@@ -3786,6 +3788,7 @@ def test_create_object_calls_model_clean_field_error():
     assert not ModelWithCleanMethod.objects.exists()
 
 
+@override_settings(IOMMI_FULL_CLEAN=True)
 @pytest.mark.django_db
 def test_create_object_passes_model_clean():
     from tests.models import ModelWithCleanMethod
@@ -3796,6 +3799,7 @@ def test_create_object_passes_model_clean():
     assert ModelWithCleanMethod.objects.filter(name='fine').exists()
 
 
+@override_settings(IOMMI_FULL_CLEAN=True)
 @pytest.mark.django_db
 def test_edit_object_calls_model_clean():
     from tests.models import ModelWithCleanMethod
@@ -3810,6 +3814,7 @@ def test_edit_object_calls_model_clean():
     assert instance.name == 'fine'
 
 
+@override_settings(IOMMI_FULL_CLEAN=True)
 @pytest.mark.django_db
 def test_create_object_model_clean_error_routes_by_model_field_name_not_iommi_name():
     # The iommi field is named `renamed`, but writes to (and validates) the `name` model field
@@ -3830,6 +3835,7 @@ def test_create_object_model_clean_error_routes_by_model_field_name_not_iommi_na
     assert not ModelWithCleanMethod.objects.exists()
 
 
+@override_settings(IOMMI_FULL_CLEAN=True)
 @pytest.mark.django_db
 def test_edit_object_calls_model_clean_on_nested_attr_related_model():
     # The `related_name` field writes to `related.name` (a related model) via a nested attr.
@@ -3852,6 +3858,7 @@ def test_edit_object_calls_model_clean_on_nested_attr_related_model():
     assert related.name == 'fine'
 
 
+@override_settings(IOMMI_FULL_CLEAN=True)
 @pytest.mark.django_db
 def test_create_object_model_clean_error_for_field_not_on_form_falls_back_to_global():
     # `other` is not included on the form, so a `clean()` error keyed by `other` has no field to
@@ -3864,6 +3871,32 @@ def test_create_object_model_clean_error_for_field_not_on_form_falls_back_to_glo
     assert response.status_code == 200
     assert bound.get_errors()['global'] == {'other is field invalid'}
     assert not ModelWithCleanMethod.objects.exists()
+
+
+@pytest.mark.django_db
+def test_create_object_full_clean_off_by_default_does_not_call_model_clean():
+    # Without IOMMI_FULL_CLEAN, the model's clean() is not run, so a value that clean() would
+    # reject is saved anyway. A DeprecationWarning is emitted about the upcoming default change.
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(auto__model=ModelWithCleanMethod)
+    with pytest.warns(DeprecationWarning, match='Model.full_clean'):
+        response = form.bind(
+            request=req('post', **{'name': 'field-invalid', 'other': '', '-submit': ''})
+        ).render_to_response()
+    assert response.status_code == 302
+    assert ModelWithCleanMethod.objects.filter(name='field-invalid').exists()
+
+
+@override_settings(IOMMI_FULL_CLEAN=True)
+@pytest.mark.django_db
+def test_create_object_full_clean_opt_in_does_not_warn(recwarn):
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(auto__model=ModelWithCleanMethod)
+    response = form.bind(request=req('post', **{'name': 'fine', 'other': '', '-submit': ''})).render_to_response()
+    assert response.status_code == 302
+    assert not any(issubclass(w.category, DeprecationWarning) for w in recwarn.list)
 
 
 @pytest.mark.django_db
