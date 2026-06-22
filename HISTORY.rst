@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+7.30.0 (2026-06-22)
+~~~~~~~~~~~~~~~~~~~
+
+* An item in the `auto__include` list may now be a dict instead of a plain string. The `attr` key gives the field path and the remaining keys are extra configuration passed to that generated member, e.g. `auto__include=['name', dict(attr='year', display_name='Year')]`.
+
+* Exposed `do_post` and request helpers as public API in `iommi.test_helpers`, with documentation on testing iommi components.
+
+* `.from_model()` resolution for `Field`/`Column`/`Filter`/`EditColumn` is now deferred to `refine_done()` of the parent container. This means you can now use `Field.from_model` without supplying `model` or `model_field`. The `from_model()` call is treated more as a flag for the `auto` machinery than something that needs to resolve the entire thing right there.
+
+  Note: As a consequence, resolution is now deferred until the container is built, so the result is now just a lazy placeholder and any exceptions will now only occur durin `refine_done()` on the container.
+
+* Debug panel improvements, including jump-to-code fixes for FBVs, `Fragment`, and `MainMenu`, and the pick and tree debug panel components are no longer shown for non-iommi views.
+
+
 7.29.0 (2026-06-17)
 ~~~~~~~~~~~~~~~~~~~
 
@@ -9,12 +23,6 @@ Changelog
 
 7.28.0 (2026-06-12)
 ~~~~~~~~~~~~~~~~~~~
-
-* `.from_model()` no longer require upfront `model`/`model_field` params when declared inside a container but can be inferred.
-
-  Note: As a consequence, resolution is now deferred until the container is built, so the result is now just a lazy placeholder and any exceptions will now only occur durin `refine_done()` on the container.
-
-* An item in the `auto__include` list may now be a dict instead of a plain string. The `attr` key gives the field path and the remaining keys are extra configuration passed to that generated member, e.g. `auto__include=['name', dict(attr='year', display_name='Year')]`.
 
 * `Form` create/edit now runs Django model validation (`Model.full_clean`), so a model's custom `clean()`/`clean_fields()` is called on save. Errors are routed to the matching field, or to the form for non-field errors. Related model instances reached through a nested `attr` (e.g. `attr='artist__name'`) are validated too.
 
