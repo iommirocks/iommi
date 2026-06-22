@@ -9,6 +9,10 @@ from iommi.declarative.namespace import (
     setattr_path,
     setdefaults_path,
 )
+from iommi.refinable import (
+    Refinable,
+    RefinableObject,
+)
 from iommi.struct import Struct
 
 
@@ -316,6 +320,54 @@ def test_namespace_setitem_function_non_dict():
     assert ns == dict(f=f)
     ns.setitem_path('f', 17)
     assert ns == dict(f=17)
+
+
+def test_namespace_setitem_refinable_object_split_path():
+    class MyRefinableObject(RefinableObject):
+        a = Refinable()
+        b = Refinable()
+
+    obj = MyRefinableObject(a=1)
+    ns = Namespace(x=obj)
+    ns.setitem_path('x__b', 2)
+    assert isinstance(ns.x, MyRefinableObject)
+    assert ns.x.iommi_namespace.as_namespace() == Namespace(a=1, b=2)
+
+
+def test_namespace_setitem_refinable_object_dict():
+    # A whole dict merged (no `__` delimiter) onto an existing RefinableObject
+    # should refine it, not overwrite it with a bare Namespace.
+    class MyRefinableObject(RefinableObject):
+        a = Refinable()
+        b = Refinable()
+
+    obj = MyRefinableObject(a=1)
+    ns = Namespace(x=obj)
+    ns.setitem_path('x', dict(b=2))
+    assert isinstance(ns.x, MyRefinableObject)
+    assert ns.x.iommi_namespace.as_namespace() == Namespace(a=1, b=2)
+
+
+def test_namespace_setitem_refinable_object_non_dict_overwrite():
+    class MyRefinableObject(RefinableObject):
+        a = Refinable()
+
+    obj = MyRefinableObject(a=1)
+    ns = Namespace(x=obj)
+    ns.setitem_path('x', None)
+    assert ns == Namespace(x=None)
+
+
+def test_namespace_merge_dict_onto_refinable_object():
+    # The same bug, but reached through nested Namespace stacking (as styles do).
+    class MyRefinableObject(RefinableObject):
+        a = Refinable()
+        b = Refinable()
+
+    obj = MyRefinableObject(a=1)
+    ns = Namespace(dict(x__y=obj), dict(x__y__b=2))
+    assert isinstance(ns.x.y, MyRefinableObject)
+    assert ns.x.y.iommi_namespace.as_namespace() == Namespace(a=1, b=2)
 
 
 def test_namespace_no_promote_overwrite():
