@@ -1,10 +1,12 @@
 Changelog
 ---------
 
-7.30.1 (unreleased)
+7.30.1 (2026-06-22)
 ~~~~~~~~~~~~~~~~~~~
 
 * Running `Model.full_clean` on `Form` create/edit (added in 7.28.0) is now opt-in behind the `IOMMI_FULL_CLEAN = True` setting, since it could break existing installs that rely on `clean()` not running on save. Without it, the previous behavior (validating uniqueness and constraints only) is kept and a `DeprecationWarning` is emitted; the default will switch to full validation in a future release.
+
+* Fixed namespace stacking issue that could interfere with `Style` configuration
 
 
 7.30.0 (2026-06-22)
