@@ -1,6 +1,6 @@
 [project]
 name = 'iommi'
-version = '7.29.0'
+version = '7.30.0'
 description = 'iommi is a high level framework built on django'
 authors = [
     { name = "Anders Hovmöller", email = "boxed@killingar.net" },
