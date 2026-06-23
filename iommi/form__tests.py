@@ -9,6 +9,7 @@ from datetime import (
     timedelta,
 )
 from decimal import Decimal
+from pathlib import Path
 from io import (
     BytesIO,
     StringIO,
@@ -2251,6 +2252,16 @@ def test_dropimage_rendering():
 @pytest.mark.django_db
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 def test_dropfile_crud():
+    # The MEDIA_ROOT above is created once at import time and is therefore shared across
+    # repeated in-process pytest sessions (e.g. mutmut's stats/clean/per-mutant runs).
+    # Clear any leftover upload so Django doesn't suffix the saved file name, which the
+    # assertions below depend on being exactly 'test.txt'.
+    from django.conf import settings
+
+    for leftover in Path(settings.MEDIA_ROOT).iterdir():
+        if leftover.is_file():
+            leftover.unlink()
+
     # create/upload:
     uploaded_file = SimpleUploadedFile(
         "test.txt",
@@ -3880,12 +3891,22 @@ def test_create_object_full_clean_off_by_default_does_not_call_model_clean():
     from tests.models import ModelWithCleanMethod
 
     form = Form.create(auto__model=ModelWithCleanMethod)
-    with pytest.warns(DeprecationWarning, match='Model.full_clean'):
+    with pytest.warns(DeprecationWarning) as records:
         response = form.bind(
             request=req('post', **{'name': 'field-invalid', 'other': '', '-submit': ''})
         ).render_to_response()
     assert response.status_code == 302
     assert ModelWithCleanMethod.objects.filter(name='field-invalid').exists()
+
+    deprecation_message = next(
+        str(w.message) for w in records if issubclass(w.category, DeprecationWarning)
+    )
+    assert deprecation_message == (
+        'iommi will call Model.full_clean() on form create/edit in a future release, '
+        "which runs your model's clean()/clean_fields() on save. Set IOMMI_FULL_CLEAN = True "
+        'to opt in to the new behavior now and silence this warning. The current behavior only '
+        'validates uniqueness and constraints.'
+    )
 
 
 @override_settings(IOMMI_FULL_CLEAN=True)
@@ -4080,7 +4101,7 @@ def test_date_parse():
 
     assert (
         str(e.value.args[0])
-        == 'Time data "2020-01-60" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
+        == 'Time data "2020-01-60" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H", and is not a relative date like "2d" or "2 weeks ago" (unexpected extra characters)'
     )
 
     with pytest.raises(ValidationError) as e:
@@ -4088,7 +4109,7 @@ def test_date_parse():
 
     assert (
         str(e.value.args[0])
-        == 'Time data "2020-01-031" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
+        == 'Time data "2020-01-031" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H", and is not a relative date like "2d" or "2 weeks ago" (unexpected extra characters)'
     )
 
     assert date_parse('2020-01-02') == date(2020, 1, 2)
@@ -4831,8 +4852,33 @@ def test_register_related_field_factory_factory_and_kwargs_raises():
     class MyRelatedModel:
         pass
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError) as e:
         register_related_field_factory(MyRelatedModel, factory=Shortcut(), display_name='foo')
+
+    assert str(e.value) == 'Can not provide both a factory and additional defaults separately'
+
+
+def test_register_field_factory_factory_and_kwargs_raises():
+    from django.db.models import IntegerField
+
+    from iommi.form import register_field_factory
+
+    with pytest.raises(AssertionError) as e:
+        register_field_factory(IntegerField, factory=Shortcut(), display_name='foo')
+
+    assert str(e.value) == 'Can not provide both a factory and additional defaults separately'
+
+
+def test_register_related_multiple_field_factory_factory_and_kwargs_raises():
+    from iommi.form import register_related_multiple_field_factory
+
+    class MyRelatedMultipleModel:
+        pass
+
+    with pytest.raises(AssertionError) as e:
+        register_related_multiple_field_factory(MyRelatedMultipleModel, factory=Shortcut(), display_name='foo')
+
+    assert str(e.value) == 'Can not provide both a factory and additional defaults separately'
 
 
 def test_register_related_multiple_field_factory_with_factory():
@@ -5104,3 +5150,29 @@ def test_form_field_none_in_namespace():
         fields__name=None,
     ).bind(request=req('get'))
     assert 'name' not in form.fields
+
+
+def test_date_parse_invalid_date_message():
+    with pytest.raises(ValidationError) as e:
+        date_parse('2020-13-01')
+
+    msg = str(e.value)
+    assert 'does not match any of the formats' in msg
+    # extra_information defaults to '' (not None / not a mutated literal) and no error-string matched
+    assert 'None' not in msg
+    assert 'XX' not in msg
+    assert 'out of range' not in msg
+
+
+def test_date_parse_unconverted_data_adds_extra_characters_note():
+    with pytest.raises(ValidationError) as e:
+        date_parse('2020-01-01xx')
+
+    assert 'unexpected extra characters' in str(e.value)
+
+
+def test_date_parse_out_of_range_adds_out_of_range_note():
+    with pytest.raises(ValidationError) as e:
+        date_parse('2020-02-31')
+
+    assert 'out of range' in str(e.value)

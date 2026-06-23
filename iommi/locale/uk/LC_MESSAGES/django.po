@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-22 09:51+0100\n"
+"POT-Creation-Date: 2026-06-23 09:16+0200\n"
 "PO-Revision-Date: 2023-04-08 13:50+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -21,107 +21,92 @@ msgstr ""
 "(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
 "X-Generator: Poedit 3.1.1\n"
 
-#: action.py:164
+#: action.py:171
 msgid "Submit"
 msgstr "Надіслати"
 
-#: admin.py:143
+#: admin.py:138
 msgid "iommi administration"
 msgstr "адміністрування iommi"
 
-#: admin.py:147 admin.py:627
+#: admin.py:142 views.py:161
 msgid "Change password"
 msgstr "Змінити пароль"
 
-#: admin.py:151
+#: admin.py:146
 msgid "Logout"
 msgstr "Вийти"
 
-#: admin.py:351
-msgid "All models"
-msgstr "Усі моделі"
-
-#: admin.py:403
+#: admin.py:435
 msgid "Add models to admin"
 msgstr "Додати моделі до адміністрування"
 
-#: admin.py:447
+#: admin.py:478
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "Створити %(model_name)s"
 
-#: admin.py:570
-msgid "Username"
-msgstr "Ім'я користувача"
+#: admin.py:577
+msgid "admin"
+msgstr ""
 
-#: admin.py:571
-msgid "Password"
-msgstr "Пароль"
-
-#: admin.py:574
-msgid "Login"
-msgstr "Увійти"
-
-#: admin.py:589
-msgid "Unknown username or password"
-msgstr "Неправильне ім'я користувача або пароль"
-
-#: admin.py:605
-msgid "Incorrect password"
-msgstr "Неправильний пароль"
-
-#: admin.py:621
-msgid "New passwords do not match"
-msgstr "Нові паролі не збігаються"
-
-#: admin.py:637
-msgid "Current password"
-msgstr "Поточний пароль"
-
-#: admin.py:638
-msgid "New password"
-msgstr "Новий пароль"
-
-#: admin.py:639
-msgid "Confirm password"
-msgstr "Підтвердити пароль"
-
-#: base__tests.py:67 form.py:1495
+#: base__tests.py:66 form.py:1828
 msgid "edit"
 msgstr "редагувати"
 
-#: edit_table.py:145 style_base.py:87 table.py:586
+#: edit_table.py:224 style_base.py:116 table.py:681
+#: templates/iommi/form/file_item.html:15
 msgid "Delete"
 msgstr "Вилучити"
 
-#: edit_table.py:302 form.py:1661 style_base.py:85
+#: edit_table.py:274 panel.py:332
+msgid "Drag and drop to reorder"
+msgstr ""
+
+#: edit_table.py:456 form.py:2047 style_base.py:114
 msgid "Save"
 msgstr "Зберегти"
 
-#: edit_table.py:314
+#: edit_table.py:462
 msgid "Add row"
 msgstr "Додати рядок"
 
-#: form.py:152
+#: form.py:260
+#, python-brace-format
 msgid "{} is not a valid boolean value"
 msgstr ""
 
-#: form.py:285
+#: form.py:443
+#, python-brace-format
 msgid "Could not convert string to float: {}"
 msgstr ""
 
-#: form.py:296 form.py:314
+#: form.py:450
+#, python-brace-format
+msgid "Could not convert string to int: {}"
+msgstr ""
+
+#: form.py:457 form.py:475
+#, python-brace-format
 msgid "{} not in available choices"
 msgstr ""
 
-#: form.py:410
+#: form.py:575
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
 "{formats}, and is not a relative date like \"2d\" or \"2 weeks ago\""
 msgstr ""
 
-#: form.py:445
+#: form.py:604
+msgid "out of range"
+msgstr "поза діапазоном"
+
+#: form.py:606
+msgid "unexpected extra characters"
+msgstr "неочікувані зайві символи"
+
+#: form.py:613
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
@@ -129,129 +114,174 @@ msgid ""
 "ago\"{extra_information}"
 msgstr ""
 
-#: form.py:477
+#: form.py:645
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\" or "
 "{formats}"
 msgstr ""
 
-#: form.py:493
+#: form.py:661
 #, python-brace-format
 msgid "Invalid literal for Decimal: '{string_value}'"
 msgstr ""
 
-#: form.py:518
+#: form.py:686
 msgid ""
 "Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
 "123 4567 or +1 212 123 4567"
 msgstr ""
 
-#: form.py:942
+#: form.py:1200
 msgid "This field is required"
 msgstr "Це поле обов'язкове"
 
-#: form.py:1186 table.py:250
+#: form.py:1500 style_bootstrap_icons.py:30 style_daisyui.py:31
+#: style_font_awesome_4.py:29 style_font_awesome_6.py:32 table.py:273
+#: table.py:821
 msgid "Yes"
 msgstr "Так"
 
-#: form.py:1186 table.py:252
+#: form.py:1500 table.py:275
 msgid "No"
 msgstr "Ні"
 
-#: form.py:1448
+#: form.py:1781
 #, python-format
 msgid "Cannot delete %(name)s"
 msgstr "Неможливо вилучити %(name)s"
 
-#: form.py:1494
+#: form.py:1827
 msgid "create"
 msgstr "створити"
 
-#: form.py:1496
+#: form.py:1829
 msgid "delete"
 msgstr "вилучити"
 
-#: form.py:1653
+#: form.py:2038
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:2041
+#: form.py:2528
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Ви справді хочете вилучити %(model_name)s \"%(instance)s\"?"
 
-#: query.py:609 templates/iommi/query/form_toggle_script.html:26
+#: form__tests.py:4597
+#, fuzzy
+#| msgid "Yes"
+msgid "yes"
+msgstr "Так"
+
+#: panel__tests.py:59
+msgid "Permissions"
+msgstr ""
+
+#: query.py:671 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Розширений пошук"
 
-#: query.py:740
+#: query.py:811
 msgid "Search"
 msgstr "Пошук"
 
-#: query.py:790
+#: query.py:860
 #, fuzzy
 #| msgid "Filter"
 msgctxt "verb"
 msgid "Filter"
 msgstr "Фільтр"
 
-#: style_base.py:86
+#: style_98.py:136 style_base.py:163 style_bootstrap.py:141
+#: style_bootstrap5.py:158 style_bulma.py:126 style_daisyui.py:217
+#: style_semantic_ui.py:87 style_us_web_design_system.py:138
+#: style_vanilla_css.py:94
+#, fuzzy
+#| msgid "Yes, delete all!"
+msgid "Select all"
+msgstr "Так, вилучити усі!"
+
+#: style_base.py:115
 msgid "Create"
 msgstr "Створити"
 
-#: table.py:563
+#: style_base.py:150
+msgid "Drop files here, or click to upload."
+msgstr ""
+
+#: style_base.py:151
+msgid "Drop file here, or click to upload."
+msgstr ""
+
+#: style_base.py:152
+msgid "Upload from this field is disabled."
+msgstr ""
+
+#: table.py:658
 msgid "Edit"
 msgstr "Редагувати"
 
-#: table.py:611
+#: table.py:706
 msgid "Download"
 msgstr "Завантажити"
 
-#: table.py:635
+#: table.py:730
 msgid "Run"
 msgstr "Виконати"
 
-#: table.py:1324
+#: table.py:1528
 #, python-brace-format
 msgid "Are you sure you want to delete these {count} items?"
 msgstr "Ви справді хочете вилучити ці {count} елементів?"
 
-#: table.py:1339
+#: table.py:1544
 msgid "Yes, delete all!"
 msgstr "Так, вилучити усі!"
 
-#: table.py:1767 table.py:1979
+#: table.py:2008 table.py:2240
 msgid "Bulk change"
 msgstr "Масово змінити"
 
-#: table.py:1985
+#: table.py:2246
 msgid "Bulk delete"
 msgstr "Масово вилучити"
 
-#: templates/iommi/query/advanced.html:5
+#: templates/iommi/form/file_item.html:16
+#, fuzzy
+#| msgid "Are you sure you want to delete these {count} items?"
+msgid "Do you really want to delete this file?"
+msgstr "Ви справді хочете вилучити ці {count} елементів?"
+
+#: templates/iommi/query/advanced.html:4
+#: templates/iommi/query/daisyui/advanced.html:4
 msgid "Search query"
 msgstr "Пошуковий запит"
 
-#: templates/iommi/query/advanced.html:9
+#: templates/iommi/query/advanced.html:8
+#: templates/iommi/query/daisyui/advanced.html:8
 #: templates/iommi/query/form_toggle_script.html:48
 msgid "Show help"
 msgstr "Показати довідку"
 
-#: templates/iommi/query/advanced.html:14
+#: templates/iommi/query/advanced.html:13
+#: templates/iommi/query/daisyui/advanced.html:13
 msgid "Available fields"
 msgstr "Доступні поля"
 
-#: templates/iommi/query/advanced.html:22
+#: templates/iommi/query/advanced.html:21
+#: templates/iommi/query/daisyui/advanced.html:21
 msgid "Queries"
 msgstr "Запити"
 
-#: templates/iommi/query/advanced.html:24
+#: templates/iommi/query/advanced.html:23
+#: templates/iommi/query/daisyui/advanced.html:23
 msgid "Search for an exact value: <code>field_name=value</code>"
 msgstr "Шукати точне значення: <code>назва_поля=значення</code>"
 
-#: templates/iommi/query/advanced.html:25
+#: templates/iommi/query/advanced.html:24
+#: templates/iommi/query/daisyui/advanced.html:24
 msgid ""
 "Search for an exact value containing space: <code>field_name=\"value with "
 "space\"</code>"
@@ -259,15 +289,18 @@ msgstr ""
 "Шукати точне значення, що містить пропукс: <code>назва_поля=\"значення з "
 "пропуском\"</code>"
 
-#: templates/iommi/query/advanced.html:26
+#: templates/iommi/query/advanced.html:25
+#: templates/iommi/query/daisyui/advanced.html:25
 msgid "Containing a text: <code>field_name:val</code>"
 msgstr "Містить текст: <code>назва_поля:значення</code>"
 
-#: templates/iommi/query/advanced.html:27
+#: templates/iommi/query/advanced.html:26
+#: templates/iommi/query/daisyui/advanced.html:26
 msgid "Exclude a value: <code>field_name!=value</code>"
 msgstr "Виключити значення: <code>назва_поля!=значення</code>"
 
-#: templates/iommi/query/advanced.html:28
+#: templates/iommi/query/advanced.html:27
+#: templates/iommi/query/daisyui/advanced.html:27
 msgid ""
 "You can also use <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
 "and <code>&gt;=</code> to find ranges of values: <code>field_name&lt;10</"
@@ -277,14 +310,16 @@ msgstr ""
 "code> і <code>&gt;=</code>, щоб знаходити діапазони значень: "
 "<code>назва_поля&lt;10</code>"
 
-#: templates/iommi/query/advanced.html:29
+#: templates/iommi/query/advanced.html:28
+#: templates/iommi/query/daisyui/advanced.html:28
 msgid ""
 "To search for dates, use ISO8601 format: <code>field_name>1969-07-20</code>"
 msgstr ""
 "Аби шукати дати, використовуйте формат ISO8601: <code>назва_поля>1969-07-20</"
 "code>"
 
-#: templates/iommi/query/advanced.html:30
+#: templates/iommi/query/advanced.html:29
+#: templates/iommi/query/daisyui/advanced.html:29
 msgid ""
 "You can filter for relative dates: <code>field_name < \"10 days ago\"</"
 "code>. Supported fields are <code>days</code>, <code>months</code>, "
@@ -305,3 +340,62 @@ msgstr "Базовий пошук"
 #: templates/iommi/query/form_toggle_script.html:42
 msgid "Hide help"
 msgstr "Приховати довідку"
+
+#: templates/iommi/table/js_select_all.html:15
+msgid "All items on this page are selected."
+msgstr ""
+
+#: templates/iommi/table/js_select_all.html:15
+msgid "Select all items"
+msgstr ""
+
+#: templates/iommi/table/js_select_all.html:32
+msgid "All items selected"
+msgstr ""
+
+#: views.py:90
+msgid "Confirm log out"
+msgstr ""
+
+#: views.py:92
+msgid "Log out"
+msgstr ""
+
+#: views.py:104
+msgid "Username"
+msgstr "Ім'я користувача"
+
+#: views.py:105
+msgid "Password"
+msgstr "Пароль"
+
+#: views.py:108
+msgid "Login"
+msgstr "Увійти"
+
+#: views.py:125
+msgid "Unknown username or password"
+msgstr "Неправильне ім'я користувача або пароль"
+
+#: views.py:139
+msgid "Incorrect password"
+msgstr "Неправильний пароль"
+
+#: views.py:155
+msgid "New passwords do not match"
+msgstr "Нові паролі не збігаються"
+
+#: views.py:173
+msgid "Current password"
+msgstr "Поточний пароль"
+
+#: views.py:179
+msgid "New password"
+msgstr "Новий пароль"
+
+#: views.py:184
+msgid "Confirm password"
+msgstr "Підтвердити пароль"
+
+#~ msgid "All models"
+#~ msgstr "Усі моделі"

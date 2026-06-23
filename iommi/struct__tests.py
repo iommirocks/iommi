@@ -300,3 +300,8 @@ def test_frozen_struct_cache_actually_caches():
     dict.__setitem__(f, 'a', 2)
     assert hash(f) == old_hash
     assert f._hash == old_hash
+
+
+def test_frozen_hash_depends_on_contents():
+    assert hash(FrozenStruct(a=1)) == hash(FrozenStruct(a=1))
+    assert hash(FrozenStruct(a=1)) != hash(FrozenStruct(a=2))

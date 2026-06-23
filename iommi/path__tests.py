@@ -158,3 +158,36 @@ def test_iommi_view_params_fills_already_existing():
 def test_model_pk_user_error():
     with pytest.raises(AssertionError):
         register_path_decoding(foo=Artist.pk)
+
+
+def test_path_decoder_stores_model():
+    from tests.models import Foo
+
+    decoder = PathDecoder(model=Foo, name='foo')
+    assert decoder.model is Foo
+
+
+@pytest.mark.django_db
+def test_decode_path_components_passes_key_request_and_kwargs_to_decoder():
+    captured = {}
+
+    def my_decode(key, string, request, decoded_kwargs, kwargs, **_):
+        captured.update(
+            key=key,
+            string=string,
+            request=request,
+            decoded_kwargs=dict(decoded_kwargs),
+            kwargs=dict(kwargs),
+        )
+        return f'decoded-{string}'
+
+    request = req('get')
+    with register_path_decoding(my_key=my_decode):
+        result = decode_path_components(request, my_key='abc', other='xyz')
+
+    assert captured['key'] == 'my_key'
+    assert captured['string'] == 'abc'
+    assert captured['request'] is request
+    assert captured['decoded_kwargs'] == {}
+    assert captured['kwargs'] == dict(my_key='abc', other='xyz')
+    assert result['my_key'] == 'decoded-abc'

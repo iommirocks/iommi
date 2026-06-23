@@ -358,6 +358,26 @@ class LimitChoicesToM2MTest(Model):
     foo_m2m = ManyToManyField(Foo, limit_choices_to={'foo__gte': 3})
 
 
+class CallableLimitTarget(Model):
+    foo = IntegerField()
+
+
+class ReverseRelationTarget(Model):
+    # Dedicated target so the reverse relations below don't pollute introspection of other models.
+    pass
+
+
+class ReverseRelationM2MSource(Model):
+    targets = ManyToManyField(ReverseRelationTarget, related_name='m2m_sources')
+
+
+class LimitChoicesToCallableFKTest(Model):
+    # A callable limit_choices_to exercises the branch in choices_from_model_field that
+    # resolves the callable before filtering the queryset. Uses a dedicated target model so it
+    # doesn't add a reverse relation to the widely-introspected Foo model.
+    foo_fk = ForeignKey(CallableLimitTarget, on_delete=CASCADE, limit_choices_to=lambda: {'foo__gte': 3})
+
+
 class FooProxy(Foo):
     class Meta:
         proxy = True

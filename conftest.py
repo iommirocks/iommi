@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from django.contrib.auth.models import User
 from django.db import connection
+from django.db.backends.base.base import BaseDatabaseWrapper
 
 from docs.models import (
     Album,
@@ -12,6 +13,39 @@ from docs.models import (
     Track,
 )
 from iommi.path import _path_component_to_decode_data
+
+# When several pytest sessions run in one process (e.g. mutmut's in-process runner does
+# a stats run followed by a clean-test run, then a run per mutant) pytest-django's
+# DB-access blocker leaks state between sessions. Each session gets a fresh,
+# session-scoped django_db_blocker that lazily captures the "real" ensure_connection the
+# first time it is used. But the previous session leaves
+# BaseDatabaseWrapper.ensure_connection pointing at pytest-django's _blocking_wrapper, so
+# the new blocker captures that blocking wrapper as "real". Unblocking then restores the
+# blocking wrapper instead of real DB access, and test-database setup fails with
+# "Database access not allowed".
+#
+# We can't grab the genuine ensure_connection at import time: pytest-django has already
+# installed blocking by the time this conftest is imported. Instead we patch the blocker
+# to remember the genuine implementation the first time it is visible (which happens
+# repeatedly during the first session, whenever a django_db test is unblocked) and pin
+# every blocker to it. This is a no-op for a normal single-session run.
+def _pin_pytest_django_blocker_to_genuine_ensure_connection():
+    from pytest_django.plugin import DjangoDbBlocker
+
+    def _dj_db_wrapper(self):
+        current = BaseDatabaseWrapper.ensure_connection
+        if current.__module__ != 'pytest_django.plugin':
+            DjangoDbBlocker._iommi_genuine_ensure_connection = current
+        if self._real_ensure_connection is None:
+            self._real_ensure_connection = getattr(
+                DjangoDbBlocker, '_iommi_genuine_ensure_connection', current
+            )
+        return BaseDatabaseWrapper
+
+    DjangoDbBlocker._dj_db_wrapper = property(_dj_db_wrapper)
+
+
+_pin_pytest_django_blocker_to_genuine_ensure_connection()
 
 
 # pragma: no cover

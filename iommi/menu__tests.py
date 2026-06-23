@@ -1,3 +1,4 @@
+import pytest
 from django.urls import (
     path,
     reverse_lazy,
@@ -87,7 +88,25 @@ def test_debug_menu():
     assert '<li><a class="link" href="/code/">Code</a></li>' in html
     assert '<li><a class="link" href="?/debug_tree">Tree</a></li>' in html
     assert '<li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li>' in html
+    assert '<li><a class="link" href="?_iommi_code_finder=">Code finder</a></li>' in html
     assert '<li><a class="link" href="?_iommi_live_edit">Edit</a></li>' in html
+    assert '<li><a class="link" href="?_iommi_live_edit=style_editor">Edit style</a></li>' in html
+    assert '<li><a class="link" href="?_iommi_prof=">Profile</a></li>' in html
+    assert '<a class="link" href="#">Profile POST</a></li>' in html
+    assert '<li><a class="link" href="?_iommi_sql_trace=">SQL trace</a></li>' in html
+    # Templates and Stop editing require specific request state and must be absent by default.
+    assert 'Templates' not in html
+    assert 'Stop editing' not in html
+
+
+def test_debug_menu_with_live_edit_active_and_templates_used():
+    request = req('get', **{'_iommi_live_edit': ''})
+    request.iommi_used_templates = {'foo.html': 1}
+    html = get_debug_menu().bind(request=request).__html__()
+
+    assert '<li><a class="link" href="?/debug_templates_used">Templates</a></li>' in html
+    assert '<li><a class="link" href="?_iommi_live_edit&amp;_iommi_live_edit_flow=row">Edit vertical</a></li>' in html
+    assert '<li><a class="link" href="?_iommi_live_edit=stop">Stop editing</a></li>' in html
 
 
 def test_template():
@@ -190,3 +209,15 @@ def test_active_on_li():
     menu.set_active('/foo/')
     assert menu.sub_menu.qwe.sub_menu.foo._active is True
     assert '<li class="active">' in menu.__html__()
+
+
+
+
+def test_menu_item_requires_active_class():
+    class MyMenu(Menu):
+        home = MenuItem(url='/', active_class=None)
+
+    with pytest.raises(AssertionError) as e:
+        MyMenu().bind(request=req('GET'))
+
+    assert str(e.value) == 'No active_class provided'

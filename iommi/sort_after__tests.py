@@ -211,3 +211,52 @@ Available names:
     quux
     quux6"""
     )
+
+def test_sort_after_order_before_points_to_nothing():
+    with pytest.raises(SortAfterException) as e:
+        sort_after(
+            dict(
+                quux=Struct(),
+                foo=Struct(),
+                quux6=Struct(after='<does-not-exist'),
+            )
+        )
+
+    assert (
+        e.value.args[0]
+        == """\
+Tried to order before does-not-exist but that key does not exist.
+Available names:
+    foo
+    quux
+    quux6"""
+    )
+
+
+def test_sort_after_order_before_points_to_nothing_plural():
+    with pytest.raises(SortAfterException) as e:
+        sort_after(
+            dict(
+                quux=Struct(),
+                foo=Struct(after='<does-not-exist2'),
+                quux6=Struct(after='<does-not-exist'),
+            )
+        )
+
+    assert (
+        e.value.args[0]
+        == """\
+Tried to order before does-not-exist, does-not-exist2 but those keys do not exist.
+Available names:
+    foo
+    quux
+    quux6"""
+    )
+
+
+def test_sort_after_order_before_does_not_stop_iteration():
+    # The `continue` after categorizing a `<` (before) item must not become a `break`, which
+    # would drop every item declared after it.
+    result = sort_after(dict(a=Struct(), b=Struct(after='<a'), c=Struct()))
+
+    assert list(keys(result)) == ['b', 'a', 'c']

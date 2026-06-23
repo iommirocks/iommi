@@ -16,6 +16,7 @@ from iommi.sql_trace import (
     SQL_DEBUG_LEVEL_WORST,
     colorize,
     format_clickable_filename,
+    format_explain_output,
     format_sql,
     get_sql_debug,
     is_explainable,
@@ -346,3 +347,79 @@ def test_run_explain_non_explainable():
     entry = {'sql': 'BEGIN', 'params': None, 'using': 'default'}
     result = run_explain(entry)
     assert result is None
+
+
+def test_format_explain_output():
+    # The most expensive row scales the gradient bar to 100%, the cheaper one proportionally.
+    html = format_explain_output(
+        ['Plan'],
+        [['Seq Scan  (cost=0.00..2.00 rows=1)'], ['Index  (cost=0.00..1.00 rows=1)']],
+    )
+    assert html == (
+        '<table style="border-collapse: collapse; margin: 8px 0; font-size: 13px">'
+        '<tr><th style="border: 1px solid #666; padding: 4px 8px; white-space: pre; text-align: left">Plan</th></tr>'
+        '<tr><td style="border: 1px solid #666; padding: 4px 8px; white-space: pre;'
+        ' background: linear-gradient(to right, rgba(79,79,255,0.3) 100.0%, transparent 100.0%)">'
+        'Seq Scan  (cost=0.00..2.00 rows=1)</td></tr>'
+        '<tr><td style="border: 1px solid #666; padding: 4px 8px; white-space: pre;'
+        ' background: linear-gradient(to right, rgba(79,79,255,0.3) 50.0%, transparent 50.0%)">'
+        'Index  (cost=0.00..1.00 rows=1)</td></tr>'
+        '</table>'
+    )
+
+
+@pytest.mark.parametrize(
+    'sql, color, keyword',
+    [
+        ('SELECT x FROM foo', 'green', 'SELECT'),
+        ('INSERT INTO foo', 'magenta', 'INSERT'),
+        ('UPDATE foo SET x', 'orange', 'UPDATE'),
+        ('DELETE FROM foo', 'red', 'DELETE'),
+        ('COMMIT', 'cyan', 'COMMIT'),
+        ('BEGIN', 'cyan', 'BEGIN'),
+        ('ROLLBACK', 'red', 'ROLLBACK'),
+    ],
+)
+def test_format_sql_keyword_colors(sql, color, keyword):
+    # short_limit high so the query is rendered "short" (no line wrapping).
+    html = format_sql(sql, short_limit=1000)
+    assert f'<span style="color: {color}; font-weight: bold">{keyword}</span>' in html
+
+
+def test_sql_debug_format_stack_trace_skips_framework_frames(monkeypatch):
+    monkeypatch.setattr('iommi.sql_trace.colored', lambda text, **kwargs: text)
+
+    skip_filenames = [
+        '/lib/python/x.py',
+        'a/django/core/x.py',
+        'a/pydev/pydevd/x.py',
+        'a/gunicorn/x.py',
+        'iommi/iommi/declarative/dispatch.py',
+        'iommi/iommi/member.py',
+    ]
+
+    frames = [
+        Struct(f_lineno=1, f_locals={}, f_code=Struct(co_name='user_code', co_filename='myapp/views.py')),
+    ]
+    for i, filename in enumerate(skip_filenames):
+        frames.append(Struct(f_lineno=1, f_locals={}, f_code=Struct(co_name=f'skip{i}', co_filename=filename)))
+
+    for i, f in enumerate(frames):
+        f.f_back = None if i == 0 else frames[i - 1]
+
+    result = sql_debug_format_stack_trace(frames[-1])
+
+    assert 'user_code' in result
+    for i in range(len(skip_filenames)):
+        assert f'skip{i}' not in result
+
+
+def test_format_explain_output_scales_to_actual_max_cost():
+    # The most expensive row defines 100%; costs below 1.0 must still scale (col_max tracks the
+    # real max, starting from 0, and the gradient shows whenever col_max > 0).
+    html = format_explain_output(
+        ['Plan'],
+        [['A (cost=0.00..0.50 rows=1)'], ['B (cost=0.00..0.25 rows=1)']],
+    )
+    assert 'rgba(79,79,255,0.3) 100.0%' in html
+    assert 'rgba(79,79,255,0.3) 50.0%' in html

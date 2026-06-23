@@ -332,3 +332,13 @@ def test_action_shortcut_icon():
         Action.icon('foo', display_name='title').bind(request=None).__html__()
         == '<a><i class="fa fa-foo"></i> title</a>'
     )
+
+
+def test_action_input_tag_keeps_explicit_value():
+    action = Action(tag='input', display_name='Save', attrs__value='preset').bind(request=req('get'))
+    assert action.attrs.get('value') == 'preset'
+
+
+def test_action_non_input_sets_text_child_to_display_name():
+    action = Action(display_name='Hello').bind(request=req('get'))
+    assert action.children['text'] == 'Hello'

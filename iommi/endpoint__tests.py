@@ -16,6 +16,7 @@ from iommi.endpoint import (
     InvalidEndpointPathException,
     find_target,
     path_join,
+    perform_ajax_dispatch,
     perform_post_dispatch,
 )
 from iommi.part import request_data
@@ -256,3 +257,20 @@ def test_perform_post_with_no_dispatch_parameter():
         target.render_to_response()
 
     assert str(e.value) == 'This request was a POST, but there was no dispatch command present.'
+
+
+def test_perform_ajax_dispatch_passes_root_and_value_to_callback():
+    page = Page(endpoints__test__func=lambda root, value, **_: (root, value)).bind(request=req('get'))
+
+    result = perform_ajax_dispatch(root=page, path='/test', value='the-value')
+
+    assert result == (page, 'the-value')
+
+
+def test_perform_ajax_dispatch_non_endpoint_target_raises_with_message():
+    page = Page(parts__foo=html.div('x')).bind(request=req('get'))
+
+    with pytest.raises(InvalidEndpointPathException) as e:
+        perform_ajax_dispatch(root=page, path='/foo', value='')
+
+    assert 'is not a valid endpoint handler' in str(e.value)

@@ -82,7 +82,7 @@ def _is_localhost(request):
         host = host.split(']')[0] + ']'
     else:
         host = host.partition(':')[0]
-    return host in ('localhost', '127.0.0.1', '[::1]')
+    return host in ('localhost', '127.0.0.1', '[::1]') or host.endswith('.localhost')
 
 
 def should_edit(request):

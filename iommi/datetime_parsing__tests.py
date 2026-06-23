@@ -147,3 +147,9 @@ def test_parse_relative_date_leap_year_overflow():
 
 def test_parse_relative_datetime_leap_year_overflow():
     assert parse_relative_datetime('1 year', start_date=date(2020, 2, 29)) == datetime(2021, 2, 28, 1, 11, 13, 17)
+
+
+def test_parse_relative_date_weekdays_ago_spanning_weeks():
+    # 8 business days back must use divmod(count, 5) (a 5-day work week).
+    with time_machine.travel('2018-02-05'):  # a Monday
+        assert parse_relative_date('8 weekdays ago') == date(2018, 1, 24)

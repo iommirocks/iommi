@@ -4848,3 +4848,74 @@ def test_disallow_sorting_on_non_sortable_columns_that_have_valid_attr__nested()
     t = t.bind(request=req('get', **{'order': 'foo__synthetic'}))
 
     assert not t.columns.synthetic.sortable
+
+
+@pytest.mark.django_db
+def test_csv_download_escapes_all_formula_injection_prefixes_and_sets_last_modified():
+    import re as _re
+
+    for danger in ('+cmd', '-cmd', '@cmd', '=cmd'):
+        CSVExportTestModel.objects.create(a=1, b='x', c=1.0, danger=danger)
+
+    t = Table(
+        auto__model=CSVExportTestModel,
+        columns__a__extra_evaluated__report_name='A',
+        columns__b__extra_evaluated__report_name='B',
+        columns__c__extra_evaluated__report_name='C',
+        columns__d__extra_evaluated__report_name='D',
+        columns__danger__extra_evaluated__report_name='DANGER',
+        extra_evaluated__report_name='foo',
+    ).bind(request=req('get', **{'/csv': ''}))
+    response = t.render_to_response()
+    csv = response.getvalue().decode()
+
+    # Every spreadsheet-formula prefix (+, -, @, =) must be neutralised with a leading tab.
+    assert '\t+cmd' in csv
+    assert '\t-cmd' in csv
+    assert '\t@cmd' in csv
+    assert '\t=cmd' in csv
+
+    assert _re.match(
+        r'^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$',
+        response['Last-Modified'],
+    )
+
+
+@pytest.mark.django_db
+def test_csv_download_whitelisted_column_is_not_escaped():
+    CSVExportTestModel.objects.create(a=1, b='x', c=1.0, danger='=cmd')
+
+    t = Table(
+        auto__model=CSVExportTestModel,
+        columns__a__extra_evaluated__report_name='A',
+        columns__b__extra_evaluated__report_name='B',
+        columns__c__extra_evaluated__report_name='C',
+        columns__d__extra_evaluated__report_name='D',
+        columns__danger__extra_evaluated__report_name='DANGER',
+        columns__danger__extra__csv_whitelist=True,
+        extra_evaluated__report_name='foo',
+    ).bind(request=req('get', **{'/csv': ''}))
+    csv = t.render_to_response().getvalue().decode()
+
+    # A column marked csv_whitelist is trusted, so its value keeps the leading '=' un-escaped.
+    assert '=cmd' in csv
+    assert '\t=cmd' not in csv
+
+
+@pytest.mark.django_db
+def test_csv_download_uses_report_value_override():
+    CSVExportTestModel.objects.create(a=1, b='x', c=1.0)
+
+    t = Table(
+        auto__model=CSVExportTestModel,
+        columns__a__extra_evaluated__report_name='A',
+        columns__a__extra_evaluated__report_value=lambda **_: 'CUSTOM_A',
+        columns__b__extra_evaluated__report_name='B',
+        columns__c__extra_evaluated__report_name='C',
+        columns__d__extra_evaluated__report_name='D',
+        columns__danger__extra_evaluated__report_name='DANGER',
+        extra_evaluated__report_name='foo',
+    ).bind(request=req('get', **{'/csv': ''}))
+    csv = t.render_to_response().getvalue().decode()
+
+    assert 'CUSTOM_A' in csv

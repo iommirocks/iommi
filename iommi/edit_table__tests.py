@@ -1,6 +1,7 @@
 import html
 import json
 import tempfile
+from pathlib import Path
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -1148,6 +1149,16 @@ def test_edit_table_dropfile_rendering():
 @pytest.mark.django_db
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 def test_dropfile_crud():
+    # The MEDIA_ROOT above is created once at import time and is therefore shared across
+    # repeated in-process pytest sessions (e.g. mutmut's stats/clean/per-mutant runs).
+    # Clear any leftover upload so Django doesn't suffix the saved file name, which the
+    # assertions below depend on being exactly 'test.txt'.
+    from django.conf import settings
+
+    for leftover in Path(settings.MEDIA_ROOT).iterdir():
+        if leftover.is_file():
+            leftover.unlink()
+
     # create/upload:
     uploaded_file = SimpleUploadedFile(
         "test.txt",
@@ -1294,3 +1305,25 @@ def test_dropfile_crud():
 
     assert attachment is not None
     assert isinstance(attachment.file, FieldFile) and not attachment.file.name
+
+
+def test_register_edit_column_factory_requires_shortcut_or_factory():
+    from django.db.models import IntegerField
+
+    from iommi.edit_table import register_edit_column_factory
+
+    with pytest.raises(AssertionError):
+        register_edit_column_factory(IntegerField)
+
+
+def test_register_edit_column_factory_forwards_kwargs_to_shortcut():
+    from iommi.edit_table import _edit_column_factory_by_field_type, register_edit_column_factory
+
+    class RegisterEditColumnFactoryField:
+        pass
+
+    register_edit_column_factory(RegisterEditColumnFactoryField, shortcut_name='text', extra__foo=7)
+
+    factory = _edit_column_factory_by_field_type[RegisterEditColumnFactoryField]
+    assert factory['call_target']['attribute'] == 'text'
+    assert factory['extra']['foo'] == 7

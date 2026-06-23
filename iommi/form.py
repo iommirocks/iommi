@@ -599,8 +599,11 @@ def date_parse(string_value, **_):
     try:
         return datetime.strptime(string_value, date_iso_format).date()
     except ValueError as e:
-        if 'out of range' in str(e) or 'unconverted data remains' in str(e):
+        msg = str(e)
+        if 'out of range' in msg or 'must be in' in msg:
             extra_information = f' ({gettext_lazy("out of range")})'
+        elif 'unconverted data remains' in msg:
+            extra_information = f' ({gettext_lazy("unexpected extra characters")})'
 
     result = parse_relative_date(string_value)
     if result is None:

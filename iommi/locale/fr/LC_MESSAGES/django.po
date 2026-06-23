@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-10 21:46+0000\n"
+"POT-Creation-Date: 2026-06-23 09:16+0200\n"
 "Last-Translator: PierreMDL <pierre@lepinay.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -38,49 +38,49 @@ msgstr "Créer %(model_name)s"
 msgid "admin"
 msgstr "admin"
 
-#: base__tests.py:66 form.py:1704
+#: base__tests.py:66 form.py:1828
 msgid "edit"
 msgstr "modifier"
 
-#: edit_table.py:230 style_base.py:116 table.py:642
+#: edit_table.py:224 style_base.py:116 table.py:681
 #: templates/iommi/form/file_item.html:15
 msgid "Delete"
 msgstr "Supprimer"
 
-#: edit_table.py:280 panel.py:332
+#: edit_table.py:274 panel.py:332
 msgid "Drag and drop to reorder"
 msgstr "Glisser-déposer pour réordonner"
 
-#: edit_table.py:462 form.py:1923 style_base.py:114
+#: edit_table.py:456 form.py:2047 style_base.py:114
 msgid "Save"
 msgstr "Enregistrer"
 
-#: edit_table.py:468
+#: edit_table.py:462
 msgid "Add row"
 msgstr "Ajouter une ligne"
 
-#: form.py:170
+#: form.py:260
 #, python-brace-format
 msgid "{} is not a valid boolean value"
 msgstr "« {} » ne peut pas être interprété comme une valeur booléenne"
 
-#: form.py:359
+#: form.py:443
 #, python-brace-format
 msgid "Could not convert string to float: {}"
 msgstr ""
 "« {} » ne peut pas être inteprété comme un nombre décimal à virgule flottante"
 
-#: form.py:366
+#: form.py:450
 #, python-brace-format
 msgid "Could not convert string to int: {}"
 msgstr "« {} » ne peut pas être inteprété comme un nombre entier"
 
-#: form.py:373 form.py:391
+#: form.py:457 form.py:475
 #, python-brace-format
 msgid "{} not in available choices"
 msgstr "« {} » ne fait pas partie des choix disponibles"
 
-#: form.py:491
+#: form.py:575
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
@@ -90,11 +90,15 @@ msgstr ""
 "relative telle que « 2d » ou « 2 weeks ago » ni aux formats suivants : "
 "{formats}"
 
-#: form.py:519
+#: form.py:604
 msgid "out of range"
 msgstr "date trop éloignée"
 
-#: form.py:526
+#: form.py:606
+msgid "unexpected extra characters"
+msgstr "caractères supplémentaires inattendus"
+
+#: form.py:613
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
@@ -105,7 +109,7 @@ msgstr ""
 "relative telle que « 2d » ou « 2 weeks ago » ni aux formats suivants : "
 "{formats}{extra_information}"
 
-#: form.py:558
+#: form.py:645
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\" or "
@@ -114,14 +118,14 @@ msgstr ""
 "La valeur donnée « {string_value} » ne correspond ni à « now » ni aux "
 "formats suivants : {formats}"
 
-#: form.py:574
+#: form.py:661
 #, python-brace-format
 msgid "Invalid literal for Decimal: '{string_value}'"
 msgstr ""
 "« {string_value} » ne peut pas être interprété comme un nombre décimal à "
 "virgule fixe"
 
-#: form.py:599
+#: form.py:686
 msgid ""
 "Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
 "123 4567 or +1 212 123 4567"
@@ -130,44 +134,44 @@ msgstr ""
 "(indicatif régional) numéro. Par exemple pour USA : +1 (212) 123 4567 ou "
 "bien +1 212 123 4567"
 
-#: form.py:1110
+#: form.py:1200
 msgid "This field is required"
 msgstr "Ce champ est obligatoire"
 
-#: form.py:1376 style_bootstrap_icons.py:30
-#: style_daisyui.py:31 style_font_awesome_4.py:29
-#: style_font_awesome_6.py:32 table.py:274 table.py:782
+#: form.py:1500 style_bootstrap_icons.py:30 style_daisyui.py:31
+#: style_font_awesome_4.py:29 style_font_awesome_6.py:32 table.py:273
+#: table.py:821
 msgid "Yes"
 msgstr "Oui"
 
-#: form.py:1376 table.py:276
+#: form.py:1500 table.py:275
 msgid "No"
 msgstr "Non"
 
-#: form.py:1657
+#: form.py:1781
 #, python-format
 msgid "Cannot delete %(name)s"
 msgstr "%(name)s ne peut être supprimé"
 
-#: form.py:1703
+#: form.py:1827
 msgid "create"
 msgstr "créer"
 
-#: form.py:1705
+#: form.py:1829
 msgid "delete"
 msgstr "supprimer"
 
-#: form.py:1914
+#: form.py:2038
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:2404
+#: form.py:2528
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Confirmer la suppression de %(model_name)s \"%(instance)s\"?"
 
-#: form__tests.py:4358
+#: form__tests.py:4597
 msgid "yes"
 msgstr "oui"
 
@@ -175,23 +179,23 @@ msgstr "oui"
 msgid "Permissions"
 msgstr "Permissions"
 
-#: query.py:631 templates/iommi/query/form_toggle_script.html:26
+#: query.py:671 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Passer à la recherche avancée"
 
-#: query.py:771
+#: query.py:811
 msgid "Search"
 msgstr "Rechercher"
 
-#: query.py:820
+#: query.py:860
 msgctxt "verb"
 msgid "Filter"
 msgstr "Filtrer"
 
 #: style_98.py:136 style_base.py:163 style_bootstrap.py:141
-#: style_bootstrap5.py:158 style_bulma.py:126
-#: style_daisyui.py:217 style_semantic_ui.py:87
-#: style_us_web_design_system.py:138 style_vanilla_css.py:94
+#: style_bootstrap5.py:158 style_bulma.py:126 style_daisyui.py:217
+#: style_semantic_ui.py:87 style_us_web_design_system.py:138
+#: style_vanilla_css.py:94
 msgid "Select all"
 msgstr "Tout sélectionner"
 
@@ -211,32 +215,32 @@ msgstr "Déposer un fichier ici ou cliquer pour téléverser."
 msgid "Upload from this field is disabled."
 msgstr "Le téléversement est désactivé pour ce champ."
 
-#: table.py:619
+#: table.py:658
 msgid "Edit"
 msgstr "Modifier"
 
-#: table.py:667
+#: table.py:706
 msgid "Download"
 msgstr "Télécharger"
 
-#: table.py:691
+#: table.py:730
 msgid "Run"
 msgstr "Exécuter"
 
-#: table.py:1489
+#: table.py:1528
 #, python-brace-format
 msgid "Are you sure you want to delete these {count} items?"
 msgstr "Confirmer la suppression de ces {count} éléments ?"
 
-#: table.py:1505
+#: table.py:1544
 msgid "Yes, delete all!"
 msgstr "Oui, tout supprimer"
 
-#: table.py:1969 table.py:2201
+#: table.py:2008 table.py:2240
 msgid "Bulk change"
 msgstr "Changer en masse"
 
-#: table.py:2207
+#: table.py:2246
 msgid "Bulk delete"
 msgstr "Supprimer en masse"
 

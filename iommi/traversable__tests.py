@@ -712,3 +712,18 @@ def test_evaluated_refinable_respects_order():
         'e',
         'f',
     ]
+
+
+def test_iommi_bound_members_before_bind_asserts():
+    from iommi import Part
+
+    with pytest.raises(AssertionError) as e:
+        Part().iommi_bound_members()
+
+    assert str(e.value) == 'Not bound yet'
+
+
+def test_repr_of_unnamed_part():
+    from iommi import Part
+
+    assert repr(Part()) == '<iommi.part.Part>'

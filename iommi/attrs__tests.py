@@ -378,3 +378,7 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
         == ' apple="red" banana="orange" class="bar foo" style="fie: foe; fum: bink"'
     )
     assert next(counter) == 3
+
+
+def test_render_attrs_escapes_ampersand():
+    assert render_attrs(Namespace(foo='a&b')) == ' foo="a&amp;b"'

@@ -204,7 +204,7 @@ def test_namespace_as_callable_with_call_target_missing():
     expected_error_msg = (
         "Namespace was used as a function, but no call_target was specified. The namespace is: Namespace(x=17)"
     )
-    assert expected_error_msg in str(e.value)
+    assert str(e.value) == expected_error_msg
 
 
 def test_namespace_flatten_loop_detection():

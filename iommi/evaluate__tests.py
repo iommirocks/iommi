@@ -295,3 +295,36 @@ def test_evaluate_as_needed_recursively():
     assert evaluated['foo'] == 7
     assert evaluated['bar']['baz'] == 7
     assert evaluated['bar']['quux']['foobar'] == 7
+
+
+def test_find_static_items_skips_empty_namespace():
+    # An empty Namespace is falsy, so no _static_items should be recorded.
+    d = Namespace()
+    find_static_items(d)
+    assert not hasattr(d, '_static_items')
+
+
+def test_evaluate_as_needed_recursively_propagates_ignore_into_nested():
+    nested = Namespace(inner=Namespace(skipme=lambda **_: 'EVALUATED', keep=5))
+    result = evaluate_as_needed_recursively(nested, {}, ignore=('skipme',))
+    assert list(result.inner.keys()) == ['keep']
+
+
+def test_evaluate_strict_respects_match_empty_false():
+    # With __match_empty=False a no-specification callback must not match, and strict mode then
+    # raises rather than silently evaluating it.
+    with pytest.raises(AssertionError):
+        evaluate_strict(lambda **_: 'X', __match_empty=False, x=1)
+
+
+def test_matches_returns_correct_value_with_cache_enabled():
+    from iommi import evaluate as evaluate_module
+
+    evaluate_module._matches_cache.clear()
+    evaluate_module._use_cache = True
+    try:
+        assert matches('a', 'a||', __match_empty=True) is True
+        # second call hits the cache and must still return the real value
+        assert matches('a', 'a||', __match_empty=True) is True
+    finally:
+        evaluate_module._use_cache = False

@@ -491,7 +491,7 @@ def test_date_out_of_range():
 
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
-        query.parse_query_string('foo=2014-03-37')
+        query.parse_query_string('foo=2014-02-31')
 
     assert 'out of range' in str(e)
 
@@ -810,6 +810,15 @@ def test_nice_error_message():
 def test_value_to_str_for_query_dunder_path():
     bar = Bar.objects.create(foo=Foo.objects.create(foo=17))
     assert value_to_str_for_query(Filter(search_fields=['foo__foo']).refine_done(), bar) == '"17"'
+
+
+def test_value_to_str_for_query_primitives():
+    # bool renders as 1/0, numbers render bare (no quotes), everything else is quoted.
+    assert value_to_str_for_query(None, True) == '1'
+    assert value_to_str_for_query(None, False) == '0'
+    assert value_to_str_for_query(None, 5) == '5'
+    assert value_to_str_for_query(None, 1.5) == '1.5'
+    assert value_to_str_for_query(None, 'hello') == '"hello"'
 
 
 @pytest.mark.django_db
@@ -1198,3 +1207,9 @@ def test_required_freetext():
             </span>
         ''',
     )
+
+
+def test_advanced_toggle_action():
+    q = Query(auto__model=Foo).bind(request=req('get'))
+    assert q.advanced.toggle._name == 'toggle'
+    assert str(q.advanced.toggle.display_name) == 'Switch to advanced search'

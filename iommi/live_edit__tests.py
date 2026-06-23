@@ -225,3 +225,34 @@ def test_style_editor__new():
             **{'-submit': ''},
         )
     ).render_to_response()
+
+
+def test_is_localhost_detects_local_hosts():
+    from iommi.live_edit import _is_localhost
+
+    class _Req:
+        def __init__(self, **meta):
+            self.META = meta
+
+    # local hosts (with and without port, IPv4 and IPv6) are recognised
+    assert _is_localhost(_Req(HTTP_HOST='localhost'))
+    assert _is_localhost(_Req(HTTP_HOST='localhost:8000'))
+    assert _is_localhost(_Req(HTTP_HOST='127.0.0.1'))
+    assert _is_localhost(_Req(HTTP_HOST='127.0.0.1:8000'))
+    assert _is_localhost(_Req(HTTP_HOST='[::1]'))
+    assert _is_localhost(_Req(HTTP_HOST='[::1]:8000'))
+
+    # *.localhost subdomains resolve to loopback (e.g. in Chrome)
+    assert _is_localhost(_Req(HTTP_HOST='foo.localhost'))
+    assert _is_localhost(_Req(HTTP_HOST='foo.bar.localhost:8000'))
+
+    # non-local hosts are rejected
+    assert not _is_localhost(_Req(HTTP_HOST='example.com'))
+    assert not _is_localhost(_Req(HTTP_HOST='evil.com:8000'))
+    assert not _is_localhost(_Req(HTTP_HOST='localhost.evil.com'))
+    assert not _is_localhost(_Req(HTTP_HOST='notlocalhost'))
+
+    # HTTP_HOST takes precedence, but SERVER_NAME is the fallback
+    assert _is_localhost(_Req(SERVER_NAME='localhost'))
+    assert not _is_localhost(_Req(SERVER_NAME='example.com'))
+    assert not _is_localhost(_Req())
