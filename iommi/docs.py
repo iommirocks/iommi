@@ -57,6 +57,10 @@ def uses_from_cookbooks():
 
     parser = docutils.parsers.rst.Parser()
     settings = docutils.frontend.get_default_settings(docutils.parsers.rst.Parser)
+    # The cookbooks use Sphinx roles (`:ref:`, `:doc:`) that plain docutils doesn't know about.
+    # We only parse them here to extract `uses` comments, so suppress those harmless system messages
+    # (5 is above the max severity of 4=SEVERE) to keep the test output quiet.
+    settings.report_level = 5
 
     backrefs = defaultdict(set)
 

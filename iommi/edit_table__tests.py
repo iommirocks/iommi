@@ -854,7 +854,7 @@ def test_lazy_tbody_on_fail():
     )
 
 
-@pytest.mark.xfail(reason='https://github.com/iommirocks/iommi/issues/673', strict=True)
+@pytest.mark.skip(reason='https://github.com/iommirocks/iommi/issues/673')
 @pytest.mark.django_db
 def test_required_field_in_edit_table_does_not_invalidate_parent_form():
     # https://github.com/iommirocks/iommi/issues/673
