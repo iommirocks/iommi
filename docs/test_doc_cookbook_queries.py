@@ -356,3 +356,41 @@ def test_how_do_i_customize_the_advanced_query_toggle(big_discography):
     # @test
     show_output(albums, '')
     # @end
+
+
+def test_how_do_i_let_a_filter_select_multiple_values(big_discography):
+    # language=rst
+    """
+    .. _filter-multi-select:
+
+    How do I let a filter match several values at once?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Filter.related
+    .. uses Filter.multi_choice_queryset
+
+    A filter on a foreign key (the `related` shortcut, which is what you get by
+    default for an `album` or `artist` column) normally lets the user pick a
+    single value in the GUI. Pass `multi_select=True` to turn it into a
+    multi-select where the chosen values are OR:ed together:
+    """
+
+    tracks = Table(
+        auto__model=Track,
+        auto__include=['name', 'album'],
+        columns__album__filter__include=True,
+        columns__album__filter__multi_select=True,
+    )
+
+    # @test
+    t = tracks.bind(request=req('get'))
+    assert t.query.form.fields.album.iommi_shortcut_stack[:2] == ['related', 'multi_choice_queryset']
+
+    show_output(tracks, '')
+    # @end
+
+    # language=rst
+    """
+    Selecting two albums now produces a query like ``album__pk=1 OR album__pk=2``
+    instead of forcing the user to choose just one.
+    """

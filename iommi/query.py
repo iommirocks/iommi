@@ -589,8 +589,12 @@ class Filter(Part):
         field__call_target__attribute='related',
         choices=related__choices,
     )
-    def related(cls, **kwargs):
-        return cls.choice_queryset(**kwargs)
+    def related(cls, multi_select=False, **kwargs):
+        if multi_select:
+            kwargs['field']['multi_select'] = multi_select
+            return cls.multi_choice_queryset(**kwargs)
+        else:
+            return cls.choice_queryset(**kwargs)
 
     @classmethod
     @with_defaults

@@ -557,6 +557,36 @@ def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use
     """
 
 
+def test_how_do_i_make_a_foreign_key_field_multi_select(black_sabbath):
+    # language=rst
+    """
+
+    .. _field-related-multi-select:
+
+    How do I make a foreign key field a multi-select?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Field.related
+    .. uses Field.multi_choice_queryset
+
+    A foreign key uses the `related` shortcut, which renders as a single-value
+    select. Pass `multi_select=True` to render it as a multi-select
+    (`multi_choice_queryset`) instead:
+    """
+
+    form = Form(
+        auto__model=Album,
+        fields__artist__multi_select=True,
+    )
+
+    # @test
+    f = form.bind(request=req('get'))
+    assert f.fields.artist.iommi_shortcut_stack[:2] == ['related', 'multi_choice_queryset']
+
+    show_output(form)
+    # @end
+
+
 def test_how_do_i_insert_a_css_class_or_html_attribute():
     # language=rst
     """
