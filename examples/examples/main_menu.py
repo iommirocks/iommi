@@ -3,7 +3,7 @@ from examples import (
     storybook,
     views,
 )
-from examples.iommi import Form
+from examples.iommi import Form, Admin
 from examples.models import (
     Album,
     Artist,
@@ -13,7 +13,7 @@ from iommi import (
     M,
     MainMenu,
 )
-from iommi.admin import Admin
+
 from iommi.main_menu import EXTERNAL
 
 main_menu = MainMenu(
@@ -51,13 +51,13 @@ main_menu = MainMenu(
         login=M(
             view=EXTERNAL,
             display_name='Log in',
-            url='/iommi-admin/login/?next=/',
+            url='/iommi_admin/login/?next=/',
             include=lambda request, **_: not request.user.is_authenticated,
         ),
         log_out=M(
             view=EXTERNAL,
             display_name='Log out',
-            url='/iommi-admin/logout/',
+            url='/iommi_admin/logout/',
             include=lambda request, **_: request.user.is_authenticated,
         ),
     ),

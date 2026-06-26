@@ -1,5 +1,6 @@
 
 import iommi
+from iommi import admin
 from iommi.shortcut import with_defaults
 
 
@@ -69,6 +70,10 @@ class EditTable(iommi.EditTable):
         page_class = Page
         action_class = Action
 
+class Admin(admin.Admin):
+    class Meta:
+        table_class = EditTable
+        form_class = Form
 
 class Menu(iommi.Menu):
     pass

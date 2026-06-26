@@ -142,6 +142,36 @@ def test_semantic_models():
         You can also add configuration via the `Style` machinery. This is useful for reusable apps.
 
         Semantic models requires a little bit more initial setup, but for commonly used field types, it will make new views correct by default and super easy to setup.
+
+        .. warning::
+
+            The `register_related_factory`/`register_related_multiple_factory` registrations are
+            global and keyed on the model type, but the custom shortcut they point at (`user`,
+            `roles`, ...) only exists on *your* subclasses of `Column`/`Field`/`Filter`. Any code
+            that builds parts from the model using the *base* iommi classes will look up the
+            shortcut on a class that doesn't have it and fail with
+            `AttributeError: type object '...' has no attribute '<shortcut_name>'`.
+
+            The most common place this bites is the built-in :doc:`admin`, which uses the base
+            `Table`/`Form` (and therefore base `Column`/`Field`/`Filter`) by default. To make the
+            admin (or anything else that auto-generates from your models) use your shortcuts, point
+            it at your subclasses::
+
+                from iommi.admin import Admin as BaseAdmin
+
+                class Admin(BaseAdmin):
+                    class Meta:
+                        # so the list view's columns/filters/bulk-form find `.user()`, `.roles()`, ...
+                        table_class = MyEditTable
+                        # so the create/edit/delete forms find `.user()`, `.roles()`, ...
+                        form_class = MyForm
+
+            Note that both `table_class` and `form_class` are needed: `table_class` covers the list
+            view, while `form_class` covers the create/edit/delete views.
+
+            The same applies anywhere the auto machinery runs against a model with one of these
+            registered relations -- make sure the `Table`/`Form`/`Query` involved use your
+            subclasses, not the base iommi ones.
         """
 
         # @test
