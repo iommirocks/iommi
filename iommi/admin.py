@@ -42,7 +42,6 @@ from iommi.declarative.namespace import (
     flatten,
     setdefaults_path,
 )
-from iommi.declarative.with_meta import with_meta
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 from iommi.struct import Struct
@@ -113,7 +112,7 @@ def read_config(f):
 
     return read_config_wrapper
 
-@with_meta
+
 class Admin(Page):
     class Meta:
         table_class = EditTable
