@@ -88,3 +88,63 @@ def test_admin_renders(staff_user):
 
     response = Admin.all_models().bind(request=staff_req('get')).render_to_response()
     assert response.status_code == 200
+
+
+# The examples app registers `register_related_factory(Artist, shortcut_name='artist')` (see
+# examples/apps.py), which resolves foreign keys to `Artist` via the custom `artist` shortcut. That
+# shortcut only exists on the examples' own `Column`/`Field`/`Filter` subclasses, so the admin must
+# use the examples' `Admin` (with the matching `table_class`/`form_class`) or building any view for a
+# model with a FK to `Artist` -- like `Album` -- crashes with `AttributeError: ... has no attribute
+# 'artist'`. These tests guard that interaction.
+
+
+@pytest.mark.django_db
+def test_admin_list_renders_model_with_registered_related_factory(album, staff_user):
+    from examples.iommi import Admin
+
+    response = (
+        Admin.list()
+        .refine_with_params(app_name='examples', model_name='album')
+        .bind(request=staff_req('get'))
+        .render_to_response()
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_admin_create_renders_model_with_registered_related_factory(staff_user):
+    from examples.iommi import Admin
+
+    response = (
+        Admin.create()
+        .refine_with_params(app_name='examples', model_name='album')
+        .bind(request=staff_req('get'))
+        .render_to_response()
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_admin_edit_renders_model_with_registered_related_factory(album, staff_user):
+    from examples.iommi import Admin
+
+    response = (
+        Admin.edit()
+        .refine_with_params(app_name='examples', model_name='album', pk=album.pk)
+        .bind(request=staff_req('get'))
+        .render_to_response()
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_admin_delete_renders_model_with_registered_related_factory(album, staff_user):
+    from examples.iommi import Admin
+
+    response = (
+        Admin.delete()
+        .refine_with_params(app_name='examples', model_name='album', pk=album.pk)
+        .bind(request=staff_req('get'))
+        .render_to_response()
+    )
+    assert response.status_code == 200
