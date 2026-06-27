@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+7.31.0 (2026-06-27)
+~~~~~~~~~~~~~~~~~~~
+
+* Simple multi select switch for FK/OneToOne mappings
+
+* Fix warning about `@with_meta` on `Admin`
+
+
 7.30.1 (2026-06-22)
 ~~~~~~~~~~~~~~~~~~~
 
