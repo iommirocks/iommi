@@ -7,7 +7,7 @@ authors = [
     { name = "Johan Lübcke", email = "johan@lubcke.se" },
 ]
 readme = "README_pypi.rst"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 keywords = ["iommi"]
 license = "BSD-2-Clause"
 
@@ -16,10 +16,16 @@ classifiers = [
     'Intended Audience :: Developers',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'Framework :: Django',
+    'Framework :: Django :: 5.2',
+    'Framework :: Django :: 6.0',
 ]
 dependencies = [
     "pyparsing",
-    "Django >= 3.2",
+    "Django >= 5.2",
 ]
 
 [dependency-groups]
@@ -48,7 +54,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/iommirocks/iommi"
+Homepage = "https://iommi.rocks/"
+Documentation = "https://docs.iommi.rocks"
+Source = "https://github.com/iommirocks/iommi"
+Changelog = "https://docs.iommi.rocks/history.html"
+"Bug Tracker" = "https://github.com/iommirocks/iommi/issues"
 
 [build-system]
 requires = ["setuptools", "wheel"]
