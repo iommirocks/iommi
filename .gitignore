@@ -122,6 +122,7 @@ output/*/index.html
 
 # Sphinx
 docs/_build
+docs/README.rst
 docs/iommi.rst
 docs/lib.iommi.rst
 docs/lib.rst

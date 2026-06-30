@@ -22,6 +22,9 @@ def test_iommi():
 
         <h3 class="pun">Your first pick for a django power chord</h3>
 
+    .. image:: https://img.shields.io/badge/Code_on-GitHub-black
+        :target: https://github.com/iommirocks/iommi
+
     .. image:: https://img.shields.io/discord/773470009795018763?logo=discord&logoColor=fff?label=Discord&color=7389d8
         :target: https://discord.gg/ZyYRYhf7Pd
 
@@ -35,8 +38,8 @@ def test_iommi():
         :target: https://docs.iommi.rocks
         :alt: Documentation Status
 
-    .. image:: https://repl.it/badge/github/boxed/iommi-repl.it
-        :target: https://repl.it/github/boxed/iommi-repl.it
+    .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+        :target: https://github.com/psf/black
 
     iommi is a toolkit to build web apps faster. It's built on Django but goes a lot further.
 

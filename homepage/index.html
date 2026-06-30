@@ -675,7 +675,7 @@
             <div>
                 <div class="card">
                     <div class="hd">From zero to CRUD in ~10 lines</div>
-<pre><code><span class="comment"># views.py</span>
+<pre data-iommi-snippet="hero"><code><span class="comment"># views.py</span>
 <span class="keyword">from</span> iommi <span class="keyword">import</span> <span class="class-name">Table</span>, <span class="class-name">Form</span>, <span class="class-name">Page</span>
 <span class="keyword">from</span> .models <span class="keyword">import</span> <span class="class-name">Album</span>
 
@@ -756,7 +756,7 @@
                     <div class="bd">
                     <p class="small" style="margin-top:10px">Example: Set the initial filter of a table, 5 levels of nesting deep. Just clean configuration, no need to create 5 classes.</p>
                     </div>
-<pre><code><span class="class-name">Table</span>(
+<pre data-iommi-snippet="deep"><code><span class="class-name">Table</span>(
     auto__model=<span class="class-name">Album</span>,
     columns__artist__filter__include=<span class="keyword">True</span>,
     query__form__fields__artist__initial=
@@ -774,7 +774,7 @@
         <section id="snippet" class="container" style="padding:26px 0 56px">
             <div class="card">
                 <div class="hd">Feature highlight: powerful Table filters</div>
-<pre><code><span class="keyword">class</span> <span class="class-name">AlbumTable</span>(<span class="class-name">Table</span>):
+<pre data-iommi-snippet="filters"><code><span class="keyword">class</span> <span class="class-name">AlbumTable</span>(<span class="class-name">Table</span>):
     <span class="keyword">class</span> <span class="class-name">Meta</span>:
         auto__model = <span class="class-name">Album</span>
         columns__artist__filter__include = <span class="keyword">True</span>
@@ -817,7 +817,7 @@
                     <p class="small">Add iommi to your project and start declaring UIs in Python. Works with your existing Django stack.</p>
                     </div>
                     <div style="margin-top:14px; padding-top:14px" class="card">
-<pre><code><span class="comment"># 1) Install</span>
+<pre data-iommi-snippet="install"><code><span class="comment"># 1) Install</span>
 pip install iommi
 
 <span class="comment"># 2) Add to INSTALLED_APPS</span>
@@ -829,11 +829,12 @@ INSTALLED_APPS = [
 <span class="comment"># 3) Add to MIDDLEWARE</span>
 MIDDLEWARE = [
     ...,
-    <span class="string">'iommi.middleware',</span>,
+    <span class="string">'iommi.middleware'</span>,
 ]
 
 <span class="comment"># 4) Build a page</span>
 <span class="keyword">from</span> iommi <span class="keyword">import</span> <span class="class-name">Table</span>, <span class="class-name">Form</span>, <span class="class-name">Page</span>
+<span class="keyword">from</span> .models <span class="keyword">import</span> <span class="class-name">Album</span>
 
 <span class="keyword">class</span> <span class="class-name">AlbumPage</span>(<span class="class-name">Page</span>):
     <span class="keyword">class</span> <span class="class-name">Meta</span>:
@@ -844,9 +845,8 @@ MIDDLEWARE = [
 
 <span class="comment"># 5) Map it to a URL</span>
 urlpatterns = [
-    <span class="function">path</span>('album/', <span class="class-name">AlbumPage</span>().<span class="function">as_view</span>(),
+    <span class="function">path</span>(<span class="string">'album/'</span>, <span class="class-name">AlbumPage</span>().<span class="function">as_view</span>()),
 ]
-
 </code></pre>
                 <div class="bd">
                     <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap">

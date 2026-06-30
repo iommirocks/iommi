@@ -6,6 +6,7 @@ help:
 	@echo "test - run tests"
 	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
+	@echo "homepage - regenerate the code examples in homepage/index.html"
 	@echo "dist - package"
 	@echo "tag - set a tag with the current version number"
 	@echo "release-check - check release tag"
@@ -29,6 +30,7 @@ clean-pyc:
 
 clean-docs:
 	rm -rf docs/_build
+	rm -f docs/README.rst
 	rm -f docs/iommi.rst
 	rm -f docs/lib.iommi.rst
 	rm -f docs/lib.rst
@@ -106,6 +108,10 @@ docs-viewer:
 .PHONY: test-docs
 test-docs:
 	uv run sphinx-build -b html docs docs/_build/html
+
+.PHONY: homepage
+homepage:
+	uv run python -m iommi.homepage
 
 .PHONY: dist
 dist: clean-build clean-pyc

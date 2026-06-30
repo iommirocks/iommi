@@ -71,6 +71,46 @@ def test_django_custom_fields():
     )
 
 
+def test_related_fields():
+    # language=rst
+    """
+    Related fields (foreign key/many-to-many)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    `ForeignKey`, `OneToOneField`, and `ManyToManyField` don't carry their semantic meaning in
+    a custom type the way a `TimeField` does -- they're all keyed on the *related* model. To
+    register behavior for them you point at the related model instead of a field class:
+
+
+    * `register_related_factory`: foreign key and one-to-one, for everything at once
+    * `register_related_column_factory`/`register_related_field_factory`/`register_related_filter_factory`: foreign key and one-to-one, for a specific class
+    * `register_related_multiple_factory`: many-to-many and one-to-many (reverse foreign key), for everything at once
+    * `register_related_multiple_column_factory`/`register_related_multiple_field_factory`/`register_related_multiple_filter_factory`: many-to-many and one-to-many, for a specific class
+    """
+
+    # @test
+    class User:
+        pass
+
+    class Role:
+        pass
+    # @end
+
+    # foreign key and one-to-one
+    register_related_factory(User, shortcut_name='user')
+    # many-to-many and one-to-many (aka reverse foreign key)
+    register_related_multiple_factory(Role, shortcut_name='roles')
+
+    # language=rst
+    """
+    When iommi then sees a `ForeignKey` to `User` it will call the `Column.user`/`Filter.user`/`Field.user`
+    shortcuts, and a `ManyToManyField` to `Role` will use the `Column.roles`/`Filter.roles`/`Field.roles`
+    shortcuts. You will need to add those shortcuts on your subclasses of `Column`, `Field`, and `Filter`.
+
+    This is the primary mechanism behind :ref:`semantic-models`, see that page for a fuller example.
+    """
+
+
 def test_rendering_of_your_custom_types_in_a_table():
     # language=rst
     """
