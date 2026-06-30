@@ -142,7 +142,7 @@ def generate(text):
     def replace(match):
         name = match.group('name')
         if name not in SNIPPETS:
-            raise ValueError(f'Unknown homepage snippet: {name!r}')
+            raise ValueError(f'Unknown homepage snippet: {name!r}')  # pragma: no cover
         return _render_block(name)
 
     return re.sub(
@@ -153,10 +153,12 @@ def generate(text):
     )
 
 
+# pragma: no cover
 def main():
     text = HOMEPAGE_PATH.read_text()
     HOMEPAGE_PATH.write_text(generate(text))
 
 
+# pragma: no cover
 if __name__ == '__main__':
     main()
