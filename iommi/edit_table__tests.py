@@ -335,6 +335,24 @@ def test_edit_table_post_create():
 
 
 @pytest.mark.django_db
+def test_edit_table_new_row_delete_checkbox_uses_sentinel_pk():
+    edit_table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        columns__delete=EditColumn.delete(),
+    ).refine_done()
+
+    html = json.loads(
+        edit_table.bind(request=req('get', **{'/new_row': ''})).render_to_response().content
+    )['html']
+
+    assert 'name="pk_delete_#sentinel#"' in html
+    assert 'id="id_pk_delete_#sentinel#"' in html
+    assert 'for="id_pk_delete_#sentinel#"' in html
+    assert 'pk_delete_0' not in html
+
+
+@pytest.mark.django_db
 def test_edit_table_post_create_hardcoded():
     foo = TFoo.objects.create(a=1, b='asd')
     edit_table = EditTable(
@@ -391,6 +409,20 @@ def test_edit_table_post_delete():
     assert response.status_code == 302
 
     assert TFoo.objects.all().count() == 0
+
+
+def test_edit_table_delete_checkbox_for_list_rows_uses_row_index():
+    edit_table = EditTable(
+        rows=[Struct(pk=10), Struct(pk=20)],
+        columns__delete=EditColumn.delete(),
+    )
+
+    html = edit_table.bind(request=req('get')).__html__()
+
+    assert 'name="pk_delete_0"' in html
+    assert 'id="id_pk_delete_0"' in html
+    assert 'name="pk_delete_1"' in html
+    assert 'id="id_pk_delete_1"' in html
 
 
 @pytest.mark.django_db
@@ -607,6 +639,7 @@ def test_edit_table_multiple_new_rows_validation_errors_preserved():
         columns__name__field__required=True,
         columns__artist__field__include=True,
         columns__year__field__include=True,
+        columns__delete=EditColumn.delete(),
     )
 
     bound_table = edit_table.bind(
@@ -643,6 +676,14 @@ def test_edit_table_multiple_new_rows_validation_errors_preserved():
     assert 'value="2025"' in html
     assert 'value="Valid Album"' in html
     assert html.count('This field is required') == 2
+
+    # Virtual rows restored after validation errors must retain their own
+    # delete checkbox paths instead of sharing a row-index-based ID.
+    for pk in (-1, -2, -3):
+        assert html.count(f'name="pk_delete_{pk}"') == 1
+        assert html.count(f'id="id_pk_delete_{pk}"') == 1
+        assert html.count(f'for="id_pk_delete_{pk}"') == 1
+    assert 'pk_delete_0' not in html
 
     # Verify row order is preserved
     pos_2023 = html.find('value="2023"')
