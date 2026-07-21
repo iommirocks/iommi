@@ -229,7 +229,12 @@ class EditColumn(Column):
     )
     def delete(cls, **kwargs):
         def cell__value(row, table, cells, column, **_):
-            if isinstance(table.rows, QuerySet):
+            if cells.is_create_template:
+                # New rows use a virtual PK (or #sentinel# in the row template).
+                # Keep it in the checkbox path so iommi.js can replace the
+                # sentinel with a distinct virtual PK for every appended row.
+                row_id = row.pk
+            elif isinstance(table.rows, QuerySet):
                 row_id = row.pk
             else:
                 # row_index is the visible row number
