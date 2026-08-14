@@ -2544,6 +2544,11 @@ class Table(Part, Tag):
             ordering = get_queryset_ordering(self.sorted_rows)
             if len(ordering) == 1:
                 order = ordering[0]
+            # Model Meta.ordering / queryset.order_by can be non-unique. Append pk
+            # so pagination does not skip or repeat rows (see #634).
+            if ordering and ordering[-1] not in ('pk', '-pk'):
+                self.sorted_rows = self.sorted_rows.order_by(*ordering, 'pk')
+                self.rows = self.sorted_rows
 
         self.current_sort_order = order
 

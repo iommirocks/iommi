@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+Unreleased
+~~~~~~~~~~
+
+* Always append ``pk`` to queryset ordering so table pagination stays stable when the model or queryset is ordered on a non-unique column (#634)
+
+
 7.31.0 (2026-06-27)
 ~~~~~~~~~~~~~~~~~~~
 
