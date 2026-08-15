@@ -2546,6 +2546,26 @@ def test_ordering():
 
 
 @pytest.mark.django_db
+def test_ordering_appends_pk_when_model_ordering_is_not_unique():
+    # Artist.Meta.ordering is ('name',), which is not unique. Without a pk
+    # tiebreaker, adjacent pages can skip or repeat rows.
+    t = Table(auto__model=Artist).bind(request=req('get'))
+    assert list(t.sorted_rows.query.order_by) == ['name', 'pk']
+
+
+@pytest.mark.django_db
+def test_ordering_appends_pk_when_queryset_order_by_is_not_unique():
+    t = Table(auto__model=TFoo, rows=TFoo.objects.order_by('a')).bind(request=req('get'))
+    assert list(t.sorted_rows.query.order_by) == ['a', 'pk']
+
+
+@pytest.mark.django_db
+def test_ordering_does_not_duplicate_existing_pk_tiebreaker():
+    t = Table(auto__model=TFoo, rows=TFoo.objects.order_by('a', 'pk')).bind(request=req('get'))
+    assert list(t.sorted_rows.query.order_by) == ['a', 'pk']
+
+
+@pytest.mark.django_db
 def test_many_to_many():
     f1 = TFoo.objects.create(a=17, b="Hej")
     f2 = TFoo.objects.create(a=23, b="Hopp")
