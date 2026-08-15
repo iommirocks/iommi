@@ -2545,8 +2545,14 @@ class Table(Part, Tag):
             if len(ordering) == 1:
                 order = ordering[0]
             # Model Meta.ordering / queryset.order_by can be non-unique. Append pk
-            # so pagination does not skip or repeat rows (see #634).
-            if ordering and ordering[-1] not in ('pk', '-pk'):
+            # so pagination does not skip or repeat rows (see #634). Skip when the
+            # queryset is already sliced: Django >= 6.0 forbids reordering a
+            # sliced query, and the caller has already applied its ordering.
+            if (
+                ordering
+                and ordering[-1] not in ('pk', '-pk')
+                and not self.sorted_rows.query.is_sliced
+            ):
                 self.sorted_rows = self.sorted_rows.order_by(*ordering, 'pk')
                 self.rows = self.sorted_rows
 
