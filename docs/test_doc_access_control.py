@@ -2,7 +2,7 @@
 """
 
 Access control
-~~~~~~~~~~~~~~
+==============
 
 The iommi admin only allows access to users with the `is_staff` flag. Other than that iommi doesn't enforce any access control on its own. If you need any you have to implement it yourself for your specific use case. That being said, here are a few ideas:
 
@@ -27,7 +27,7 @@ def test_path_decoder_for_access_control(track):
     # language=rst
     """
     Minimal example for path decoding access control
-    ================================================
+    ------------------------------------------------
     """
 
     class AccessDeniedException(Exception):

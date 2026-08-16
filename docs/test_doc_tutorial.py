@@ -1,7 +1,7 @@
 # language=rst
 """
 Tutorial
-~~~~~~~~
+========
 
 .. note::
 
@@ -11,7 +11,22 @@ Tutorial
     It is also expected that you have already installed iommi in your project. Read section 1 of :ref:`Getting started <getting-started>`.
 
 
-This tutorial will build a discography app. Let's start with the models:
+In this tutorial you will build a discography app. By the end you will have:
+
+- an index page with album artwork
+- an artist page, and a page listing artists
+- an album page, and a page listing albums
+- a tracks page
+- the iommi admin, enabled for all of these
+
+Every step shows the code and the page it produces. Type the code in as you go;
+each step builds on the one before it.
+
+
+Set up
+------
+
+Put these models in your app's `models.py`:
 
 .. literalinclude:: models.py
     :pyobject: Genre
@@ -29,16 +44,23 @@ This tutorial will build a discography app. Let's start with the models:
     :pyobject: Track
     :end-before: def __str__
 
-We will build up to these pages:
+Create the tables:
 
-- index page with album artwork
-- an artist page
-- an artists page
-- an album page
-- an albums page
-- a tracks page
+.. code-block:: shell
 
-Plus we're going to enable the iommi admin for these models.
+    python manage.py makemigrations
+    python manage.py migrate
+
+Now load the same example data used in this tutorial, so your pages look like the
+screenshots. Download `big_discography.py`_ into your project and run it:
+
+.. code-block:: shell
+
+    python manage.py shell < big_discography.py
+
+.. _big_discography.py: https://raw.githubusercontent.com/iommirocks/iommi/master/docs/custom/big_discography.py
+
+You're ready to build the first page.
 """
 from pathlib import Path
 
@@ -92,22 +114,14 @@ def create_discography_dump():
 
 
 def test_setup_data():
+    # Regenerates the example data script that the `Set up` section of this page
+    # links to. Nothing is rendered into the docs from here.
     # @test
     with open(Path(__file__).parent / 'custom' / 'big_discography.py', 'w') as f:
         for line in create_discography_dump():
             f.write(line)
             f.write('\n')
     # @end
-
-    # language=rst
-    """
-    Example data
-    ------------
-    
-    If you want to get the same example data as in this tutorial, run `this code`_.
-
-    .. _this code: https://raw.githubusercontent.com/iommirocks/iommi/master/docs/custom/big_discography.py
-    """
 
 
 def test_declarative_tables():
@@ -250,16 +264,38 @@ def test_path_decoding():
 def test_table_customization():
     # language=rst
     """
-    Deeper customization
-    --------------------
+    Customize the table
+    -------------------
 
-    cell__format
-    ============
+    Change how a value is displayed
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    In iommi you can customize the rendering on many different levels, depending
-    on what the situation requires. The last layer of customization is
-    `format` which is used to convert the value of a cell to a string that
-    is inserted into the html (or CSV or whatever output format you are targeting):
+    Add `get_absolute_url` to your `Album` and `Artist` models, then let's make the
+    album name link to the album page. `cell__url` turns a cell into a link:
+    """
+
+    albums = Table(
+        auto__model=Album,
+        columns__name__cell__url=lambda row, **_: row.get_absolute_url(),
+    )
+
+    # @test
+    show_output(albums)
+    # @end
+
+    # language=rst
+    """
+    Notice that the *artist* column became a link too, without you asking for it:
+    for a `ForeignKey` column iommi does this by default when the target model has
+    `get_absolute_url`.
+
+    `columns__name__cell__url` reads as `columns.name.cell.url`. iommi uses `__` to
+    step down into nested configuration, because `.` isn't valid in a keyword
+    argument. You'll see this everywhere from here on;
+    :ref:`dunder-dict-equivalence` explains it properly.
+
+    When you need to build the displayed string yourself rather than just link it,
+    use `cell__format`:
     """
 
     albums = Table(
@@ -273,71 +309,15 @@ def test_table_customization():
     # @end
 
     # language=rst
-    """    
-    `columns__artist__cell__format` should be read as something similar to
-    `columns.artist.cell.format`. This way of jumping namespace with `__` instead
-    of `.` (because `.` is syntactically invalid!) is something Django started 
-    doing for query sets and we really like it so we've taken this concept further
-    and it is now everywhere in iommi.
-    
-    Read more about this double underscore form in :ref:`dunder-dict-equivalence` 
-    
-    The other levels of customization are `value` which is how the value is 
-    extracted from the row, `attr` which is the attribute that is read (if
-    you don't customize `value`), and lastly `template` which you use to override
-    the entire rendering of the cell (including the `td` tag!). 
-    
-    You can also override `template` on the row to customize the row rendering.
-    Again this includes the `tr` tag.
-    
-    
-    cell__url
-    =========
-    
-    A very common case of tables is to show a link in the cell. You can do that
-    with `cell__format` and `cell__template` like above, but it's such a common
-    case that we supply a special convenience method `cell__url` for this. Let's
-    make the artist column link to the artist page in our table. First we add
-    a `get_absolute_url` on the model, then replace the 
-    `columns__artist__cell__format` we had above with:
-    
     """
-    albums = Table(
-        auto__model=Album,
-            columns__artist__cell__url=lambda value, **_: value.get_absolute_url(),
-    )
+    There is a ladder of hooks here, and you reach for the lowest one that does the
+    job: `attr` picks which attribute is read, `value` computes the value, `format`
+    turns the value into a string, and `template` replaces the cell's rendering
+    outright, `td` tag included. Rows have a `template` too.
 
-    # @test
-    show_output(albums)
-    # @end
+    Add filtering
+    ~~~~~~~~~~~~~
 
-    # language=rst
-    """
-    
-    Much better!
-    
-    But actually, this is such a common case that we do this by default for you
-    for `ForeignKey` columns if the target model has `get_absolute_url`. So we
-    can just remove the `columns__artist__cell__url` specification entirely. But 
-    we do want the *name* column to link to the album page so the total definition
-    becomes:
-    
-    """
-
-    albums = Table(
-        auto__model=Album,
-        columns__name__cell__url=lambda row, **_: row.get_absolute_url(),
-    )
-
-    # @test
-    show_output(albums)
-    # @end
-
-    # language=rst
-    """ 
-    Filters
-    =======
-    
     Tables also have built in filtering. To enable a filter make sure `include` is `True` for the `filter` of a column.    
     """
 
@@ -375,15 +355,12 @@ def test_table_customization():
 def test__foo():
     # language=rst
     """
-    Actions
-    =======
+    Add buttons, and edit/delete links for staff
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    An `Action` in iommi is a link or a button. We use them for submit buttons of
-    forms and for links that you can add to a part. A common use case is to add
-    links to a table. In our example app we want to add a create button for staff.
-
-    While we're at it, let's add some new columns for edit and delete links. There
-    are special shortcuts in iommi prebuilt for that too: `Column.edit` and `Column.delete`.
+    An `Action` in iommi is a link or a button. Let's add a create button, plus edit
+    and delete columns, and show all three only to staff. `Column.edit` and
+    `Column.delete` are prebuilt shortcuts for the link columns:
     """
 
     albums = Table(
@@ -417,15 +394,15 @@ def test__foo():
     # language=rst
     """
     
-    cell__template
-    ==============
-    
-    Now that we have a basic app, we'd like to customize the look of the index page
-    a bit. A plain html table with text doesn't look very cool, so we will spice it
-    up with album covers. We'll start by removing the artists section. 
-    
-    A custom cell template for albums might be a good start to make it look nicer. 
-    
+    Show album art in a column
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Now that we have a basic app, let's make the index page look better. A plain
+    table of text doesn't look very cool, so we'll add the album covers.
+
+    Add a column that has no model field behind it (`attr=None`) and give it a
+    template that renders an image:
+
     """
     albums = Table(
         auto__model=Album,
@@ -448,16 +425,16 @@ def test__foo():
     # language=rst
     """
     
-    That's a start, but we want something a bit more showy, let's get rid of html
-    tables entirely:
-    
-    row__template
-    =============
-    
-    To override the rendering of an entire row we use `row__template`. We also
-    change the table from rendering a `table` tag to a `div`, and turn off the 
-    table header:
-    
+    That's a start, but we want something more showy, so let's get rid of the html
+    table entirely.
+
+    Turn the rows into cards
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+
+    `row__template` replaces the rendering of a whole row, `tr` tag included. Render
+    the table as a `div` instead of a `table`, turn off the header, and make each row
+    a card:
+
     """
     albums = Table(
         auto__model=Album,
@@ -596,34 +573,17 @@ def test_forms():
             actions__submit__display_name = 'Save'
 
     # language=rst
-    """    
-    In iommi we use `class Meta` a lot, similar to Django, but in iommi it's not
-    just a bucket of values, it has a precise definition: values in `Meta` are 
-    passed into the constructor. So the example above is semantically the same as:
     """
-
-    AlbumForm(
-        auto__model=Album,
-        auto__include=['name', 'artist'],
-        actions__submit__display_name='Save',
-    )
-
-    # language=rst
-    """
-    Worth pointing out is that values of `Meta` are defaults, so you can still
-    override at the constructor call.
-
-    An advantage to this strict definition is that we don't have silent failures
-    in iommi. If you make a spelling mistake for a setting in `Meta`, you will get
-    an error message.
-
+    Everything you put in `class Meta` is passed to the constructor, and only valid
+    constructor arguments are accepted there -- so a misspelled setting is an error,
+    not silence. :doc:`equivalency` covers what that buys you.
 
     There are many more customization options available, you can find more
     in the :ref:`form cookbook <cookbook-forms>` and the docs for `Field`.
 
 
     Automatic views
-    ===============
+    ~~~~~~~~~~~~~~~
 
     iommi goes a step further than Django forms, by supplying full views that can
     be used from either a declarative form or an auto generated form. An example

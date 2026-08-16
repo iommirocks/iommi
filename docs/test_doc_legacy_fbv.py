@@ -26,7 +26,7 @@ pytestmark = pytest.mark.django_db
 # language=rst
 """
 Add iommi to a FBV
-~~~~~~~~~~~~~~~~~~
+==================
 
 .. note::
 
@@ -67,7 +67,7 @@ def test_legacy_fbv_step2(small_discography, black_sabbath):
     # language=rst
     """
     Add an iommi table
-    ==================
+    ------------------
 
     First the template is modified to extend `"iommi/base.html"` and wrap the content in `{% block content %}`.
 
@@ -107,7 +107,7 @@ def test_legacy_fbv_step3(black_sabbath, album, track):
     # language=rst
     """
     AJAX dispatch
-    =============
+    -------------
 
     There are two problems with this code so far though, and that is that if we add filtering on album it breaks. One of the nice features
     of iommi is the automatic ajax endpoints (and by default a select2 widget), but this requires some extra routing, and that we include the
@@ -153,7 +153,7 @@ def test_legacy_fbv_step4(black_sabbath, album, track):
     # language=rst
     """
     Multiple iommi components
-    =========================
+    -------------------------
 
     You should only create one top level iommi component in order to get the automatic namespacing for free. So if you wanted to add two tables, you should wrap them in a `Page`:
     """
@@ -199,7 +199,7 @@ def test_legacy_fbv_with_main_menu_and_basic_html(settings, black_sabbath, mediu
     # language=rst
     """
     Using iommi's base template with a FBV
-    ======================================
+    --------------------------------------
 
     For existing FBVs, you can get the iommi `MainMenu` and the base style
     assets by simply extending `iommi/base.html`:

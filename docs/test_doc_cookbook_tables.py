@@ -2001,3 +2001,65 @@ def test_how_do_i_wrap_the_table_tag(small_discography):
     # @test
     show_output(table)
     # @end
+
+
+def test_how_do_i_download_a_table_as_csv(small_discography):
+    # language=rst
+    """
+    .. _table-as-csv:
+
+    How do I let the user download a table as CSV?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.extra_evaluated
+    .. uses EditTable.extra_evaluated
+    .. uses Column.extra_evaluated
+    .. uses EditColumn.extra_evaluated
+    .. uses Table.endpoints
+    .. uses Table.actions
+
+    Every table has a `csv` endpoint, which is turned on by giving the table a report
+    name via `extra_evaluated__report_name`. Then say which columns to include by
+    giving each one a header name, also via `extra_evaluated__report_name`. Add an
+    `Action` pointing at the endpoint to get a download link:
+    """
+
+    class AlbumTable(Table):
+        class Meta:
+            extra_evaluated__report_name = 'Albums'
+            actions__download = Action(
+                attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
+            )
+            rows = Album.objects.all()
+
+        name = Column(extra_evaluated__report_name='Name')
+        artist = Column(extra_evaluated__report_name='Artist')
+        year = Column.number(extra_evaluated__report_name='Year')
+
+    albums = AlbumTable().as_view()
+
+    # language=rst
+    """
+    The table renders as normal, but hitting the csv endpoint returns a text file in
+    CSV format:
+    """
+
+    # @test
+    show_output(
+        b"<pre>"
+        + albums(request=req('get', **{'/csv': ''})).getvalue()
+        + b"</pre>"
+    )
+    # @end
+
+    # language=rst
+    """
+    To include every column without naming each one, set
+    `extra__report_columns_all=True` on the table. Each column then uses its own name
+    as the header, and an explicit `extra_evaluated__report_name` on a column still
+    wins.
+
+    To control the CSV dialect, pass kwargs through to `csv.writer` with
+    `extra_evaluated__csv_writer_kwargs`, e.g.
+    `extra_evaluated__csv_writer_kwargs={'delimiter': ';'}`.
+    """

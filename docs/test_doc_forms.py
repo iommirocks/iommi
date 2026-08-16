@@ -26,29 +26,33 @@ def test_forms():
     =====
 
     iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on its weaknesses.
+
+    This page explains what iommi forms are and how they differ from Django's. If you
+    want to *do* something specific, go to the :ref:`form cookbook <cookbook-forms>`;
+    for the exhaustive list of options see :doc:`Form` and :doc:`Field`.
     """
 
     # language=rst
     """
-    Major features compared to Django forms:
+    Where iommi forms differ from Django's
+    --------------------------------------
 
-    - Nice rendering to HTML out of the box. Default bootstrap but more built in and can be adapted to your design system.
-    - AJAX-backed select widgets for your foreign key relationships.
-    - Supports `__` syntax for going across table/object boundaries, similar to how Django does with QuerySets.
-    - Send in a callable that is late evaluated to determine if a field should be displayed (`include`). This is very handy for showing a slightly different form to administrators for example.
-    - Easily add a CSS class or style to just the thing you need just now.
-    - Easy configuration without writing entire classes that are only used in one place anyway.
+    - They render to HTML nicely out of the box. The default is bootstrap, several other :doc:`styles <styles>` ship with iommi, and you can adapt them to your own design system.
+    - Foreign key relationships get AJAX-backed select widgets, with the endpoint wired up on the same URL as the view. Because it's the same view, it's covered by the same permission checks.
+    - `__` works for going across table/object boundaries, the same way Django does it for QuerySets.
+    - Anywhere you can put a value you can put a callable instead, evaluated late. `include=lambda request, **_: request.user.is_staff` is how you show a slightly different form to administrators, without a second form class.
+    - You can add a CSS class or attribute to exactly one thing without copying a template.
+    - Configuration doesn't require writing a class that's only used in one place.
 
-    Read the full documentation and the :doc:`cookbook` for more.
+    A `Form` is also a complete view. `Form.create`, `Form.edit` and `Form.delete`
+    give you the post handler and the redirect too, so there's no template and no
+    view function to write. See :doc:`views` for the CRUD set built on top of these.
 
-    iommi pre-packages sets of defaults for common field types as 'shortcuts'.
-    Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.
-    The full list of shortcuts can be found in the
-    `API documentation for Field <api.html#iommi.Field>`_.
-
-    iommi also comes with full `edit`, `create` and `delete` views. See below for more.
-
-
+    Instead of `Field` subclasses, iommi pre-packages sets of defaults as
+    *shortcuts* -- `Field.boolean`, `Field.integer`, `Field.choice` and so on. The
+    difference matters: a shortcut's config is defaults, not hard coded behavior, so
+    you can start from one and refine it without subclassing. See
+    :doc:`philosophy` for why, and :doc:`Field` for the full list.
     """
 
 
@@ -60,11 +64,20 @@ def test_fully_automatic_forms(settings):
 
     # language=rst
     """
+    Three ways to say the same thing
+    --------------------------------
+
+    The next three sections build the same form automatically, declaratively and
+    programmatically. They are not three different features to choose between: they
+    are one API seen from three angles, and you can mix them freely. Which one reads
+    best depends on how much you know at import time. :doc:`equivalency` spells out
+    the mapping between them.
+
     Fully automatic forms
-    ---------------------
+    ~~~~~~~~~~~~~~~~~~~~~
 
     Generating forms from Django models automatically is the most powerful and common use for iommi forms:
-    
+
     """
 
     form = Form.create(auto__model=Album)
@@ -121,7 +134,7 @@ def test_declarative_forms():
     # language=rst
     """
     Declarative forms
-    -----------------
+    ~~~~~~~~~~~~~~~~~
 
     You can create forms declaratively, similar to Django forms. There are some important differences between iommi forms and Django forms in this mode, maybe the most important being that in iommi you can pass a callable as a parameter to late evaluate what the value of something is. This is used to restrict a field for staff users in this example:
     """
@@ -185,7 +198,7 @@ def test_programmatic_forms():
     # language=rst
     """
     Programmatic forms
-    ------------------
+    ~~~~~~~~~~~~~~~~~~
 
     The declarative style is very readable, but sometimes you don't know until runtime what the form should look like. Creating forms programmatically in iommi is easy (and equivalent to doing it the declarative way):
 
@@ -303,52 +316,22 @@ def test_post_handlers():
     """
 
 
-def test_customization_of_save_behavior():
+def test_saving():
     # language=rst
     """
+    Saving
+    ------
 
-    .. _Field-hardcoded:
+    `Form.create` and `Form.edit` come with a post handler that saves for you, so in
+    the common case there is nothing to write. When you do need to intervene, you
+    don't subclass or override a `save` method: you refine one of the callbacks that
+    correspond to the steps of a Django multi-step commit.
 
-    Customization of save behavior on `Form.create`/`edit`
-    ------------------------------------------------------
+    This mirrors the philosophy elsewhere in iommi -- there is a named hook for each
+    step, so you can replace just the step you care about and leave the rest of the
+    default behavior alone.
 
-    There are some useful hooks for customizing the save behavior on `Form.create` and `Form.edit`. The most common use case
-    is to set some hardcoded value for a field that is not in the form. This is best done by using `Field.hardcoded`, so
-    that should be your first option.
-
-    Saving a model in Django mirrors SQL quite closely, and iommi has hooks for all the steps in a multi-step commit.
-
-    The callbacks are executed in this order:
-
-    - `extra__new_instance`: This is called to create a new instance of the model. By default it just calls `form.model()`.
-    - `extra__save`: This is called to save each model_object. By default it calls `model_object.save()`.
-    - `extra__pre_save_all_but_related_fields` (only called for `Form.create`)
-    - `extra__on_save_all_but_related_fields` (only called for `Form.create`)
-    - `extra__pre_save` (before `instance.save()`)
-    - `extra__on_save` (after `instance.save()`)
-
-    **IMPORTANT**: Be careful when using `extra__save`!
-
-    #. the passed kwarg for object instance, which we need to save is `model_object` *and not instance*!
-    #. always test the instance of `model_object` to avoid possible bugs! Because quite often you need to edit objects from multiple models, for example:
-    """
-
-    class AlbumForm(Form):
-        class Meta:
-            auto__model = Album
-            auto__include = ["name", "artist__name"]
-
-            @classmethod
-            def extra__save(model_object, **_):
-                if isinstance(model_object, Album):
-                    # IMPORTANT: always test the proper model when overriding save
-                    model_object.save(foo="bar")
-                else:
-                    # because this gets called for saving the artist.name
-                    model_object.save()
-
-    # language=rst
-    """
-    After a POST is completed, the `extra__redirect` callback is executed if present, otherwise `extra__redirect_to`
-    is used to determine where to redirect to.
+    For the list of callbacks and the order they run in, see
+    :ref:`Save callbacks <form-save-callbacks>` on `Form`. For worked examples, see
+    :ref:`the cookbook <form-save-hooks>`.
     """

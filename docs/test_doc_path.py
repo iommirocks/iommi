@@ -62,7 +62,7 @@ def test_path_fbv_example():
 # language=rst
 """
 URLConf and iommi
-~~~~~~~~~~~~~~~~~
+-----------------
 
 The url parameters, or path components, are available in iommi under the `params` namespace and also as keyword arguments directly. A simple example is:
 """
@@ -91,7 +91,7 @@ def test_path_url_mapping():
 # language=rst
 """
 iommi path decoders
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 In iommi we have a powerful and easy to use system for path decoding that also
 works smoothly with iommi views. It builds on top of the params feature
@@ -139,7 +139,7 @@ def test_path_decoder(black_sabbath, album):
 
 
     Use iommi decoders on a function based view
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    -------------------------------------------
 
     You can use the iommi path decoders on a normal FBV too:
     """
@@ -166,7 +166,7 @@ def test_path_decoder(black_sabbath, album):
 # language=rst
 """
 Advanced path decoders
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 For cases where you want to decode something other than a pk or name you need the advanced path decoders. Here's a simple example:
 """
@@ -212,7 +212,7 @@ def test_path_decoders_for_access_control():
     # language=rst
     """
     Path decoders for access control
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    --------------------------------
 
     Access control on path decoder level can be very powerful if you have row-level access rules. Let's say that only staff users can edit Black Sabbath albums:
     """

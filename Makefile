@@ -65,6 +65,8 @@ clean-docs:
 	rm -f docs/QueryAutoConfig.rst
 	rm -f docs/TableAutoConfig.rst
 	rm -f docs/views.rst
+	rm -f docs/functions.rst
+	rm -f docs/testing.rst
 
 .PHONY: lint
 lint: ruff

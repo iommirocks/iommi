@@ -152,7 +152,7 @@ def test_how_do_i_make_a_field_non_editable(black_sabbath):
     user, or B) non-editable but do not show it ("hardcoded").
 
     A) Show the value
-    =================
+    ^^^^^^^^^^^^^^^^^
 
     Pass a callable or `bool` to the `editable` member of the field:
     """
@@ -189,8 +189,10 @@ def test_how_do_i_make_a_field_non_editable(black_sabbath):
 
     # language=rst
     """
+    .. _field-hardcoded:
+
     B) Hardcode the value
-    =====================
+    ^^^^^^^^^^^^^^^^^^^^^
 
     A common use case is to navigate to some object, then create a sub-object.
     In this example we have a url like `/artists/Black Sabbath/`, where the
@@ -1362,7 +1364,7 @@ def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath
     Here are some common use cases:
 
     Password fields
-    ===============
+    ^^^^^^^^^^^^^^^
 
     Django's password fields require special handling with `set_password()`:
     """
@@ -1391,7 +1393,7 @@ def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath
     # language=rst
     """
     Data transformation
-    ===================
+    ^^^^^^^^^^^^^^^^^^^
 
     Transform the data before saving (e.g., uppercase, calculations):
     """
@@ -1413,7 +1415,7 @@ def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath
     # language=rst
     """
     Many-to-many relationships
-    ==========================
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Many-to-many fields use `.set()` instead of direct assignment:
     """
@@ -1440,7 +1442,7 @@ def test_how_do_i_customize_how_a_field_is_written_to_the_instance(black_sabbath
     # language=rst
     """
     The default implementation
-    ==========================
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     If you want to extend the default behavior rather than replace it:
     """
@@ -1801,4 +1803,74 @@ def test_how_do_i_change_how_a_field_reads_from_the_instance(album):
 
     # @test
     show_output(form)
+    # @end
+
+
+def test_how_do_i_hook_into_saving(black_sabbath):
+    # language=rst
+    """
+    .. _form-save-hooks:
+
+    How do I hook into saving a create/edit form?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Form.extra
+    .. uses Form.instance
+    .. uses FormAutoConfig.model
+
+    If all you want is to set a value that isn't in the form, use
+    :ref:`Field.hardcoded <field-hardcoded>` instead: it's simpler and it keeps the
+    value visible in the form definition.
+
+    For anything else, `Form.create` and `Form.edit` expose a callback per step of
+    the save. To supply a value the form doesn't collect, build the object yourself
+    in `extra__new_instance`:
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        auto__exclude=['artist'],
+        extra__new_instance=lambda form, **_: Album(artist=black_sabbath),
+    )
+
+    # @test
+    posted = form.bind(request=req('post', name='Vol. 4', year='1972', **{'-submit': ''}))
+    posted.render_to_response()
+    assert Album.objects.get(name='Vol. 4').artist == black_sabbath
+    # @end
+
+    # language=rst
+    """
+    .. note::
+
+        On `Form.create` the instance is saved *twice*, because Django has to have a
+        pk before related fields can be written. That means `extra__pre_save` runs
+        after the first insert, so it is too late to fill in a `NOT NULL` column. Use
+        `extra__new_instance` or `extra__pre_save_all_but_related_fields` for that.
+        On `Form.edit` there is only one save and `extra__pre_save` runs before it.
+
+    The full list of callbacks, and the order they run in, is documented under
+    :ref:`Save callbacks <form-save-callbacks>` on `Form`.
+
+    The one to be careful with is `extra__save`. It receives the object to save as
+    `model_object` (**not** `instance`), and it is called once per model when the
+    form spans more than one, so always check which model you got before doing
+    anything model specific:
+    """
+
+    class AlbumForm(Form):
+        class Meta:
+            auto__model = Album
+            auto__include = ['name', 'artist__name']
+
+            @staticmethod
+            def extra__save(model_object, **_):
+                if isinstance(model_object, Album):
+                    model_object.save()
+                else:
+                    # this also gets called for saving artist.name
+                    model_object.save()
+
+    # @test
+    show_output(AlbumForm.create())
     # @end

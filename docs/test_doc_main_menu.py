@@ -23,7 +23,7 @@ def test_base(settings, medium_discography):
     .. _mainmenu:
 
     Main menu
-    ~~~~~~~~~
+    =========
 
     The main menu component in iommi is used to create the main navigation for your app. This is primarily useful for SaaS or internal apps. It creates a sidebar menu with support for nested menu items, and centralized access control that automatically shows only menu items the user has access to.
 

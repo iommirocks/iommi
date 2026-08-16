@@ -21,7 +21,7 @@ def test_django_custom_fields():
     # language=rst
     """
     Django custom fields
-    ~~~~~~~~~~~~~~~~~~~~
+    --------------------
 
     To tell iommi how to handle your custom fields you have these options:
 
@@ -75,7 +75,7 @@ def test_related_fields():
     # language=rst
     """
     Related fields (foreign key/many-to-many)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    --------------------------------------------
 
     `ForeignKey`, `OneToOneField`, and `ManyToManyField` don't carry their semantic meaning in
     a custom type the way a `TimeField` does -- they're all keyed on the *related* model. To
@@ -115,7 +115,7 @@ def test_rendering_of_your_custom_types_in_a_table():
     # language=rst
     """
     Rendering of your custom types in a table
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    -----------------------------------------
 
     iommi renders `bool`, `list`, `set`, `tuple`, `QuerySet` and any type that has a `__html__` method with special logic to make it look nice in a table. If you have a type where you can't or don't want to implement a `__html__` method (or you want more complex rendering) you can plug into this system yourself with `register_cell_formatter`:
     """
@@ -137,7 +137,7 @@ def test_the_search_fields_of_your_django_models():
     # language=rst
     """
     The search fields of your Django models
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ---------------------------------------
 
     When searching for an object with `Query` we need to know which fields to use to find the object. This enables the advanced query language to be `my_car_brand='toyota'` instead of `my_car_brand.pk=42` which is a lot nicer. iommi will automatically use a field called `name` if it exists and is unique. If you have other fields you want iommi to use to find objects you can register it like this:
     """
@@ -165,7 +165,7 @@ def test_custom_styles():
     # language=rst
     """
     Custom styles
-    ~~~~~~~~~~~~~
+    -------------
 
     You can register your own styles with `register_style`. By default the style `bootstrap` is used. You can use it as the basis of your custom look and feel or start with the `base` style and work from there.
     """

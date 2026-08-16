@@ -29,7 +29,7 @@ def test_equivalence():
 
 
     Declarative/programmatic hybrid API
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    -----------------------------------
 
     The programmatic API is pretty straightforward: you have a class constructor that takes some arguments. The interesting part is how we can mirror that *exactly* into a declarative style.
 
@@ -59,11 +59,23 @@ def test_equivalence():
     
     1. Variables declared in `class Meta` in iommi means they get passed into the constructor. `model = Album` in `Meta` is exactly the same as `Table(model=Album)`.
     2. The `name` column is declared on the class itself, and the `columns` part of the argument (`Table(columns=dict(...)`) is implicit. For `Page` the same implicit name is called `parts`, and for `Form` it's called `fields`.
-    
+
+    Note that values set in `Meta` are *defaults*, not hard coded values, so you can
+    still override them in the constructor call (or in a subclass).
+
+    .. note::
+
+        Writing `MyTable().as_view()` in your `urlpatterns` looks superficially like a
+        Django class based view, but the two are unrelated. Notice the parentheses after
+        the class name: you are creating an *instance* and asking it for a view, which is
+        why you can pass arguments at that point (`MyTable(page_size=2).as_view()`).
+        Django CBVs and iommi classes are radically different concepts and can't be
+        combined.
+
     .. _dunder-dict-equivalence:
     
     Double underscore short form
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ----------------------------
     
     In iommi you can have very deeply nested object structures, and because you want to customize something deep inside a graph it would be cumbersome to nest dicts a lot. So `__` is used as a separator.
     
@@ -115,7 +127,7 @@ def test_equivalence():
     # language=rst
     """
     Further examples
-    ~~~~~~~~~~~~~~~~
+    ----------------
     """
 
     # language=rst

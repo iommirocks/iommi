@@ -1,6 +1,9 @@
 API Reference
 =============
 
+Classes
+-------
+
 .. toctree::
    :maxdepth: 1
 
@@ -38,3 +41,19 @@ API Reference
    Table
    TableAutoConfig
    Traversable
+
+Functions
+---------
+
+.. toctree::
+   :maxdepth: 1
+
+   functions
+
+Middleware
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   middleware

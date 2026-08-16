@@ -1948,6 +1948,33 @@ class Form(Part, Tag):
                     )),
                     p_error=Panel.alert('Error!', level='error'),
                 ))
+
+    .. _form-save-callbacks:
+
+    Save callbacks
+    ~~~~~~~~~~~~~~
+
+    Saving a model in Django mirrors SQL quite closely, and `Form.create`/`Form.edit`
+    have hooks for all the steps in a multi-step commit. They are called in this
+    order:
+
+    - `extra__new_instance`: called to create a new instance of the model. By default it just calls `form.model()`.
+    - `extra__save`: called to save each `model_object`. By default it calls `model_object.save()`. Note that the keyword argument is `model_object`, *not* `instance`, and that it is called once per model when the form spans more than one (e.g. `auto__include=['name', 'artist__name']`), so always check `isinstance` before applying model specific behavior.
+    - `extra__pre_save_all_but_related_fields` (only called for `Form.create`)
+    - `extra__on_save_all_but_related_fields` (only called for `Form.create`)
+    - `extra__pre_save` (before `instance.save()`)
+    - `extra__on_save` (after `instance.save()`)
+
+    Note that `Form.create` saves twice, because Django needs a pk before related
+    fields can be written. The first save happens between
+    `pre_save_all_but_related_fields` and `on_save_all_but_related_fields`, which
+    means `extra__pre_save` runs *after* the row already exists and is too late to
+    fill in a `NOT NULL` column. `Form.edit` saves once, before `extra__on_save`.
+
+    After a POST completes, `extra__redirect` is called if present, otherwise
+    `extra__redirect_to` determines where to redirect to.
+
+    See :ref:`the cookbook <form-save-hooks>` for worked examples.
     """
 
     actions: Namespace = RefinableMembers()
