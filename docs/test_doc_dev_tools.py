@@ -161,7 +161,6 @@ def test_profile():
 
     - `?_iommi_prof=flame` gives you a flame graph.
     - If you have gprof2dot installed you can also do `?_iommi_prof=graph` to get a graph output.
-    - If you have snakeviz installed you can also do `?_iommi_prof=snake` to get snakeviz output.
 
     On Python 3.15 and later iommi uses the statistical sampling engine that CPython's
     own sampling profiler is built on. It reads the stack of the thread serving the
