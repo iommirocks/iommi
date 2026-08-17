@@ -155,12 +155,26 @@ def test_profile():
     Profile
     -------
 
-    Press this tool to get a cProfile output for the current page. By default it
+    Press this tool to get a profile of the current page. By default it
     will do sorting on the cumulative time, but you can do `?_iommi_prof=tottime`
     to get the total time.
 
+    - `?_iommi_prof=flame` gives you a flame graph.
     - If you have gprof2dot installed you can also do `?_iommi_prof=graph` to get a graph output.
     - If you have snakeviz installed you can also do `?_iommi_prof=snake` to get snakeviz output.
+
+    On Python 3.15 and later iommi uses the statistical sampling engine that CPython's
+    own sampling profiler is built on. It reads the stack of the thread serving the
+    request from a separate thread, so the page renders at full speed and the numbers
+    you get aren't distorted by the measuring. Sampled data has no call counts, so the
+    `ncalls` column is replaced by the number of samples the function was on the stack
+    for.
+
+    On older versions of Python there is no such engine available, so iommi falls back
+    to a tracing profiler: `yappi <https://pypi.org/project/yappi/>`_ if it is
+    installed, and `cProfile` otherwise. Tracing makes the page several times slower to
+    render, which does skew the result towards whatever is called the most often, but
+    you do get exact call counts.
 
     .. note::
 

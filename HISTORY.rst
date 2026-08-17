@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+Unreleased
+~~~~~~~~~~
+
+* The profiler now uses the statistical sampling engine behind CPython's own sampling profiler when it's available (Python 3.15+), instead of a tracing profiler. The page renders at full speed while being profiled, so the numbers aren't distorted by the measurement. Sampled data has no call counts, so the `ncalls` column shows the number of samples the function was on the stack for. On older Pythons the previous behavior is kept: yappi if installed, cProfile otherwise.
+
+
 7.31.0 (2026-06-27)
 ~~~~~~~~~~~~~~~~~~~
 
