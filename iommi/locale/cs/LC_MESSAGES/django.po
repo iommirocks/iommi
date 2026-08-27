@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 12:41+0200\n"
+"POT-Creation-Date: 2026-08-27 12:52+0200\n"
 "Last-Translator: Martin Beran <info@berycz.net>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -38,7 +38,7 @@ msgstr "Vytvořit %(model_name)s"
 msgid "admin"
 msgstr ""
 
-#: base__tests.py:66 form.py:1831
+#: base__tests.py:66 form.py:1834
 msgid "edit"
 msgstr "editace"
 
@@ -51,7 +51,7 @@ msgstr "Smazat"
 msgid "Drag and drop to reorder"
 msgstr "Přetáhni pro změnu pořadí"
 
-#: edit_table.py:461 form.py:2077 style_base.py:114
+#: edit_table.py:461 form.py:2080 style_base.py:114
 msgid "Save"
 msgstr "Uložit"
 
@@ -84,7 +84,15 @@ msgstr ""
 "Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\", "
 "{formats}, a nejedná se o relativní datum jako \"2d\" nebo \"2 weeks ago\""
 
-#: form.py:613
+#: form.py:604
+msgid "out of range"
+msgstr "mimo rozsah"
+
+#: form.py:605
+msgid "unexpected extra characters"
+msgstr "neočekávané přebytečné znaky"
+
+#: form.py:616
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\", "
@@ -95,7 +103,7 @@ msgstr ""
 "{formats}, a nejedná se o relativní datum jako \"2d\" nebo \"2 weeks "
 "ago\"{extra_information}"
 
-#: form.py:645
+#: form.py:648
 #, python-brace-format
 msgid ""
 "Time data \"{string_value}\" does not match any of the formats \"now\" or "
@@ -104,12 +112,12 @@ msgstr ""
 "Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\" nebo "
 "{formats}"
 
-#: form.py:661
+#: form.py:664
 #, python-brace-format
 msgid "Invalid literal for Decimal: '{string_value}'"
 msgstr "Neplatný literál pro desetinné číslo: '{string_value}'"
 
-#: form.py:686
+#: form.py:689
 msgid ""
 "Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
 "123 4567 or +1 212 123 4567"
@@ -117,37 +125,37 @@ msgstr ""
 "Použijte prosím formát +<kód země> (XX) XX XX. Příklad čísla v USA: +1 (212) "
 "123 4567 nebo +1 212 123 4567"
 
-#: form.py:1200
+#: form.py:1203
 msgid "This field is required"
 msgstr "Toto pole je povinné"
 
-#: form.py:1500 table.py:273
+#: form.py:1503 table.py:273
 msgid "Yes"
 msgstr "Ano"
 
-#: form.py:1500 table.py:275
+#: form.py:1503 table.py:275
 msgid "No"
 msgstr "Ne"
 
-#: form.py:1784
+#: form.py:1787
 #, python-format
 msgid "Cannot delete %(name)s"
 msgstr "Nelze smazat %(name)s"
 
-#: form.py:1830
+#: form.py:1833
 msgid "create"
 msgstr "vytvořit"
 
-#: form.py:1832
+#: form.py:1835
 msgid "delete"
 msgstr "smazat"
 
-#: form.py:2068
+#: form.py:2071
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:2558
+#: form.py:2561
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Jste si jisti, že chcete smazat %(model_name)s \"%(instance)s\"?"
@@ -392,12 +400,6 @@ msgstr "Nové heslo"
 #: views.py:184
 msgid "Confirm password"
 msgstr "Potvrdit heslo"
-
-#~ msgid "out of range"
-#~ msgstr "mimo rozsah"
-
-#~ msgid "unexpected extra characters"
-#~ msgstr "neočekávané přebytečné znaky"
 
 #~ msgid "All models"
 #~ msgstr "Všechny modely"

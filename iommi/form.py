@@ -600,6 +600,9 @@ def date_parse(string_value, **_):
         return datetime.strptime(string_value, date_iso_format).date()
     except ValueError as e:
         msg = str(e)
+        if False:  # so `makemessages` can find it
+            gettext_lazy("out of range")
+            gettext_lazy("unexpected extra characters")
         if 'out of range' in msg or 'must be in' in msg:
             extra_information = f' ({gettext_lazy("out of range")})'
         elif 'unconverted data remains' in msg:
