@@ -1,32 +1,33 @@
+{% load i18n %}
 {{ paginator.iommi_open_tag }}
     <{{ paginator.container.tag }}{{ paginator.container.attrs }}>
         {% if show_first %}
             <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="First Page"{{ paginator.link.attrs }}>&laquo;</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="{% translate 'First Page' %}"{{ paginator.link.attrs }}>&laquo;</a>
             </{{ paginator.item.tag }}>
         {% endif %}
 
         {% if has_previous %}
             <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="Previous Page"{{ paginator.link.attrs }}>&lt;</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="{% translate 'Previous Page' %}"{{ paginator.link.attrs }}>&lt;</a>
             </{{ paginator.item.tag }}>
         {% endif %}
 
         {% for num in page_numbers %}
             <{{ paginator.active_item.tag }}{% if num == page %}{{ paginator.active_item.attrs }}{% else %}{{ paginator.item.attrs }}{% endif %}>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="Page {{ num }}"{% if num == page %}{{ paginator.active_link.attrs }}{% else %}{{ paginator.link.attrs }}{% endif %}>{{ num }}</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="{% blocktranslate with page_number=num %}Page {{ page_number }}{% endblocktranslate %}"{% if num == page %}{{ paginator.active_link.attrs }}{% else %}{{ paginator.link.attrs }}{% endif %}>{{ num }}</a>
             </{{ paginator.active_item.tag }}>
         {% endfor %}
 
         {% if has_next %}
             <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="Next Page"{{ paginator.link.attrs }}>&gt;</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="{% translate 'Next Page' %}"{{ paginator.link.attrs }}>&gt;</a>
             </{{ paginator.item.tag }}>
         {% endif %}
 
         {% if show_last %}
             <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="Last Page"{{ paginator.link.attrs }}>&raquo;</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="{% translate 'Last Page' %}"{{ paginator.link.attrs }}>&raquo;</a>
             </{{ paginator.item.tag }}>
         {% endif %}
     </{{ paginator.container.tag }}>

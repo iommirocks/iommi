@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-23 09:16+0200\n"
+"POT-Creation-Date: 2026-08-27 12:41+0200\n"
 "Last-Translator: Martin Beran <info@berycz.net>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -13,32 +13,32 @@ msgstr ""
 msgid "Submit"
 msgstr "Odeslat"
 
-#: admin.py:138
+#: admin.py:137
 msgid "iommi administration"
 msgstr "iommi administrace"
 
-#: admin.py:142 views.py:161
+#: admin.py:141 views.py:161
 msgid "Change password"
 msgstr "Změnit heslo"
 
-#: admin.py:146
+#: admin.py:145
 msgid "Logout"
 msgstr "Odhlásit"
 
-#: admin.py:435
+#: admin.py:434
 msgid "Add models to admin"
 msgstr "Přidat modely do administrace"
 
-#: admin.py:478
+#: admin.py:477
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "Vytvořit %(model_name)s"
 
-#: admin.py:577
+#: admin.py:576
 msgid "admin"
 msgstr ""
 
-#: base__tests.py:66 form.py:1828
+#: base__tests.py:66 form.py:1831
 msgid "edit"
 msgstr "editace"
 
@@ -47,36 +47,31 @@ msgstr "editace"
 msgid "Delete"
 msgstr "Smazat"
 
-#: edit_table.py:274 panel.py:332
+#: edit_table.py:279 panel.py:332
 msgid "Drag and drop to reorder"
 msgstr "Přetáhni pro změnu pořadí"
 
-#: edit_table.py:456 form.py:2047 style_base.py:114
+#: edit_table.py:461 form.py:2077 style_base.py:114
 msgid "Save"
 msgstr "Uložit"
 
-#: edit_table.py:462
+#: edit_table.py:467
 msgid "Add row"
 msgstr "Přidat řádek"
 
 #: form.py:260
-#, python-brace-format
 msgid "{} is not a valid boolean value"
 msgstr "{} není validní boolean"
 
 #: form.py:443
-#, python-brace-format
 msgid "Could not convert string to float: {}"
 msgstr "Nepodařilo se konvertovat řetězec na desetinné číslo: {}"
 
 #: form.py:450
-#, fuzzy, python-brace-format
-#| msgid "Could not convert string to float: {}"
 msgid "Could not convert string to int: {}"
-msgstr "Nepodařilo se konvertovat řetězec na desetinné číslo: {}"
+msgstr "Nepodařilo se konvertovat řetězec na číslo: {}"
 
 #: form.py:457 form.py:475
-#, python-brace-format
 msgid "{} not in available choices"
 msgstr "{} není dostupnou volbou"
 
@@ -88,14 +83,6 @@ msgid ""
 msgstr ""
 "Časový údaj \"{string_value}\" neodpovídá žádnému z formátů \"now\", "
 "{formats}, a nejedná se o relativní datum jako \"2d\" nebo \"2 weeks ago\""
-
-#: form.py:604
-msgid "out of range"
-msgstr "mimo rozsah"
-
-#: form.py:606
-msgid "unexpected extra characters"
-msgstr "neočekávané přebytečné znaky"
 
 #: form.py:613
 #, python-brace-format
@@ -134,9 +121,7 @@ msgstr ""
 msgid "This field is required"
 msgstr "Toto pole je povinné"
 
-#: form.py:1500 style_bootstrap_icons.py:30 style_daisyui.py:31
-#: style_font_awesome_4.py:29 style_font_awesome_6.py:32 table.py:273
-#: table.py:821
+#: form.py:1500 table.py:273
 msgid "Yes"
 msgstr "Ano"
 
@@ -144,25 +129,25 @@ msgstr "Ano"
 msgid "No"
 msgstr "Ne"
 
-#: form.py:1781
+#: form.py:1784
 #, python-format
 msgid "Cannot delete %(name)s"
 msgstr "Nelze smazat %(name)s"
 
-#: form.py:1827
+#: form.py:1830
 msgid "create"
 msgstr "vytvořit"
 
-#: form.py:1829
+#: form.py:1832
 msgid "delete"
 msgstr "smazat"
 
-#: form.py:2038
+#: form.py:2068
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:2528
+#: form.py:2558
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Jste si jisti, že chcete smazat %(model_name)s \"%(instance)s\"?"
@@ -175,15 +160,15 @@ msgstr "Ano"
 msgid "Permissions"
 msgstr "Oprávnění"
 
-#: query.py:671 templates/iommi/query/form_toggle_script.html:26
+#: query.py:675 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Přepnout do rozšířeného hledání"
 
-#: query.py:811
+#: query.py:815
 msgid "Search"
 msgstr "Hledané slovo"
 
-#: query.py:860
+#: query.py:864
 msgctxt "verb"
 msgid "Filter"
 msgstr "Filtrovat"
@@ -343,6 +328,27 @@ msgstr "Vybrat všechny položky"
 msgid "All items selected"
 msgstr "Všechny položky jsou vybrány"
 
+#: templates/iommi/table/paginator.html:6
+msgid "First Page"
+msgstr "První stránka"
+
+#: templates/iommi/table/paginator.html:12
+msgid "Previous Page"
+msgstr "Předchozí stránka"
+
+#: templates/iommi/table/paginator.html:18
+#, python-format
+msgid "Page %(page_number)s"
+msgstr "Stránka %(page_number)s"
+
+#: templates/iommi/table/paginator.html:24
+msgid "Next Page"
+msgstr "Další stránka"
+
+#: templates/iommi/table/paginator.html:30
+msgid "Last Page"
+msgstr "Poslední stránka"
+
 #: views.py:90
 msgid "Confirm log out"
 msgstr "Potvrdit odhlášení"
@@ -386,6 +392,12 @@ msgstr "Nové heslo"
 #: views.py:184
 msgid "Confirm password"
 msgstr "Potvrdit heslo"
+
+#~ msgid "out of range"
+#~ msgstr "mimo rozsah"
+
+#~ msgid "unexpected extra characters"
+#~ msgstr "neočekávané přebytečné znaky"
 
 #~ msgid "All models"
 #~ msgstr "Všechny modely"
