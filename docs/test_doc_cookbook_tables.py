@@ -2063,3 +2063,40 @@ def test_how_do_i_download_a_table_as_csv(small_discography):
     `extra_evaluated__csv_writer_kwargs`, e.g.
     `extra_evaluated__csv_writer_kwargs={'delimiter': ';'}`.
     """
+
+
+def test_how_do_i_change_the_ajax_timeout_or_the_error_shown_when_a_table_fails_to_load():
+    # language=rst
+    """
+    .. _table-ajax-timeout:
+
+    How do I change the ajax timeout or the error shown when a table fails to load?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Filtering, sorting and paginating a table reloads the table body with an ajax
+    request. If that request doesn't finish within `ajaxTimeout` milliseconds
+    (default 5000) it is aborted, and an error overlay with a retry button is
+    shown over the table. The same overlay is shown if the request fails for
+    any other reason. The overlay has the CSS class `iommi_table_error`, and the
+    table container gets the class `iommi_table_error_shown` while it's visible.
+
+    Both the timeout and the texts are properties on the JavaScript `iommi`
+    object. Set them in an `iommi.init.start` event listener, which runs before
+    iommi wires up any tables:
+
+    .. code-block:: html
+
+        <script>
+            document.addEventListener('iommi.init.start', (event) => {
+                const iommi = event.detail.iommi;
+                iommi.ajaxTimeout = 30000;  // or null to never time out
+                iommi.messages.tableLoadTimeout = gettext('Loading the table took too long and was cancelled.');
+                iommi.messages.tableLoadError = gettext('Loading the table failed.');
+                iommi.messages.retry = gettext('Retry');
+            });
+        </script>
+
+    A timed out request fails with a `TimeoutError`, so you can also tell it
+    apart from other failures in an `iommi.error` event listener via
+    `event.detail.error.name`.
+    """

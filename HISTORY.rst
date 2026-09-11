@@ -4,6 +4,8 @@ Changelog
 Unreleased
 ~~~~~~~~~~
 
+* Tables now show an error overlay with a retry button when the ajax reload of the table body fails. Previously a failure was silent, and in particular hitting the 5 second `ajaxTimeout` left the stale table in place with no indication that anything went wrong. The timeout now aborts with a `TimeoutError` instead of an `AbortError`, so it is reported through the `iommi.error` event like other failures. The texts can be translated via `iommi.messages`, see the tables cookbook.
+
 * The profiler now uses the statistical sampling engine behind CPython's own sampling profiler when it's available (Python 3.15+), instead of a tracing profiler. The page renders at full speed while being profiled, so the numbers aren't distorted by the measurement. Sampled data has no call counts, so the `ncalls` column shows the number of samples the function was on the stack for. On older Pythons the previous behavior is kept: yappi if installed, cProfile otherwise.
 
 

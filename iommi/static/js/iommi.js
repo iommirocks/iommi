@@ -3,6 +3,14 @@ class IommiBase {
 
     ajaxTimeout = 5000;
 
+    // Texts shown to the user. Override them with translated strings in an
+    // `iommi.init.start` event listener, see the cookbook.
+    messages = {
+        tableLoadTimeout: 'Loading the table took too long and was cancelled.',
+        tableLoadError: 'Loading the table failed.',
+        retry: 'Retry',
+    };
+
     historyStatePushedByUser = true;
 
     constructor(options) {
@@ -93,6 +101,10 @@ class IommiBase {
         return err.name === 'AbortError';
     }
 
+    isAjaxTimeout(err) {
+        return err.name === 'TimeoutError';
+    }
+
     getAbortController(element) {
         if (element.iommi && element.iommi.abortController) {
             return element.iommi.abortController;
@@ -110,7 +122,12 @@ class IommiBase {
         const newAbortController = new AbortController();
         element.iommi.abortController = newAbortController;
         if (this.ajaxTimeout !== null) {
-            setTimeout(() => newAbortController.abort(), this.ajaxTimeout);
+            // Abort with a TimeoutError so it's distinguishable from the AbortError
+            // we get when a newer request supersedes this one.
+            setTimeout(
+                () => newAbortController.abort(new DOMException(`The request took longer than ${this.ajaxTimeout} ms`, 'TimeoutError')),
+                this.ajaxTimeout
+            );
         }
         return newAbortController;
     }
@@ -185,6 +202,7 @@ class IommiBase {
 
     async updateTableContainer(container, params, extra) {
         const tbodyPath = container.getAttribute('data-endpoint');
+        this.hideTableError(container);
 
         container.dispatchEvent(
             new CustomEvent('iommi.loading.start', {
@@ -228,6 +246,8 @@ class IommiBase {
                     extra.filterForm.querySelector('.iommi_query_error').innerHTML = err;
                 }
 
+                this.showTableError(container, err, params, extra);
+
                 container.dispatchEvent(
                     new CustomEvent('iommi.error', {
                         bubbles: true,
@@ -249,6 +269,39 @@ class IommiBase {
                 })
             );
         }
+    }
+
+    showTableError(container, err, params, extra) {
+        this.hideTableError(container);
+
+        const overlay = document.createElement('div');
+        overlay.className = 'iommi_table_error';
+        overlay.setAttribute('role', 'alert');
+
+        const message = document.createElement('span');
+        message.className = 'iommi_table_error_message';
+        message.textContent = this.isAjaxTimeout(err) ? this.messages.tableLoadTimeout : this.messages.tableLoadError;
+        message.title = String(err);
+
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'iommi_table_error_retry';
+        retry.textContent = this.messages.retry;
+        retry.addEventListener('click', () => this.updateTableContainer(container, params, extra));
+
+        // The overlay covers the whole (possibly very tall) table, so the content
+        // is in its own element that CSS can keep within the viewport.
+        const content = document.createElement('div');
+        content.className = 'iommi_table_error_content';
+        content.append(message, retry);
+        overlay.appendChild(content);
+        container.classList.add('iommi_table_error_shown');
+        container.appendChild(overlay);
+    }
+
+    hideTableError(container) {
+        container.classList.remove('iommi_table_error_shown');
+        container.querySelectorAll(':scope > .iommi_table_error').forEach(x => x.remove());
     }
 
     async queryPopulate(form) {
