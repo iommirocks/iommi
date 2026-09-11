@@ -335,7 +335,7 @@ wheels = [
 
 [[package]]
 name = "iommi"
-version = "7.31.0"
+version = "7.32.0"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
