@@ -13,6 +13,7 @@ from django.urls import (
 from django.urls import (
     path as orig_path,
 )
+from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy
 
 from iommi import (
@@ -288,7 +289,9 @@ class M:
 
     def _set_name(self, name):
         self.name = name
-        if not callable(self.display_name) and not isinstance(self.display_name, NoTranslateString):
+        # A `Promise` (`gettext_lazy` and friends) is a deferred lookup that must stay
+        # deferred until render, so it resolves under the language of the request.
+        if not callable(self.display_name) and not isinstance(self.display_name, NoTranslateString | Promise):
             self._raw_display_name = (self.display_name or name).replace('_', ' ')
             self.display_name = capitalize(gettext_lazy(self._raw_display_name))
         if self.path is MISSING:

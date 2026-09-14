@@ -5,6 +5,8 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseForbidden
 from django.template import Template
 from django.urls import reverse
+from django.utils import translation
+from django.utils.translation import gettext_lazy
 
 from docs.models import Artist
 from iommi import (
@@ -579,3 +581,39 @@ def test_styling_6(settings):
     assert test_main_menu_style.resolve(MainMenu())[0]['assets']['iommi_main_menu_css'] is None
     with register_style('test_main_menu_style', test_main_menu_style):
         MainMenu().bind(request=req('get'))
+
+
+def test_lazy_display_name_is_not_resolved_at_declaration_time():
+    # `gettext_lazy` is a deferred lookup, not a string: it must stay deferred until
+    # render, so it resolves under the language of the request. Normalizing it here
+    # (`.replace('_', ' ')`) forces it under whatever language is active when the menu
+    # module is imported and freezes that text -- and re-wrapping the result would make
+    # the frozen text the msgid, so no other language could ever match it again.
+    with translation.override('de'):
+        item = M(view=fake_view, display_name=gettext_lazy('Logout'))
+        item._set_name('some_name')
+
+    # Nothing for an i18n string extractor to pick up here: the `gettext_lazy` call in
+    # the caller's source is what gets extracted.
+    assert item._raw_display_name is None
+
+    with translation.override('de'):
+        assert str(item.display_name) == 'Abmelden'
+    with translation.override('en'):
+        assert str(item.display_name) == 'Logout'
+
+
+def test_plain_display_name_is_still_translated_by_iommi():
+    item = M(view=fake_view, display_name='some_name_here')
+    item._set_name('ignored')
+
+    assert item._raw_display_name == 'some name here'
+    assert str(item.display_name) == 'Some name here'
+
+
+def test_display_name_falls_back_to_the_item_name():
+    item = M(view=fake_view)
+    item._set_name('some_name_here')
+
+    assert item._raw_display_name == 'some name here'
+    assert str(item.display_name) == 'Some name here'
