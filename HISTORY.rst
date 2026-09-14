@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.32.1 (2026-09-14)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed: `MainMenu` items given a lazy `display_name` (`gettext_lazy(...)`) had it resolved under the language active at import time and then re-wrapped in `gettext_lazy`, so the label was stuck in that language for all requests and string extractors picked up the translated text as the msgid. A lazy string is now passed through untouched.
+
+
 7.32.0 (2026-09-11)
 ~~~~~~~~~~~~~~~~~~~
 
