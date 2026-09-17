@@ -20,6 +20,7 @@ clean: clean-build clean-pyc
 clean-build:
 	rm -fr build/
 	rm -fr dist/
+	rm -fr iommi.egg-info/
 
 .PHONY: clean-pyc
 clean-pyc:

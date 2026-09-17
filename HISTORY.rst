@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.32.2 (2026-09-17)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed: the French translations, and in fact all translations, were missing from the built package. `iommi/locale/` was never declared as package data, and the locales that did ship got in only because setuptools folded a stale `iommi.egg-info/SOURCES.txt` back into each build. French was added after that file was last regenerated, so it never made it into a release. Locale files are now declared explicitly, and `make clean-build` removes the egg-info directory so the stale list can't come back.
+
+
 7.32.1 (2026-09-14)
 ~~~~~~~~~~~~~~~~~~~
 
