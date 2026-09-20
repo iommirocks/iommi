@@ -1783,6 +1783,54 @@ def test_how_do_i_limit_the_choices_for_a_column(small_discography):
     # @end
 
 
+def test_how_do_i_make_all_choice_filters_multi_select(small_discography):
+    # language=rst
+    """
+    .. _multi-select-filters:
+
+    How do I make all choice filters multi select?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Style
+    .. uses Filter.field
+
+    By default a choice filter renders as a single select, so the user can only
+    filter on one value at a time. Define a custom style that points the
+    `choice` and `choice_queryset` filter shortcuts at the multi select variants
+    of their fields to change this for your entire project:
+    """
+    # @test
+    from iommi.style_bootstrap_docs import bootstrap_docs as bootstrap
+
+    # @end
+
+    my_style = Style(
+        bootstrap,
+        Filter__shortcuts__choice__field__call_target__attribute='multi_choice',
+        Filter__shortcuts__choice_queryset__field__call_target__attribute='multi_choice_queryset',
+    )
+
+    # language=rst
+    """
+    `choice` covers columns with a `choices` list, and `choice_queryset` covers
+    foreign keys and many-to-many relations. Selecting several values in a
+    filter now means "any of these", so this table finds albums released in
+    1980 *or* 1981:
+    """
+
+    table = Table(
+        auto__model=Album,
+        iommi_style=my_style,
+        columns__year=Column.choice(
+            choices=[1980, 1981],
+            filter__include=True,
+        ),
+    )
+
+    # @test
+    show_output(table.bind(request=req('get', year=['1980', '1981'])))
+    # @end
+
+
 def test_how_do_i_read_the_model_information_of_a_table(small_discography):
     # language=rst
     """
