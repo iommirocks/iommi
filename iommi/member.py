@@ -17,6 +17,7 @@ from iommi.refinable import (
 )
 from iommi.sort_after import sort_after
 from iommi.struct import Struct
+from iommi.style import resolve_style
 from iommi.traversable import (
     Traversable,
 )
@@ -38,6 +39,21 @@ class Members(Traversable):
 
     def on_bind(self):
         self._bound_members = MemberBinder(self, self._declared_members, self._unknown_types_fall_through)
+
+    def refine_done(self, parent=None):
+        # Every part has members containers, and most of them are empty. For a plain Members
+        # container the generic refine_done() only resolves the style, so just do that when
+        # nothing else can apply: no refinements, not the root, and no style config for Members.
+        if type(self) is Members and parent is not None and not self.iommi_namespace.as_stack():
+            iommi_style = resolve_style(None, enclosing_style=parent.iommi_style)
+            if 'Members' not in iommi_style.config:
+                result = copy(self)
+                assert not result.is_refine_done, f"refine_done() already invoked on {result!r}"
+                result.iommi_style = iommi_style
+                result.is_refine_done = True
+                result._refinables_dynamic = {}
+                return result
+        return super().refine_done(parent=parent)
 
 
 def reify_conf(conf):

@@ -13,9 +13,13 @@ from iommi.endpoint import (
 )
 from iommi.member import (
     ForbiddenNamesException,
+    Members,
     bind_member,
 )
-from iommi.refinable import Refinable
+from iommi.refinable import (
+    Refinable,
+    RefinableObject,
+)
 from iommi.shortcut import with_defaults
 from iommi.traversable import Traversable
 from tests.helpers import (
@@ -414,3 +418,30 @@ def test_bind_single_member():
 
     lid_path = DISPATCH_PATH_SEPARATOR + basket.lid.iommi_path
     assert find_target(path=lid_path, root=basket) == basket.lid
+
+
+def test_members_refine_done_shortcut_matches_generic_refine_done():
+    parent = Fragment().refine_done()
+    members = Members(_name='children', _declared_members={}, cls=Fragment, unknown_types_fall_through=False)
+
+    fast = members.refine_done(parent=parent)
+    generic = RefinableObject.refine_done(members, parent=parent)
+
+    # The shortcut keeps the refinable stack as it is, the generic version adds a style layer
+    assert fast.iommi_namespace is members.iommi_namespace
+    assert generic.iommi_namespace is not members.iommi_namespace
+
+    def state(x):
+        return {k: v for k, v in vars(x).items() if k != 'iommi_namespace'}
+
+    assert state(fast) == state(generic)
+
+
+def test_members_refine_done_applies_style_config_for_members():
+    def extra_params(**_):
+        return {}
+
+    parent = Fragment(iommi_style=Style(Members__extra_params=extra_params)).refine_done()
+    members = Members(_name='children', _declared_members={}, cls=Fragment, unknown_types_fall_through=False)
+
+    assert members.refine_done(parent=parent).extra_params is extra_params
