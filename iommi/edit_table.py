@@ -240,20 +240,24 @@ class EditColumn(Column):
                 # row_index is the visible row number
                 # See selection() for the code that does the lookup
                 row_id = cells.row_index
-            button = Action.delete(
-                display_name=column.display_name,
-                attrs__type="button",
-                attrs__accesskey=None,
-                **{
-                    "attrs__data-iommi-edit-table-delete-row-button": True,
-                },
-            ).bind()
+            # The button is the same for every row, so render it once per bound column
+            button_html = getattr(column, '_delete_button_html', None)
+            if button_html is None:
+                button_html = Action.delete(
+                    display_name=column.display_name,
+                    attrs__type="button",
+                    attrs__accesskey=None,
+                    **{
+                        "attrs__data-iommi-edit-table-delete-row-button": True,
+                    },
+                ).bind().__html__()
+                column._delete_button_html = button_html
             path = path_join(table.iommi_path, f'pk_delete_{row_id}')
             checkbox = (
                 f'<input type="checkbox" name="{path}" id="id_{path}" data-iommi-edit-table-delete-row-checkbox="" />'
                 f'<label for="id_{path}"> {column.display_name}</label>'
             )
-            return mark_safe(f'{button.__html__()}{checkbox}')
+            return mark_safe(f'{button_html}{checkbox}')
 
         setdefaults_path(kwargs, dict(cell__value=cell__value))
         return cls(**kwargs)
