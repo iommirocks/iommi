@@ -445,3 +445,16 @@ def test_members_refine_done_applies_style_config_for_members():
     members = Members(_name='children', _declared_members={}, cls=Fragment, unknown_types_fall_through=False)
 
     assert members.refine_done(parent=parent).extra_params is extra_params
+
+
+def test_excluded_member_is_not_bound_again():
+    include_calls = []
+
+    def include(**_):
+        include_calls.append(1)
+        return False
+
+    page = Page(parts__foo=html.div('foo', include=include), parts__bar=html.div('bar')).bind()
+    for _ in range(3):
+        assert list(page.parts.keys()) == ['bar']
+    assert len(include_calls) == 1
