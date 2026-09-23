@@ -5,6 +5,7 @@ help:
 	@echo "lint - check style with ruff check"
 	@echo "test - run tests"
 	@echo "coverage - check code coverage quickly with the default Python"
+	@echo "benchmark - run the benchmarks, pass options with ARGS=\"--against master\""
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
 	@echo "homepage - regenerate the code examples in homepage/index.html"
 	@echo "dist - package"
@@ -97,6 +98,10 @@ coverage:
 	uv run coverage report -m
 	uv run coverage html
 	uv run coverage xml
+
+.PHONY: benchmark
+benchmark:
+	uv run python -m benchmarks.run $(ARGS)
 
 .PHONY: docs
 docs: clean-docs
