@@ -31,11 +31,13 @@ class Namespace(Struct):
 
     # noinspection PyMissingConstructor
     def __init__(self, *dicts, **kwargs):
-        for mappings in dicts:
+        for mappings in (*dicts, kwargs):
             for path, value in dict.items(mappings):
-                self.setitem_path(path, value)
-        for path, value in dict.items(kwargs):
-            self.setitem_path(path, value)
+                if '__' in path or value is EMPTY or dict.get(self, path) is not None:
+                    self.setitem_path(path, value)
+                else:
+                    # Fast path for the most common case: a plain key that isn't set yet
+                    self[path] = value
 
     # Optimize attribute (and item) access by using native implementations.
     # Note: This comes with the price of `my_namespace['nonexisting']` raising AttributeError, not KeyError
@@ -43,12 +45,18 @@ class Namespace(Struct):
     __missing__ = object.__getattribute__
 
     def setitem_path(self, path, value):
-        from iommi.refinable import RefinableObject
         key, delimiter, rest_path = path.partition('__')
-        existing = Struct.get(self, key)
+        existing = dict.get(self, key)
 
         if value is EMPTY:
             value = Namespace()
+
+        if existing is None:
+            # This is a common case and checking for None is fast
+            self[key] = Namespace({rest_path: value}) if delimiter else value
+            return
+
+        from iommi.refinable import RefinableObject
 
         if delimiter:
             if isinstance(existing, dict):
@@ -62,10 +70,7 @@ class Namespace(Struct):
                 # Unable to promote to Namespace, just overwrite
                 self[key] = Namespace({rest_path: value})
         else:
-            if existing is None:
-                # This is a common case and checking for None is fast
-                self[key] = value
-            elif getattr(existing, 'shortcut', False):
+            if getattr(existing, 'shortcut', False):
                 # Avoid merging Shortcuts
                 self[key] = value
             elif isinstance(existing, dict):
