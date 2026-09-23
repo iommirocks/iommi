@@ -1151,7 +1151,14 @@ class CellConfig(TransientFragment, Tag):
             link: Namespace,
             parent,
         ):
-        super(CellConfig, self).__init__(parent=parent, template=template, attrs=attrs, children=None, tag=tag)
+        # Not calling TransientFragment.__init__: its attrs defaults cost a Namespace merge
+        # for every cell, and Cell replaces attrs with the evaluated attrs right away anyway
+        self._is_bound = True
+        self.template = template
+        self.attrs = attrs
+        self.children = None
+        self.tag = tag
+        self.parent = parent
         self.url = url
         self.url_title = url_title
         self.value = value
