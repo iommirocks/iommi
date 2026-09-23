@@ -273,6 +273,13 @@ class RefinableObject:
                 + '\n'
             )
 
+    def __copy__(self):
+        # The same as the default copy.copy(), which goes through __reduce_ex__ and copyreg, but faster
+        cls = type(self)
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
     @classmethod
     def get_meta(cls):
         return get_meta(cls)
