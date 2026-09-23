@@ -1,4 +1,5 @@
 import re
+from copy import copy
 
 import pytest
 from django.template import Template
@@ -399,6 +400,19 @@ def test_refine_refinable_object_merged_in_from_a_dict():
 
     inner = stack.get('x').inner
     assert inner.iommi_namespace.as_stack() == [('member', {'a': 2})]
+
+
+def test_copy():
+    obj = RefinableObject()
+    obj.foo = 1
+
+    copied = copy(obj)
+
+    assert copied is not obj
+    assert type(copied) is RefinableObject
+    assert vars(copied) == vars(obj)
+    copied.foo = 2
+    assert obj.foo == 1
 
 
 def test_with_meta_warning():
