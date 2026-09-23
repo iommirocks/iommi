@@ -13,6 +13,9 @@ class SortAfterException(Exception):
 
 
 def sort_after(d):
+    if not d:
+        return d
+
     unmoved = []
     to_be_moved_by_index = []
     to_be_moved_by_name = defaultdict(list)
