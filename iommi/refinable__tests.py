@@ -374,6 +374,33 @@ def test_refinable_stack_lazy_resolution():
     assert id(object.__getattribute__(stack3, '_resolved')) == resolved_id
 
 
+def test_refinable_stack_get_last_set():
+    stack = RefinableStack(a=1)._refine(Prio.style, a=2, b=3)
+
+    assert stack.get_last_set('a') == 1  # Prio.base wins over Prio.style
+    assert stack.get_last_set('b') == 3
+    assert stack.get_last_set('c') is None
+    assert stack.get_last_set('c', 4) == 4
+    assert object.__getattribute__(stack, '_resolved') is None
+
+    stack.set('a', 5)
+    assert stack.get_last_set('a') == 5
+
+
+def test_refine_refinable_object_merged_in_from_a_dict():
+    class Inner(RefinableObject):
+        a = Refinable()
+
+    # The dict is merged into the existing namespace for x, so the Inner object ends up
+    # where the next layer refines it, and that refinement should get the layer's prio
+    stack = RefinableStack(x__other=1)
+    stack = stack._refine(Prio.member, x=dict(inner=Inner()))
+    stack = stack._refine(Prio.member, x__inner__a=2)
+
+    inner = stack.get('x').inner
+    assert inner.iommi_namespace.as_stack() == [('member', {'a': 2})]
+
+
 def test_with_meta_warning():
     @with_meta
     class MyPage(Page):

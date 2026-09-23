@@ -76,9 +76,20 @@ class RefinableStack:
     def _build_resolved(self):
         result = Namespace()
         missing = object()
+        # The prefix search below only matters for paths that go through a RefinableObject in
+        # result. Those can only be under a top level key where a layer has set a
+        # RefinableObject, or a dict that might contain one, so other paths skip the search.
+        keys_that_can_hold_refinable_objects = set()
 
         for prio, params, flattened_params in self._stack:
             for path, value in flattened_params:
+                key = path.partition('__')[0]
+                if key not in keys_that_can_hold_refinable_objects:
+                    if not (isinstance(value, RefinableObject) or (isinstance(value, dict) and value)):
+                        result.setitem_path(path, value)
+                        continue
+                    keys_that_can_hold_refinable_objects.add(key)
+
                 found = False
                 for prefix in prefixes(path):
                     existing = getattr_path(result, prefix, missing)
@@ -123,6 +134,17 @@ class RefinableStack:
     def get(self, key, default=None):
         value = self.as_namespace().get(key, default)
         return value
+
+    def get_last_set(self, key, default=None):
+        """Get the value of a top level key from the highest priority layer that sets it,
+        without resolving the whole stack. This is the same as get() for values that
+        replace each other rather than merge, like `iommi_style`."""
+        if self._resolved is not None:
+            return self._resolved.get(key, default)
+        for _, params, _ in reversed(self._stack):
+            if key in params:
+                return params[key]
+        return default
 
     def set(self, key, value):
         """Mutate the resolved namespace directly. Only for use in on_refine_done hooks.
@@ -277,7 +299,7 @@ class RefinableObject:
         if hasattr(result, 'apply_style'):
             is_root = parent is None
             enclosing_style = None if is_root else parent.iommi_style
-            iommi_style = result.iommi_namespace.get('iommi_style', None)
+            iommi_style = result.iommi_namespace.get_last_set('iommi_style', None)
 
             from iommi.style import resolve_style
 
