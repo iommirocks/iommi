@@ -246,6 +246,8 @@ class MemberBinder(dict):
 
         object.__setattr__(self, '_parent', parent)
         object.__setattr__(self, '_bindable_names', bindable_names)
+        # Names whose bind() returned None, so they aren't bound again on every access
+        object.__setattr__(self, '_excluded_names', set())
         object.__setattr__(self, '_declared_members', _declared_members)
         super().__init__()
 
@@ -310,8 +312,13 @@ def _force_bind(member_binder: MemberBinder, name: str):
         _declared_members = object.__getattribute__(member_binder, '_declared_members')
 
         if name in _bindable_names:
+            _excluded_names = object.__getattribute__(member_binder, '_excluded_names')
+            if name in _excluded_names:
+                return
             bound_member = _declared_members[name].bind(parent=_parent)
-            if bound_member is not None:
+            if bound_member is None:
+                _excluded_names.add(name)
+            else:
                 bound_members = dict.copy(member_binder)
                 dict.clear(member_binder)  # re-insert values in dict to retain ordering
                 dict.update(
