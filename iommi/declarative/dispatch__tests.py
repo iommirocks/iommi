@@ -13,6 +13,18 @@ def test_dispatch():
     assert f() == dict(foo={})
 
 
+def test_dispatch_without_defaults():
+    @dispatch
+    def f(**kwargs):
+        return kwargs
+
+    assert f(a=1, b=dict(c=2)) == dict(a=1, b=dict(c=2))
+    assert f(a=1, b__c=2, b__d=3) == dict(a=1, b=dict(c=2, d=3))
+    result = f(a=EMPTY)
+    assert result == dict(a={})
+    assert result['a'] is not EMPTY
+
+
 def test_dispatch_legacy():
     @dispatch(bar__a='5', bar__quux__title='hi!')
     def foo(a, b, c, bar, baz):
