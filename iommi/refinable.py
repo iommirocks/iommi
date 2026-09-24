@@ -251,6 +251,8 @@ class RefinableMembers(Refinable):
     parameter='refinable',
     is_member=is_refinable_function,
     add_init_kwargs=False,
+    # The members are stateless Refinable markers and refinable functions, so instances can share them
+    copy_members=False,
 )
 class RefinableObject:
     iommi_namespace: RefinableStack
