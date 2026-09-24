@@ -21,10 +21,14 @@ from iommi.refinable import (
     RefinableObject,
 )
 from iommi.shortcut import with_defaults
-from iommi.traversable import Traversable
+from iommi.traversable import (
+    PathNotFoundException,
+    Traversable,
+)
 from tests.helpers import (
     Basket,
     Fruit,
+    req,
     verify_part_html,
 )
 
@@ -418,6 +422,40 @@ def test_bind_single_member():
 
     lid_path = DISPATCH_PATH_SEPARATOR + basket.lid.iommi_path
     assert find_target(path=lid_path, root=basket) == basket.lid
+
+
+def test_bind_single_member_with_endpoint():
+    class MyPage(Page):
+        lid = Refinable()
+
+        def on_bind(self):
+            super().on_bind()
+            bind_member(self, name='lid')
+
+    page = MyPage(lid=html.div(_name='lid', endpoints__open__func=lambda **_: 'opened')).bind(request=req('get'))
+
+    # The lid is refine done when it's bound, but the path map still knows what it contains
+    assert find_target(path='/open', root=page) is page.lid.endpoints.open
+
+
+def test_single_member_without_a_free_short_path():
+    class Lid(Traversable):
+        pass
+
+    class MyBasket(Basket):
+        lid: Lid = Refinable()
+
+        def on_bind(self):
+            super().on_bind()
+            bind_member(self, name='lid')
+
+    basket = MyBasket(fruits__lid=Fruit(), lid=Lid(_name='lid')).bind()
+
+    # The fruit takes the short path 'lid', which is also the long path of the lid, so the lid gets no short
+    # path. That only fails when its path is looked up, since the lid might not be bound at all.
+    assert basket.fruits.lid.iommi_path == 'lid'
+    with pytest.raises(PathNotFoundException, match='Ran out of names'):
+        basket.lid.iommi_path
 
 
 def test_members_refine_done_shortcut_matches_generic_refine_done():

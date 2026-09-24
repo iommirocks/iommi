@@ -15,7 +15,10 @@ from iommi.debug import (
     source_url_from_part,
     source_url_from_view_function,
 )
-from iommi.endpoint import find_target
+from iommi.endpoint import (
+    InvalidEndpointPathException,
+    find_target,
+)
 from iommi.struct import Struct
 from tests import debug_tests_stuff
 from tests.helpers import req
@@ -33,7 +36,8 @@ def test_debug_tree_on_debug_false(settings):
 
     root = MyPage().bind(request=req('get', **{'/debug_tree': '7'}))
 
-    with pytest.raises(AssertionError):
+    # The endpoint is excluded, which is handled like a path that doesn't exist
+    with pytest.raises(InvalidEndpointPathException):
         find_target(path='/debug_tree', root=root)
 
 
