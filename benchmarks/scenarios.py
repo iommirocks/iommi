@@ -27,6 +27,11 @@ from benchmarks.models import (
     Genre,
     Track,
 )
+from benchmarks.names import (
+    ALBUM_NAMES,
+    ARTIST_NAMES,
+    DISCOGRAPHY,
+)
 from iommi import (
     Action,
     Column,
@@ -73,12 +78,13 @@ GENRES = [
     'Stoner',
     'Thrash',
 ]
-NUMBER_OF_ARTISTS = 30
+NUMBER_OF_ARTISTS = len(ARTIST_NAMES)
 ALBUMS_PER_ARTIST = 10
 TRACKS_PER_ALBUM = 10
+assert all(len(albums) == ALBUMS_PER_ARTIST for albums in DISCOGRAPHY.values())
 
-EDITED_ALBUM = 'Album 007'
-EDIT_TABLE_ALBUMS = ['Album 010', 'Album 011', 'Album 012', 'Album 013']
+EDITED_ALBUM = ALBUM_NAMES[7]
+EDIT_TABLE_ALBUMS = ALBUM_NAMES[10:14]
 
 
 def setup_database():
@@ -91,7 +97,7 @@ def setup_database():
     artists = Artist.objects.bulk_create(
         [
             Artist(
-                name=f'Artist {i:02}',
+                name=ARTIST_NAMES[i],
                 country=Artist.COUNTRIES[i % len(Artist.COUNTRIES)][0],
                 formed=1960 + i,
                 active=i % 3 != 0,
@@ -102,7 +108,7 @@ def setup_database():
     albums = Album.objects.bulk_create(
         [
             Album(
-                name=f'Album {i:03}',
+                name=ALBUM_NAMES[i],
                 artist=artists[i // ALBUMS_PER_ARTIST],
                 year=1965 + i * 7 % 55,
                 published_date=date(1965 + i * 7 % 55, 1 + i % 12, 1 + i % 28),
@@ -152,8 +158,8 @@ REPORT_ROWS = [
     ReportRow(
         pk=i,
         name=f'Track {i:03}',
-        artist=f'Artist {i % NUMBER_OF_ARTISTS:02}',
-        album=f'Album {i // TRACKS_PER_ALBUM:03}',
+        artist=ARTIST_NAMES[i % NUMBER_OF_ARTISTS],
+        album=ALBUM_NAMES[i // TRACKS_PER_ALBUM],
         year=1965 + i * 7 % 55,
         released=date(1965 + i * 7 % 55, 1 + i % 12, 1 + i % 28),
         duration=120 + i * 37 % 300,
@@ -333,21 +339,21 @@ def get_scenarios():
             description='Model table with filters, bulk edit, row actions and pagination',
             view=album_list_view,
             build_request=get('/albums/'),
-            expected_text=['Album 000', 'Artist 00', 'Create album'],
+            expected_text=['A Candle for the Ferryman', 'The Marrow Lanterns', 'Create album'],
         ),
         Scenario(
             name='albums.list_filtered',
             description='Same table: free text search, sorted on a column, second page',
             view=album_list_view,
-            build_request=get('/albums/', {'freetext_search': 'Album 1', 'order': '-year', 'page': '2'}),
-            expected_text=['Album 140', 'Album 131'],
+            build_request=get('/albums/', {'freetext_search': 'the', 'order': '-year', 'page': '2'}),
+            expected_text=['The Pompadour Tapes', 'Northern Lights Radio'],
         ),
         Scenario(
             name='albums.tbody_ajax',
             description='Same table: the ajax endpoint used to refresh rows when filtering',
             view=album_list_view,
-            build_request=get('/albums/', {tbody_path: '', 'freetext_search': 'Album 2'}),
-            expected_text=['{"html": ', 'Album 215'],
+            build_request=get('/albums/', {tbody_path: '', 'freetext_search': 'st'}),
+            expected_text=['{"html": ', 'Blue Hour in Stockholm'],
         ),
         Scenario(
             name='album_form.create',
@@ -374,8 +380,8 @@ def get_scenarios():
             name='album_form.choices_ajax',
             description='Model create form: the select2 ajax endpoint for the artist FK',
             view=album_create_view,
-            build_request=get('/albums/create/', {choices_path: 'Artist 1'}),
-            expected_text=['Artist 10', 'Artist 19'],
+            build_request=get('/albums/create/', {choices_path: 'the'}),
+            expected_text=['The Brass Heron', 'The Tumbleweed Saints'],
         ),
         Scenario(
             name='tracks.edit_table',
@@ -396,7 +402,7 @@ def get_scenarios():
             description='Page instantiated per request: menu, fragments, a form and two model tables',
             view=dashboard_view,
             build_request=get('/'),
-            expected_text=['Dashboard', 'Latest releases', 'Artist 00'],
+            expected_text=['Dashboard', 'Latest releases', 'Delta Ghost Receiver'],
         ),
         Scenario(
             name='report',

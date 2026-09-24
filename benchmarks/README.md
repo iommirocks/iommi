@@ -6,7 +6,8 @@ with tables, forms, an edit table and a composite page, and the requests a brows
 shows them all.
 
 The settings are production like: `DEBUG = False`, the bootstrap5 style, no dev tool middleware, and
-an in-memory sqlite database with 30 artists, 300 albums and 3000 tracks. Views are called directly
+an in-memory sqlite database with 30 artists, 300 albums and 3000 tracks. The made up artists and
+albums are listed in `names.py`. Views are called directly
 with requests from `RequestFactory`, so the Django middleware stack is not measured.
 
 ```
