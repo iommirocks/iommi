@@ -631,3 +631,17 @@ def test_func_from_namespace():
     )
     assert n() == 'g'
     assert func_from_namespace(n) is F.g
+
+
+def test_refine_call_target_callable_with_attribute():
+    class F:
+        @staticmethod
+        def g():
+            return 'g'
+
+    assert Namespace(dict(call_target=F), dict(call_target__attribute='g'))() == 'g'
+    assert Namespace(dict(call_target=F), dict(call_target=dict(attribute='g')))() == 'g'
+    assert Namespace(dict(x__call_target=F), dict(x__call_target__attribute='g')).x() == 'g'
+
+    with pytest.raises(AttributeError):
+        Namespace(dict(call_target=F), dict(call_target__attribute='garbage'))()

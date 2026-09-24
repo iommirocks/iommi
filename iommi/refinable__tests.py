@@ -392,3 +392,18 @@ def test_with_meta_warning():
     )
 
     assert p.extra.banana == 17
+
+
+def test_refinable_stack_is_configured():
+    stack = RefinableStack()._refine(Prio.shortcut, bulk__call_target__attribute='text')
+    stack = stack._refine(Prio.style, bulk__include=True, filter=dict(include=True))
+    assert not stack.is_configured('bulk', min_prio=Prio.style, ignore=['include'])
+    assert not stack.is_configured('filter', min_prio=Prio.style, ignore=['include'])
+    assert stack.is_configured('bulk', min_prio=Prio.shortcut, ignore=['include'])
+    assert stack.is_configured('bulk', min_prio=Prio.style)
+
+    stack = stack._refine(Prio.refine, bulk__display_name='foo', filter=dict(attr='foo'))
+    assert stack.is_configured('bulk', min_prio=Prio.style, ignore=['include'])
+    assert stack.is_configured('filter', min_prio=Prio.style, ignore=['include'])
+    assert not stack.is_configured('bulk', min_prio=Prio.refine, ignore=['include', 'display_name'])
+    assert not stack.is_configured('bulk_container', min_prio=Prio.style)

@@ -34,6 +34,7 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.refinable import (
+    Prio,
     Refinable,
     RefinableObject,
     SpecialEvaluatedRefinable,
@@ -213,6 +214,22 @@ def member_from_model(
         model_field_name=model_field_name,
         model=model,
     )
+
+
+def with_shortcut_defaults(conf, **defaults):
+    """Apply `defaults` to the member built from the `member_from_model` result `conf` at shortcut
+    priority, instead of passing them as constructor arguments. That way they still override the
+    defaults of the shortcut `conf` points to, but styles can override them."""
+    if not isinstance(conf, Namespace):
+        return conf
+
+    call_target = conf.pop('call_target')
+
+    def call_target_with_shortcut_defaults(**kwargs):
+        return Namespace(call_target=call_target)(**kwargs).refine(Prio.shortcut, **defaults)
+
+    conf.call_target = call_target_with_shortcut_defaults
+    return conf
 
 
 def _config_from_model_kwargs(member):

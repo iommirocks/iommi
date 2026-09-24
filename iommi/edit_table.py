@@ -48,7 +48,7 @@ from iommi.form import (
     find_unique_prefixes,
     int_parse,
 )
-from iommi.from_model import base_defaults_factory, member_from_model
+from iommi.from_model import base_defaults_factory, member_from_model, with_shortcut_defaults
 from iommi.member import (
     bind_member,
     bind_members,
@@ -185,12 +185,9 @@ class EditColumn(Column):
     field: Field | None = Refinable()
 
     @classmethod
-    @dispatch(
-        filter__call_target__attribute='from_model',
-        bulk__call_target__attribute='from_model',
-    )
+    @dispatch
     def _from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
-        return member_from_model(
+        conf = member_from_model(
             cls=cls,
             model=model,
             factory_lookup={**_column_factory_by_field_type, **_edit_column_factory_by_field_type},
@@ -201,6 +198,12 @@ class EditColumn(Column):
             model_field=model_field,
             defaults_factory=base_defaults_factory,
             **kwargs,
+        )
+        # Not passed as arguments, so styles can pick other filter/bulk shortcuts
+        return with_shortcut_defaults(
+            conf,
+            filter__call_target__attribute='from_model',
+            bulk__call_target__attribute='from_model',
         )
 
     def on_refine_done(self):

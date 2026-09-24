@@ -141,6 +141,19 @@ class RefinableStack:
 
     # --- Stack inspection ---
 
+    def is_configured(self, name, *, min_prio: Prio, ignore=()):
+        """Is anything under `name`, except the keys in `ignore`, refined at `min_prio` or higher?"""
+        for prio, _, flattened_params in self._stack:
+            if prio.value < min_prio.value:
+                continue
+            for path, value in flattened_params:
+                if path == name and isinstance(value, dict):
+                    if value.keys() - set(ignore):
+                        return True
+                elif path.startswith(name + '__') and path[len(name) + 2 :].partition('__')[0] not in ignore:
+                    return True
+        return False
+
     def as_stack(self):
         return [(prio.name, dict(flattened_params)) for prio, _, flattened_params in self._stack]
 

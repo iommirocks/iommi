@@ -51,6 +51,7 @@ dev = [
     "pytest-xdist>=3.0.0",
     "watchdog>=6.0.0",
     "pyyaml>=6.0",
+    "hypothesis>=6.168.1",
 ]
 
 [project.urls]

@@ -4,6 +4,13 @@ from iommi.struct import (
 )
 
 
+def _promote_callable(key, existing, value):
+    if key == 'call_target' and value.keys() <= {'attribute', 'cls'}:
+        # `call_target=Foo` refined with `call_target__attribute='bar'` means `Foo.bar`
+        return Namespace(dict(cls=existing), value)
+    return _get_type_of_namespace(value)(dict(call_target=existing), value)
+
+
 def _get_type_of_namespace(dict_value):
     if isinstance(dict_value, Namespace):
         return type(dict_value)
@@ -55,7 +62,7 @@ class Namespace(Struct):
                 type_of_namespace = _get_type_of_namespace(existing)
                 self[key] = type_of_namespace(existing, {rest_path: value})
             elif callable(existing):
-                self[key] = Namespace(dict(call_target=existing), {rest_path: value})
+                self[key] = _promote_callable(key, existing, Namespace({rest_path: value}))
             elif isinstance(existing, RefinableObject):
                 self[key] = existing.refine(**{rest_path: value})
             else:
@@ -84,8 +91,7 @@ class Namespace(Struct):
                     self[key] = value
             elif callable(existing):
                 if isinstance(value, dict):
-                    type_of_namespace = _get_type_of_namespace(value)
-                    self[key] = type_of_namespace(dict(call_target=existing), value)
+                    self[key] = _promote_callable(key, existing, value)
                 else:
                     self[key] = value
             else:

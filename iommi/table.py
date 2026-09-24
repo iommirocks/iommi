@@ -19,6 +19,7 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
+from django.conf import settings
 from django.core.exceptions import (
     FieldDoesNotExist,
     ImproperlyConfigured,
@@ -108,11 +109,14 @@ from iommi.from_model import (
     get_search_fields,
     member_from_model,
     related_choices_from_model_field,
+    resolve_config_from_model,
+    with_shortcut_defaults,
 )
 from iommi.member import (
     bind_member,
     bind_members,
     refine_done_members,
+    reify_conf,
 )
 from iommi.page import (
     Page,
@@ -383,9 +387,14 @@ def foreign_key__sort_key(column, **_):
 
 def get_choices_from_column(table, traversable, **_):
     column_definition = table.iommi_namespace.get('columns')[traversable.iommi_name()]
+    # The choices belong to the column, so they are evaluated as the column, not as the filter/bulk field
     return evaluate_strict(
         column_definition.choices,
-        **traversable.iommi_evaluate_parameters(),
+        **{
+            **traversable.iommi_evaluate_parameters(),
+            'traversable': column_definition,
+            'column': column_definition,
+        },
     )
 
 
@@ -595,12 +604,9 @@ class Column(Part):
         )
 
     @classmethod
-    @dispatch(
-        filter__call_target__attribute='from_model',
-        bulk__call_target__attribute='from_model',
-    )
+    @dispatch
     def _from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
-        return member_from_model(
+        conf = member_from_model(
             cls=cls,
             model=model,
             factory_lookup=_column_factory_by_field_type,
@@ -611,6 +617,12 @@ class Column(Part):
             model_field=model_field,
             defaults_factory=base_defaults_factory,
             **kwargs,
+        )
+        # Not passed as arguments, so styles can pick other filter/bulk shortcuts
+        return with_shortcut_defaults(
+            conf,
+            filter__call_target__attribute='from_model',
+            bulk__call_target__attribute='from_model',
         )
 
     @classmethod
@@ -2147,14 +2159,21 @@ class Table(Part, Tag):
         if self.model:
             # Query
             filters = Struct()
+            # In DEBUG, configured filters and bulk fields that are excluded from the query and bulk
+            # form are still built, so that invalid config raises instead of being silently ignored.
+            unused_filters = Struct()
+            unused_bulk_fields = Struct()
+
+            def is_configured(column, name):
+                return (
+                    settings.DEBUG
+                    and isinstance(column, RefinableObject)
+                    and column.iommi_namespace.is_configured(name, min_prio=Prio.style, ignore=['include'])
+                )
 
             field_class = self.query_class.get_meta().member_class
 
             for name, column in items(self.iommi_namespace.get('columns', {})):
-                if getattr(column, 'include', None) is False:
-                    continue
-                if getattr(column.filter, 'include', None) is False:
-                    continue
                 filter = setdefaults_path(
                     Namespace(),
                     column.filter,
@@ -2177,6 +2196,11 @@ class Table(Part, Tag):
                     include=should_have_filter,
                 )
 
+                if getattr(column, 'include', None) is False or getattr(column.filter, 'include', None) is False:
+                    if is_configured(column, 'filter'):
+                        unused_filters[name] = filter
+                    continue
+
                 filters[name] = filter()
 
             query_params = setdefaults_path(
@@ -2196,10 +2220,6 @@ class Table(Part, Tag):
 
             declared_bulk_fields = Struct()
             for name, column in items(self.iommi_namespace.get('columns', {})):
-                if getattr(column, 'include', None) is False:
-                    continue
-                if getattr(column.bulk, 'include', None) is False:
-                    continue
                 field = setdefaults_path(
                     Namespace(),
                     column.bulk,
@@ -2215,8 +2235,13 @@ class Table(Part, Tag):
                         initial=None,
                     ),
                 )
-                if isinstance(column.model_field, BooleanField):
+                if isinstance(column.model_field, BooleanField) and field.call_target.attribute in ('boolean', 'from_model'):
                     field.call_target.attribute = 'boolean_tristate'
+
+                if getattr(column, 'include', None) is False or getattr(column.bulk, 'include', None) is False:
+                    if is_configured(column, 'bulk'):
+                        unused_bulk_fields[name] = field
+                    continue
 
                 declared_bulk_fields[name] = field
 
@@ -2251,6 +2276,19 @@ class Table(Part, Tag):
                     Prio.table_defaults,
                     fields=declared_bulk_fields,
                 )
+            elif settings.DEBUG:
+                columns = self.iommi_namespace.get('columns', {})
+                unused_bulk_fields.update(
+                    {k: v for k, v in items(declared_bulk_fields) if k in columns and is_configured(columns[k], 'bulk')}
+                )
+
+            for unused_members in [unused_filters, unused_bulk_fields]:
+                unused_members = Struct({k: reify_conf(v) for k, v in items(unused_members)})
+                resolve_config_from_model(self, unused_members, member_class=None, unapplied_config={})
+                for member in values(unused_members):
+                    member = reify_conf(member)
+                    if member is not None:
+                        member.refine_done(parent=self)
 
         if not self.model and not self.bulk and 'actions' in self.iommi_namespace.get('bulk', {}):
             # TODO: Support custom 'bulk' actions even when there is no model

@@ -4919,3 +4919,96 @@ def test_csv_download_uses_report_value_override():
     csv = t.render_to_response().getvalue().decode()
 
     assert 'CUSTOM_A' in csv
+
+
+@pytest.mark.django_db
+def test_style_can_change_filter_shortcut_of_auto_column():
+    from iommi.style import Style, get_global_style
+
+    style = Style(get_global_style('test'), Column__shortcuts__integer__filter__call_target__attribute='text')
+    t = Table(auto__model=TFoo, iommi_style=style, columns__a__filter__include=True).bind(request=req('get'))
+    assert t.query.filters.a.iommi_shortcut_stack[0] == 'text'
+
+    style = Style(get_global_style('test'), Column__shortcuts__choice_queryset__filter__call_target__attribute='garbage')
+    with pytest.raises(AttributeError, match='garbage'):
+        Table(auto__model=TBar, iommi_style=style, columns__foo__filter__include=True).bind(request=req('get'))
+
+
+@pytest.mark.django_db
+def test_style_can_change_bulk_shortcut_of_auto_boolean_column():
+    from iommi.style import Style, get_global_style
+
+    style = Style(get_global_style('test'), Column__shortcuts__boolean__bulk__call_target__attribute='garbage')
+    with pytest.raises(AttributeError, match='garbage'):
+        Table(auto__model=BooleanFromModelTestModel, iommi_style=style, columns__b__bulk__include=True).bind(
+            request=req('get')
+        )
+
+
+@pytest.mark.django_db
+def test_invalid_bulk_config_on_column_without_bulk_raises(settings):
+    # Only validated in DEBUG, to not pay for it in production
+    Table(auto__model=TFoo, columns__a__bulk__garbage=1).bind(request=req('get'))
+
+    settings.DEBUG = True
+    with pytest.raises(TypeError, match='garbage'):
+        Table(auto__model=TFoo, columns__a__bulk__garbage=1).bind(request=req('get'))
+
+    # ...also when some other column has bulk
+    with pytest.raises(TypeError, match='garbage'):
+        Table(auto__model=TFoo, columns__a__bulk__garbage=1, columns__b__bulk__include=True).bind(request=req('get'))
+
+
+@pytest.mark.django_db
+def test_invalid_filter_config_on_excluded_filter_raises(settings):
+    # Only validated in DEBUG, to not pay for it in production
+    Table(auto__model=TFoo, columns__a__filter__include=False, columns__a__filter__garbage=1).bind(request=req('get'))
+
+    settings.DEBUG = True
+    with pytest.raises(TypeError, match='garbage'):
+        Table(auto__model=TFoo, columns__a__filter__include=False, columns__a__filter__garbage=1).bind(request=req('get'))
+
+    with pytest.raises(TypeError, match='garbage'):
+        Table(auto__model=TFoo, columns__a__include=False, columns__a__filter__garbage=1).bind(request=req('get'))
+
+
+@pytest.mark.django_db
+def test_excluded_filter_and_bulk_of_non_model_column_are_not_built(settings):
+    settings.DEBUG = True
+    # These columns can't have a filter or bulk field. That's fine as long as nobody configures them.
+    t = Table(
+        auto__model=TBar,
+        columns__foo_a=Column.from_model(attr='foo__a', model_field=TFoo.a.field),
+        columns__computed=Column(attr=None, filter__include=False),
+    ).bind(request=req('get'))
+    assert 'foo_a' in t.columns
+    assert 'computed' in t.columns
+
+
+@pytest.mark.django_db
+def test_foreign_key_column_choices_for_filter():
+    from iommi.style import Style, get_global_style
+
+    f1 = TFoo.objects.create(a=1, b='one')
+    f2 = TFoo.objects.create(a=2, b='two')
+    f3 = TFoo.objects.create(a=3, b='three')
+    b1 = TBar.objects.create(foo=f1, c=False)
+    b2 = TBar.objects.create(foo=f2, c=False)
+    TBar.objects.create(foo=f3, c=False)
+
+    t = Table(
+        auto__model=TBar,
+        columns__foo=Column.foreign_key(model_field=TBar.foo.field, filter__include=True),
+    ).bind(request=req('get', foo=str(f1.pk)))
+    assert list(t.query.form.fields.foo.choices) == [f1, f2, f3]
+    assert list(t.rows) == [b1]
+
+    style = Style(
+        get_global_style('test'),
+        Column__shortcuts__choice_queryset__filter__call_target__attribute='multi_choice_queryset',
+    )
+    t = Table(auto__model=TBar, iommi_style=style, columns__foo__filter__include=True).bind(
+        request=req('get', foo=[str(f1.pk), str(f2.pk)])
+    )
+    assert list(t.query.form.fields.foo.choices) == [f1, f2, f3]
+    assert list(t.rows) == [b1, b2]
