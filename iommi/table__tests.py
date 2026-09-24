@@ -66,6 +66,7 @@ from iommi.sql_trace import (
     set_sql_debug,
 )
 from iommi.table import (
+    Cells,
     Column,
     DataRetrievalMethods,
     Struct,
@@ -601,6 +602,29 @@ def test_attr(NoSortTable):  # noqa: N803
             </table>
         """,
     )
+
+
+def test_cells_are_refine_done_once_per_table():
+    refine_done_calls = []
+
+    class MyCells(Cells):
+        def refine_done(self, parent=None):
+            refine_done_calls.append(self)
+            return super().refine_done(parent=parent)
+
+    table = Table(
+        columns__a=Column(),
+        rows=[Struct(a=1), Struct(a=2), Struct(a=3)],
+        cells_class=MyCells,
+        row__attrs__class__odd=lambda row, **_: row.a % 2 == 1,
+    ).bind(request=req('get'))
+    all_cells = list(table.cells_for_rows())
+
+    # Refine done gives the same result for every row, but every row is bound on its own
+    assert len(refine_done_calls) == 1
+    assert [(cells.row.a, cells.row_index) for cells in all_cells] == [(1, 0), (2, 1), (3, 2)]
+    assert [cells.attrs['class'] for cells in all_cells] == [dict(odd=True), dict(odd=False), dict(odd=True)]
+    assert len({id(cells) for cells in all_cells}) == 3
 
 
 # noinspection HtmlUnknownAttribute
