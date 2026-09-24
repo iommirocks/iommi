@@ -143,8 +143,9 @@ class EditCell(Cell):
 
 
 def bind_field_from_instance(field, instance):
-    field.input = field.iommi_namespace.get('input')(_name='input')
-    field.non_editable_input = field.iommi_namespace.get('non_editable_input')(_name='non_editable_input')
+    # The inputs of the declared field are already refine done, so each cell only needs to bind them
+    field.input = field._declared.input
+    field.non_editable_input = field._declared.non_editable_input
     field.editable = field.iommi_namespace.get('editable')
     field.initial = field.iommi_namespace.get('initial')
     field.label.attrs['for'] = evaluate_strict(default_input_id, **field.label.iommi_evaluate_parameters())
