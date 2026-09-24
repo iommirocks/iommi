@@ -1,5 +1,6 @@
 import csv
 from collections.abc import Callable, Iterable
+from copy import copy
 from datetime import (
     UTC,
     date,
@@ -2801,8 +2802,24 @@ class Table(Part, Tag):
                     yield self.row_group_class(**column.row_group, value=v).bind(parent=self).__html__()
                 row_group_values[column._name] = v
 
+            yield self._bind_cells(row=row, row_index=i)
+
+    def _bind_cells(self, row, row_index, **kwargs):
+        # Refine done gives the same Cells for every row, so it's only done once per bound table
+        refine_done_cells_by_kwargs = getattr(self, '_refine_done_cells_by_kwargs', None)
+        if refine_done_cells_by_kwargs is None:
+            refine_done_cells_by_kwargs = self._refine_done_cells_by_kwargs = {}
+        key = tuple(sorted(kwargs.items()))
+        refine_done_cells = refine_done_cells_by_kwargs.get(key)
+        if refine_done_cells is None:
             # noinspection PyCallingNonCallable
-            yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
+            refine_done_cells = self.cells_class(row=None, row_index=None, **kwargs, **self.row.as_dict()).refine_done(parent=self)
+            refine_done_cells_by_kwargs[key] = refine_done_cells
+
+        cells = copy(refine_done_cells)
+        cells.row = row
+        cells.row_index = row_index
+        return cells.bind(parent=self)
 
     @classmethod
     @dispatch()
