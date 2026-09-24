@@ -13,6 +13,7 @@ from docs.models import (
     Track,
 )
 from iommi.path import _path_component_to_decode_data
+from iommi.thread_locals import set_current_request
 
 # When several pytest sessions run in one process (e.g. mutmut's in-process runner does
 # a stats run followed by a clean-test run, then a run per mutant) pytest-django's
@@ -80,6 +81,14 @@ def _reset_path_decoders():
     """Clear global path decoders before each test so registrations from app.ready() (e.g. examples app) don't interfere."""
     _path_component_to_decode_data.clear()
     yield
+
+
+@pytest.fixture(autouse=True)
+def _reset_current_request():
+    """Clear the current request after each test. show_output() sets it, and a request with _iommi_code_finder makes
+    later tests in the same process render code finder comments."""
+    yield
+    set_current_request(None)
 
 
 @pytest.fixture(autouse=True)
