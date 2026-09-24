@@ -560,6 +560,28 @@ def test_non_editable():
 
 
 @pytest.mark.django_db
+def test_cells_bind_the_inputs_of_the_declared_field():
+    TFoo(pk=123, a=1, b='asd').save()
+    TFoo(pk=456, a=2, b='fgh').save()
+
+    table = EditTable(
+        auto__model=TFoo,
+        columns__b__field=dict(
+            include=True,
+            editable=lambda instance, **_: instance and instance.pk == 123,
+        ),
+    ).bind(request=req('get'))
+    table.__html__()
+
+    field = table.edit_form.fields.b
+    declared_field = field._declared
+    # The last row isn't editable, so its cell bound the non editable input
+    assert field.input._declared is declared_field.non_editable_input
+    assert not declared_field.input._is_bound
+    assert not declared_field.non_editable_input._is_bound
+
+
+@pytest.mark.django_db
 def test_non_rendered():
     TFoo(pk=321, a=1, b='asd').save()
     TFoo(pk=654, a=2, b='fgh').save()
