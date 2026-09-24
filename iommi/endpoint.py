@@ -100,7 +100,13 @@ def find_target(*, path, root):
         if part == '':
             continue
         next_node = node.iommi_bound_members().get(part)
-        assert next_node is not None, f"Failed to traverse long path '{long_path}' (No bound value for '{part}')"
+        if next_node is None:
+            # The path map is built from the declared tree, so it also has paths to parts that aren't bound for
+            # this request, for example excluded ones. Handle them like paths that don't exist.
+            raise InvalidEndpointPathException(
+                f"Given path {path} not found.\n"
+                f"    Failed to traverse long path '{long_path}' (No bound value for '{part}')"
+            )
         node = next_node
 
     return node

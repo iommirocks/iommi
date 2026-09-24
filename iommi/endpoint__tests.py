@@ -161,6 +161,24 @@ Given path /bar not found.
     )
 
 
+def test_excluded_part_is_handled_like_a_path_that_does_not_exist(settings):
+    page = Page(
+        parts__visible=html.div(endpoints__foo__func=lambda **_: 'foo'),
+        parts__hidden=html.div(endpoints__bar__func=lambda **_: 'bar', include=False),
+    ).refine_done()
+
+    def dispatch(path):
+        return json.loads(page.bind(request=req('get', **{path: ''})).render_to_response().content)
+
+    assert dispatch('/foo') == 'foo'
+    # The path map is built from the declared tree, so it has the path to the excluded endpoint
+    assert dispatch('/bar') == dispatch('/does_not_exist') == dict(error='Invalid endpoint path')
+
+    settings.DEBUG = True
+    with pytest.raises(InvalidEndpointPathException):
+        page.bind(request=req('get', **{'/bar': ''})).render_to_response()
+
+
 def test_unsupported_request_method():
     with pytest.raises(AssertionError):
         request_data(Struct(method='OPTIONS'))

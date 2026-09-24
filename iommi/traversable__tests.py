@@ -49,6 +49,7 @@ from iommi.struct import Struct
 from iommi.traversable import (
     Traversable,
     build_long_path_by_path,
+    get_long_path_by_path,
 )
 from tests.helpers import (
     Basket,
@@ -113,7 +114,7 @@ def test_traverse_on_iommi():
     page = MyPage().refine_done()
     actual = build_long_path_by_path(page)
     assert actual == {
-        '': 'parts/header',
+        '': '',
         'a_table': 'parts/a_table',
         'a_table/columns': 'parts/a_table/columns/columns',
         'a_table/fusk': 'parts/a_table/columns/fusk',
@@ -166,7 +167,8 @@ def test_traverse_on_iommi():
         'help': 'parts/some_form/fields/fisk/help',
         'input': 'parts/some_form/fields/fisk/input',
         'label': 'parts/some_form/fields/fisk/label',
-        'header': 'parts/a_table/header',
+        'header': 'parts/header',
+        'a_table/header': 'parts/a_table/header',
         'non_editable_input': 'parts/some_form/fields/fisk/non_editable_input',
         'outer': 'parts/a_table/outer',
         'outer/container': 'parts/a_table/outer/children/container',
@@ -192,6 +194,7 @@ def test_traverse_on_iommi():
     }
     assert len(actual.values()) == len(set(actual.values()))
     page = page.bind(request=req('get'))
+    assert get_long_path_by_path(page) == actual
 
     assert page.iommi_path == ''
     assert page.parts.header.iommi_path == 'header'
@@ -202,6 +205,25 @@ def test_traverse_on_iommi():
     assert page.parts.a_table.columns.fusk.iommi_path == 'a_table/fusk'
     assert page._name == 'root'
     assert set(keys(page.iommi_evaluate_parameters())) == {'traversable', 'page', 'params', 'request', 'user'}
+
+
+def test_path_map_is_built_once_from_the_declared_tree():
+    page = Page(
+        parts__form=Form(fields__name=Field()),
+        parts__other_form=Form(
+            fields__name=Field(),
+            include=lambda request, **_: request.GET.get('other') == 'yes',
+        ),
+    ).refine_done()
+
+    with_other_form = page.bind(request=req('get', other='yes'))
+    without_other_form = page.bind(request=req('get'))
+
+    # The map doesn't depend on what a request binds, so all binds of the page share one
+    assert get_long_path_by_path(with_other_form) is get_long_path_by_path(without_other_form)
+    assert with_other_form.parts.form.fields.name.iommi_path == 'name'
+    assert with_other_form.parts.other_form.fields.name.iommi_path == 'other_form/name'
+    assert 'other_form' not in keys(without_other_form.parts)
 
 
 def test_evil_names_that_work():

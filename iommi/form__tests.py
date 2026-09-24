@@ -3167,6 +3167,12 @@ def test_form_h_tag():
     assert 'None' not in Form(h_tag__include=False).bind(request=req('get')).__html__()
 
 
+def test_nested_form_h_tag():
+    page = Page(parts__form=Form(h_tag=html.b('$$$'), fields__name=Field())).bind(request=req('get'))
+    assert '<b>$$$</b>' in page.__html__()
+    assert page.parts.form.fields.name.iommi_path == 'name'
+
+
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_render_create_object():

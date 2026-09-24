@@ -148,6 +148,13 @@ class Traversable(RefinableObject):
         path_by_long_path = get_path_by_long_path(self)
         path = path_by_long_path.get(long_path)
         if path is None:
+            long_path_by_path = get_long_path_by_path(self)
+            if long_path in long_path_by_path:
+                raise PathNotFoundException(
+                    f"Ran out of names...\n"
+                    f"Any suitable short name for {long_path} already taken.\n\n"
+                    f"Paths:\n" + '\n'.join(f'{k}   ->   {v}' for k, v in long_path_by_path.items())
+                )
             candidates = '\n'.join(path_by_long_path.keys())
             raise PathNotFoundException(
                 f"Path not found(!) (Searched for '{long_path}' among the following:\n{candidates}"
@@ -192,16 +199,15 @@ class Traversable(RefinableObject):
         assert parent is None or parent._is_bound
         assert not self._is_bound
 
-        result = copy.copy(self)
+        declared = self if self.is_refine_done else self.refine_done(parent=parent)
+        del self  # to prevent mistakes when changing the code below
+
+        result = copy.copy(declared)
 
         is_root = parent is None
 
-        if not result.is_refine_done:
-            result = result.refine_done(parent=parent)
-
-        # todo drop _declared
-        result._declared = self
-        del self  # to prevent mistakes when changing the code below
+        # The refine done definition this is a copy of. The path map is built from the declared tree.
+        result._declared = declared
 
         if is_root:
             result._request = request
@@ -317,7 +323,7 @@ class Traversable(RefinableObject):
             return self.iommi_parent().get_context()
 
 
-def declared_members(node: Traversable) -> Namespace:
+def declared_members(node: Traversable, *, refine_done_children=False) -> Namespace:
     assert node.is_refine_done, "Trying to find declared_member on RefinableObject without doing refine_done() first"
     result = Namespace()
     for k, v in items(node.get_declared('refinable')):
@@ -326,6 +332,12 @@ def declared_members(node: Traversable) -> Namespace:
         else:
             child = getattr(node, k)
             if isinstance(child, RefinableObject):
+                if refine_done_children and not child.is_refine_done:
+                    # Members like this are refine done when they are bound, for example with bind_member().
+                    # Refine done a copy to find what it contains, named like the attribute it's bound as.
+                    child = child.refine_done(parent=node)
+                    if child._name is None:
+                        child._name = k
                 assert (
                     child.is_refine_done
                 ), f"refine_done() not invoked on something ({k}) in the declared namespace of {node._name}"
@@ -336,23 +348,31 @@ def declared_members(node: Traversable) -> Namespace:
     return result
 
 
-def get_long_path_by_path(node):
+def _get_path_map(node, name, build):
+    # The path maps only depend on the declared tree, not on what a request binds, so they are built once
+    # for the declared root and shared by all bound copies of it.
     root = node.iommi_root()
-    long_path_by_path = getattr(root, '_long_path_by_path', None)
-    if long_path_by_path is None:
-        long_path_by_path = build_long_path_by_path(root)
-        root._long_path_by_path = long_path_by_path
-    return long_path_by_path
+    path_map = getattr(root, name, None)
+    if path_map is None:
+        declared_root = getattr(root, '_declared', root)
+        path_map = getattr(declared_root, name, None)
+        if path_map is None:
+            path_map = build(declared_root)
+            setattr(declared_root, name, path_map)
+        setattr(root, name, path_map)
+    return path_map
+
+
+def get_long_path_by_path(node):
+    return _get_path_map(node, '_long_path_by_path', build_long_path_by_path)
 
 
 def get_path_by_long_path(node):
-    root = node.iommi_root()
-    path_by_long_path = getattr(root, '_path_by_long_path', None)
-    if path_by_long_path is None:
-        long_path_by_path = get_long_path_by_path(root)
-        path_by_long_path = {v: k for k, v in items(long_path_by_path)}
-        root._path_by_long_path = path_by_long_path
-    return path_by_long_path
+    return _get_path_map(
+        node,
+        '_path_by_long_path',
+        lambda declared_root: {v: k for k, v in items(get_long_path_by_path(declared_root))},
+    )
 
 
 def build_long_path(node: Traversable) -> str:
@@ -373,7 +393,8 @@ def build_long_path_by_path(root) -> dict[str, str]:
     result = dict()
 
     def _traverse(node, long_path_segments, short_path_candidate_segments):
-        if include_in_short_path(node):
+        # The root always gets the empty path, even when the root of a declared tree has no name
+        if node is root or include_in_short_path(node):
 
             def find_unique_suffix(parts):
                 for i in range(len(parts), -1, -1):
@@ -384,19 +405,17 @@ def build_long_path_by_path(root) -> dict[str, str]:
             long_path = '/'.join(long_path_segments)
             short_path = find_unique_suffix(short_path_candidate_segments)
             if short_path is None:
-                less_short_path = find_unique_suffix(long_path_segments)
-                assert less_short_path is not None, (
-                    f"Ran out of names...\n"
-                    f"Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\n"
-                    f"Result so far:\n" + '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
-                )
-                short_path = less_short_path
-            result[short_path] = long_path
+                short_path = find_unique_suffix(long_path_segments)
+            # When all suitable short paths are taken the node doesn't get one, and only looking up its path fails.
+            # The map is built from the declared tree, so the node might not even be bound, like an excluded part.
+            if short_path is not None:
+                result[short_path] = long_path
 
-            node._iommi_path_cache = short_path
+                if node is not root:
+                    node._iommi_path_cache = short_path
 
         if isinstance(node, RefinableObject):
-            members = declared_members(node)
+            members = declared_members(node, refine_done_children=True)
         elif isinstance(node, dict):
             members = node
             assert '_declared_members' not in members
