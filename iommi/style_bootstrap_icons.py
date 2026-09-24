@@ -26,8 +26,9 @@ bootstrap_icons = Style(
         edit__extra__icon='pencil-square',
         delete__extra__icon='trash',
         download__extra__icon='download',
+        # fs-5 with lh-1 is the biggest the check mark can be without making the row taller
         boolean__cell__format=lambda value, **_: mark_safe(
-            f'<i class="bi bi-check-lg fs-3" title="{gettext_lazy("Yes")}"></i>'
+            f'<i class="bi bi-check-lg fs-5 lh-1" title="{gettext_lazy("Yes")}"></i>'
         )
         if value
         else '',
