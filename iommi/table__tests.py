@@ -31,6 +31,7 @@ from iommi import (
     html,
 )
 from iommi._web_compat import Template
+from iommi.attrs import evaluate_attrs
 from iommi.base import (
     items,
     keys,
@@ -66,6 +67,7 @@ from iommi.sql_trace import (
     set_sql_debug,
 )
 from iommi.table import (
+    Cell,
     Column,
     DataRetrievalMethods,
     Struct,
@@ -601,6 +603,93 @@ def test_attr(NoSortTable):  # noqa: N803
             </table>
         """,
     )
+
+
+def test_cell_config_that_depends_on_the_row(NoSortTable):  # noqa: N803
+    class TestTable(NoSortTable):
+        a = Column(
+            cell__attrs__class__odd=lambda row, **_: row.a % 2 == 1,
+            cell__attrs__class__static=True,
+            cell__attrs__title=lambda value, **_: f'title {value}',
+            cell__tag=lambda row, **_: 'th' if row.a == 2 else 'td',
+            cell__url=lambda row, **_: f'/{row.a}/' if row.a == 3 else None,
+        )
+        b = Column(cell__attrs__class__static=True)
+
+    verify_table_html(
+        table=TestTable(rows=[Struct(a=1, b='x'), Struct(a=2, b='y'), Struct(a=3, b='z')]),
+        find=dict(name='tbody'),
+        # language=html
+        expected_html="""
+            <tbody>
+                <tr>
+                    <td class="odd static" title="title 1"> 1 </td>
+                    <td class="static"> x </td>
+                </tr>
+                <tr>
+                    <th class="static" title="title 2"> 2 </th>
+                    <td class="static"> y </td>
+                </tr>
+                <tr>
+                    <td class="odd static" title="title 3"> <a href="/3/"> 3 </a> </td>
+                    <td class="static"> z </td>
+                </tr>
+            </tbody>
+        """,
+    )
+
+
+def test_cell_can_change_its_own_attrs(NoSortTable):  # noqa: N803
+    def format(bound_cell, value, **_):
+        if value == 2:
+            bound_cell.attrs['class']['two'] = True
+        return value
+
+    class TestTable(NoSortTable):
+        a = Column(cell__attrs__class__foo=True, cell__format=format)
+
+    # The attrs of the column are only evaluated once, but every cell gets its own
+    verify_table_html(
+        table=TestTable(rows=[Struct(a=1), Struct(a=2), Struct(a=3)]),
+        find=dict(name='tbody'),
+        # language=html
+        expected_html="""
+            <tbody>
+                <tr> <td class="foo"> 1 </td> </tr>
+                <tr> <td class="foo two"> 2 </td> </tr>
+                <tr> <td class="foo"> 3 </td> </tr>
+            </tbody>
+        """,
+    )
+
+
+def test_static_cell_attrs_are_evaluated_once_per_column(NoSortTable, monkeypatch):  # noqa: N803
+    evaluated_for_columns = []
+
+    def recording_evaluate_attrs(obj, **kwargs):
+        if isinstance(obj, Cell):
+            evaluated_for_columns.append(obj.column._name)
+        return evaluate_attrs(obj, **kwargs)
+
+    monkeypatch.setattr('iommi.table.evaluate_attrs', recording_evaluate_attrs)
+
+    class TestTable(NoSortTable):
+        a = Column(cell__attrs__class__foo=True)
+        b = Column(cell__attrs__class__odd=lambda row, **_: row.b % 2 == 1)
+
+    TestTable(rows=[Struct(a=1, b=1), Struct(a=2, b=2), Struct(a=3, b=3)]).bind(request=req('get')).__html__()
+    assert evaluated_for_columns == ['a', 'b', 'b', 'b']
+
+
+@pytest.mark.parametrize('parameter', ['value', 'format'])
+def test_cell_callable_with_signature_that_does_not_match(parameter):
+    table = Table(
+        columns__a=Column(**{f'cell__{parameter}': lambda nonexistent_parameter: 1}),
+        rows=[Struct(a=1), Struct(a=2)],
+    ).bind(request=req('get'))
+
+    with pytest.raises(AssertionError, match="didn't resolve it into a value but strict mode was active"):
+        table.__html__()
 
 
 # noinspection HtmlUnknownAttribute
@@ -2954,6 +3043,28 @@ def test_data_iommi_path():
                     </tr>
                 </tbody>
             </table>
+        """,
+    )
+
+
+@override_settings(IOMMI_DEBUG=True)
+def test_data_iommi_path_of_cells():
+    class FooTable(Table):
+        a = Column(cell__attrs__class__foo=True)
+
+    verify_table_html(
+        table=FooTable(rows=[Struct(a=1), Struct(a=2)]),
+        find=dict(name='tbody'),
+        # language=html
+        expected_html="""
+            <tbody data-iommi-path="tbody" data-iommi-type="Fragment">
+                <tr data-iommi-path="row" data-iommi-type="Cells">
+                    <td class="foo" data-iommi-path="columns__a__cell" data-iommi-type="Cell"> 1 </td>
+                </tr>
+                <tr data-iommi-path="row" data-iommi-type="Cells">
+                    <td class="foo" data-iommi-path="columns__a__cell" data-iommi-type="Cell"> 2 </td>
+                </tr>
+            </tbody>
         """,
     )
 

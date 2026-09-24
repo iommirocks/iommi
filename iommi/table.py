@@ -10,7 +10,10 @@ from enum import (
     Enum,
     auto,
 )
-from functools import total_ordering
+from functools import (
+    partial,
+    total_ordering,
+)
 from io import StringIO
 from itertools import groupby
 from math import ceil
@@ -88,6 +91,10 @@ from iommi.evaluate import (
     evaluate,
     evaluate_member,
     evaluate_strict,
+    get_signature,
+    is_callable,
+    matches,
+    signature_from_kwargs,
 )
 from iommi.form import (
     Field,
@@ -1167,21 +1174,150 @@ class CellConfig(TransientFragment, Tag):
         self.link = link
 
 
+def _evaluator_for_cells(func_or_value, signature):
+    # How to evaluate a value of the cell config like evaluate_strict() does, but with the signature only matched
+    # once for the column: None if the value is used as it is, or what to call with the evaluate parameters
+    if not is_callable(func_or_value):
+        return None
+    callee_parameters = get_signature(func_or_value)
+    if callee_parameters is not None and matches(signature, callee_parameters, True):
+        return func_or_value
+    # Let evaluate_strict() fail with its explanation
+    return partial(evaluate_strict, func_or_value)
+
+
+def _evaluate_for_cell(func_or_value, evaluator, evaluate_parameters):
+    return func_or_value if evaluator is None else evaluator(**evaluate_parameters)
+
+
+def _evaluates_to_itself(d, ignore=()):
+    # Whether evaluate_as_needed_recursively() would return d as it is
+    for key, value in items(d):
+        if key in ignore:
+            continue
+        if isinstance(value, Namespace):
+            if not _evaluates_to_itself(value):
+                return False
+        elif is_callable(value):
+            return False
+    return True
+
+
+def _attrs_evaluate_to_themselves(attrs):
+    # Whether evaluate_attrs() gives the same attrs for every cell. It evaluates class and style first.
+    if not attrs:
+        return True
+    for key in ('class', 'style'):
+        value = attrs.get(key, {})
+        if not isinstance(value, dict) or is_callable(value) or not _evaluates_to_itself(value):
+            return False
+    return _evaluates_to_itself(attrs, ignore=('class', 'style'))
+
+
+def _copy_of_attrs(attrs):
+    # evaluate_attrs() makes new namespaces for every cell, so a cell can change its own attrs
+    if not isinstance(attrs, Namespace):
+        return attrs
+    result = type(attrs).__new__(type(attrs))
+    for key, value in dict.items(attrs):
+        dict.__setitem__(result, key, _copy_of_attrs(value))
+    return result
+
+
+_NOT_STATIC = object()
+
+
+class _CellConfigOfColumn:
+    # What is the same for all cells of a column: the cell config of the column merged with the one of the table,
+    # how its values are evaluated, and the attrs when they don't depend on the row. It's worked out with the first
+    # cell of the column, which is evaluated just like the others.
+
+    def __init__(self, column):
+        self.config = setdefaults_path(Namespace(), column.cell, column.table.cell)
+        self.format = column.cell.format
+        self.signature = None
+
+    def _prepare(self, cell):
+        evaluate_parameters = cell._evaluate_parameters
+        self.signature = signature_from_kwargs(evaluate_parameters)
+        signature_with_value = signature_from_kwargs({**evaluate_parameters, 'value': None})
+        config = self.config
+        self.value_evaluator = _evaluator_for_cells(config.value, self.signature)
+        self.url_evaluator = _evaluator_for_cells(config.url, signature_with_value)
+        self.url_title_evaluator = _evaluator_for_cells(config.url_title, signature_with_value)
+        self.tag_evaluator = _evaluator_for_cells(config.tag, signature_with_value)
+        self.format_evaluator = _evaluator_for_cells(self.format, signature_with_value)
+        self.static_tag = config.tag if self.tag_evaluator is None else _NOT_STATIC
+        # The static attrs are evaluated for the first cell, and are never handed out, so they stay as evaluated
+        self.static_attrs = None if _attrs_evaluate_to_themselves(config.attrs) else _NOT_STATIC
+        self.start_and_end_tag = None
+
+    def evaluate(self, cell):
+        if self.signature is None:
+            self._prepare(cell)
+        evaluate_parameters = cell._evaluate_parameters
+        cell.value = _evaluate_for_cell(cell.value, self.value_evaluator, evaluate_parameters)
+        evaluate_parameters['value'] = cell.value
+        cell.url = _evaluate_for_cell(cell.url, self.url_evaluator, evaluate_parameters)
+        if self.static_attrs is _NOT_STATIC:
+            cell.attrs = evaluate_attrs(cell, **evaluate_parameters)
+        else:
+            if self.static_attrs is None:
+                self.static_attrs = evaluate_attrs(cell, **evaluate_parameters)
+            cell.attrs = _copy_of_attrs(self.static_attrs)
+        cell.url_title = _evaluate_for_cell(cell.url_title, self.url_title_evaluator, evaluate_parameters)
+        cell.tag = _evaluate_for_cell(cell.tag, self.tag_evaluator, evaluate_parameters)
+
+    def render_formatted(self, cell):
+        cell_format = cell.column.cell.format
+        if cell_format is not self.format:
+            return evaluate_strict(cell_format, **cell._evaluate_parameters)
+        return _evaluate_for_cell(cell_format, self.format_evaluator, cell._evaluate_parameters)
+
+    def get_start_and_end_tag(self, tag, attrs):
+        # The rendered tags, if the cell still has the static tag and attrs of the column
+        if tag is not self.static_tag or self.static_attrs is _NOT_STATIC or attrs != self.static_attrs:
+            return None
+        if self.start_and_end_tag is None:
+            self.start_and_end_tag = (
+                f'<{conditional_escape(tag)}{conditional_escape(self.static_attrs)}>',
+                f'</{conditional_escape(tag)}>',
+            )
+        return self.start_and_end_tag
+
+
+def _cell_config_of_column(column, cell_class):
+    # Kept on the bound column. Changing the cell config of a bound column needs to drop it, see _prepare_auto_rowspan().
+    cell_configs = getattr(column, '_cell_configs', None)
+    if cell_configs is None:
+        cell_configs = column._cell_configs = {}
+    cell_config = cell_configs.get(cell_class)
+    if cell_config is None:
+        cell_config = cell_configs[cell_class] = _CellConfigOfColumn(column)
+    return cell_config
+
+
 class Cell(CellConfig):
     @dispatch
     def __init__(self, cells: 'Cells', column, **kwargs):
-        kwargs = setdefaults_path(
-            Namespace(),
-            column.cell,
-            column.table.cell,
-            **kwargs,
-        )
+        # The config is the same for all cells of a column, unless a cell is given more config
+        column_config = _cell_config_of_column(column, type(self)) if kwargs.keys() <= {'parent'} else None
+        if column_config is None:
+            kwargs = setdefaults_path(
+                Namespace(),
+                column.cell,
+                column.table.cell,
+                **kwargs,
+            )
+        else:
+            kwargs = {**kwargs, **column_config.config}
         super(Cell, self).__init__(**kwargs)
         self._name = 'cell'
         self._parent = cells
         self._is_bound = True
         self.iommi_style = None
         self._unapplied_config = {}
+        self._column_config = column_config
 
         self.column = column
         self.cells = cells
@@ -1194,6 +1330,10 @@ class Cell(CellConfig):
             row=self.row,
             bound_cell=self,
         )
+
+        if column_config is not None:
+            column_config.evaluate(self)
+            return
 
         self.value = evaluate_strict(self.value, **self._evaluate_parameters)
         self._evaluate_parameters['value'] = self.value
@@ -1215,10 +1355,18 @@ class Cell(CellConfig):
             context = self._evaluate_parameters
             return render_template(self.table.get_request(), cell__template, context)
 
-        if self.tag:
-            return format_html('<{}{}>{}</{}>', self.tag, self.attrs, self.render_cell_contents(), self.tag)
-        else:
+        tag = self.tag
+        if not tag:
             return format_html('{}', self.render_cell_contents())
+
+        attrs = self.attrs
+        contents = self.render_cell_contents()
+        if self._column_config is not None and self.tag is tag:
+            start_and_end_tag = self._column_config.get_start_and_end_tag(tag, attrs)
+            if start_and_end_tag is not None:
+                start_tag, end_tag = start_and_end_tag
+                return mark_safe(f'{start_tag}{conditional_escape(contents)}{end_tag}')
+        return format_html('<{}{}>{}</{}>', tag, attrs, contents, self.tag)
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
@@ -1238,6 +1386,8 @@ class Cell(CellConfig):
         return cell_contents
 
     def render_formatted(self):
+        if self._column_config is not None:
+            return self._column_config.render_formatted(self)
         return evaluate_strict(self.column.cell.format, **self._evaluate_parameters)
 
     def __str__(self):
@@ -2512,6 +2662,8 @@ class Table(Part, Tag):
                 if 'style' not in column.cell.attrs:
                     column.cell.attrs['style'] = {}
                 column.cell.attrs['style']['display'] = auto_rowspan_style
+                # The cells made above worked out the cell config of the column without these attrs
+                column._cell_configs = None
 
     def _prepare_sorting(self):
         """Sort all the rows.
