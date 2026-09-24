@@ -10,7 +10,7 @@ from .util import (
 T = TypeVar("T")
 
 
-def declarative(member_class=None, parameter='members', add_init_kwargs=True, sort_key: Callable[[object], object] | None = None, is_member: Callable[[object], bool] | None = None):
+def declarative(member_class=None, parameter='members', add_init_kwargs=True, sort_key: Callable[[object], object] | None = None, is_member: Callable[[object], bool] | None = None, copy_members=True):
     """
     Class decorator to enable classes to be defined in the style of django models.
     That is, @declarative classes will get an additional argument to constructor,
@@ -21,6 +21,7 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
     :param str parameter: Name of constructor parameter to inject
     :param bool add_init_kwargs: If constructor parameter should be injected (Default: True)
     :param sort_key: Function to invoke on members to obtain ordering (Default is to use ordering from `creation_ordered`)
+    :param bool copy_members: If each instance should get its own (shallow) copies of the members (Default: True)
     """
     if member_class is None and is_member is None:
         raise TypeError(
@@ -45,9 +46,9 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
 
         def get_extra_args_function(self):
             declared = get_declared(self, parameter)
-            copied_members = {k: copy(v) for k, v in declared.items()}
-            self.__dict__.update(copied_members)
-            return {parameter: copied_members}
+            members = {k: copy(v) for k, v in declared.items()} if copy_members else dict(declared)
+            self.__dict__.update(members)
+            return {parameter: members}
 
         if add_init_kwargs:
             add_args_to_init_call(new_class, get_extra_args_function)

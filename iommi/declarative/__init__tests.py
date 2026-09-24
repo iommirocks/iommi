@@ -459,6 +459,23 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
         D()
 
 
+def test_no_copy_of_attributes():
+    @declarative(list, sort_key=lambda x: x, copy_members=False)
+    class C:
+        x = []
+
+        def __init__(self, members):
+            self.members = members
+
+    # noinspection PyArgumentList
+    a = C()
+
+    assert a.x is C.x
+    assert a.members == dict(x=[])
+    assert a.members['x'] is C.x
+    assert a.members is not C.get_declared()
+
+
 def test_getter_and_setter_interface():
     @declarative(str, sort_key=lambda x: x, add_init_kwargs=False)
     class Foo:
