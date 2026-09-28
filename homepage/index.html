@@ -151,6 +151,30 @@
                 letter-spacing: -.02em
             }
 
+            .late-h {
+                display: inline-block;
+                vertical-align: top;
+                overflow: hidden;
+                max-width: 0;
+                opacity: 0;
+                animation: late-h .6s ease-out 1.5s forwards
+            }
+
+            @keyframes late-h {
+                to {
+                    max-width: 1em;
+                    opacity: 1
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .late-h {
+                    animation: none;
+                    max-width: none;
+                    opacity: 1
+                }
+            }
+
             .hero p {
                 font-size: 1.125rem;
                 color: var(--muted);
@@ -665,7 +689,7 @@
         <!-- Hero -->
         <section class="container hero">
             <div class="free-floating-content">
-                <h1>Your first pick for a <span style="color:var(--django-green)">Django</span> power chord</h1>
+                <h1>Your first pick for a <span style="color:var(--django-green)">Django</span> power c<span class="late-h">h</span>ord</h1>
                 <p>iommi is a productivity toolkit for Django that lets you ship complex UIs fast: forms, tables, pages, and an admin - without the boilerplate. Compose powerful parts, keep your code tiny, and stay in Python.</p>
                 <div class="hero-cta">
                     <a class="btn solid" href="#install">Install in minutes</a>
