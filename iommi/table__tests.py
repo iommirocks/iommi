@@ -4077,6 +4077,23 @@ def test_rows_should_not_cache():
 
 
 @pytest.mark.django_db
+def test_choice_queryset_choices_should_not_cache():
+    TFoo.objects.create(a=1)
+    q = TFoo.objects.all()
+    Table(
+        auto__model=TFoo,
+        columns__a=Column.choice_queryset(
+            choices=q,
+            filter__include=True,
+            filter__field__template='iommi/form/choice.html',
+            bulk__include=True,
+            bulk__template='iommi/form/choice.html',
+        ),
+    ).bind(request=req('get')).render_to_response()
+    assert q._result_cache is None, "Cache should be empty"
+
+
+@pytest.mark.django_db
 def test_auto_model_for_text_choices():
     class TestTable(Table):
         class Meta:

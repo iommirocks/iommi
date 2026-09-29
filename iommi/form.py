@@ -1058,6 +1058,10 @@ class Field(Part, Tag):
         self.parsed_data = self._parsed_data
         self._errors = set()
         self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
+        if isinstance(self.choices, QuerySet):
+            # Clone queryset to avoid accidental caching across requests. After evaluating, since
+            # a callable can hand back a shared queryset too, like a Column's filter and bulk fields do.
+            self.choices = self.choices.all()
         self.editable = evaluate_strict(self.editable, **self.iommi_evaluate_parameters())
         self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
         self._read_initial()
@@ -1095,10 +1099,6 @@ class Field(Part, Tag):
 
         form = self.form
         assert form is not None, "Each field needs a form."
-
-        if isinstance(self.choices, QuerySet):
-            # Clone queryset to avoid accidental caching across requests
-            self.choices = self.choices.all()
 
         form.all_fields[self._name] = self
 
