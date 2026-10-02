@@ -13,10 +13,10 @@ from decimal import (
 from functools import reduce
 from itertools import groupby
 from operator import or_
-from urllib.parse import urlparse
 from typing import (
     Any,
 )
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured, ObjectDoesNotExist, ValidationError

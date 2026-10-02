@@ -3,7 +3,7 @@ from examples import (
     storybook,
     views,
 )
-from examples.iommi import Form, Admin
+from examples.iommi import Admin, Form
 from examples.models import (
     Album,
     Artist,
@@ -13,7 +13,6 @@ from iommi import (
     M,
     MainMenu,
 )
-
 from iommi.main_menu import EXTERNAL
 
 main_menu = MainMenu(

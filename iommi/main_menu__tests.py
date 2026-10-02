@@ -27,9 +27,9 @@ from iommi.path import (
     register_path_decoding,
 )
 from iommi.style import (
+    Style,
     register_style,
     resolve_style,
-    Style,
 )
 from iommi.style_base import base
 from tests.helpers import (

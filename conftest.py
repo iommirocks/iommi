@@ -15,6 +15,7 @@ from docs.models import (
 from iommi.path import _path_component_to_decode_data
 from iommi.thread_locals import set_current_request
 
+
 # When several pytest sessions run in one process (e.g. mutmut's in-process runner does
 # a stats run followed by a clean-test run, then a run per mutant) pytest-django's
 # DB-access blocker leaks state between sessions. Each session gets a fresh,

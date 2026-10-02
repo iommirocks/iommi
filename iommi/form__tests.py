@@ -9,14 +9,13 @@ from datetime import (
     timedelta,
 )
 from decimal import Decimal
-from pathlib import Path
 from io import (
     BytesIO,
     StringIO,
 )
+from pathlib import Path
 from urllib.parse import urlencode
 
-import django
 import pytest
 import time_machine
 from bs4 import BeautifulSoup
