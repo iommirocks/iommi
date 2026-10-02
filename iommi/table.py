@@ -1152,7 +1152,8 @@ class CellConfig(TransientFragment, Tag):
             link: Namespace,
             parent,
         ):
-        super(CellConfig, self).__init__(parent=parent, template=template, attrs=attrs, children=None, tag=tag)
+        # Cell replaces attrs with the evaluated attrs right away, so the attrs defaults aren't needed
+        self._init(parent=parent, template=template, attrs=attrs, children=None, tag=tag)
         self.url = url
         self.url_title = url_title
         self.value = value
