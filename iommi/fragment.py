@@ -68,6 +68,11 @@ class TransientFragment:
         attrs__style=EMPTY,
     )
     def __init__(self, *, parent, template=None, attrs, children, tag):
+        self._init(parent=parent, template=template, attrs=attrs, children=children, tag=tag)
+
+    def _init(self, *, parent, template, attrs, children, tag):
+        # Without the attrs defaults of __init__, which cost a Namespace merge. For subclasses that are
+        # created very often and don't need them, like Cell.
         self._is_bound = True
         self.template = template
         self.attrs = attrs
