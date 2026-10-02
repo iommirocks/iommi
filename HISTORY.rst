@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+7.33.0 (2026-10-02)
+~~~~~~~~~~~~~~~~~~~
+
+* Big performance improvements in rendering, especially for tables and edit tables. Compared to 7.32.2 in the new benchmark suite (`make benchmark`), rendering an edit table takes 88% less time and posting one 67% less, pages with several tables 38-47% less, model tables with filters 26-28% less and forms 10-13% less. Among the changes: faster `Namespace` construction and refinable stack resolution, table cells are refine done once per table instead of once per row, edit table cells bind the declared inputs instead of building new ones, and the edit table delete button is rendered once per column.
+
+* Fixed: the options of filter and bulk fields from a `Column` with `choice_queryset` could be cached across requests. The shared queryset was only cloned if `choices` was a queryset to begin with, not when it was handed back by a callable, so a template that iterates the options (like `iommi/form/choice.html`) filled its result cache on the first render and later requests got stale options.
+
+* The bootstrap icons style renders the boolean check mark as `fs-5 lh-1` instead of `fs-3`, so it no longer makes table rows taller
+
+* New cookbook: How do I make all choice filters multi select?
+
+
 7.32.2 (2026-09-17)
 ~~~~~~~~~~~~~~~~~~~
 
