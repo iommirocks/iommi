@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.35.0 (2026-10-06)
+~~~~~~~~~~~~~~~~~~~
+
+* `context` can be a callable that returns a dict, for when several values come out of the same computation. Like the values of a dict `context`, it is evaluated the first time `get_context()` is called, so ajax requests that don't render anything (like the choices lookup of a select2 field) skip it, unlike `extra_params` which runs on every request.
+
+
 7.34.0 (2026-10-06)
 ~~~~~~~~~~~~~~~~~~~
 
