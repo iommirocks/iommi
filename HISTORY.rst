@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.34.0 (2026-10-06)
+~~~~~~~~~~~~~~~~~~~
+
+* `context` is now evaluated the first time `get_context()` is called, instead of when the `Page` renders. Before, an endpoint that renders a nested part on its own, like a table's `tbody` endpoint used for live filtering, skipped that step, so its templates got the unevaluated callables instead of their values.
+
+* `context` on nested parts composes with the context of its parents: `get_context()` returns the parents' context with the part's own context on top. Before, `context` was only allowed on the root `Page`, and a nested `Page` with a `context` raised an `AssertionError`.
+
+* `get_context()` asserts that the object is bound
+
+
 7.33.0 (2026-10-02)
 ~~~~~~~~~~~~~~~~~~~
 
