@@ -180,6 +180,57 @@ def test_nested_page_context_composes_with_the_parents():
     assert 'Nested: root foo nested nested' in html
 
 
+def test_page_context_can_be_a_callable_returning_a_dict():
+    calls = []
+
+    def context(page, **_):
+        calls.append(page)
+        return {'foo': 'foo', 'bar': 'bar'}
+
+    class MyPage(Page):
+        part = Template('{{ foo }} {{ bar }}\n')
+
+    page = MyPage(context=context).bind(request=req('get'))
+    assert calls == []
+
+    assert page.__html__().strip() == 'foo bar'
+    assert page.get_context() == {'foo': 'foo', 'bar': 'bar'}
+    assert len(calls) == 1
+
+
+def test_page_context_callable_is_evaluated_when_an_endpoint_renders_a_nested_part():
+    class MyPage(Page):
+        table = Table(
+            rows=[],
+            container__children__extra=Fragment(template=Template('Context: {{ foo }}')),
+        )
+
+    response = MyPage(context=lambda **_: {'foo': 'foo'}).as_view()(req('get', **{'/table/tbody': ''}))
+
+    assert 'Context: foo' in json.loads(response.content)['html']
+
+
+def test_nested_page_context_callable_composes_with_the_parents():
+    class Nested(Page):
+        part = Template('Nested: {{ foo }} {{ bar }}\n')
+
+    class Root(Page):
+        nested = Nested(context=lambda **_: {'bar': 'nested bar'})
+
+    html = Root(context=lambda **_: {'foo': 'root foo', 'bar': 'root bar'}).bind(request=req('get')).__html__()
+
+    assert 'Nested: root foo nested bar' in html
+
+
+def test_page_context_callable_must_return_a_dict():
+    page = Page(context=lambda **_: 'not a dict').bind(request=req('get'))
+
+    with pytest.raises(AssertionError) as e:
+        page.get_context()
+
+    assert str(e.value) == 'context needs to be a dict, or a callable that returns a dict'
+
+
 def test_as_view():
     view = Page(parts__foo='##foo##').as_view()
     assert '##foo##' in view(req('get')).content.decode()

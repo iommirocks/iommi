@@ -319,7 +319,11 @@ class Traversable(RefinableObject):
         # Evaluated on first use, not when rendering, because an endpoint can render a
         # nested part without rendering its ancestors, and it still needs their context
         if not self._context_is_evaluated:
-            self.context = evaluate_as_needed(self.context, self.iommi_evaluate_parameters())
+            if isinstance(self.context, dict):
+                self.context = evaluate_as_needed(self.context, self.iommi_evaluate_parameters())
+            else:
+                self.context = evaluate_strict(self.context, **self.iommi_evaluate_parameters())
+                assert isinstance(self.context, dict), 'context needs to be a dict, or a callable that returns a dict'
             self._context_is_evaluated = True
         return {**parent_context, **self.context}
 

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 
 from iommi._web_compat import (
     format_html,
@@ -58,7 +59,7 @@ class Page(Part):
 
     title: str = EvaluatedRefinable()
     member_class: type[Fragment] = Refinable()
-    context = SpecialEvaluatedRefinable()
+    context: dict | Callable[..., dict] = Refinable()
     h_tag: Fragment | str = SpecialEvaluatedRefinable()
     parts: dict[str, PartType] = RefinableMembers()
 
@@ -66,7 +67,6 @@ class Page(Part):
         member_class = Fragment
 
         parts = EMPTY
-        context = EMPTY
 
     @with_defaults(
         h_tag__call_target=Header,
@@ -94,6 +94,9 @@ class Page(Part):
             members_from_declared=_parts_dict,
             cls=self.member_class,
         )
+        if isinstance(self.context, dict):
+            # A callable context stays as is, it is evaluated into a dict by get_context
+            self.context = Namespace(self.context)
         find_static_items(self.context)
         super(Page, self).on_refine_done()
 
