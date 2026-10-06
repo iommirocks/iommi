@@ -16,7 +16,6 @@ from iommi.declarative.namespace import (
     Namespace,
 )
 from iommi.evaluate import (
-    evaluate_as_needed,
     find_static_items,
 )
 from iommi.fragment import (
@@ -100,8 +99,6 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
-        if self.context and self.iommi_parent() is not None:
-            assert False, 'The context property is only valid on the root page'
 
         build_and_bind_h_tag(self)
 
@@ -111,7 +108,6 @@ class Page(Part):
     @dispatch(render=lambda rendered: format_html('{}' * len(rendered), *values(rendered)))
     def __html__(self, *, render=None):
         assert self._is_bound, NOT_BOUND_MESSAGE
-        self.context = evaluate_as_needed(self.context or {}, self.iommi_evaluate_parameters())
         request = self.get_request()
         context = {**self.get_context(), **self.iommi_evaluate_parameters()}
         parts = dict(h_tag=self.h_tag)

@@ -1,4 +1,5 @@
 import itertools
+import json
 from platform import python_implementation
 from unittest import mock
 
@@ -9,13 +10,14 @@ from django.test import override_settings
 from iommi import (
     Fragment,
     Page,
+    Table,
     html,
 )
 from iommi._web_compat import (
     Template,
 )
+from iommi.base import NOT_BOUND_MESSAGE
 from iommi.evaluate import evaluate_strict
-from iommi.member import _force_bind_all
 from iommi.part import (
     as_html,
     render_root,
@@ -113,19 +115,69 @@ def test_page_context():
     assert MyPage().bind(request=req('get')).__html__().strip() == 'Template: foo\nTemplate2: foo\nTemplate3: foo'
 
 
-def test_invalid_context_specified():
-    class Nested(Page):
+def test_page_context_is_evaluated_when_an_endpoint_renders_a_nested_part():
+    calls = []
+
+    def foo(page, **_):
+        calls.append(page)
+        return 'foo'
+
+    class MyPage(Page):
+        table = Table(
+            rows=[],
+            container__children__extra=Fragment(template=Template('Context: {{ foo }}')),
+        )
+
         class Meta:
-            context__foo = 1
+            context__foo = foo
+
+    response = MyPage().as_view()(req('get', **{'/table/tbody': ''}))
+
+    assert 'Context: foo' in json.loads(response.content)['html']
+    assert len(calls) == 1
+
+
+def test_page_context_is_evaluated_once_per_request():
+    calls = []
+
+    def foo(**_):
+        calls.append(1)
+        return 'foo'
+
+    class MyPage(Page):
+        part1 = Template('Template: {{ foo }}\n')
+        part2 = html.div(template=Template('Template2: {{ foo }}\n'))
+
+        class Meta:
+            context__foo = foo
+
+    page = MyPage().bind(request=req('get'))
+    assert page.__html__().strip() == 'Template: foo\nTemplate2: foo'
+    assert page.get_context() == {'foo': 'foo'}
+    assert len(calls) == 1
+
+
+def test_nested_page_context_composes_with_the_parents():
+    class Nested(Page):
+        part = Template('Nested: {{ foo }} {{ bar }}\n')
+
+        class Meta:
+            @staticmethod
+            def context__bar(page, **_):
+                return f'nested {page._name}'
 
     class Root(Page):
+        part = Template('Root: {{ foo }} {{ bar }}\n')
         nested = Nested()
 
-    with pytest.raises(AssertionError) as e:
-        root = Root().bind(request=None)
-        _force_bind_all(root.parts)
+        class Meta:
+            context__foo = 'root foo'
+            context__bar = 'root bar'
 
-    assert str(e.value) == 'The context property is only valid on the root page'
+    html = Root().bind(request=req('get')).__html__()
+
+    assert 'Root: root foo root bar' in html
+    assert 'Nested: root foo nested nested' in html
 
 
 def test_as_view():
@@ -237,3 +289,10 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
         'static_part': 'This is a static thing',
     }
     assert next(counter) == 1
+
+
+def test_get_context_requires_bind():
+    with pytest.raises(AssertionError) as e:
+        Page(context__foo='foo').refine_done().get_context()
+
+    assert str(e.value) == NOT_BOUND_MESSAGE

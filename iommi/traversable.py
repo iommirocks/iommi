@@ -88,6 +88,7 @@ class Traversable(RefinableObject):
     _is_bound = False
     _request = None
     context = None
+    _context_is_evaluated = False
 
     iommi_style: str | Style | None = Refinable()
 
@@ -311,10 +312,16 @@ class Traversable(RefinableObject):
             return self.iommi_root().get_request()
 
     def get_context(self):
-        if self._parent is None:
-            return self.context or {}
-        else:
-            return self.iommi_parent().get_context()
+        assert self._is_bound, NOT_BOUND_MESSAGE
+        parent_context = self.iommi_parent().get_context() if self._parent is not None else {}
+        if not self.context:
+            return parent_context
+        # Evaluated on first use, not when rendering, because an endpoint can render a
+        # nested part without rendering its ancestors, and it still needs their context
+        if not self._context_is_evaluated:
+            self.context = evaluate_as_needed(self.context, self.iommi_evaluate_parameters())
+            self._context_is_evaluated = True
+        return {**parent_context, **self.context}
 
 
 def declared_members(node: Traversable) -> Namespace:
