@@ -8,8 +8,6 @@ Changelog
 
 * `context` on nested parts composes with the context of its parents: `get_context()` returns the parents' context with the part's own context on top. Before, `context` was only allowed on the root `Page`, and a nested `Page` with a `context` raised an `AssertionError`.
 
-* `get_context()` asserts that the object is bound
-
 
 7.33.0 (2026-10-02)
 ~~~~~~~~~~~~~~~~~~~
