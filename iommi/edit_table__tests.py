@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models.fields.files import FieldFile
 from django.test import override_settings
@@ -26,6 +27,7 @@ from iommi.form import (
 from iommi.struct import Struct
 from iommi.table import (
     Column,
+    PaginatorTrigger,
 )
 from tests.helpers import (
     do_post,
@@ -198,6 +200,61 @@ def test_edit_table_post():
     assert rows[1].editable_thing == 'fusk'
 
     assert post_save_was_called
+
+
+@pytest.mark.django_db
+def test_incremental_edit_table_saves_loaded_rows_and_rejects_unloaded_ids():
+    rows = [TFoo.objects.create(a=i, b='x') for i in range(1, 6)]
+
+    def make_table():
+        return EditTable(
+            auto__model=TFoo,
+            columns__a__field__include=True,
+            page_size=2,
+            parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+            parts__page__show_page_links=False,
+        )
+
+    first = make_table().bind(request=req('get'))
+    assert str(first).count('name="columns/a/') == 2
+    second = make_table().bind(request=req('get', **{'/incremental_page': '2'})).render_to_response()
+    second_data = json.loads(second.content)
+    assert f'name="columns/a/{rows[2].pk}"' in second_data['html']
+    assert f'name="columns/a/{rows[3].pk}"' in second_data['html']
+    token = BeautifulSoup(second_data['paginator_html'], 'html.parser').find('input', {'name': 'incremental_pages'})['value']
+    tampered = make_table().bind(request=req('POST', **{
+        'incremental_pages': token + 'x',
+        f'columns/a/{rows[4].pk}': '99',
+        '-save': '',
+    })).render_to_response()
+    assert tampered.status_code == 400
+
+    invalid = make_table().bind(request=req('POST', **{
+        'incremental_pages': token,
+        f'columns/a/{rows[0].pk}': '11',
+        f'columns/a/{rows[1].pk}': '12',
+        f'columns/a/{rows[2].pk}': 'not a number',
+        f'columns/a/{rows[3].pk}': '14',
+        f'columns/a/{rows[4].pk}': '99',
+        '-save': '',
+    })).render_to_response()
+    assert invalid.status_code == 200
+    assert f'name="columns/a/{rows[2].pk}"' in invalid.content.decode()
+    assert 'not a number' in invalid.content.decode()
+    assert TFoo.objects.get(pk=rows[0].pk).a == 1
+    retry_token = BeautifulSoup(invalid.content, 'html.parser').find('input', {'name': 'incremental_pages'})['value']
+
+    valid = make_table().bind(request=req('POST', **{
+        'incremental_pages': retry_token,
+        f'columns/a/{rows[0].pk}': '11',
+        f'columns/a/{rows[1].pk}': '12',
+        f'columns/a/{rows[2].pk}': '13',
+        f'columns/a/{rows[3].pk}': '14',
+        f'columns/a/{rows[4].pk}': '99',
+        '-save': '',
+    })).render_to_response()
+    assert valid.status_code == 302
+    assert list(TFoo.objects.order_by('pk').values_list('a', flat=True)) == [11, 12, 13, 14, 5]
 
 
 @pytest.mark.django_db

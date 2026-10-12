@@ -1,5 +1,6 @@
 class IommiBase {
     debug = false;
+    initialized = false;
 
     ajaxTimeout = 5000;
 
@@ -41,6 +42,7 @@ class IommiBase {
             container => SELF.enhanceTableContainer(container)
         );
 
+        this.initialized = true;
         document.dispatchEvent(
             new CustomEvent('iommi.init.end', {
                 bubbles: true,
@@ -201,6 +203,8 @@ class IommiBase {
     }
 
     async updateTableContainer(container, params, extra) {
+        container.iommiIncrementalGeneration = (container.iommiIncrementalGeneration || 0) + 1;
+        const generation = container.iommiIncrementalGeneration;
         const tbodyPath = container.getAttribute('data-endpoint');
         this.hideTableError(container);
 
@@ -222,6 +226,7 @@ class IommiBase {
 
         try {
             const {html} = await this.fetchJson(ajaxURL, ajaxOptions);
+            if (generation !== container.iommiIncrementalGeneration) return;
 
             // We have to remove each child before setting innerHTML since disconnectedCallback
             // is not fired on the children using IE11
@@ -233,6 +238,7 @@ class IommiBase {
 
             const element = document.createRange().createContextualFragment(html);
             container.appendChild(element);
+            container.iommiIncrementalDirty = false;
 
             container.dispatchEvent(
                 new CustomEvent('iommi.element.populated', {
@@ -703,7 +709,7 @@ class IommiReorderable {
         document.addEventListener('iommi.editTable.newElement', (event) => {
             const tbody = event.target.closest(this.defaultSelector);
             if(tbody) {
-                SELF.recalculate(tbody);
+                SELF.recalculate(tbody, event.target);
             }
         });
     }
@@ -712,12 +718,28 @@ class IommiReorderable {
         this.initAll();
     }
 
-    recalculate(tbody) {
-        let index = 0;
-        for (let item of tbody.children) {
-            item.querySelector(tbody.dataset.iommiReorderableFieldSelector).value = index;
-            index += 1;
+    recalculate(tbody, newRow) {
+        const fields = Array.from(tbody.children).map(item =>
+            item.querySelector(tbody.dataset.iommiReorderableFieldSelector)
+        );
+        const newField = newRow && newRow.querySelector(tbody.dataset.iommiReorderableFieldSelector);
+        // Keep the visible rows' existing sort values as slots. This preserves
+        // gaps and values outside the current page when only one page is loaded.
+        const positions = fields
+            .filter(field => field && field !== newField && field.value !== '')
+            .map(field => Number(field.value))
+            .filter(Number.isFinite)
+            .sort((a, b) => a - b);
+
+        while (positions.length < fields.length) {
+            positions.push((positions[positions.length - 1] ?? -1) + 1);
         }
+
+        fields.forEach((field, index) => {
+            if (field) {
+                field.value = positions[index];
+            }
+        });
     }
 
     initAll(parent, selector, extraOptions) {
@@ -1061,9 +1083,11 @@ window.iommi = new IommiBase({
     extendedFileInput: new IommiExtendedFileInput()
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => window.iommi.onDOMLoad());
+} else {
     window.iommi.onDOMLoad();
-});
+}
 
 window.addEventListener('popstate', function (event) {
     window.iommi.onPopState(event);

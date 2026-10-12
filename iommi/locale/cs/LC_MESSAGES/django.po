@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 12:52+0200\n"
+"POT-Creation-Date: 2026-10-05 13:56+0200\n"
 "Last-Translator: Martin Beran <info@berycz.net>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr "iommi administrace"
 msgid "Change password"
 msgstr "Změnit heslo"
 
-#: admin.py:145
+#: admin.py:145 main_menu__tests.py:593
 msgid "Logout"
 msgstr "Odhlásit"
 
@@ -42,20 +42,20 @@ msgstr ""
 msgid "edit"
 msgstr "editace"
 
-#: edit_table.py:224 style_base.py:116 table.py:681
+#: edit_table.py:229 style_base.py:116 table.py:686
 #: templates/iommi/form/file_item.html:15
 msgid "Delete"
 msgstr "Smazat"
 
-#: edit_table.py:279 panel.py:332
+#: edit_table.py:284 panel.py:332
 msgid "Drag and drop to reorder"
 msgstr "Přetáhni pro změnu pořadí"
 
-#: edit_table.py:461 form.py:2080 style_base.py:114
+#: edit_table.py:471 form.py:2080 style_base.py:114
 msgid "Save"
 msgstr "Uložit"
 
-#: edit_table.py:467
+#: edit_table.py:477
 msgid "Add row"
 msgstr "Přidat řádek"
 
@@ -129,11 +129,11 @@ msgstr ""
 msgid "This field is required"
 msgstr "Toto pole je povinné"
 
-#: form.py:1503 table.py:273
+#: form.py:1503 table.py:278
 msgid "Yes"
 msgstr "Ano"
 
-#: form.py:1503 table.py:275
+#: form.py:1503 table.py:280
 msgid "No"
 msgstr "Ne"
 
@@ -204,32 +204,44 @@ msgstr "Sem přetáhněte soubor, nebo klikněte pro výběr."
 msgid "Upload from this field is disabled."
 msgstr "Upload z tohoto pole je zakázaný."
 
-#: table.py:658
+#: table.py:663
 msgid "Edit"
 msgstr "Editovat"
 
-#: table.py:706
+#: table.py:711
 msgid "Download"
 msgstr "Stáhnout"
 
-#: table.py:730
+#: table.py:735
 msgid "Run"
 msgstr "Spustit"
 
-#: table.py:1528
+#: table.py:1533
 #, python-brace-format
 msgid "Are you sure you want to delete these {count} items?"
 msgstr "Jste si jisti, že chcete smazat těchto {count} položek?"
 
-#: table.py:1544
+#: table.py:1549
 msgid "Yes, delete all!"
 msgstr "Ano, smazat vše!"
 
-#: table.py:2008 table.py:2240
+#: table.py:1653
+msgid "Load more"
+msgstr "Načíst další"
+
+#: table.py:1659
+msgid "Retry"
+msgstr "Opakovat"
+
+#: table.py:1874
+msgid "Discard unsaved table edits?"
+msgstr "Zahodit neuložené změny?"
+
+#: table.py:2183 table.py:2421
 msgid "Bulk change"
 msgstr "Hromadné úpravy"
 
-#: table.py:2246
+#: table.py:2427
 msgid "Bulk delete"
 msgstr "Hromadné mazání"
 
@@ -323,6 +335,14 @@ msgstr "Přepnout do základního hledání"
 #: templates/iommi/query/form_toggle_script.html:42
 msgid "Hide help"
 msgstr "Skrýt nápovědu"
+
+#: templates/iommi/table/incremental_trigger.html:12
+msgid "Loading…"
+msgstr "Načítání…"
+
+#: templates/iommi/table/incremental_trigger.html:13
+msgid "Loading failed. Please retry."
+msgstr "Načtení se nepodařilo. Zkuste to prosím znovu."
 
 #: templates/iommi/table/js_select_all.html:15
 msgid "All items on this page are selected."
