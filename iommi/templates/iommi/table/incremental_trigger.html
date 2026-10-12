@@ -1,0 +1,14 @@
+{% load i18n %}
+<div class="iommi-incremental-pagination"
+     data-iommi-incremental="{{ paginator.trigger }}"
+     data-iommi-incremental-endpoint="{{ table.endpoints.incremental_page.endpoint_path }}"
+     data-iommi-page-parameter="{{ paginator.iommi_path }}"
+     data-iommi-start-page="{{ paginator.start_page }}"
+     data-iommi-next-cursor="{{ next_cursor }}">
+    {{ paginator.load_more }}
+    {{ paginator.retry }}
+    <div class="iommi-incremental-sentinel" data-iommi-incremental-sentinel aria-hidden="true" style="min-height: 1px;"></div>
+    <span class="iommi-incremental-status" data-iommi-incremental-status role="status" aria-live="polite"
+          data-iommi-loading-text="{% translate 'Loading…' %}"
+          data-iommi-error-text="{% translate 'Loading failed. Please retry.' %}"></span>
+</div>

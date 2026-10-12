@@ -18,7 +18,7 @@ from iommi.main_menu import EXTERNAL
 main_menu = MainMenu(
     items=dict(
         albums=M(
-            view=views.AlbumTable(auto__model=Album, columns__year__bulk__include=True),
+            view=views.album_card_table(table_class=views.AlbumTable, columns__year__bulk__include=True),
             items=dict(
                 create=M(view=Form.create(auto__model=Album)),
                 album=M(
@@ -43,6 +43,27 @@ main_menu = MainMenu(
             ),
         ),
         tracks=M(view=views.TrackTable(auto__model=Track)),
+        load_more=M(
+            view=EXTERNAL,
+            display_name='Load more (tracks)',
+            url='/experimental/pagination/load-more/',
+        ),
+        infinite_scroll=M(
+            view=EXTERNAL,
+            display_name='Infinite scroll (albums)',
+            url='/experimental/pagination/infinite-scroll/',
+        ),
+        hybrid_scroll=M(
+            view=EXTERNAL,
+            display_name='Load more, then infinite scroll (albums)',
+            url='/experimental/pagination/hybrid/',
+        ),
+        edit_table_load_more=M(
+            view=EXTERNAL,
+            display_name='Edit table: Load more (Black Sabbath)',
+            url=views.black_sabbath_edit_url,
+            include=lambda **_: Artist.objects.filter(name='Black Sabbath').exists(),
+        ),
         calendar=M(view=views.AlbumCalendar()),
         storybook=M(view=storybook.storybook),
         playground=M(view=playground.PlaygroundPage),

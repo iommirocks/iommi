@@ -63,6 +63,50 @@ def test_tables(really_big_discography):
     """
 
 
+def test_incremental_pagination():
+    # language=rst
+    """
+    Incremental pagination
+    ----------------------
+
+    By default, people move between numbered pages. You can instead let them
+    see more rows on the same page. This example starts with 30 albums and adds
+    another batch when someone clicks “Load more”:
+
+    .. code-block:: python
+
+        from iommi import PaginatorTrigger
+
+        Table(
+            auto__model=Album,
+            page_size=30,
+            parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+        )
+
+    Choose one of the available loading behaviors:
+
+    * ``PaginatorTrigger.LOAD_MORE`` adds a “Load more” button after each batch.
+    * ``PaginatorTrigger.INFINITE_SCROLL`` loads another batch as people reach
+      the end of the current rows.
+    * ``PaginatorTrigger.LOAD_MORE_THEN_INFINITE_SCROLL`` shows a button for the
+      first batch, then loads further batches as people scroll.
+
+    Numbered page links are shown with the button behavior and hidden with the
+    scrolling behaviors. Set ``parts__page__show_page_links`` to ``True`` or
+    ``False`` to change that. Hiding the links lets iommi check whether more
+    rows exist without first counting all matching rows.
+
+    The buttons use the active iommi style. To add a CSS class to the “Load more”
+    button, for example, add this option:
+
+    .. code-block:: python
+
+        parts__page__load_more__attrs__class__my_button=True
+
+    These loading behaviors also work with ``Table.div()`` and ``EditTable``.
+    """
+
+
 def test_creating_tables_from_models():
     # language=rst
     """

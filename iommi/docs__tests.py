@@ -1,3 +1,4 @@
+from enum import Enum
 from io import StringIO
 from platform import python_implementation
 
@@ -158,7 +159,11 @@ def test_default_classes():
 
     import iommi
 
-    classes_in_all = {x for x in iommi.__all__ if isinstance(getattr(iommi, x), type)}
+    classes_in_all = {
+        x
+        for x in iommi.__all__
+        if isinstance(getattr(iommi, x), type) and not issubclass(getattr(iommi, x), Enum)
+    }
 
     assert (classes_in_all - default_classes) == set()
 

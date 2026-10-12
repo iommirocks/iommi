@@ -4,9 +4,13 @@ from typing import (
     Any,
 )
 
+from django.core import signing
 from django.db.models import QuerySet
 from django.db.models.fields.files import FieldFile
-from django.http import HttpResponseRedirect
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
@@ -74,6 +78,7 @@ from iommi.table import (
     _column_factory_by_field_type,
     _related_column_factory_by_model,
     _related_multiple_column_factory_by_model,
+    incremental_query_key,
 )
 
 _edit_column_factory_by_field_type = {}
@@ -294,6 +299,8 @@ class EditColumn(Column):
 
 
 def edit_table__post_handler(table, request, **_):
+    if getattr(table, 'invalid_incremental_token', False):
+        return HttpResponseBadRequest('Invalid loaded pages')
     # 1. Validate all the fields
     table.edit_errors = defaultdict(set)
     table.create_errors = defaultdict(set)
@@ -335,6 +342,9 @@ def edit_table__post_handler(table, request, **_):
     if isinstance(table.initial_rows, QuerySet):
         prefix = path_join(table.iommi_path, 'pk_delete_')
         qs = table.bulk_queryset(prefix=prefix)
+        if table.paginator.trigger is not None:
+            allowed_pks = [row.pk for row in table.get_visible_rows()]
+            qs = qs.filter(pk__in=allowed_pks)
         deleted_pks = set(qs.values_list('pk', flat=True))
         qs.delete()
 
@@ -604,6 +614,38 @@ class EditTable(Table):
 
         if result is None:
             return result
+
+        result.invalid_incremental_token = False
+        bound_request = result.get_request()
+        if bound_request is not None and bound_request.method == 'POST' and result.paginator.trigger is not None:
+            token_name = path_join(result.iommi_path, 'incremental_pages')
+            try:
+                loaded = signing.loads(bound_request.POST[token_name])
+                start, end = loaded['start'], loaded['end']
+                valid = (
+                    loaded['table'] == result.iommi_path
+                    and loaded['query'] == incremental_query_key(result)
+                    and isinstance(start, int) and not isinstance(start, bool)
+                    and isinstance(end, int) and not isinstance(end, bool)
+                    and 1 <= start <= end <= 100000
+                    and (end - start + 1) * result.paginator.page_size <= 10000000
+                )
+            except (KeyError, TypeError, ValueError, signing.BadSignature):
+                valid = False
+            if valid:
+                result.visible_rows = result.sorted_and_filtered_rows[
+                    (start - 1) * result.paginator.page_size:end * result.paginator.page_size
+                ]
+                result._preprocessed_rows = None
+                has_more = bool(result.sorted_and_filtered_rows[end * result.paginator.page_size:end * result.paginator.page_size + 1])
+                result.paginator.set_incremental_page(
+                    page=end,
+                    start_page=start,
+                    rows=result.visible_rows,
+                    has_more=has_more,
+                )
+            else:
+                result.invalid_incremental_token = True
 
         reorder_handles = []
         is_sorting_on = None
