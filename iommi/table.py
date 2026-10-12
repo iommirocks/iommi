@@ -1696,7 +1696,17 @@ class Paginator(Traversable, Tag):
                     page_size = int(page_size_str)
                 except ValueError:
                     pass
-        self.page_size = page_size if page_size is not None else table.page_size
+        if page_size is None:
+            evaluate_member(table, 'page_size', **table.iommi_evaluate_parameters())
+            self.page_size = table.page_size
+        else:
+            self.page_size = page_size
+        evaluate_member(table, 'max_page_size', **table.iommi_evaluate_parameters())
+        assert (
+            isinstance(table.max_page_size, int) and table.max_page_size > 0
+        ), 'max_page_size must evaluate to a positive integer'
+        if self.page_size is not None:
+            self.page_size = min(self.page_size, table.max_page_size)
         if self.trigger is not None:
             assert self.page_size is not None and self.page_size > 0, 'Incremental pagination requires a positive page_size'
 
@@ -2096,6 +2106,7 @@ class Table(Part, Tag):
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
+    max_page_size: int = EvaluatedRefinable()
     actions_template: str | Template = EvaluatedRefinable()
     actions_below: bool = EvaluatedRefinable()
     tbody: Fragment = EvaluatedRefinable()
@@ -2185,6 +2196,7 @@ class Table(Part, Tag):
         bulk__title=gettext_lazy('Bulk change'),
         bulk_container__call_target=Fragment,
         page_size=DEFAULT_PAGE_SIZE,
+        max_page_size=lambda user, **_: 10000 if getattr(user, 'is_authenticated', False) else 1000,
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
         tag='table',

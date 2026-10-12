@@ -981,6 +981,31 @@ def test_page_size():
     )
 
 
+def test_max_page_size_clamps_configured_and_requested_page_size():
+    rows = [Struct(pk=i, value=i) for i in range(1, 11)]
+    table = Table(
+        rows=rows,
+        columns__value=Column(),
+        page_size=8,
+        max_page_size=lambda user, **_: 4 if not user.is_authenticated else 6,
+    )
+
+    assert table.bind(request=req('get')).paginator.page_size == 4
+    assert table.bind(request=req('get', page_size=7)).paginator.page_size == 4
+    assert table.bind(request=user_req('get', page_size=7)).paginator.page_size == 6
+
+
+def test_callable_page_size_is_evaluated():
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 6)],
+        columns__value=Column(),
+        page_size=lambda user, **_: 3,
+        max_page_size=4,
+    ).bind(request=req('get'))
+
+    assert table.paginator.page_size == 3
+
+
 @pytest.mark.django_db
 def test_bulk_edit_table():
     assert TFoo.objects.all().count() == 0
