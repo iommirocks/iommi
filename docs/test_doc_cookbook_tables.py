@@ -98,6 +98,37 @@ def test_how_do_you_turn_off_pagination(small_discography):
     """
 
 
+def test_how_do_i_limit_page_size():
+    # language=rst
+    """
+    .. _limit-page-size:
+
+    How do I limit the page size?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.page_size
+    .. uses Table.max_page_size
+
+    `page_size` sets the default number of rows per page. `max_page_size` caps that
+    value and any page size requested with the table's `*_size` query parameter.
+    Both options can be integers or callables. For example, set a default page size
+    and a maximum:
+
+    .. code-block:: python
+
+        Table(
+            auto__model=Album,
+            page_size=100,
+            max_page_size=500,
+        )
+
+    Use a callable when the value needs to be computed from request context.
+
+    `EditTable` defaults `max_page_size` to 200. Applications can override that value
+    in a style or on an individual table.
+    """
+
+
 def test_how_do_i_customize_the_rendering_of_a_cell():
     # language=rst
     """

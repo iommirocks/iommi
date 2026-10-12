@@ -68,7 +68,6 @@ def test_edit_table_rendering():
             Struct(pk=2, editable_thing='baz', readonly_thing='buzz'),
         ],
     )
-
     verify_table_html(
         table=edit_table.bind(request=req('get')),
         find__method='post',
@@ -102,6 +101,16 @@ def test_edit_table_rendering():
             </form>
         """,
     )
+
+
+def test_edit_table_class_limits_page_size():
+    table = EditTable(
+        rows=[Struct(pk=1, value='x')],
+        columns__value=EditColumn(),
+        page_size=500,
+    ).bind(request=req('get', page_size=600))
+
+    assert table.paginator.page_size == 200
 
 
 @pytest.mark.django_db

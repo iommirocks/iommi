@@ -466,6 +466,12 @@ class EditTable(Table):
     edit_actions: dict[str, Action] = RefinableMembers()
     reorderable: bool | dict[str, Any] | None = EvaluatedRefinable()
 
+    @with_defaults(
+        max_page_size=200,  # it's here and not in Meta, so the docs read the proper value
+    )
+    def __init__(self, **kwargs):
+        super(EditTable, self).__init__(**kwargs)
+
     class Meta:
         form_class = Form
         member_class = EditColumn
