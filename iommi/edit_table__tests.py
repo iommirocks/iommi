@@ -401,6 +401,29 @@ def test_edit_table_post_create():
 
 
 @pytest.mark.django_db
+def test_edit_table_new_reorderable_row_uses_max_sort_order(fav_artists):
+    FavoriteArtist.objects.create(
+        user=fav_artists[0].user,
+        artist=Artist.objects.create(name='Beyond the Realms of Death'),
+        comment='later page',
+        sort_order=20,
+    )
+    edit_table = EditTable(
+        auto__model=FavoriteArtist,
+        auto__include=['artist__name', 'comment', 'sort_order'],
+        columns__comment__field__include=True,
+        reorderable=True,
+        page_size=1,
+        sortable=False,
+    ).refine_done()
+
+    response = edit_table.bind(request=req('get', **{'/new_row': ''})).render_to_response()
+    new_row = BeautifulSoup(json.loads(response.content)['html'], 'html.parser')
+
+    assert new_row.select_one('[data-reordering-value]')['value'] == '21'
+
+
+@pytest.mark.django_db
 def test_edit_table_new_row_delete_checkbox_uses_sentinel_pk():
     edit_table = EditTable(
         auto__model=TFoo,

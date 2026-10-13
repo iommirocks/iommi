@@ -5,7 +5,7 @@ from typing import (
 )
 
 from django.core import signing
-from django.db.models import QuerySet
+from django.db.models import Max, QuerySet
 from django.db.models.fields.files import FieldFile
 from django.http import (
     HttpResponseBadRequest,
@@ -101,7 +101,7 @@ class EditCell(Cell):
 
         if field:
             orig_attr = field.attr
-            if self.cells.is_create_template:
+            if self.cells.is_create_template and 'reorder_handle' not in getattr(self.column, 'iommi_shortcut_stack', []):
                 field.attr = None
 
             path = self.get_path()
@@ -520,6 +520,19 @@ class EditTable(Table):
         def endpoints__new_row__func(table, **kwargs):
             if table.model is not None:
                 sentinel_row = table.model(pk='#sentinel#')
+                if table.reorderable and isinstance(table.sorted_and_filtered_rows, QuerySet):
+                    reorder_column = next(
+                        (
+                            column
+                            for column in values(table.columns)
+                            if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', [])
+                        ),
+                        None,
+                    )
+                    field_name = getattr(reorder_column, 'model_field_name', None)
+                    if field_name:
+                        max_value = table.sorted_and_filtered_rows.aggregate(max_value=Max(field_name))['max_value']
+                        setattr(sentinel_row, field_name, (max_value if max_value is not None else -1) + 1)
             else:
                 sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(table.create_form.fields)})
             return {
