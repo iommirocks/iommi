@@ -730,9 +730,11 @@ class IommiReorderable {
             .map(field => Number(field.value))
             .filter(Number.isFinite)
             .sort((a, b) => a - b);
+        const newPosition = newField && newField.value !== '' ? Number(newField.value) : NaN;
 
         while (positions.length < fields.length) {
-            positions.push((positions[positions.length - 1] ?? -1) + 1);
+            const nextPosition = (positions[positions.length - 1] ?? -1) + 1;
+            positions.push(Number.isFinite(newPosition) ? Math.max(nextPosition, newPosition) : nextPosition);
         }
 
         fields.forEach((field, index) => {
