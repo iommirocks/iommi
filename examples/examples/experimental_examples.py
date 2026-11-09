@@ -29,7 +29,6 @@ from iommi.edit_table import (
 )
 from iommi.form import save_nested_forms
 
-
 urlpatterns = [
     path(
         'pagination/load-more/',
