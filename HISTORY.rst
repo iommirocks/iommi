@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+7.36.0 (2026-11-09)
+~~~~~~~~~~~~~~~~~~~
+
+* Incremental pagination: tables can load more rows onto the same page instead of moving between numbered pages. Set `parts__page__trigger` to `PaginatorTrigger.LOAD_MORE`, `PaginatorTrigger.INFINITE_SCROLL` or `PaginatorTrigger.LOAD_MORE_THEN_INFINITE_SCROLL`. Works with `Table.div()` and `EditTable`. See the tables docs.
+
+* New `Table.max_page_size` caps both `page_size` and any page size requested with the `*_size` query parameter. It can be an integer or a callable. The default is 10000 for logged-in users and 1000 for anonymous users, and `EditTable` defaults to 200. Before, the page size requested in the URL had no limit.
+
+* Fixed: adding a row to a reorderable `EditTable` renumbered the sort values of all visible rows from 0, which broke the order of rows outside the current page. Existing sort values are now kept, and new rows get a sort value after the highest one in the whole table, not just the current page. (Thanks sean0407!)
+
+* Czech translation updated
+
+* Fixed: the sampling profiler on Python 3.15
+
+* Fixed: the SQL trace crashed on a line number outside the cached source of a file
+
+
 7.35.0 (2026-10-06)
 ~~~~~~~~~~~~~~~~~~~
 
