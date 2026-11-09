@@ -8,6 +8,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 from collections import (
     Counter,
     defaultdict,
@@ -85,6 +86,14 @@ def _iter_thread_info(stack_trace):
             yield from threads
 
 
+def _frame_lineno(frame_info):
+    """Tolerate both shapes this private API has had: a `location` (3.15.1+) and a plain `lineno` (earlier)."""
+    if not hasattr(frame_info, 'location'):
+        return frame_info.lineno
+    location = frame_info.location
+    return location.lineno if location is not None else 0
+
+
 # Before 3.15 the unwinder can't walk out of a frame that was entered from C, so resuming
 # a generator or calling a dunder from a C function ends the walk right there. Rendering an
 # iommi page does both constantly: measured on a 200 row table, 83% of the sampled stacks
@@ -114,6 +123,9 @@ class SamplingProfiler:
         self.stacks = Counter()
         self.sample_count = 0
         self.error_count = 0
+        # The traceback of the first failed sample, so that a sampler that fails every
+        # time shows why instead of serving an empty profile.
+        self.first_error = None
         self.elapsed = 0.0
         self.thread = threading.Thread(target=self._run, name='iommi-sampling-profiler', daemon=True)
 
@@ -143,6 +155,13 @@ class SamplingProfiler:
             return 0.0
         return self.elapsed / self.sample_count
 
+    @property
+    def error_message(self):
+        if not self.error_count:
+            return None
+        attempts = self.sample_count + self.error_count
+        return f'{self.error_count} of {attempts} samples failed. The first error was:\n\n{self.first_error}'
+
     def _sample(self):
         for thread_info in _iter_thread_info(self.unwinder.get_stack_trace()):
             if thread_info.thread_id == self.thread_id:
@@ -159,12 +178,14 @@ class SamplingProfiler:
                 try:
                     frames = self._sample()
                     if frames:
-                        self.stacks[tuple((f.filename, f.lineno, f.funcname) for f in frames)] += 1
+                        self.stacks[tuple((f.filename, _frame_lineno(f), f.funcname) for f in frames)] += 1
                         self.sample_count += 1
                 except Exception:
                     # A thread can go away between being listed and being unwound, and the
                     # whole point of this tool is to not take the request down with it.
                     self.error_count += 1
+                    if self.first_error is None:
+                        self.first_error = traceback.format_exc()
                 time.sleep(self.interval)
         finally:
             self.elapsed = time.perf_counter() - start
@@ -302,6 +323,7 @@ class HTMLStats(pstats.Stats):
     # be meaningless.
     sampling = False
     sample_count = 0
+    sampling_error_message = None
 
     def _build_url(self, **overrides):
         params = self._get_params.copy() if self._get_params else {}
@@ -350,6 +372,9 @@ class HTMLStats(pstats.Stats):
         indent = ' ' * 8
         for func in self.top_level:
             print(indent, func[2], file=self.stream)
+
+        if self.sampling_error_message:
+            print(f'<pre class="error">{escape(self.sampling_error_message)}</pre>', file=self.stream)
 
         if self.sampling:
             print(indent, self.sample_count, "samples", end=' ', file=self.stream)
@@ -560,8 +585,11 @@ class Middleware:
                 from django.templatetags.static import static
 
                 threshold = float(request.GET.get('_iommi_prof_threshold', 0.00001)) / 100
+                error_html = ''
                 if hasattr(request, '_iommi_sample_aggregate'):
                     sampling_profiler = request._iommi_sampling_profiler
+                    if sampling_profiler.error_message:
+                        error_html = f'<pre class="error">{escape(sampling_profiler.error_message)}</pre>'
                     folded_data = _sampling_generate_folded_data(
                         sampling_profiler.stacks,
                         request._iommi_sample_aggregate,
@@ -598,6 +626,7 @@ class Middleware:
             .flame-graph span[title*="{base_dir_css}"]:not([title*="/site-packages/"]) {{
                 background-color: light-dark(#a8d5a8, #305830);
             }}
+            .error {{ color: light-dark(#c00, #ff6b6b); white-space: pre-wrap; padding: 8px 12px; }}
             .legend {{ display: flex; gap: 16px; padding: 8px 12px; font-family: monospace; font-size: 12px; }}
             .legend-swatch {{ display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }}
             .legend-project {{ background-color: light-dark(#a8d5a8, #305830); }}
@@ -606,6 +635,7 @@ class Middleware:
         </style>
     </head>
     <body>
+        {error_html}
         <div class="legend">
             <span><span class="legend-swatch legend-project"></span>project</span>
             <span><span class="legend-swatch legend-thirdparty"></span>third-party</span>
@@ -669,6 +699,11 @@ class Middleware:
                             color: black;
                         }
 
+                        .error {
+                            color: #c00;
+                            white-space: pre-wrap;
+                        }
+
                         @media (prefers-color-scheme: dark) {
                             html {
                                 background-color: black;
@@ -680,6 +715,10 @@ class Middleware:
 
                             .own td {
                                 color: white;
+                            }
+
+                            .error {
+                                color: #ff6b6b;
                             }
 
                             a {
@@ -775,6 +814,7 @@ class Middleware:
             ps = _html_stats(aggregate.to_pstats_dict(sample_interval), stream)
             ps.sampling = True
             ps.sample_count = sampling_profiler.sample_count
+            ps.sampling_error_message = sampling_profiler.error_message
         elif yappi is not None:
             yappi.stop()
 

@@ -1,5 +1,6 @@
 import re
 import sys
+import time
 from collections import Counter
 from io import StringIO
 from types import SimpleNamespace
@@ -360,6 +361,47 @@ def test_profiler_sampling_without_a_single_sample(monkeypatch):
     content = middleware(staff_req('get', _iommi_prof='')).content.decode()
     assert '0 samples in 0.000 seconds' in content
     assert middleware(staff_req('get', _iommi_prof='flame')).status_code == 200
+
+
+def test_sampling_profiler_records_the_first_error():
+    profiler = SamplingProfiler(interval=0.0001, switch_interval=None)
+
+    def broken_sample():
+        raise AttributeError("'FrameInfo' object has no attribute 'lineno'")
+
+    profiler._sample = broken_sample
+    assert profiler.error_message is None
+
+    profiler.thread.start()
+    while profiler.error_count < 3:
+        time.sleep(0.001)
+    profiler.stop()
+
+    assert profiler.sample_count == 0
+    assert profiler.error_message.startswith(f'{profiler.error_count} of {profiler.error_count} samples failed.')
+    assert "AttributeError: 'FrameInfo' object has no attribute 'lineno'" in profiler.error_message
+
+
+def test_profiler_sampling_shows_sampling_errors(monkeypatch):
+    class AllSamplesFailed(FakeSamplingProfiler):
+        def start(self):
+            super().start()
+            self.stacks = Counter()
+            self.sample_count = 0
+            self.error_count = 7
+            self.first_error = 'Traceback:\nAttributeError: <no lineno>\n'
+            return True
+
+    monkeypatch.setattr('iommi.profiling.SamplingProfiler', AllSamplesFailed)
+
+    expected = '<pre class="error">7 of 7 samples failed. The first error was:\n\nTraceback:\nAttributeError: &lt;no lineno&gt;\n</pre>'
+    assert expected in middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert expected in middleware(staff_req('get', _iommi_prof='flame')).content.decode()
+
+
+def test_profiler_sampling_shows_no_error_when_all_samples_succeed(sampling):
+    assert 'class="error"' not in middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert 'class="error"' not in middleware(staff_req('get', _iommi_prof='flame')).content.decode()
 
 
 @pytest.mark.skipif(not SAMPLING_SUPPORTED, reason='needs the CPython sampling profiler engine')
