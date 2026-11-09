@@ -506,9 +506,10 @@ def get_line_cached_on_request(file_name, line):
     if file_name not in request._iommi_line_cache:
         request._iommi_line_cache[file_name] = linecache.getlines(file_name)
 
-    if not request._iommi_line_cache[file_name]:
+    lines = request._iommi_line_cache[file_name]
+    if not 1 <= line <= len(lines):
         return ''
-    return request._iommi_line_cache[file_name][line - 1]
+    return lines[line - 1]
 
 
 def format_clickable_filename(file_name, line, fn, extra=None):
