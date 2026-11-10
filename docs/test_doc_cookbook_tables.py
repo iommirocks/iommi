@@ -1070,9 +1070,6 @@ def test_how_do_i_delete_related_objects_instead_of_selected_rows():
 
     .. code-block:: python
 
-        from django.db import models
-        from iommi import Table
-
         class Movie(models.Model):
             year = models.IntegerField()
             imdb_id = models.CharField(max_length=20, unique=True)
@@ -1118,8 +1115,6 @@ def test_how_do_i_customize_deletion():
     `super()` to perform the delete and return the deleted primary keys:
 
     .. code-block:: python
-
-        from iommi import Table
 
         class MyTable(Table):
             def delete_queryset(self, queryset):
