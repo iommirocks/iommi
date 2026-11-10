@@ -38,6 +38,8 @@ from tests.helpers import (
 )
 from tests.models import (
     AttachmentModel,
+    OrderedItem,
+    OrderedItemTranslation,
     TBar,
     TBaz,
     TFoo,
@@ -401,7 +403,8 @@ def test_edit_table_post_create():
 
 
 @pytest.mark.django_db
-def test_edit_table_new_reorderable_row_uses_max_sort_order(fav_artists):
+@pytest.mark.parametrize('empty', [False, True])
+def test_edit_table_new_reorderable_row_uses_max_sort_order(fav_artists, empty):
     FavoriteArtist.objects.create(
         user=fav_artists[0].user,
         artist=Artist.objects.create(name='Beyond the Realms of Death'),
@@ -410,6 +413,7 @@ def test_edit_table_new_reorderable_row_uses_max_sort_order(fav_artists):
     )
     edit_table = EditTable(
         auto__model=FavoriteArtist,
+        rows=FavoriteArtist.objects.none() if empty else FavoriteArtist.objects.all(),
         auto__include=['artist__name', 'comment', 'sort_order'],
         columns__comment__field__include=True,
         reorderable=True,
@@ -420,7 +424,71 @@ def test_edit_table_new_reorderable_row_uses_max_sort_order(fav_artists):
     response = edit_table.bind(request=req('get', **{'/new_row': ''})).render_to_response()
     new_row = BeautifulSoup(json.loads(response.content)['html'], 'html.parser')
 
-    assert new_row.select_one('[data-reordering-value]')['value'] == '21'
+    assert new_row.select_one('[data-reordering-value]')['value'] == ('0' if empty else '21')
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('empty', [False, True])
+@pytest.mark.parametrize('renamed', [False, True])
+def test_edit_table_new_row_with_related_sort_order(empty, renamed):
+    for sort_order in [2, 20]:
+        OrderedItemTranslation.objects.create(item=OrderedItem.objects.create(sort_order=sort_order))
+    # An item outside the table's queryset must not affect the new row's value.
+    OrderedItem.objects.create(sort_order=99)
+    rows = OrderedItemTranslation.objects.all()
+    if empty:
+        rows = rows.none()
+    column_name = 'position' if renamed else 'item_sort_order'
+    columns = {}
+    if renamed:
+        columns[column_name] = EditColumn.from_model(
+            model=OrderedItemTranslation,
+            model_field_name='item__sort_order',
+        )
+    edit_table = EditTable(
+        auto__model=OrderedItemTranslation,
+        rows=rows,
+        auto__include=['title'] if renamed else ['title', 'item__sort_order'],
+        columns=columns,
+        page_size=1,
+        sortable=False,
+    ).bind(request=req('get', **{'/new_row': ''}))
+
+    assert edit_table.reorderable
+    assert edit_table.columns[column_name].model_field_name == 'sort_order'
+    assert edit_table.columns[column_name].attr == 'item__sort_order'
+    response = edit_table.render_to_response()
+    new_row = BeautifulSoup(json.loads(response.content)['html'], 'html.parser')
+
+    ordering_input = new_row.select_one('[data-reordering-value]')
+    assert ordering_input['name'] == f'columns/{column_name}/#sentinel#'
+    assert ordering_input['value'] == ('0' if empty else '21')
+    assert OrderedItem.objects.count() == 3
+    assert OrderedItemTranslation.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_edit_table_saves_related_sort_order():
+    translations = [
+        OrderedItemTranslation.objects.create(item=OrderedItem.objects.create(sort_order=sort_order))
+        for sort_order in [2, 20]
+    ]
+    edit_table = EditTable(
+        auto__model=OrderedItemTranslation,
+        auto__include=['item__sort_order'],
+        sortable=False,
+    )
+    rendered = BeautifulSoup(edit_table.bind(request=req('get')).__html__(), 'html.parser')
+    assert [field['value'] for field in rendered.select('[data-reordering-value]')] == ['2', '20']
+
+    response = edit_table.bind(request=req('post', **{
+        f'columns/item_sort_order/{translations[0].pk}': '1',
+        f'columns/item_sort_order/{translations[1].pk}': '0',
+        '-save': '',
+    })).render_to_response()
+
+    assert response.status_code == 302
+    assert list(OrderedItem.objects.order_by('pk').values_list('sort_order', flat=True)) == [1, 0]
 
 
 @pytest.mark.django_db

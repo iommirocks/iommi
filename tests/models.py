@@ -19,6 +19,7 @@ from django.db.models import (
 )
 
 from iommi import register_search_fields
+from iommi.models import Orderable
 
 
 class FormFromModelTest(Model):
@@ -385,3 +386,12 @@ class FooProxy(Foo):
 
 class FKToFooProxyTest(Model):
     foo_fk = ForeignKey(FooProxy, on_delete=CASCADE)
+
+
+class OrderedItem(Orderable):
+    pass
+
+
+class OrderedItemTranslation(Model):
+    item = ForeignKey(OrderedItem, on_delete=CASCADE)
+    title = CharField(max_length=255, blank=True)

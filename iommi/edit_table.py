@@ -529,10 +529,19 @@ class EditTable(Table):
                         ),
                         None,
                     )
-                    field_name = getattr(reorder_column, 'model_field_name', None)
-                    if field_name:
-                        max_value = table.sorted_and_filtered_rows.aggregate(max_value=Max(field_name))['max_value']
-                        setattr(sentinel_row, field_name, (max_value if max_value is not None else -1) + 1)
+                    attr = getattr(reorder_column, 'attr', None)
+                    if attr:
+                        max_value = table.sorted_and_filtered_rows.aggregate(max_value=Max(attr))['max_value']
+                        # Related columns retain their full path in attr; model_field_name
+                        # only contains the leaf name. Build unsaved related instances so
+                        # the create template can read the ordering value through that path.
+                        instance = sentinel_row
+                        parts = attr.split('__')
+                        for part in parts[:-1]:
+                            related_instance = instance._meta.get_field(part).remote_field.model()
+                            setattr(instance, part, related_instance)
+                            instance = related_instance
+                        setattr(instance, parts[-1], (max_value if max_value is not None else -1) + 1)
             else:
                 sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(table.create_form.fields)})
             return {
