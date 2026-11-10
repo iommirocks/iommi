@@ -1524,7 +1524,7 @@ def bulk_delete__post_handler(table, form, **_):
     if not form.is_valid():
         return
 
-    queryset = table.bulk_queryset()
+    queryset = table.get_delete_queryset()
 
     from iommi.page import (
         Page,
@@ -1563,7 +1563,7 @@ def bulk_delete__post_handler(table, form, **_):
     p = ConfirmPage().bind(request=request)
 
     if request.POST.get(p.parts.confirm.bulk.fields.confirmed.iommi_path) == 'confirmed':
-        queryset.delete()
+        table.delete_queryset(queryset)
         return HttpResponseRedirect(safe_redirect_url(request.META.get('HTTP_REFERER', '/'), request))
 
     return HttpResponse(render_root(part=p))
@@ -2926,6 +2926,26 @@ class Table(Part, Tag):
         assert isinstance(self.initial_rows, QuerySet), "bulk_queryset can only be used on querysets"
 
         return self.selection(prefix=prefix).filter(**self.bulk_filter).exclude(**self.bulk_exclude)
+
+    def get_delete_queryset(self, prefix='pk_'):
+        """Return selected source rows to delete, before any domain-specific mapping.
+
+        Override this to map selected rows to a different deletion target. The
+        source selection is restricted to visible rows for EditTable row
+        deletion before an override receives it through ``super()``.
+        """
+        assert isinstance(self.initial_rows, QuerySet), "delete queryset requires queryset-backed rows"
+        queryset = self.selection(prefix=prefix).filter(**self.bulk_filter).exclude(**self.bulk_exclude)
+        if prefix.endswith('pk_delete_'):
+            allowed_pks = [row.pk for row in self.get_visible_rows()]
+            queryset = queryset.filter(pk__in=allowed_pks)
+        return queryset
+
+    def delete_queryset(self, queryset):
+        """Delete a queryset and return the primary keys that were deleted."""
+        deleted_pks = set(queryset.values_list('pk', flat=True))
+        queryset.delete()
+        return deleted_pks
 
     def should_render_form_tag(self):
         return bool(self.bulk and self.bulk.actions)

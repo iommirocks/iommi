@@ -103,6 +103,8 @@ from tests.models import (
     FieldFromModelOneToOneTest,
     Foo,
     FromModelWithInheritanceTest,
+    OrderedItem,
+    OrderedItemTranslation,
     QueryFromIndexesTestModel,
     Qux,
     SortKeyOnForeignKeyB,
@@ -1452,6 +1454,41 @@ def test_bulk_delete():
     assert response.status_code == 302, response.content.decode()
 
     assert TFoo.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('trigger', [None, *list(PaginatorTrigger)])
+def test_bulk_delete_uses_overridden_delete_queryset(trigger):
+    item = OrderedItem.objects.create(sort_order=1)
+    translation = OrderedItemTranslation.objects.create(item=item, title='translation')
+    other_item = OrderedItem.objects.create(sort_order=2)
+    other_translation = OrderedItemTranslation.objects.create(item=other_item, title='other translation')
+
+    class MappedTable(Table):
+        def get_delete_queryset(self, prefix='pk_'):
+            source = super().get_delete_queryset(prefix=prefix)
+            return OrderedItem.objects.filter(pk__in=source.values_list('item_id', flat=True))
+
+    table = MappedTable(
+        auto__model=OrderedItemTranslation,
+        rows=OrderedItemTranslation.objects.select_related('item').order_by('item__sort_order'),
+        page_size=1,
+        parts__page__trigger=trigger,
+        bulk__actions__delete__include=True,
+    ).refine_done()
+
+    selected = {f'pk_{translation.pk}': ''}
+    t = table.bind(request=req('post', **selected, **{'-delete': ''}))
+    assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
+
+    t = table.bind(request=req('post', **selected, confirmed='confirmed', **{'-delete': ''}))
+    response = t.render_to_response()
+
+    assert response.status_code == 302, response.content.decode()
+    assert not OrderedItem.objects.filter(pk=item.pk).exists()
+    assert not OrderedItemTranslation.objects.filter(pk=translation.pk).exists()
+    assert OrderedItem.objects.filter(pk=other_item.pk).exists()
+    assert OrderedItemTranslation.objects.filter(pk=other_translation.pk).exists()
 
 
 @pytest.mark.django_db
