@@ -1052,6 +1052,87 @@ def test_how_do_i_enable_bulk_delete(small_discography):
     # @end
 
 
+def test_how_do_i_delete_related_objects_instead_of_selected_rows():
+    # language=rst
+    """
+
+    .. _delete-related-objects:
+
+    How do I delete related objects instead of the selected rows?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.get_delete_queryset
+
+    Suppose a movie has a row per language. To make the Table bulk-delete
+    action remove the movie and all its translations, map the selected
+    translation rows to their movies. Call `super()` first so iommi applies
+    the selection and bulk filters before the mapping:
+
+    .. code-block:: python
+
+        from django.db import models
+        from iommi import Table
+
+        class Movie(models.Model):
+            year = models.IntegerField()
+            imdb_id = models.CharField(max_length=20, unique=True)
+
+        class MovieI18N(models.Model):
+            movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+            language = models.CharField(max_length=10)
+            title = models.CharField(max_length=255)
+
+        class MovieTable(Table):
+            def get_delete_queryset(self, prefix='pk_'):
+                translations = super().get_delete_queryset(prefix=prefix)
+                return Movie.objects.filter(
+                    pk__in=translations.values_list('movie_id', flat=True)
+                )
+
+        movie_table = MovieTable(
+            auto__rows=MovieI18N.objects.filter(language='en').order_by('-movie__year'),
+            auto__include=['title', 'movie__year', 'movie__imdb_id'],
+            bulk__actions__delete__include=True,
+        )
+
+    Here, deleting a selected `MovieI18N` row deletes its parent `Movie`,
+    which in turn deletes all language rows through the foreign key cascade.
+    If you want to remove only one language, leave `get_delete_queryset()`
+    unchanged and delete the selected `MovieI18N` row itself.
+    """
+
+
+def test_how_do_i_customize_deletion():
+    # language=rst
+    """
+
+    .. _customize-deletion:
+
+    How do I customize deletion?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.delete_queryset
+    .. uses EditTable.delete_queryset
+
+    Override `delete_queryset()` to add behavior around deletion. Call
+    `super()` to perform the delete and return the deleted primary keys:
+
+    .. code-block:: python
+
+        from iommi import Table
+
+        class MyTable(Table):
+            def delete_queryset(self, queryset):
+                deleted_pks = super().delete_queryset(queryset)
+                # Add custom cleanup here.
+                return deleted_pks
+
+    This hook is used by Table bulk deletion and EditTable row deletion. To
+    change which rows are selected for deletion, override
+    `get_delete_queryset()` instead.
+    """
+
+
 def test_how_do_i_make_a_custom_bulk_action(album):
     # language=rst
     """

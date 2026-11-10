@@ -269,6 +269,57 @@ def test_incremental_edit_table_saves_loaded_rows_and_rejects_unloaded_ids():
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('trigger', [None, *list(PaginatorTrigger)])
+def test_edit_table_delete_mapped_related_rows_is_page_limited(trigger):
+    visible_item = OrderedItem.objects.create(sort_order=1)
+    visible = OrderedItemTranslation.objects.create(item=visible_item, title='visible')
+    visible_second = OrderedItemTranslation.objects.create(
+        item=OrderedItem.objects.create(sort_order=2), title='visible 2'
+    )
+    other_language = OrderedItemTranslation.objects.create(item=visible_item, title='other language')
+    non_visible_item = OrderedItem.objects.create(sort_order=3)
+    non_visible = OrderedItemTranslation.objects.create(item=non_visible_item, title='non-visible')
+
+    class MappedEditTable(EditTable):
+        def get_delete_queryset(self, prefix='pk_'):
+            source = super().get_delete_queryset(prefix=prefix)
+            return OrderedItem.objects.filter(pk__in=source.values_list('item_id', flat=True))
+
+    def make_table():
+        return MappedEditTable(
+            auto__model=OrderedItemTranslation,
+            auto__include=['title', 'item__sort_order'],
+            columns__title__field__include=True,
+            columns__item_sort_order__field__include=True,
+            columns__delete=EditColumn.delete(),
+            page_size=2,
+            parts__page__trigger=trigger,
+            parts__page__show_page_links=False,
+        )
+
+    initial = make_table().bind(request=req('get'))
+    token_input = BeautifulSoup(str(initial), 'html.parser').find('input', {'name': 'incremental_pages'})
+    post_data = {
+        f'pk_delete_{visible.pk}': '',
+        f'pk_delete_{non_visible.pk}': '',
+        f'columns/title/{visible.pk}': visible.title,
+        f'columns/item_sort_order/{visible.pk}': str(visible_item.sort_order),
+        f'columns/title/{visible_second.pk}': visible_second.title,
+        f'columns/item_sort_order/{visible_second.pk}': str(visible_second.item.sort_order),
+        '-save': '',
+    }
+    if token_input is not None:
+        post_data['incremental_pages'] = token_input['value']
+    response = make_table().bind(request=req('POST', **post_data)).render_to_response()
+
+    assert response.status_code == 302
+    assert not OrderedItem.objects.filter(pk=visible_item.pk).exists()
+    assert not OrderedItemTranslation.objects.filter(pk__in=[visible.pk, other_language.pk]).exists()
+    assert OrderedItem.objects.filter(pk=non_visible_item.pk).exists()
+    assert OrderedItemTranslation.objects.filter(pk=non_visible.pk).exists()
+
+
+@pytest.mark.django_db
 def test_edit_table_related_objects():
     baz = TBaz.objects.create()
     foo = TFoo.objects.create(a=1)

@@ -338,15 +338,11 @@ def edit_table__post_handler(table, request, **_):
     if table.edit_errors or table.create_errors:
         return None
 
-    deleted_pks = set()
     if isinstance(table.initial_rows, QuerySet):
         prefix = path_join(table.iommi_path, 'pk_delete_')
-        qs = table.bulk_queryset(prefix=prefix)
-        if table.paginator.trigger is not None:
-            allowed_pks = [row.pk for row in table.get_visible_rows()]
-            qs = qs.filter(pk__in=allowed_pks)
-        deleted_pks = set(qs.values_list('pk', flat=True))
-        qs.delete()
+        deleted_pks = table.delete_queryset(table.get_delete_queryset(prefix=prefix))
+    else:
+        deleted_pks = set()
 
     def save(cells_iterator, form):
         to_save = []
