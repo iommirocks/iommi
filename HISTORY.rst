@@ -18,6 +18,8 @@ Unreleased
 
 * Editing a user in the admin no longer requires typing a password. Leave the field empty to keep the current one.
 
+* Security: the experimental `Calendar` did not escape the name and the url of an event, so html in the data, like in the name of a row, ended up in the page as it was. If your `event__display_name` returns html, mark it as safe, with `format_html` for example.
+
 * Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
 
 * Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.
