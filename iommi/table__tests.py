@@ -5232,3 +5232,28 @@ def test_csv_download_uses_report_value_override():
     csv = t.render_to_response().getvalue().decode()
 
     assert 'CUSTOM_A' in csv
+
+
+def test_header_escapes_display_name_and_group():
+    table = Table(
+        columns__a=Column(display_name='<script>name</script>'),
+        columns__b=Column(group='<script>group</script>'),
+        rows=[Struct(a=1, b=2)],
+    )
+    html = table.bind(request=req('get')).__html__()
+
+    assert '&lt;script&gt;name&lt;/script&gt;' in html
+    assert '&lt;script&gt;group&lt;/script&gt;' in html
+    assert '<script>' not in html
+
+
+def test_header_keeps_display_name_and_group_that_are_marked_as_safe():
+    table = Table(
+        columns__a=Column(display_name=mark_safe('<i class="name"></i>')),
+        columns__b=Column(group=mark_safe('<i class="group"></i>')),
+        rows=[Struct(a=1, b=2)],
+    )
+    html = table.bind(request=req('get')).__html__()
+
+    assert '<i class="name"></i>' in html
+    assert '<i class="group"></i>' in html

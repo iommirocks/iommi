@@ -1443,7 +1443,7 @@ class ColumnHeader:
         index_in_group=None,
     ):
         self.table = table
-        self.display_name = mark_safe(display_name)
+        self.display_name = display_name
         self.template = template
         self.url = url
         self.column = column

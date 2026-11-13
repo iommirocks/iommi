@@ -24,6 +24,8 @@ Unreleased
 
 * Security: validating a `Field.phone_number` could take exponential time. Around 30 characters of the right kind kept a worker busy for seconds, and every additional character doubled that. The same phone numbers are valid as before.
 
+* Security: the `display_name` and `group` of a `Column` were put in the header of a table without escaping, so a name that comes from data could put html in the page. They are now escaped like the label of a `Field`. If you have html in a `display_name` or `group` on purpose, mark it as safe, with `format_html` or `mark_safe`.
+
 * Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
 
 * Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.
