@@ -12,6 +12,12 @@ Unreleased
 
 * Security: in the admin, the edit and delete pages of a row did not check the permissions of the model, so any staff user could read the rows of every model in the admin. The edit page now needs the view or the change permission, and is read only without the change permission. The delete page needs the delete permission.
 
+* Security: creating a user in the admin stored the password as it was typed, not hashed, and the field was a plain text field. The password is now hashed, as it already was when editing a user, and typed in a password field. A user that was created in the admin and never edited there has the typed password in the database, and should get a new one.
+
+* Security: a custom user model (`AUTH_USER_MODEL`) had no password handling in the admin at all: the hash was shown in the list and in the forms, and what was typed was stored. It now gets the same handling as `auth.User`.
+
+* Editing a user in the admin no longer requires typing a password. Leave the field empty to keep the current one.
+
 * Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
 
 * Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.

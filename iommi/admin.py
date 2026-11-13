@@ -63,6 +63,44 @@ joined_app_name_and_model = {
 }
 
 
+def user_password_defaults(user_model_label):
+    """The configuration that makes the admin hash the password of a user, and not show the hash.
+
+    Without it the password is a text field like any other: what is typed is stored as it is, and the hash is shown.
+
+    `user_model_label` is on the form `app_label.ModelName`, like `settings.AUTH_USER_MODEL`.
+    """
+    key = user_model_label.lower().replace('.', '_')
+
+    password = dict(
+        input__attrs__type='password',
+        # Without this browsers fill in the password of the staff user who is logged in
+        input__attrs__autocomplete='new-password',
+        # The stored hash is not for showing, and neither is what was typed
+        read_from_instance=lambda **_: '',
+        render_value=lambda **_: '',
+        render_value_on_error=lambda **_: '',
+    )
+
+    def set_password_if_given(instance, value, **_):
+        if value:
+            instance.set_password(value)
+
+    return {
+        f'parts__list_{key}__columns__password__include': False,
+        f'parts__create_{key}__fields__password': dict(
+            password,
+            write_to_instance=lambda instance, value, **_: instance.set_password(value),
+        ),
+        f'parts__edit_{key}__fields__password': dict(
+            password,
+            required=False,
+            help_text=gettext_lazy('Leave empty to keep the current password'),
+            write_to_instance=set_password_if_given,
+        ),
+    }
+
+
 class Messages(Fragment):
     class Meta:
         tag = 'div'
@@ -154,8 +192,6 @@ class Admin(Page):
                 or Namespace(admin.apps.get(admin.app_name+'_'+admin.model_name, dict(include=False))).include is True
         ),
         apps__auth_user__include=True,
-        parts__edit_auth_user__fields__password__write_to_instance=lambda instance, value, **_: instance.set_password(value),
-        parts__edit_auth_user__fields__password__read_from_instance=lambda **_: '',
         apps__auth_group__include=True,
         parts__messages=Messages(),
         parts__list_auth_user=dict(
@@ -182,6 +218,7 @@ class Admin(Page):
                 is_superuser__filter__include=True,
             ),
         ),
+        **user_password_defaults(settings.AUTH_USER_MODEL),
     )
     @dispatch(
         apps=EMPTY,

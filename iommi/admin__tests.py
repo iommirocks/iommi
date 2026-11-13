@@ -17,6 +17,7 @@ from iommi.admin import (
     Admin,
     Messages,
     collect_config,
+    user_password_defaults,
 )
 from iommi.base import values
 from iommi.struct import Struct
@@ -129,6 +130,103 @@ def test_delete(mock_messages, settings):
     mock_messages.add_message.assert_called_with(
         request, mock_messages.INFO, f'Foo {f} was deleted', fail_silently=True
     )
+
+
+def user_form_data(**data):
+    return {
+        'username': 'tony',
+        'first_name': '',
+        'last_name': '',
+        'email': '',
+        'is_active': '1',
+        'date_joined': '2020-01-01 00:00:00',
+        '-submit': '',
+        **data,
+    }
+
+
+@pytest.mark.django_db
+@mock.patch('iommi.admin.messages')
+def test_create_user_hashes_the_password(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
+
+    def page(request):
+        return Admin.create().refine_with_params(app_name='auth', model_name='user').bind(request=request)
+
+    content = page(staff_req('get')).__html__()
+    assert '<input autocomplete="new-password" id="id_password" name="password" type="password" value="">' in content
+
+    form = page(staff_req('post', **user_form_data(password=''))).parts.create_auth_user
+    assert form.get_errors() == {'fields': {'password': {'This field is required'}}}
+
+    p = page(staff_req('post', **user_form_data(password='hunter2')))
+    assert p.parts.create_auth_user.is_valid(), p.parts.create_auth_user.get_errors()
+    p.render_to_response()
+
+    user = User.objects.get(username='tony')
+    assert user.password != 'hunter2'
+    assert user.check_password('hunter2')
+
+
+@pytest.mark.django_db
+@mock.patch('iommi.admin.messages')
+def test_edit_user_keeps_or_hashes_the_password(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
+    user = User.objects.create(username='tony')
+    user.set_password('hunter2')
+    user.save()
+    hashed = user.password
+
+    def page(request):
+        return Admin.edit().refine_with_params(app_name='auth', model_name='user', pk=user.pk).bind(request=request)
+
+    content = page(staff_req('get')).__html__()
+    assert hashed not in content
+    assert '<input autocomplete="new-password" id="id_password" name="password" type="password" value="">' in content
+    assert 'Leave empty to keep the current password' in content
+
+    # What was typed is not sent back when another field is invalid
+    content = page(staff_req('post', **user_form_data(username='', password='changed'))).__html__()
+    assert 'This field is required' in content
+    assert 'changed' not in content
+
+    p = page(staff_req('post', **user_form_data(first_name='Tony', password='')))
+    assert p.parts.edit_auth_user.is_valid(), p.parts.edit_auth_user.get_errors()
+    p.render_to_response()
+    user.refresh_from_db()
+    assert user.first_name == 'Tony'
+    assert user.password == hashed
+
+    page(staff_req('post', **user_form_data(password='changed'))).render_to_response()
+    user.refresh_from_db()
+    assert user.password != 'changed'
+    assert user.check_password('changed')
+
+
+@pytest.mark.django_db
+def test_list_of_a_user_model_does_not_show_the_hash(settings):
+    settings.ROOT_URLCONF = __name__
+    user = User.objects.create(username='tony')
+    user.set_password('hunter2')
+    user.save()
+
+    # A custom user model has no list of columns to show, as `auth.User` has, so it gets a column per field
+    page = (
+        Admin.list(parts__list_auth_user__auto__include=None)
+        .refine_with_params(app_name='auth', model_name='user')
+        .bind(request=staff_req('get'))
+    )
+    assert 'last_login' in page.parts.list_auth_user.columns
+    assert 'password' not in page.parts.list_auth_user.columns
+    assert user.password not in page.__html__()
+
+
+def test_user_password_defaults_are_for_the_configured_user_model():
+    assert list(user_password_defaults('accounts.Person')) == [
+        'parts__list_accounts_person__columns__password__include',
+        'parts__create_accounts_person__fields__password',
+        'parts__edit_accounts_person__fields__password',
+    ]
 
 
 def staff_with_permissions_req(method, *permissions, **data):
