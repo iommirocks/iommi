@@ -165,8 +165,12 @@ def test_permissions():
     Permissions
     ~~~~~~~~~~~
 
-    By default staff users have access to the admin. You can change this by
-    overriding `has_permission`:
+    The admin is for staff users, and it uses Django's permissions. A superuser
+    can do everything. Other staff users need the `view`, `add`, `change` or
+    `delete` permission of a model to list, create, change or delete its rows.
+
+    You can change this by overriding `has_permission`. For example, to give
+    all staff users full access:
 
     """
 
@@ -175,7 +179,6 @@ def test_permissions():
     class MyAdmin(Admin):
         @staticmethod
         def has_permission(request, operation, model=None, instance=None):
-            # This is the default implementation
             return request.user.is_staff
 
     # @test
