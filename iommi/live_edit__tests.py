@@ -2,16 +2,19 @@ import json
 from pathlib import Path
 
 import pytest
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.test import override_settings
 from django.views.decorators.csrf import csrf_exempt
 
 from iommi import (
+    Form,
     Page,
     register_style,
 )
 from iommi.live_edit import (
+    LIVE_EDIT_TOKEN_FIELD,
     Middleware,
+    _live_edit_token,
     dangerous_execute_code,
     live_edit_view,
     orig_reload,
@@ -47,6 +50,7 @@ def test_live_edit():
     result = render_root(part=live_edit_view(req('get'), csrf_exempt_view, args=(), kwargs={}).bind(request=req('get')))
     assert '@csrf_exempt' in result, result
     assert "def csrf_exempt_view(request):" in result, result
+    assert f"headers: {{'X-Iommi-Live-Edit-Token': '{_live_edit_token}'}}" in result, result
 
 
 def test_live_edit_dispatch_error(settings):
@@ -77,6 +81,101 @@ def test_should_edit(settings):
     r = req('get', _iommi_live_edit='')
     r.META['SERVER_NAME'] = 'localhost'
     assert should_edit(r)
+
+
+def test_should_edit_requires_a_local_client(settings):
+    settings.DEBUG = True
+
+    def request(**meta):
+        r = req('get', _iommi_live_edit='')
+        r.META['SERVER_NAME'] = 'localhost'
+        r.META.update(meta)
+        return r
+
+    assert should_edit(request())
+    assert should_edit(request(REMOTE_ADDR='::1'))
+    assert should_edit(request(REMOTE_ADDR='::ffff:127.0.0.1'))
+    assert should_edit(request(HTTP_X_FORWARDED_FOR='127.0.0.1'))
+
+    # The Host header says localhost, but the request came from somewhere else...
+    assert not should_edit(request(REMOTE_ADDR='203.0.113.7'))
+    assert not should_edit(request(REMOTE_ADDR='::ffff:203.0.113.7'))
+    assert not should_edit(request(REMOTE_ADDR=''))
+    assert not should_edit(request(REMOTE_ADDR='not an address'))
+    # ...or through a proxy or tunnel on this machine
+    assert not should_edit(request(HTTP_X_FORWARDED_FOR='203.0.113.7'))
+    assert not should_edit(request(HTTP_X_FORWARDED_FOR='127.0.0.1, 203.0.113.7'))
+
+
+def live_edit_post(url='/?_iommi_live_edit=', data=None, **meta):
+    request = req('post', url=url, **(data if data is not None else dict(data='assert False')))
+    request.META['SERVER_NAME'] = 'localhost'
+    request.META.update(meta)
+    return Middleware(lambda _: None).process_view(request, function_based_view, (), {})
+
+
+def test_post_runs_the_code_with_the_token(settings):
+    settings.DEBUG = True
+
+    # `assert False` is the posted code: this error is what running it gives, and nothing is written to disk
+    expected = {'error': "<class 'AssertionError'>"}
+
+    assert json.loads(live_edit_post(HTTP_X_IOMMI_LIVE_EDIT_TOKEN=_live_edit_token).content) == expected
+    assert (
+        json.loads(
+            live_edit_post(
+                HTTP_X_IOMMI_LIVE_EDIT_TOKEN=_live_edit_token,
+                HTTP_HOST='localhost:8000',
+                HTTP_ORIGIN='http://localhost:8000',
+                HTTP_SEC_FETCH_SITE='same-origin',
+            ).content
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize('token', [None, '', 'wrong', 'åäö'])
+def test_post_is_refused_without_the_token(settings, token):
+    settings.DEBUG = True
+
+    response = live_edit_post(**({} if token is None else dict(HTTP_X_IOMMI_LIVE_EDIT_TOKEN=token)))
+    assert isinstance(response, HttpResponseForbidden)
+    # The page shows this to the user
+    assert 'Reload the page' in json.loads(response.content)['error']
+
+
+@pytest.mark.parametrize(
+    'meta',
+    [
+        dict(HTTP_SEC_FETCH_SITE='cross-site'),
+        # Another port on localhost is the same site, but not the same origin
+        dict(HTTP_SEC_FETCH_SITE='same-site'),
+        dict(HTTP_HOST='localhost:8000', HTTP_ORIGIN='https://evil.example'),
+        dict(HTTP_HOST='localhost:8000', HTTP_ORIGIN='http://localhost:3000'),
+        dict(HTTP_HOST='localhost:8000', HTTP_ORIGIN='null'),
+    ],
+)
+def test_post_from_another_origin_is_refused(settings, meta):
+    settings.DEBUG = True
+
+    response = live_edit_post(HTTP_X_IOMMI_LIVE_EDIT_TOKEN=_live_edit_token, **meta)
+    assert isinstance(response, HttpResponseForbidden)
+
+
+@pytest.mark.parametrize('command', ['style_editor', 'style_editor__new'])
+def test_style_editor_forms_carry_the_token(settings, command):
+    settings.DEBUG = True
+    url = f'/?_iommi_live_edit={command}'
+
+    request = req('get', url=url)
+    request.META['SERVER_NAME'] = 'localhost'
+    form = Middleware(lambda _: None).process_view(request, function_based_view, (), {})
+    assert isinstance(form, Form)
+    html = form.bind(request=request).__html__()
+    assert f'name="{LIVE_EDIT_TOKEN_FIELD}" type="hidden" value="{_live_edit_token}"' in html, html
+
+    assert isinstance(live_edit_post(url=url, data={}), HttpResponseForbidden)
+    assert isinstance(live_edit_post(url=url, data={LIVE_EDIT_TOKEN_FIELD: _live_edit_token}), Form)
 
 
 @pytest.mark.parametrize('view', [function_based_view, part_based_view])

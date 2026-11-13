@@ -135,7 +135,7 @@ def test_edit():
         `'iommi.live_edit.Middleware'` to `settings.MIDDLEWARE`. Note that you need
         to add this at the very top of the middleware list!
 
-    This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true.
+    This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true, and only for a browser on the same machine as the server: requests from other addresses are ignored, which includes a browser on the host when the server runs inside a Docker container.
     """
 
 

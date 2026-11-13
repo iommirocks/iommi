@@ -1,6 +1,9 @@
 import inspect
+import ipaddress
 import json
+import secrets
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from asgiref.sync import (
     iscoroutinefunction,
@@ -9,6 +12,7 @@ from asgiref.sync import (
 from django.conf import settings
 from django.http import (
     HttpResponse,
+    HttpResponseForbidden,
     HttpResponseRedirect,
 )
 from django.utils import autoreload
@@ -32,6 +36,12 @@ from iommi.style import (
 )
 
 orig_reload = getattr(autoreload, 'trigger_reload', None)
+
+# Made anew for every process. The live edit pages carry it and send it back with what they post. A page of another
+# site can make the browser post here, but it can't read our pages, so it doesn't have the token.
+_live_edit_token = secrets.token_urlsafe(32)
+LIVE_EDIT_TOKEN_HEADER = 'X-Iommi-Live-Edit-Token'
+LIVE_EDIT_TOKEN_FIELD = 'iommi_live_edit_token'
 
 
 class Middleware:
@@ -59,6 +69,12 @@ class Middleware:
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
         if should_edit(request):
+            # This middleware goes first, so Django's CSRF check never sees these requests
+            if request.method != 'GET' and not (_is_same_origin(request) and _has_live_edit_token(request)):
+                return HttpResponseForbidden(
+                    json.dumps(dict(error='Live edit refused this request. Reload the page and try again.')),
+                    content_type='application/json',
+                )
             return live_edit_dispatch(request)(
                 request=request, view=callback, args=callback_args, kwargs=callback_kwargs
             )
@@ -85,8 +101,49 @@ def _is_localhost(request):
     return host in ('localhost', '127.0.0.1', '[::1]') or host.endswith('.localhost')
 
 
+def _is_loopback_address(address):
+    try:
+        ip = ipaddress.ip_address(address.strip())
+    except ValueError:
+        return False
+    return (getattr(ip, 'ipv4_mapped', None) or ip).is_loopback
+
+
+def _is_local_client(request):
+    """The `Host` header is whatever the client says it is, so the address the request came from must be local too."""
+    addresses = [request.META.get('REMOTE_ADDR', '')]
+    # A proxy or tunnel on this machine connects from a local address, and names who it passes the request on for
+    addresses += [x for x in request.META.get('HTTP_X_FORWARDED_FOR', '').split(',') if x.strip()]
+    return all(_is_loopback_address(x) for x in addresses)
+
+
+def _is_same_origin(request):
+    """False for a request that the browser says another site made. Browsers set these headers, a page can't."""
+    if request.META.get('HTTP_SEC_FETCH_SITE', 'same-origin') not in ('same-origin', 'none'):
+        return False
+    origin = request.META.get('HTTP_ORIGIN')
+    return origin is None or urlsplit(origin).netloc == request.META.get('HTTP_HOST')
+
+
+def _has_live_edit_token(request):
+    token = request.headers.get(LIVE_EDIT_TOKEN_HEADER) or request.POST.get(LIVE_EDIT_TOKEN_FIELD, '')
+    return secrets.compare_digest(token.encode(), _live_edit_token.encode())
+
+
+def _live_edit_token_field():
+    from iommi import Field
+
+    # The middleware is what checks the token, the form just has to carry it
+    return Field.hidden(initial=_live_edit_token, required=False)
+
+
 def should_edit(request):
-    return settings.DEBUG and _is_localhost(request) and '_iommi_live_edit' in request.GET
+    return (
+        settings.DEBUG
+        and '_iommi_live_edit' in request.GET
+        and _is_localhost(request)
+        and _is_local_client(request)
+    )
 
 
 def include_decorators(node):
@@ -403,6 +460,7 @@ def live_edit_view_impl(
 
                         let response = await fetch('', {
                             method: 'POST',
+                            headers: {'<<token_header>>': '<<token>>'},
                             body: form_data
                         });
                         let foo = await response.json();
@@ -427,7 +485,7 @@ def live_edit_view_impl(
                     editor.session.on('change', () => {window.iommi_live_edit_needs_update = true});
                     editor.setFontSize(14);
                     editor.session.setUseWrapMode(true);
-                '''
+                '''.replace('<<token_header>>', LIVE_EDIT_TOKEN_HEADER).replace('<<token>>', _live_edit_token)
             )
         ),
     )
@@ -566,6 +624,7 @@ def style_editor__select(**_):
     return Form(
         title='Select style to edit',
         fields__name=Field.choice(choices=[k for k, v in items(_styles) if not v.internal]),
+        fields={LIVE_EDIT_TOKEN_FIELD: _live_edit_token_field()},
         actions__edit=Action.primary(
             display_name='Edit',
             post_handler=lambda form, **_: HttpResponseRedirect(
@@ -661,8 +720,9 @@ from iommi.asset import Asset
 
     return Form(
         title='Create new style',
-        fields=dict(
-            module=Field(),  # TODO: can we guess this in a smart way? maybe look at settings.__module__?
-        ),
+        fields={
+            'module': Field(),  # TODO: can we guess this in a smart way? maybe look at settings.__module__?
+            LIVE_EDIT_TOKEN_FIELD: _live_edit_token_field(),
+        },
         actions__submit__post_handler=new_style,
     )

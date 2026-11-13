@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+Unreleased
+~~~~~~~~~~
+
+* Security: live edit could be made to run code by requests it should not have trusted. The check that a request is local only looked at the `Host` header, which the client chooses, and posts were not protected against other sites making the browser send them. So with `DEBUG` on and `iommi.live_edit.Middleware` installed, a web page open in the developer's browser, or another machine that could reach the development server, could run Python code on the server. Live edit now only answers requests that come from a local address, and posts must come from the live edit page itself. A consequence is that live edit doesn't work from a browser on the host when the server runs inside a Docker container.
+
+
 7.36.1 (2026-11-13)
 ~~~~~~~~~~~~~~~~~~~
 * Main menu access control access control bug fixed
