@@ -109,6 +109,13 @@ menu_declaration = MainMenu(
 urlpatterns = menu_declaration.urlpatterns()
 
 
+class UrlConfWithTableFirst:
+    urlpatterns = list(reversed(urlpatterns))
+
+
+url_conf_with_table_first = UrlConfWithTableFirst()
+
+
 def test_menu_match():
     menu = menu_declaration.bind(request=staff_req('get', url='/foo/bar/baz/'))
     assert menu.active_item.url == '/foo/bar/baz/'
@@ -346,8 +353,12 @@ def test_path_decoding_include_parent(settings):
     ok = object()
     inner = main_menu_middleware(lambda request: ok)
 
+    request = req('get', url='/table/')
+    # In `urlpatterns` the path of `artist`, `<artist_pk>/`, comes first and resolves /table/ too
+    request.urlconf = url_conf_with_table_first
+
     assert (
-        inner(req('get', url='/table/')) == ok
+        inner(request) == ok
     ), "Could not access M containing items with `params` and `include` functions that use them."
 
 
@@ -617,3 +628,120 @@ def test_display_name_falls_back_to_the_item_name():
 
     assert item._raw_display_name == 'some name here'
     assert str(item.display_name) == 'Some name here'
+
+
+class UrlConfOfAccessMenu:
+    """What `request.urlconf` points at in the access tests below: the menu's own paths, and one path declared beside it."""
+
+    @property
+    def urlpatterns(self):
+        return access_menu_urlpatterns
+
+
+access_menu_declaration = MainMenu(
+    items=dict(
+        # The link carries a query string, as for a list that opens filtered.
+        staff_only=M(
+            view=fake_view,
+            include=lambda user, **_: user.is_staff,
+            url='/staff_only/?filter=mine',
+            path='staff_only/',
+            items=dict(
+                child=M(
+                    view=fake_view,
+                    path='child/',
+                    url='/staff_only/child/',
+                ),
+            ),
+            paths=[
+                path('extra/', fake_view),
+            ],
+        ),
+        # The link does not go to the item's own path.
+        link_elsewhere=M(
+            view=fake_view,
+            include=lambda user, **_: user.is_staff,
+            url='/somewhere/else/',
+            path='link_elsewhere/',
+            items=dict(
+                child=M(
+                    view=fake_view,
+                    path='child/',
+                    url='/link_elsewhere/child/',
+                ),
+            ),
+        ),
+        open_to_all=M(
+            view=fake_view,
+            items=dict(
+                staff_child=M(
+                    view=fake_view,
+                    include=lambda user, **_: user.is_staff,
+                    # The link of a child that is computed from something else than the request's path.
+                    url=lambda **_: '/open_to_all/some_other_child/',
+                    path='staff_child/',
+                ),
+            ),
+        ),
+    ),
+)
+
+access_menu_urlpatterns = access_menu_declaration.urlpatterns() + [
+    path('staff_only/declared_beside_the_menu/', fake_view),
+    path('not_in_the_menu/', fake_view),
+]
+url_conf_of_access_menu = UrlConfOfAccessMenu()
+
+
+def access_menu_response(request):
+    request.urlconf = url_conf_of_access_menu
+    return main_menu_middleware(lambda request: 'ok')(request)
+
+
+@pytest.mark.parametrize(
+    'url',
+    [
+        '/staff_only/',
+        '/staff_only/child/',
+        '/staff_only/extra/',
+        '/staff_only/declared_beside_the_menu/',
+        '/link_elsewhere/',
+        '/link_elsewhere/child/',
+        '/open_to_all/staff_child/',
+    ],
+)
+def test_access_follows_the_resolved_path_and_not_the_link_of_the_item(settings, url):
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.access_menu_declaration'
+
+    assert access_menu_response(staff_req('get', url=url)) == 'ok'
+    assert isinstance(access_menu_response(req('get', url=url)), HttpResponseForbidden)
+
+
+@pytest.mark.parametrize('url', ['/open_to_all/', '/not_in_the_menu/'])
+def test_access_to_what_no_excluded_item_is_above(settings, url):
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.access_menu_declaration'
+
+    assert access_menu_response(req('get', url=url)) == 'ok'
+
+
+def test_active_item_of_a_link_with_a_query_string():
+    menu = access_menu_declaration.bind(request=staff_req('get', url='/staff_only/'))
+    assert menu.active_item.url == '/staff_only/?filter=mine'
+
+    menu = access_menu_declaration.bind(request=staff_req('get', url='/staff_only/child/'))
+    assert menu.active_item.url == '/staff_only/child/'
+
+
+@pytest.mark.django_db
+def test_path_decoding_include_denied_by_the_middleware(settings, ozzy, black_sabbath):
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.menu_declaration'
+    settings.ROOT_URLCONF = 'iommi.main_menu__tests'
+
+    def decode_artist(string, **_):
+        return Artist.objects.get(pk=string)
+
+    with register_path_decoding(artist_pk=PathDecoder(decode=decode_artist, name='artist')):
+        inner = main_menu_middleware(lambda request: 'ok')
+
+        assert inner(req('get', url=f'/table/{black_sabbath.pk}/')) == 'ok'
+        assert isinstance(inner(req('get', url=f'/table/{ozzy.pk}/')), HttpResponseForbidden)

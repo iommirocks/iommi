@@ -7,6 +7,7 @@ from django.conf import settings
 from django.conf.urls import handler403
 from django.core.exceptions import PermissionDenied
 from django.urls import (
+    URLResolver,
     get_resolver,
     include,
 )
@@ -62,6 +63,69 @@ def path(path, view_or_list, name=None, kwargs=None):
             return orig_path(path, view_or_list, name=name, kwargs=kwargs)
 
 
+def join_routes(route, sub_route):
+    """Join the routes of a resolver and of what it includes, as Django does for `ResolverMatch.route`."""
+    if not route:
+        return sub_route
+    return route + sub_route.removeprefix('^')
+
+
+def is_route_below(route, *, item_route):
+    """True if `route` is the route of the item, or of something below it in the URL hierarchy."""
+    if not route.startswith(item_route):
+        return False
+    rest_of_route = route[len(item_route):]
+    # `users` is not above `users_archive/`
+    return not item_route or item_route.endswith('/') or not rest_of_route or rest_of_route.startswith('/')
+
+
+class MenuRoutes:
+    """Where the items of the main menus are in a URL configuration: the route of each item, and for each path that is declared in a menu the item it belongs to."""
+
+    def __init__(self, url_patterns):
+        self.item_by_declared_route = {}
+        self.routes_and_items = []
+        self._collect(url_patterns, route='', item=None)
+
+    def _collect(self, url_patterns, *, route, item):
+        for url_pattern in url_patterns:
+            pattern_route = join_routes(route, str(url_pattern.pattern))
+            pattern_item = getattr(url_pattern, 'iommi_menu_item', item)
+            if pattern_item is not item:
+                self.routes_and_items.append((pattern_route, pattern_item))
+            if isinstance(url_pattern, URLResolver):
+                self._collect(url_pattern.url_patterns, route=pattern_route, item=pattern_item)
+            elif pattern_item is not None:
+                # Django resolves the first of two paths with the same route
+                self.item_by_declared_route.setdefault(pattern_route, pattern_item)
+
+    def find_item(self, route):
+        """The item that the path with this route is declared in, or else the deepest item it is below."""
+        if route in self.item_by_declared_route:
+            return self.item_by_declared_route[route]
+
+        deepest_route, deepest_item = '', None
+        for item_route, item in self.routes_and_items:
+            if is_route_below(route, item_route=item_route) and (deepest_item is None or len(item_route) > len(deepest_route)):
+                deepest_route, deepest_item = item_route, item
+        return deepest_item
+
+
+def get_menu_routes(urlconf):
+    resolver = get_resolver(urlconf)
+    # Kept on the resolver, which Django caches per URL configuration and drops when the URL configuration changes
+    if not hasattr(resolver, 'iommi_menu_routes'):
+        resolver.iommi_menu_routes = MenuRoutes(resolver.url_patterns)
+    return resolver.iommi_menu_routes
+
+
+def path_of_item(item):
+    """The paths of an item, as its parent includes them: marked with the item, which is how the access check finds the item of a resolved path."""
+    url_resolver = path(item.path, item.urlpatterns(), name=item.name)
+    url_resolver.iommi_menu_item = item
+    return url_resolver
+
+
 class MainMenu:
     # language=rst
     """
@@ -92,7 +156,7 @@ class MainMenu:
             raise AssertionError('To use the iommi main menu, you must add `iommi.main_menu.main_menu_middleware` to the MIDDLEWARE list.')
 
         return [
-            path(x.path, x.urlpatterns(), name=x.name)
+            path_of_item(x)
             for x in self.items.values()
             if x.view is not EXTERNAL
         ] + self.paths
@@ -156,7 +220,7 @@ class BoundMainMenu:
         def url_likeness(x):
             if x is None:
                 return 0
-            a = PurePosixPath(x.url).parts
+            a = PurePosixPath(urlparse(x.url).path).parts
             b = path_parts
             # if a starts with b
             if a == b[:len(a)]:
@@ -179,10 +243,40 @@ class BoundMainMenu:
         self.active_item = best_match
 
     def check_access(self):
+        self.check_access_to_resolved_path()
+
         for item in self.raw_items.values():
             if not item.is_active():
                 continue
             item.check_access()
+
+    def check_access_to_resolved_path(self):
+        """Refuse a path that is declared in, or is below, an item the user does not have: that item or one above it.
+
+        This goes by the route Django resolved, where `active_item` goes by the links of the items. A link is what
+        the user clicks on, and can differ from the path of its item: a query string, or the URL of another object.
+        """
+        resolver_match = getattr(self.request, 'resolver_match', None)
+        # The parameters of a django-ninja path are not decoded, so the items above it can't be evaluated
+        if resolver_match is None or resolver_match.route is None or resolver_match.app_name == 'ninja':
+            return
+
+        item_or_main_menu = get_menu_routes(getattr(self.request, 'urlconf', None)).find_item(resolver_match.route)
+        items_from_the_top = []
+        while isinstance(item_or_main_menu, M):
+            items_from_the_top.insert(0, item_or_main_menu)
+            item_or_main_menu = item_or_main_menu.parent
+        # Not below an item, or below an item of another main menu
+        if item_or_main_menu is not self.main_menu:
+            return
+
+        bound_items = self.raw_items
+        for item in items_from_the_top:
+            bound_item = next((x for x in bound_items.values() if x.m is item), None)
+            # An item is only bound if the user has every item above it
+            if bound_item is None or not bound_item.include:
+                raise PermissionDenied()
+            bound_items = bound_item.raw_items
 
     def params_are_satisfied(self):
         return True
@@ -313,7 +407,7 @@ class M:
         return [
             path('', view, name=self._name_path(), kwargs=self.view_kwargs)
         ] + [
-            path(x.path, x.urlpatterns(), name=f'{self.name}.{self.name}')
+            path_of_item(x)
             for x in self.items.values()
             if x.view is not EXTERNAL
         ] + self.paths

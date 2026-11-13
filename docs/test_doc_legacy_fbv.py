@@ -231,7 +231,7 @@ def test_legacy_fbv_with_main_menu_and_basic_html(settings, black_sabbath, mediu
     # @test
     foo = main_menu_middleware(get_response=lambda request: view_artist(request, artist_name=black_sabbath.name))
     bar = middleware(get_response=foo)
-    response = bar(req('get', url='/artists/'))
+    response = bar(req('get', url='/foo/'))
     show_output(response)
     assert black_sabbath.name in response.content.decode()
     # @end
