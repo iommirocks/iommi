@@ -684,7 +684,9 @@ def email_parse(string_value, field=None, **_):
 
 def phone_number_is_valid(parsed_data, **_):
     return (
-        re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE),
+        # Groups of digits must have a separator between them. With an optional separator there are very many ways to
+        # split a run of digits into groups, and for a number that doesn't match, the regex engine tries them all.
+        re.match(r'^\+\d{1,3}([ \-]?\(\d+\))?[ \-]?\d+([ \-]\d+)*$', parsed_data),
         gettext_lazy(
             'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
         ),

@@ -14,6 +14,7 @@ from io import (
     StringIO,
 )
 from pathlib import Path
+from time import perf_counter
 from urllib.parse import urlencode
 
 import pytest
@@ -79,6 +80,7 @@ from iommi.form import (
     float_parse,
     int_parse,
     is_django_promise_with_string_proxy,
+    phone_number_is_valid,
     register_field_factory,
     render_template,
     save_nested_forms,
@@ -840,6 +842,37 @@ def test_phone_field():
     }
     assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo='+1 (212) 123 4567')).is_valid()
     assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo='+46 70 123 123')).is_valid()
+
+
+@pytest.mark.parametrize(
+    'number, valid',
+    [
+        ('+1 (212) 123 4567', True),
+        ('+1(212)1234567', True),
+        ('+1-(212)-123-4567', True),
+        ('+1 212 123 4567', True),
+        ('+46701234567', True),
+        ('+46-70-123-45-67', True),
+        ('+1', False),
+        ('46 70 123 123', False),
+        ('+46 70  123 123', False),
+        ('+46 70 123 123 ext 4', False),
+        ('+46 (70 123 123', False),
+        ('+46 70 123 123-', False),
+    ],
+)
+def test_phone_number_is_valid(number, valid):
+    assert bool(phone_number_is_valid(number)[0]) == valid
+
+
+def test_phone_number_is_valid_does_not_take_exponential_time():
+    # The time doubled with every digit of a number like this, and was seconds for this one
+    start = perf_counter()
+    assert not phone_number_is_valid('+1' + '1' * 28 + 'x')[0]
+    assert perf_counter() - start < 1
+
+    # Only after the check above: with exponential time this one would never finish
+    assert not phone_number_is_valid('+1' + '1' * 10000 + 'x')[0]
 
 
 def test_render_template_string():
