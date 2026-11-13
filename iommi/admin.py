@@ -494,7 +494,9 @@ class Admin(Page):
             table = setdefaults_path(
                 table,
                 edit_form__editable=has_permission('edit'),
-                edit_actions__add_row__include=has_permission('create'),
+                edit_actions__add_row__include=lambda table, **kwargs: (
+                    table.create_form is not None and has_permission('create')(table=table, **kwargs)
+                ),
                 edit_actions__save__include=has_permission('create', 'edit', 'delete'),
             )
 

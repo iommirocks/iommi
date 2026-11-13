@@ -308,9 +308,10 @@ def edit_table__post_handler(table, request, **_):
     parsed_data = {}
 
     assert table.edit_form._is_bound
-    assert table.create_form._is_bound
     table.edit_form.mode = FULL_FORM_FROM_REQUEST
-    table.create_form.mode = FULL_FORM_FROM_REQUEST
+    if table.create_form is not None:
+        assert table.create_form._is_bound
+        table.create_form.mode = FULL_FORM_FROM_REQUEST
 
     def validate(cells_iterator, form, errors):
         for cells in cells_iterator:
@@ -483,6 +484,7 @@ class EditTable(Table):
         edit_actions__add_row = dict(
             call_target__attribute='button',
             display_name=gettext_lazy('Add row'),
+            include=lambda table, **_: table.create_form is not None,
             attrs__type='button',
             **{
                 'attrs__data-iommi-edit-table-add-row-button': True,
@@ -504,7 +506,9 @@ class EditTable(Table):
 
         attrs = {
             'data-next-virtual-pk': '-1',
-            'data-new-row-endpoint': lambda table, **_: table.endpoints.new_row.endpoint_path,
+            'data-new-row-endpoint': lambda table, **_: (
+                table.endpoints.new_row.endpoint_path if table.create_form is not None else None
+            ),
         }
         row__attrs = {
             'data-iommi-edit-table-row': True,
@@ -512,6 +516,10 @@ class EditTable(Table):
         tbody__attrs = {  # this is needed for "Add row" button javascript
             'data-iommi-is-tbody': True,
         }
+
+        @staticmethod
+        def endpoints__new_row__include(table, **_):
+            return table.create_form is not None
 
         @staticmethod
         def endpoints__new_row__func(table, **kwargs):

@@ -12,6 +12,8 @@ Unreleased
 
 * Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
 
+* Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.
+
 
 7.36.1 (2026-11-13)
 ~~~~~~~~~~~~~~~~~~~

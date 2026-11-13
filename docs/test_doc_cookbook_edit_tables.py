@@ -268,6 +268,7 @@ def test_how_do_i_customize_the_edit_table_actions(black_sabbath):
     # language=rst
     """
     This is more than hiding a button: a table without the `add_row` action ignores new rows in what is posted to it.
+    Passing `create_form=None` does the same, and also leaves out the form for new rows altogether.
     In the same way rows are only deleted if the table has an `EditColumn.delete()` column, and existing rows are
     only changed if `edit_form__editable` is true. All three can be callables, so they can depend on the user.
     """

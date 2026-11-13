@@ -679,6 +679,40 @@ def test_edit_table_post_create_is_ignored_without_the_add_row_action(include):
 
 
 @pytest.mark.django_db
+def test_edit_table_without_create_form():
+    tfoo = TFoo.objects.create(a=1, b='asd')
+
+    def edit_table():
+        return EditTable(auto__model=TFoo, columns__a__field__include=True, create_form=None)
+
+    html = edit_table().bind(request=req('GET')).__html__()
+    assert f'name="columns/a/{tfoo.pk}"' in html
+    assert 'data-iommi-edit-table-add-row-button' not in html
+    assert 'data-new-row-endpoint' not in html
+
+    with pytest.raises(AssertionError, match="No bound value for 'new_row'"):
+        edit_table().bind(request=req('GET', **{'/new_row': ''})).render_to_response()
+
+    # Existing rows are saved, and a new row in what is posted is ignored
+    response = edit_table().bind(
+        request=req(
+            'POST',
+            **{
+                f'columns/a/{tfoo.pk}': '2',
+                'columns/a/-1': '3',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+    assert response.status_code == 302
+    assert list(TFoo.objects.values_list('a', flat=True)) == [2]
+
+    response = edit_table().bind(request=req('POST', **{f'columns/a/{tfoo.pk}': 'x', '-save': ''})).render_to_response()
+    assert response.status_code == 200
+    assert 'Could not convert string to int: x' in response.content.decode()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize('editable', [False, lambda **_: False])
 def test_edit_table_post_is_ignored_for_a_non_editable_edit_form(editable):
     tfoo = TFoo.objects.create(a=1, b='asd')
