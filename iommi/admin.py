@@ -482,6 +482,22 @@ class Admin(Page):
             query_from_indexes=True,
         )
 
+        if issubclass(cls.get_meta().table_class, EditTable):
+            # Saving an `EditTable` creates, changes and deletes rows, so each of those needs its own permission.
+            # Deleting follows the delete column above.
+            def has_permission(*operations):
+                return lambda request, table, **_: any(
+                    cls.has_permission(request, instance=None, model=table.model, operation=operation)
+                    for operation in operations
+                )
+
+            table = setdefaults_path(
+                table,
+                edit_form__editable=has_permission('edit'),
+                edit_actions__add_row__include=has_permission('create'),
+                edit_actions__save__include=has_permission('create', 'edit', 'delete'),
+            )
+
         return cls(
             parts__header__children__link__attrs__href='../..',
             parts__table=table,

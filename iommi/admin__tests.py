@@ -131,6 +131,75 @@ def test_delete(mock_messages, settings):
     )
 
 
+def staff_with_permissions_req(method, *permissions, **data):
+    request = req(method, **data)
+    request.user = Struct(
+        is_staff=True,
+        is_authenticated=True,
+        is_superuser=False,
+        has_perm=lambda permission: permission in permissions,
+    )
+    return request
+
+
+@pytest.mark.django_db
+def test_list_has_no_save_with_only_the_view_permission(settings):
+    settings.ROOT_URLCONF = __name__
+    f = Foo.objects.create(foo=7)
+    view = FooAdmin.list().as_view()
+
+    response = view(staff_with_permissions_req('get', 'tests.view_foo'), app_name='tests', model_name='foo')
+    content = response.content.decode()
+    assert 'name="-save"' not in content
+    assert 'data-iommi-edit-table-add-row-button' not in content
+
+    request = staff_with_permissions_req(
+        'post',
+        'tests.view_foo',
+        **{
+            f'list_tests_foo/pk_delete_{f.pk}': '',
+            'list_tests_foo/foo/-1': '11',
+            '-save': '',
+        },
+    )
+    with pytest.raises(AssertionError, match="No bound value for 'save'"):
+        view(request, app_name='tests', model_name='foo')
+
+    assert list(Foo.objects.values_list('foo', flat=True)) == [7]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'permission, expected',
+    [
+        ('tests.add_foo', [7, 11]),
+        ('tests.change_foo', [8]),
+        ('tests.delete_foo', []),
+    ],
+)
+def test_list_save_needs_the_permission_of_each_operation(settings, permission, expected):
+    settings.ROOT_URLCONF = __name__
+    f = Foo.objects.create(foo=7)
+
+    # The request tries to change a row, delete it and create another one
+    request = staff_with_permissions_req(
+        'post',
+        'tests.view_foo',
+        permission,
+        **{
+            f'list_tests_foo/foo/{f.pk}': '8',
+            f'list_tests_foo/pk_delete_{f.pk}': '',
+            'list_tests_foo/foo/-1': '11',
+            '-save': '',
+        },
+    )
+    view = FooAdmin.list(parts__list_tests_foo__columns__foo__field__include=True).as_view()
+    response = view(request, app_name='tests', model_name='foo')
+    assert response.status_code == 302
+
+    assert sorted(Foo.objects.values_list('foo', flat=True)) == expected
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize('is_authenticated', [True, False])
 @pytest.mark.parametrize(

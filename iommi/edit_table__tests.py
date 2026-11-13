@@ -619,6 +619,82 @@ def test_edit_table_post_delete():
     assert TFoo.objects.all().count() == 0
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(),
+        dict(columns__delete=EditColumn.delete(include=False)),
+        dict(columns__delete=EditColumn.delete(include=lambda **_: False)),
+        # A link to a delete view, which is not the delete of the table
+        dict(columns__delete=Column.delete()),
+    ],
+)
+def test_edit_table_post_delete_is_ignored_without_a_delete_column(kwargs):
+    tfoo = TFoo.objects.create(a=1, b='asd')
+
+    response = (
+        EditTable(auto__model=TFoo, columns__a__field__include=True, **kwargs)
+        .bind(
+            request=req(
+                'POST',
+                **{
+                    f'columns/a/{tfoo.pk}': '1',
+                    f'pk_delete_{tfoo.pk}': '',
+                    '_all_pks_': '1',
+                    '-save': '',
+                },
+            )
+        )
+        .render_to_response()
+    )
+    assert response.status_code == 302
+
+    assert TFoo.objects.filter(pk=tfoo.pk).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('include', [False, lambda **_: False])
+def test_edit_table_post_create_is_ignored_without_the_add_row_action(include):
+    edit_table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        columns__b__field__include=True,
+        edit_actions__add_row__include=include,
+    )
+
+    response = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                'columns/a/-1': '1',
+                'columns/b/-1': 'new',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+    assert response.status_code == 302
+
+    assert not TFoo.objects.exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('editable', [False, lambda **_: False])
+def test_edit_table_post_is_ignored_for_a_non_editable_edit_form(editable):
+    tfoo = TFoo.objects.create(a=1, b='asd')
+
+    def edit_table():
+        return EditTable(auto__model=TFoo, columns__a__field__include=True, edit_form__editable=editable)
+
+    html = edit_table().bind(request=req('GET')).__html__()
+    assert f'<input disabled id="id_columns__a__{tfoo.pk}" name="columns/a/{tfoo.pk}" type="text" value="1">' in html, html
+
+    response = edit_table().bind(request=req('POST', **{f'columns/a/{tfoo.pk}': '2', '-save': ''})).render_to_response()
+    assert response.status_code == 302
+
+    assert TFoo.objects.get().a == 1
+
+
 def test_edit_table_delete_checkbox_for_list_rows_uses_row_index():
     edit_table = EditTable(
         rows=[Struct(pk=10), Struct(pk=20)],

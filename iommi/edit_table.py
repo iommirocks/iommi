@@ -151,7 +151,8 @@ def bind_field_from_instance(field, instance):
     # The inputs of the declared field are already refine done, so each cell only needs to bind them
     field.input = field._declared.input
     field.non_editable_input = field._declared.non_editable_input
-    field.editable = field.iommi_namespace.get('editable')
+    # As for a field of any form: a form that isn't editable has no editable fields
+    field.editable = field.iommi_namespace.get('editable') if field.form.editable else False
     field.initial = field.iommi_namespace.get('initial')
     field.label.attrs['for'] = evaluate_strict(default_input_id, **field.label.iommi_evaluate_parameters())
     field._evaluate_parameters['instance'] = instance
@@ -338,7 +339,7 @@ def edit_table__post_handler(table, request, **_):
     if table.edit_errors or table.create_errors:
         return None
 
-    if isinstance(table.initial_rows, QuerySet):
+    if table.can_delete_rows() and isinstance(table.initial_rows, QuerySet):
         prefix = path_join(table.iommi_path, 'pk_delete_')
         deleted_pks = table.delete_queryset(table.get_delete_queryset(prefix=prefix))
     else:
@@ -728,10 +729,24 @@ class EditTable(Table):
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
 
+    def can_delete_rows(self):
+        """Rows are deleted on save only if the table has an `EditColumn.delete` column that is included for this request.
+
+        What is posted is up to the client, so a table that doesn't offer deletion must not act on it.
+        """
+        return any(
+            isinstance(column, EditColumn) and 'delete' in getattr(column, 'iommi_shortcut_stack', [])
+            for column in values(self.columns)
+        )
+
+    def can_create_rows(self):
+        """Rows are created on save only if the `add_row` action is included for this request."""
+        return self.create_form is not None and self.edit_actions.get('add_row') is not None
+
     def _get_virtual_pks_from_post(self):
         """Extract virtual PKs from POST data."""
         request = self.get_request()
-        if not request or request.method != 'POST':
+        if not request or request.method != 'POST' or not self.can_create_rows():
             return []
 
         prefix = self.iommi_path + DISPATCH_PATH_SEPARATOR if self.iommi_path else ''

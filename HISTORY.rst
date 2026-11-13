@@ -6,6 +6,12 @@ Unreleased
 
 * Security: live edit could be made to run code by requests it should not have trusted. The check that a request is local only looked at the `Host` header, which the client chooses, and posts were not protected against other sites making the browser send them. So with `DEBUG` on and `iommi.live_edit.Middleware` installed, a web page open in the developer's browser, or another machine that could reach the development server, could run Python code on the server. Live edit now only answers requests that come from a local address, and posts must come from the live edit page itself. A consequence is that live edit doesn't work from a browser on the host when the server runs inside a Docker container.
 
+* Security: saving an `EditTable` deleted and created rows whether or not the table offered that, since what is posted is up to the client. Rows are now only deleted if the table has an included `EditColumn.delete()` column, and only created if the `add_row` action is included. If you have built your own controls for this, override `EditTable.can_delete_rows()` or `EditTable.can_create_rows()`.
+
+* Security: in the admin, a staff user with only the view permission for a model could create and delete its rows, and change columns that are editable in the list, by posting to the save of the list. Each of these now needs its own permission.
+
+* Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
+
 
 7.36.1 (2026-11-13)
 ~~~~~~~~~~~~~~~~~~~
