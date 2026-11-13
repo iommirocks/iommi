@@ -10,6 +10,8 @@ Unreleased
 
 * Security: in the admin, a staff user with only the view permission for a model could create and delete its rows, and change columns that are editable in the list, by posting to the save of the list. Each of these now needs its own permission.
 
+* Security: in the admin, the edit and delete pages of a row did not check the permissions of the model, so any staff user could read the rows of every model in the admin. The edit page now needs the view or the change permission, and is read only without the change permission. The delete page needs the delete permission.
+
 * Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
 
 * Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.

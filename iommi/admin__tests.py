@@ -201,6 +201,44 @@ def test_list_save_needs_the_permission_of_each_operation(settings, permission, 
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    'permissions, edit_page, delete_page',
+    [
+        ([], None, None),
+        (['tests.view_foo'], 'read only', None),
+        (['tests.change_foo'], 'editable', None),
+        (['tests.delete_foo'], None, 'deletable'),
+        # The permissions of another model don't count
+        (['tests.view_bar', 'tests.change_bar', 'tests.delete_bar'], None, None),
+    ],
+)
+def test_edit_and_delete_pages_need_the_permission_of_the_model(settings, permissions, edit_page, delete_page):
+    settings.ROOT_URLCONF = __name__
+    f = Foo.objects.create(foo=7)
+
+    def content_of(admin):
+        request = staff_with_permissions_req('get', *permissions)
+        try:
+            return admin.as_view()(request, app_name='tests', model_name='foo', pk=f.pk).content.decode()
+        except Http404:
+            return None
+
+    content = content_of(FooAdmin.edit())
+    if edit_page is None:
+        assert content is None
+    else:
+        assert 'value="7"' in content
+        assert ('name="-submit"' in content) == (edit_page == 'editable')
+        assert ('<input disabled' in content) == (edit_page == 'read only')
+
+    content = content_of(FooAdmin.delete())
+    if delete_page is None:
+        assert content is None
+    else:
+        assert 'name="-submit"' in content
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize('is_authenticated', [True, False])
 @pytest.mark.parametrize(
     'admin, kwargs',

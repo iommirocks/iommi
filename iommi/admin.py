@@ -214,6 +214,8 @@ class Admin(Page):
 
         if instance is not None:
             refined_admin = refined_admin.refine(
+                model=model,
+                instance=instance,
                 parts__edit__auto__instance=instance,
                 parts__delete__auto__instance=instance,
             )
@@ -235,8 +237,16 @@ class Admin(Page):
                 pk=kwargs.pop('pk', None),
             ).refine_done()
 
-            if not self.has_permission(
-                request, instance=final_page.instance, model=final_page.model, operation=final_page.operation
+            operations = [final_page.operation]
+            if final_page.operation == 'edit':
+                # As in the Django admin: without the change permission the form is not editable and has no submit
+                operations.append('view')
+
+            if not any(
+                self.has_permission(
+                    request, instance=final_page.instance, model=final_page.model, operation=operation
+                )
+                for operation in operations
             ):
                 raise Http404()
 

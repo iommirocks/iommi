@@ -168,6 +168,8 @@ def test_permissions():
     The admin is for staff users, and it uses Django's permissions. A superuser
     can do everything. Other staff users need the `view`, `add`, `change` or
     `delete` permission of a model to list, create, change or delete its rows.
+    With only the `view` permission the edit page of a row can be opened, but
+    it is read only.
 
     You can change this by overriding `has_permission`. For example, to give
     all staff users full access:
