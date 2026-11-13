@@ -20,6 +20,8 @@ Unreleased
 
 * Security: the experimental `Calendar` did not escape the name and the url of an event, so html in the data, like in the name of a row, ended up in the page as it was. If your `event__display_name` returns html, mark it as safe, with `format_html` for example.
 
+* Security: `iommi.js` inserted the error of a table filter into the page as html. The error quotes what was searched for, so a link with a crafted query could run a script in the page of whoever followed it and then changed the filter. The error is now inserted as text.
+
 * Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
 
 * Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.

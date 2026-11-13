@@ -153,7 +153,8 @@ class IommiBase {
 
             const globalErrorsWrapper = form.parentNode.querySelector('.iommi_query_error');
             if (globalErrors) {
-                globalErrorsWrapper.innerHTML = globalErrors.join(', ');
+                // The errors quote what the user typed, so they are text and not html
+                globalErrorsWrapper.textContent = globalErrors.join(', ');
                 globalErrorsWrapper.classList.remove('hidden');
             } else {
                 globalErrorsWrapper.classList.add('hidden');
@@ -249,7 +250,7 @@ class IommiBase {
         } catch (err) {
             if (!this.isAjaxAbort(err)) {
                 if (extra.filterForm) {
-                    extra.filterForm.querySelector('.iommi_query_error').innerHTML = err;
+                    extra.filterForm.querySelector('.iommi_query_error').textContent = err;
                 }
 
                 this.showTableError(container, err, params, extra);
