@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+7.36.1 (2026-11-13)
+~~~~~~~~~~~~~~~~~~~
+* Main menu access control access control bug fixed
+
+
 7.36.0 (2026-11-09)
 ~~~~~~~~~~~~~~~~~~~
 
