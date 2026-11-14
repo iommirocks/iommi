@@ -7,6 +7,7 @@ from django.conf import settings
 from django.conf.urls import handler403
 from django.core.exceptions import PermissionDenied
 from django.urls import (
+    LocalePrefixPattern,
     URLResolver,
     get_resolver,
     include,
@@ -113,10 +114,14 @@ class MenuRoutes:
 
 def get_menu_routes(urlconf):
     resolver = get_resolver(urlconf)
+    # A route in `i18n_patterns` starts with the prefix of the active language, so there is one set of routes per language
+    language_prefixes = tuple(str(x.pattern) for x in resolver.url_patterns if isinstance(x.pattern, LocalePrefixPattern))
     # Kept on the resolver, which Django caches per URL configuration and drops when the URL configuration changes
     if not hasattr(resolver, 'iommi_menu_routes'):
-        resolver.iommi_menu_routes = MenuRoutes(resolver.url_patterns)
-    return resolver.iommi_menu_routes
+        resolver.iommi_menu_routes = {}
+    if language_prefixes not in resolver.iommi_menu_routes:
+        resolver.iommi_menu_routes[language_prefixes] = MenuRoutes(resolver.url_patterns)
+    return resolver.iommi_menu_routes[language_prefixes]
 
 
 def path_of_item(item):

@@ -1,10 +1,14 @@
 from textwrap import dedent
 
 import pytest
+from django.conf.urls.i18n import i18n_patterns
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseForbidden
 from django.template import Template
-from django.urls import reverse
+from django.urls import (
+    clear_url_caches,
+    reverse,
+)
 from django.utils import translation
 from django.utils.translation import gettext_lazy
 
@@ -722,6 +726,61 @@ def test_access_to_what_no_excluded_item_is_above(settings, url):
     settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.access_menu_declaration'
 
     assert access_menu_response(req('get', url=url)) == 'ok'
+
+
+class UrlConfWithLanguagePrefix:
+    def __init__(self, *, prefix_default_language):
+        self.urlpatterns = i18n_patterns(*access_menu_urlpatterns, prefix_default_language=prefix_default_language) + [
+            path('sv/not_in_the_menu_and_not_translated/', fake_view),
+        ]
+
+
+@pytest.fixture
+def language_prefix_settings(settings):
+    settings.IOMMI_MAIN_MENU = 'iommi.main_menu__tests.access_menu_declaration'
+    settings.LANGUAGES = [('en', 'English'), ('sv', 'Swedish'), ('de', 'German')]
+    # The url caches know the language prefixes by the settings
+    clear_url_caches()
+    yield
+    clear_url_caches()
+
+
+def language_prefix_response(request, *, language, urlconf):
+    request.urlconf = urlconf
+    # As `LocaleMiddleware` does, before the main menu middleware
+    with translation.override(language):
+        return main_menu_middleware(lambda request: 'ok')(request)
+
+
+@pytest.mark.parametrize('path_below_prefix', ['staff_only/', 'staff_only/child/', 'staff_only/declared_beside_the_menu/', 'open_to_all/staff_child/'])
+def test_access_with_a_language_prefix(language_prefix_settings, path_below_prefix):
+    urlconf = UrlConfWithLanguagePrefix(prefix_default_language=True)
+
+    # Back to the first language at the end: each language keeps its own routes
+    for language in ['en', 'sv', 'de', 'en']:
+        url = f'/{language}/{path_below_prefix}'
+        assert language_prefix_response(staff_req('get', url=url), language=language, urlconf=urlconf) == 'ok'
+        assert isinstance(language_prefix_response(req('get', url=url), language=language, urlconf=urlconf), HttpResponseForbidden)
+
+
+def test_access_with_a_language_prefix_to_what_no_excluded_item_is_above(language_prefix_settings):
+    urlconf = UrlConfWithLanguagePrefix(prefix_default_language=True)
+
+    for language in ['en', 'sv']:
+        for url in [f'/{language}/open_to_all/', f'/{language}/not_in_the_menu/', '/sv/not_in_the_menu_and_not_translated/']:
+            assert language_prefix_response(req('get', url=url), language=language, urlconf=urlconf) == 'ok'
+
+
+def test_access_without_a_prefix_for_the_default_language(language_prefix_settings):
+    urlconf = UrlConfWithLanguagePrefix(prefix_default_language=False)
+
+    # The link of this item is to somewhere else, so only its route tells that the path is below it
+    for language, url in [('sv', '/sv/link_elsewhere/'), ('en', '/link_elsewhere/'), ('sv', '/sv/link_elsewhere/child/'), ('en', '/link_elsewhere/child/')]:
+        assert language_prefix_response(staff_req('get', url=url), language=language, urlconf=urlconf) == 'ok'
+        assert isinstance(language_prefix_response(req('get', url=url), language=language, urlconf=urlconf), HttpResponseForbidden)
+
+    assert language_prefix_response(req('get', url='/open_to_all/'), language='en', urlconf=urlconf) == 'ok'
+    assert language_prefix_response(req('get', url='/sv/open_to_all/'), language='sv', urlconf=urlconf) == 'ok'
 
 
 def test_active_item_of_a_link_with_a_query_string():

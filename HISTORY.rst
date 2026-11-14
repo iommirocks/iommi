@@ -26,6 +26,8 @@ Unreleased
 
 * Security: the `display_name` and `group` of a `Column` were put in the header of a table without escaping, so a name that comes from data could put html in the page. They are now escaped like the label of a `Field`. If you have html in a `display_name` or `group` on purpose, mark it as safe, with `format_html` or `mark_safe`.
 
+* Security: the access control of the main menu did not work for paths in `i18n_patterns`. The paths of the menu were only known with the prefix of the language of the first request the process served, so under every other language the pages of items a user did not have were open to them. The paths are now known for each language.
+
 * Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
 
 * Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.
