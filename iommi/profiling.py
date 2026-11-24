@@ -102,6 +102,32 @@ def _frame_lineno(frame_info):
 # at all on older versions.
 SAMPLING_SUPPORTED = _remote_debugging is not None and sys.version_info >= (3, 15)
 
+# `profiling.sampling.constants.PROFILING_MODE_ALL`: makes the unwinder fill in both the GIL
+# and the on-CPU status of each thread. The default wall mode reports the CPU state as unknown.
+_UNWINDER_MODE_ALL = 3
+
+# Stands in for the C function a blocked thread is in. The sampler only sees Python
+# frames, so without this the time spent in `time.sleep`, a database round trip, a lock
+# etc. would show up as self time of the Python function that called it. The '~' filename
+# and line 0 is how pstats itself marks built-in functions.
+WAITING_FRAME = ('~', 0, '<waiting>')
+
+
+def _is_waiting(status):
+    """Is a thread with these unwinder status flags blocked, as opposed to running Python or C code?"""
+    if status is None or _remote_debugging is None:
+        return False
+    if status & getattr(_remote_debugging, 'THREAD_STATUS_UNKNOWN', 0):
+        return False
+    # A thread that wants the GIL counts as running: it is runnable, and in this setup
+    # it is mostly the sampler thread itself that holds the GIL it's waiting for.
+    running = (
+        getattr(_remote_debugging, 'THREAD_STATUS_HAS_GIL', 0)
+        | getattr(_remote_debugging, 'THREAD_STATUS_ON_CPU', 0)
+        | getattr(_remote_debugging, 'THREAD_STATUS_GIL_REQUESTED', 0)
+    )
+    return running != 0 and not status & running
+
 
 class SamplingProfiler:
     """Samples the stack of a single thread from a sidecar thread.
@@ -122,6 +148,8 @@ class SamplingProfiler:
         # stack (leaf first, as (filename, lineno, funcname) tuples) -> number of samples
         self.stacks = Counter()
         self.sample_count = 0
+        # Samples where the thread was blocked: sleeping, waiting on a socket, a lock etc.
+        self.waiting_count = 0
         self.error_count = 0
         # The traceback of the first failed sample, so that a sampler that fails every
         # time shows why instead of serving an empty profile.
@@ -134,7 +162,18 @@ class SamplingProfiler:
         if not SAMPLING_SUPPORTED:
             return False
         try:
-            self.unwinder = _remote_debugging.RemoteUnwinder(os.getpid(), all_threads=True)
+            try:
+                self.unwinder = _remote_debugging.RemoteUnwinder(
+                    os.getpid(),
+                    all_threads=True,
+                    mode=_UNWINDER_MODE_ALL,
+                    # The other modes otherwise leave out the threads that are idle, which
+                    # are exactly the samples where the request is waiting on something.
+                    skip_non_matching_threads=False,
+                )
+            except TypeError:
+                # A build that doesn't know about modes: sample without telling waiting apart.
+                self.unwinder = _remote_debugging.RemoteUnwinder(os.getpid(), all_threads=True)
         except Exception:
             # Reading our own memory can fail because it isn't permitted, or because this
             # build gets it wrong: on macOS the duplicate libpython mapping that `ctypes`
@@ -156,6 +195,10 @@ class SamplingProfiler:
         return self.elapsed / self.sample_count
 
     @property
+    def waiting_time(self):
+        return self.waiting_count * self.sample_interval
+
+    @property
     def error_message(self):
         if not self.error_count:
             return None
@@ -163,9 +206,16 @@ class SamplingProfiler:
         return f'{self.error_count} of {attempts} samples failed. The first error was:\n\n{self.first_error}'
 
     def _sample(self):
+        """Return the stack of the profiled thread, leaf first, or None if it wasn't found."""
         for thread_info in _iter_thread_info(self.unwinder.get_stack_trace()):
             if thread_info.thread_id == self.thread_id:
-                return thread_info.frame_info
+                frames = thread_info.frame_info
+                if not frames:
+                    return None
+                stack = tuple((f.filename, _frame_lineno(f), f.funcname) for f in frames)
+                if _is_waiting(getattr(thread_info, 'status', None)):
+                    stack = (WAITING_FRAME, *stack)
+                return stack
         return None
 
     def _run(self):
@@ -176,10 +226,12 @@ class SamplingProfiler:
         try:
             while not self.stop_event.is_set():
                 try:
-                    frames = self._sample()
-                    if frames:
-                        self.stacks[tuple((f.filename, _frame_lineno(f), f.funcname) for f in frames)] += 1
+                    stack = self._sample()
+                    if stack:
+                        self.stacks[stack] += 1
                         self.sample_count += 1
+                        if stack[0] == WAITING_FRAME:
+                            self.waiting_count += 1
                 except Exception:
                     # A thread can go away between being listed and being unwound, and the
                     # whole point of this tool is to not take the request down with it.
@@ -276,6 +328,28 @@ def _html_stats(pdict, stream):
     return HTMLStats(_StatsSource(pdict) if pdict else None, stream=stream)
 
 
+def _frame_category(frame, base_dir):
+    """The flame graph color of a frame. This must match the CSS rules of the flame graph."""
+    if frame.startswith(WAITING_FRAME[2]):
+        return 'waiting'
+    if '/site-packages/' in frame:
+        return 'thirdparty'
+    if base_dir in frame:
+        return 'project'
+    return 'stdlib'
+
+
+def _folded_category_times(folded_data, base_dir):
+    """Self time in seconds per flame graph color, from folded stack lines like `a;b;c 1234` (microseconds)."""
+    times = dict.fromkeys(['project', 'thirdparty', 'stdlib', 'waiting'], 0.0)
+    for line in folded_data.splitlines():
+        trace, _, microseconds = line.rpartition(' ')
+        # The time on a line is the self time of its last frame.
+        leaf = trace.rpartition(';')[2]
+        times[_frame_category(leaf, base_dir)] += int(microseconds) / 1_000_000
+    return times
+
+
 def _sampling_generate_folded_data(stacks, aggregate, sample_interval, threshold):
     total_samples = sum(stacks.values())
     if not total_samples:
@@ -323,6 +397,7 @@ class HTMLStats(pstats.Stats):
     # be meaningless.
     sampling = False
     sample_count = 0
+    waiting_time = 0.0
     sampling_error_message = None
 
     def _build_url(self, **overrides):
@@ -383,6 +458,11 @@ class HTMLStats(pstats.Stats):
             if self.total_calls != self.prim_calls:
                 print("(%d primitive calls)" % self.prim_calls, end=' ', file=self.stream)
         print("in %.3f seconds" % self.total_tt, file=self.stream)
+        if self.sampling:
+            print(
+                f'{self.waiting_time:.3f} seconds spent waiting (sleep, database, network, locks...), see {escape(WAITING_FRAME[2])}',
+                file=self.stream,
+            )
         print(file=self.stream)
 
         # this call prints...
@@ -605,6 +685,18 @@ class Middleware:
 
                 base_dir_css = str(settings.BASE_DIR).replace('\\', '\\\\').replace('"', '\\"')
 
+                category_times = _folded_category_times(folded_data, str(settings.BASE_DIR))
+                legend_html = '\n'.join(
+                    f'<span><span class="legend-swatch legend-{category}"></span>{label} ({category_times[category]:.3f} s)</span>'
+                    for category, label in [
+                        ('project', 'project'),
+                        ('thirdparty', 'third-party'),
+                        ('stdlib', 'stdlib'),
+                        ('waiting', 'waiting (sleep, database, network, locks...)'),
+                    ]
+                )
+                legend_html += f'\n<span>total ({sum(category_times.values()):.3f} s)</span>'
+
                 # language=html
                 response.content = f'''\
 <!DOCTYPE html>
@@ -626,20 +718,22 @@ class Middleware:
             .flame-graph span[title*="{base_dir_css}"]:not([title*="/site-packages/"]) {{
                 background-color: light-dark(#a8d5a8, #305830);
             }}
+            .flame-graph span[title^="{WAITING_FRAME[2]}"] {{
+                background-color: light-dark(#a8c8f0, #2a4a70);
+            }}
             .error {{ color: light-dark(#c00, #ff6b6b); white-space: pre-wrap; padding: 8px 12px; }}
             .legend {{ display: flex; gap: 16px; padding: 8px 12px; font-family: monospace; font-size: 12px; }}
             .legend-swatch {{ display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }}
             .legend-project {{ background-color: light-dark(#a8d5a8, #305830); }}
             .legend-thirdparty {{ background-color: light-dark(#f5d58d, #5a4420); }}
             .legend-stdlib {{ background-color: light-dark(#d0d0d0, #404040); }}
+            .legend-waiting {{ background-color: light-dark(#a8c8f0, #2a4a70); }}
         </style>
     </head>
     <body>
         {error_html}
         <div class="legend">
-            <span><span class="legend-swatch legend-project"></span>project</span>
-            <span><span class="legend-swatch legend-thirdparty"></span>third-party</span>
-            <span><span class="legend-swatch legend-stdlib"></span>stdlib</span>
+            {legend_html}
         </div>
         <div id="elm"></div>
         <script src="{static('js/flame_graph.js')}"></script>
@@ -814,6 +908,7 @@ class Middleware:
             ps = _html_stats(aggregate.to_pstats_dict(sample_interval), stream)
             ps.sampling = True
             ps.sample_count = sampling_profiler.sample_count
+            ps.waiting_time = sampling_profiler.waiting_time
             ps.sampling_error_message = sampling_profiler.error_message
         elif yappi is not None:
             yappi.stop()

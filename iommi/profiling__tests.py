@@ -11,10 +11,13 @@ from django.test import override_settings
 
 from iommi.profiling import (
     SAMPLING_SUPPORTED,
+    WAITING_FRAME,
     Middleware,
     SampleAggregate,
     SamplingProfiler,
+    _folded_category_times,
     _html_stats,
+    _is_waiting,
     _iter_thread_info,
     _sampling_generate_folded_data,
     _StatsSource,
@@ -435,3 +438,170 @@ def test_sampling_profiler_actually_samples():
     leaf_function = next(key for key in aggregate.cumulative_samples if key[1].endswith('leaf'))
     assert aggregate.self_samples[leaf_function] > 0
     assert re.search(r'test_sampling_profiler_actually_samples', str(list(profiler.stacks)))
+
+
+FAKE_REMOTE_DEBUGGING = SimpleNamespace(
+    THREAD_STATUS_HAS_GIL=1 << 0,
+    THREAD_STATUS_ON_CPU=1 << 1,
+    THREAD_STATUS_UNKNOWN=1 << 2,
+    THREAD_STATUS_GIL_REQUESTED=1 << 3,
+)
+
+
+@pytest.mark.parametrize(
+    'flags, expected',
+    [
+        # Blocked in the kernel: sleeping, waiting on a socket, a lock...
+        ((), True),
+        (('THREAD_STATUS_HAS_GIL',), False),
+        (('THREAD_STATUS_ON_CPU',), False),
+        # Runnable, and in practice mostly held up by the sampler thread itself.
+        (('THREAD_STATUS_GIL_REQUESTED',), False),
+        # The unwinder couldn't tell, so don't claim it was waiting.
+        (('THREAD_STATUS_UNKNOWN',), False),
+    ],
+)
+def test_is_waiting(monkeypatch, flags, expected):
+    monkeypatch.setattr('iommi.profiling._remote_debugging', FAKE_REMOTE_DEBUGGING)
+    status = 0
+    for flag in flags:
+        status |= getattr(FAKE_REMOTE_DEBUGGING, flag)
+    assert _is_waiting(status) is expected
+
+
+def test_is_waiting_without_status(monkeypatch):
+    monkeypatch.setattr('iommi.profiling._remote_debugging', FAKE_REMOTE_DEBUGGING)
+    assert _is_waiting(None) is False
+    # Without the flags this API has no way of telling, so nothing counts as waiting.
+    monkeypatch.setattr('iommi.profiling._remote_debugging', SimpleNamespace())
+    assert _is_waiting(0) is False
+    monkeypatch.setattr('iommi.profiling._remote_debugging', None)
+    assert _is_waiting(0) is False
+
+
+def test_sampling_profiler_marks_waiting_samples(monkeypatch):
+    monkeypatch.setattr('iommi.profiling._remote_debugging', FAKE_REMOTE_DEBUGGING)
+    profiler = SamplingProfiler()
+
+    def frame(filename, lineno, funcname):
+        return SimpleNamespace(filename=filename, lineno=lineno, funcname=funcname)
+
+    def thread(status, thread_id=profiler.thread_id):
+        return SimpleNamespace(thread_id=thread_id, status=status, frame_info=[frame(*RENDER), frame(*VIEW)])
+
+    profiler.unwinder = SimpleNamespace(get_stack_trace=lambda: [thread(0, thread_id=-1), thread(0)])
+    assert profiler._sample() == (WAITING_FRAME, RENDER, VIEW)
+
+    profiler.unwinder = SimpleNamespace(get_stack_trace=lambda: [thread(FAKE_REMOTE_DEBUGGING.THREAD_STATUS_ON_CPU)])
+    assert profiler._sample() == (RENDER, VIEW)
+
+
+WAITING_STACKS = Counter(
+    {
+        **SAMPLED_STACKS,
+        _stack(WAITING_FRAME, RENDER, VIEW): 4,
+    }
+)
+
+
+@pytest.fixture
+def sampling_with_waiting(monkeypatch):
+    class WaitingSamplingProfiler(FakeSamplingProfiler):
+        def start(self):
+            super().start()
+            self.stacks = WAITING_STACKS
+            self.sample_count = sum(WAITING_STACKS.values())
+            self.waiting_count = 4
+            self.elapsed = 0.014
+            return True
+
+    monkeypatch.setattr('iommi.profiling.SamplingProfiler', WaitingSamplingProfiler)
+
+
+def test_profiler_sampling_html_shows_waiting(sampling_with_waiting):
+    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+
+    assert '14 samples in 0.014 seconds' in content
+    assert '0.004 seconds spent waiting (sleep, database, network, locks...), see &lt;waiting&gt;' in content
+    # The waiting gets a row of its own, with no link to a source file it doesn't have.
+    assert '<td>&lt;waiting&gt;</td>' in content
+
+
+def test_profiler_sampling_html_shows_no_waiting(sampling):
+    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert '0.000 seconds spent waiting' in content
+
+
+def test_profiler_sampling_flame_shows_waiting(sampling_with_waiting):
+    content = middleware(staff_req('get', _iommi_prof='flame')).content.decode()
+
+    # On top of the Python function that blocked, so the flame graph shows who waited.
+    assert 'view (/app/views.py:10);render (/app/views.py:20);<waiting> (~:0) 4000' in content
+    assert 'legend-waiting' in content
+
+
+@pytest.mark.skipif(not SAMPLING_SUPPORTED, reason='needs the CPython sampling profiler engine')
+def test_sampling_profiler_actually_sees_waiting():
+    profiler = SamplingProfiler()
+    if not profiler.start():
+        pytest.skip('this interpreter cannot sample its own process')
+
+    def sleeper():
+        time.sleep(0.1)
+
+    def busy():
+        end = time.perf_counter() + 0.1
+        while time.perf_counter() < end:
+            pass
+
+    sleeper()
+    busy()
+    profiler.stop()
+
+    aggregate = SampleAggregate(profiler.stacks)
+    waiting = ('~', '<waiting>')
+    sleeper_function = next(key for key in aggregate.cumulative_samples if key[1].endswith('sleeper'))
+    busy_function = next(key for key in aggregate.cumulative_samples if key[1].endswith('busy'))
+
+    # The sleep is attributed to the waiting frame on top of `sleeper`, not to `sleeper` itself.
+    assert aggregate.edges[(sleeper_function, waiting)] > aggregate.self_samples[sleeper_function]
+    # Busy Python code doesn't count as waiting.
+    assert aggregate.edges[(busy_function, waiting)] < aggregate.self_samples[busy_function]
+    assert profiler.waiting_time == pytest.approx(0.1, rel=0.5)
+
+
+def test_folded_category_times():
+    folded = '\n'.join(
+        [
+            # Only the last frame of a line gets the time, so this is third-party.
+            'view (/app/views.py:10);render (/app/views.py:20);escape (/app/venv/lib/site-packages/django/utils/html.py:100) 6000',
+            'view (/app/views.py:10);render (/app/views.py:20) 3000',
+            'view (/app/views.py:10);sleep (/usr/lib/python3.15/time.py:1) 1500',
+            'view (/app/views.py:10);<waiting> (~:0) 4000',
+        ]
+    )
+    assert _folded_category_times(folded, '/app') == {
+        'project': pytest.approx(0.003),
+        'thirdparty': pytest.approx(0.006),
+        'stdlib': pytest.approx(0.0015),
+        'waiting': pytest.approx(0.004),
+    }
+
+
+def test_folded_category_times_without_data():
+    assert _folded_category_times('', '/app') == dict(project=0.0, thirdparty=0.0, stdlib=0.0, waiting=0.0)
+
+
+def test_profiler_sampling_flame_legend_shows_category_times(sampling_with_waiting, settings):
+    settings.BASE_DIR = '/app'
+    content = middleware(staff_req('get', _iommi_prof='flame')).content.decode()
+
+    # 14 samples of 1ms: render 3 + view 1 in the project, escape 6 in site-packages, 4 waiting.
+    assert '<span class="legend-swatch legend-project"></span>project (0.004 s)' in content
+    assert '<span class="legend-swatch legend-thirdparty"></span>third-party (0.006 s)' in content
+    assert '<span class="legend-swatch legend-stdlib"></span>stdlib (0.000 s)' in content
+    assert (
+        '<span class="legend-swatch legend-waiting"></span>waiting (sleep, database, network, locks...) (0.004 s)'
+        in content
+    )
+    assert '<span>total (0.014 s)</span>' in content
