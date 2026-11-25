@@ -5,7 +5,7 @@ from typing import (
 )
 
 from django.core import signing
-from django.db.models import Max, QuerySet
+from django.db.models import F, Max, Min, QuerySet
 from django.db.models.fields.files import FieldFile
 from django.http import (
     HttpResponseBadRequest,
@@ -299,6 +299,59 @@ class EditColumn(Column):
         return cls(**kwargs)
 
 
+def _shift_conflicting_sort_orders(table, reorder_column, existing_rows, created_values, deleted_pks):
+    remaining_existing = {pk: data for pk, data in existing_rows.items() if pk not in deleted_pks}
+    original_values = {
+        orig for _, orig, _ in existing_rows.values() if isinstance(orig, int) and not isinstance(orig, bool)
+    }
+    submitted_values = {
+        val for _, _, val in remaining_existing.values() if isinstance(val, int) and not isinstance(val, bool)
+    }
+    submitted_values.update(created_values)
+
+    new_values = submitted_values - original_values
+    if not new_values:
+        return
+
+    attr = reorder_column.attr
+    submitted_existing_pks = list(remaining_existing.keys())
+    other_rows = table.initial_rows.exclude(pk__in=submitted_existing_pks)
+
+    if '__' in attr:
+        parts = attr.split('__')
+        relation_path = '__'.join(parts[:-1])
+        field_name = parts[-1]
+        target_model = table.model
+        for part in parts[:-1]:
+            target_model = target_model._meta.get_field(part).remote_field.model
+
+        submitted_target_pks = set()
+        for instance, _, _ in remaining_existing.values():
+            related = getattr_path(instance, relation_path)
+            if related is not None and related.pk is not None:
+                submitted_target_pks.add(related.pk)
+
+        other_target_pks = other_rows.values_list(f'{relation_path}__pk', flat=True)
+        target_qs = target_model._default_manager.filter(pk__in=other_target_pks).exclude(pk__in=submitted_target_pks)
+    else:
+        field_name = attr
+        if other_rows.query.distinct or other_rows.query.combinator:
+            target_qs = table.model._default_manager.filter(pk__in=list(other_rows.values_list('pk', flat=True)))
+        else:
+            target_qs = other_rows
+
+    min_colliding = target_qs.filter(**{f'{field_name}__in': new_values}).aggregate(min_value=Min(field_name))[
+        'min_value'
+    ]
+    if min_colliding is None:
+        return
+
+    shift = max(submitted_values) - min_colliding + 1
+    target_qs.order_by().filter(**{f'{field_name}__gte': min_colliding}).update(
+        **{field_name: F(field_name) + shift}
+    )
+
+
 def edit_table__post_handler(table, request, **_):
     if getattr(table, 'invalid_incremental_token', False):
         return HttpResponseBadRequest('Invalid loaded pages')
@@ -306,6 +359,20 @@ def edit_table__post_handler(table, request, **_):
     table.edit_errors = defaultdict(set)
     table.create_errors = defaultdict(set)
     parsed_data = {}
+
+    reorder_column = None
+    if table.reorderable and isinstance(table.initial_rows, QuerySet):
+        reorder_column = next(
+            (
+                column
+                for column in values(table.columns)
+                if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', []) and column.attr
+            ),
+            None,
+        )
+    reorder_column_name = reorder_column.iommi_name() if reorder_column is not None else None
+    reorder_existing_rows = {}
+    reorder_created_values = []
 
     assert table.edit_form._is_bound
     table.edit_form.mode = FULL_FORM_FROM_REQUEST
@@ -333,6 +400,12 @@ def edit_table__post_handler(table, request, **_):
                     errors[path] |= set(field_errors)
                 else:
                     parsed_data[path] = field.value
+                    if reorder_column_name is not None and cell.column.iommi_name() == reorder_column_name:
+                        if cells.is_create_template:
+                            if isinstance(field.value, int) and not isinstance(field.value, bool):
+                                reorder_created_values.append(field.value)
+                        elif instance is not None and instance.pk is not None:
+                            reorder_existing_rows[instance.pk] = (instance, field.initial, field.value)
 
     validate(table.cells_for_rows(), table.edit_form, table.edit_errors)
     validate(table.cells_for_rows_for_create(), table.create_form, table.create_errors)
@@ -345,6 +418,15 @@ def edit_table__post_handler(table, request, **_):
         deleted_pks = table.delete_queryset(table.get_delete_queryset(prefix=prefix))
     else:
         deleted_pks = set()
+
+    if reorder_column is not None:
+        _shift_conflicting_sort_orders(
+            table=table,
+            reorder_column=reorder_column,
+            existing_rows=reorder_existing_rows,
+            created_values=reorder_created_values,
+            deleted_pks=deleted_pks,
+        )
 
     def save(cells_iterator, form):
         to_save = []
