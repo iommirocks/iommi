@@ -1,0 +1,7 @@
+{% extends "iommi/query/advanced.html" %}
+{% load i18n %}
+{% block search_input %}
+    <label class="pf-v6-c-form__label" for="iommi_{{ query.iommi_dunder_path }}_query">{% blocktrans %}Search query{% endblocktrans %}:</label>
+    <span class="pf-v6-c-form-control"><input id="iommi_{{ query.iommi_dunder_path }}_query" name="{{ query.get_advanced_query_param }}" type="text" data-query="{{ query.query_advanced_value }}"/></span>
+{% endblock %}
+{% block help_class %} pf-v6-c-content{% endblock %}

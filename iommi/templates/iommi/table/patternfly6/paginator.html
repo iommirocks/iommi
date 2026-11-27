@@ -1,59 +1,44 @@
-<div class="pf-v6-c-pagination pf-m-bottom">
-    <nav class="pf-v6-c-pagination__nav" aria-label="Pagination nav">
+{% load i18n %}
+{{ paginator.iommi_open_tag }}
+    <nav class="pf-v6-c-pagination__nav" aria-label="{% translate 'Pages' %}">
         <div class="pf-v6-c-pagination__nav-control pf-m-first">
-            <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="First Page"
-                {{ paginator.link.attrs }}>
-                <button class="pf-v6-c-button pf-m-plain" type="button" {% if paginator.page == 1 %}disabled{% endif %}
-                    aria-label="Go to first page">
-                    <span class="pf-v6-c-button__icon">
-                        <i class="fas fa-angle-double-left" aria-hidden="true"></i>
-                    </span>
-                </button>
-            </a>
+            {% if has_previous %}
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="{% translate 'First Page' %}"{{ paginator.link.attrs }}>
+            {% else %}
+                <span class="pf-v6-c-button pf-m-plain pf-m-disabled" aria-disabled="true">
+            {% endif %}
+                <span class="pf-v6-c-button__icon"><i class="fas fa-angle-double-left" aria-hidden="true"></i></span>
+            {% if has_previous %}</a>{% else %}</span>{% endif %}
         </div>
         <div class="pf-v6-c-pagination__nav-control pf-m-prev">
-            {% if has_previous %}<a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}"
-                aria-label="Previous Page" {{ paginator.link.attrs }}>{% endif %}
-                <button class="pf-v6-c-button pf-m-plain" type="button" {% if paginator.page == 1 %}disabled{% endif %}
-                    aria-label="Go to previous page">
-                    <span class="pf-v6-c-button__icon">
-                        <i class="fas fa-angle-left" aria-hidden="true"></i>
-                    </span>
-                </button>
-            {% if has_previous %}</a>{% endif %}
+            {% if has_previous %}
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="{% translate 'Previous Page' %}"{{ paginator.link.attrs }}>
+            {% else %}
+                <span class="pf-v6-c-button pf-m-plain pf-m-disabled" aria-disabled="true">
+            {% endif %}
+                <span class="pf-v6-c-button__icon"><i class="fas fa-angle-left" aria-hidden="true"></i></span>
+            {% if has_previous %}</a>{% else %}</span>{% endif %}
         </div>
         <div class="pf-v6-c-pagination__nav-page-select">
-            <!--
-            <span class="pf-v6-c-form-control">
-                <input aria-label="Current page" type="number" min="1" max="{{ paginator.number_of_pages }}"
-                    value="{{ paginator.page }}" />
-            </span>
-            -->
-            <span aria-hidden="true">{{ paginator.page }} of {{ paginator.number_of_pages }}</span>
+            <span>{% blocktranslate with page=page pages=pages %}{{ page }} of {{ pages }}{% endblocktranslate %}</span>
         </div>
         <div class="pf-v6-c-pagination__nav-control pf-m-next">
-            <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="Next Page"
-                {{ paginator.link.attrs }}>
-                <button class="pf-v6-c-button pf-m-plain" type="button"
-                    {% if paginator.page == paginator.number_of_pages %}disabled{% endif %}
-                    aria-label="Go to next page">
-                    <span class="pf-v6-c-button__icon">
-                        <i class="fas fa-angle-right" aria-hidden="true"></i>
-                    </span>
-                </button>
-            </a>
+            {% if has_next %}
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="{% translate 'Next Page' %}"{{ paginator.link.attrs }}>
+            {% else %}
+                <span class="pf-v6-c-button pf-m-plain pf-m-disabled" aria-disabled="true">
+            {% endif %}
+                <span class="pf-v6-c-button__icon"><i class="fas fa-angle-right" aria-hidden="true"></i></span>
+            {% if has_next %}</a>{% else %}</span>{% endif %}
         </div>
         <div class="pf-v6-c-pagination__nav-control pf-m-last">
-            {% if has_next %}<a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="Last Page"
-                {{ paginator.link.attrs }}>{% endif %}
-                <button class="pf-v6-c-button pf-m-plain" type="button"
-                    {% if paginator.page == paginator.number_of_pages %}disabled{% endif %}
-                    aria-label="Go to last page">
-                    <span class="pf-v6-c-button__icon">
-                        <i class="fas fa-angle-double-right" aria-hidden="true"></i>
-                    </span>
-                </button>
-            {% if has_next%}</a>{% endif %}
+            {% if has_next %}
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="{% translate 'Last Page' %}"{{ paginator.link.attrs }}>
+            {% else %}
+                <span class="pf-v6-c-button pf-m-plain pf-m-disabled" aria-disabled="true">
+            {% endif %}
+                <span class="pf-v6-c-button__icon"><i class="fas fa-angle-double-right" aria-hidden="true"></i></span>
+            {% if has_next %}</a>{% else %}</span>{% endif %}
         </div>
     </nav>
-</div>
+{{ paginator.iommi_close_tag }}

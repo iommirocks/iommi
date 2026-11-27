@@ -1,0 +1,10 @@
+<div{{ fragment.attrs }}>
+    {% for error in fragment.children.values %}
+        <div class="pf-v6-c-helper-text__item pf-m-error">
+            <span class="pf-v6-c-helper-text__item-icon">
+                <i class="fas fa-fw fa-exclamation-circle" aria-hidden="true"></i>
+            </span>
+            <span class="pf-v6-c-helper-text__item-text">{{ error.children.text }}</span>
+        </div>
+    {% endfor %}
+</div>

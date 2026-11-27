@@ -38,6 +38,7 @@ def test_style():
         - bulma
         - daisyui
         - foundation
+        - patternfly6
         - semantic_ui
         - water
         - uikit
