@@ -137,6 +137,17 @@ daisyui_base = Style(
                     'w-full': False,
                 },
             ),
+            checkboxes=dict(
+                input__template='iommi/form/daisyui/checkboxes.html',
+                input__attrs__class={
+                    'checkbox': True,
+                    'input': False,
+                    'input-bordered': False,
+                    'select': False,
+                    'select-bordered': False,
+                    'w-full': False,
+                },
+            ),
             choice__input__attrs__class={
                 'select': True,
                 'select-bordered': True,

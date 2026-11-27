@@ -1,6 +1,6 @@
 {% for choice in field.choice_tuples %}
-    <div{{ field.attrs }}>
+    <div{% block item_attrs %}{{ field.attrs }}{% endblock %}>
         <input type="radio" value="{{ choice.1|stringformat:'s' }}" id="{{ field.extra_evaluated.id }}_{{ choice.4 }}" {{ field.input.attrs }} {% if choice.3 %}checked{% endif %}/>
-        <label for="{{ field.extra_evaluated.id }}_{{ choice.4 }}">{{ choice.2 }}</label>
+        <label{% block label_attrs %}{% endblock %} for="{{ field.extra_evaluated.id }}_{{ choice.4 }}">{{ choice.2 }}</label>
     </div>
 {% endfor %}

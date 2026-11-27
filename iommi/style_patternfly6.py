@@ -141,6 +141,7 @@ patternfly6_base = Style(
             ),
             checkboxes=dict(
                 input__template='iommi/form/patternfly6/checkboxes.html',
+                input__attrs__style__width=None,
                 input__attrs__class={'pf-v6-c-check__input': True},
             ),
         ),
