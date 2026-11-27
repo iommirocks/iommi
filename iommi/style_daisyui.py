@@ -258,6 +258,11 @@ daisyui_base = Style(
     ),
     Paginator=dict(
         template='iommi/table/daisyui/paginator.html',
+        tag='div',
+        attrs__class={'flex': True, 'justify-center': True, 'my-4': True},
+        container__attrs__class={'join': True},
+        link__attrs__class={'join-item': True, 'btn': True, 'btn-sm': True},
+        active_link__attrs__class={'join-item': True, 'btn': True, 'btn-sm': True, 'btn-active': True},
     ),
     Errors=dict(
         # Errors renders as <ul><li>; Tailwind resets list-style and padding
