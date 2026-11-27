@@ -281,9 +281,14 @@ daisyui_base = Style(
         attrs__class={'text-error': True, 'text-sm': True, 'mt-1': True, 'list-disc': True, 'list-inside': True},
     ),
     DebugMenu=dict(
+        # Not a full width navbar like Menu, and the theme background instead of the white from the base style
         attrs__class={
+            'navbar': False,
+            'bg-base-100': False,
+            'shadow-sm': False,
             'bg-base-300': True,
         },
+        attrs__style__background=None,
         items_container__attrs__class={
             'text-xs': True,
         },
