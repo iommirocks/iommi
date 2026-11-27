@@ -76,9 +76,8 @@ us_web_design_system_base = Style(
                 input__template='iommi/form/us_web_design_system/radio.html',
             ),
             checkboxes=dict(
-                attrs__class={'usa-checkbox': False},
+                input__template='iommi/form/us_web_design_system/checkboxes.html',
                 input__attrs__class={'usa-checkbox__input': True},
-                label__attrs__class={'usa-checkbox__label': True},
             ),
             number__input__attrs__class={'text-right': True},
             text=dict(
