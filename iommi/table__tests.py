@@ -3488,12 +3488,15 @@ def test_incremental_endpoint_preserves_filter_and_equal_value_order():
                      columns__b__filter__include=True, page_size=2,
                      parts__page__trigger=PaginatorTrigger.LOAD_MORE, parts__page__show_page_links=False)
 
-    bound = make_table().bind(request=req('get', query='b="foo"'))
+    bound = make_table().bind(request=req('get', b='foo'))
+    assert [x.pk for x in bound.parts.page.rows] == [foo[0].pk, foo[1].pk]
     assert bound.paginator.has_more
-    assert bound.sorted_and_filtered_rows.query.order_by == ('-a', '-pk')
-    response = make_table().bind(request=req('get', query='b="foo"', **{'/incremental_page': '2'})).render_to_response()
+    assert bound.sorted_and_filtered_rows.query.order_by == ('-a', 'pk')
+    response = make_table().bind(request=req('get', b='foo', **{'/incremental_page': '2'})).render_to_response()
     data = json.loads(response.content)
-    assert f'data-pk="{foo[0].pk}"' in data['html']
+    assert f'data-pk="{foo[2].pk}"' in data['html']
+    assert f'data-pk="{foo[0].pk}"' not in data['html']
+    assert f'data-pk="{foo[1].pk}"' not in data['html']
     assert f'data-pk="{bar.pk}"' not in data['html']
     assert data['has_more'] is False
 
