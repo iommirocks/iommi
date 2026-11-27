@@ -1,15 +1,16 @@
-<nav aria-label="Pages"{{ paginator.attrs }}>
+{% load i18n %}
+{{ paginator.iommi_open_tag }}
     {% if has_previous %}
-        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="Previous Page" class="pagination-previous">Previous</a>
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="{% translate 'Previous Page' %}" class="pagination-previous iommi_page_link">{% translate 'Previous' %}</a>
     {% endif %}
     {% if has_next %}
-        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="Next Page" class="pagination-next">Next page</a>
-{% endif %}
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="{% translate 'Next Page' %}" class="pagination-next iommi_page_link">{% translate 'Next page' %}</a>
+    {% endif %}
 
     <ul class="pagination-list">
         {% if show_first %}
             <li>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="First Page" class="pagination-link">1</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="{% translate 'First Page' %}"{{ paginator.link.attrs }}>1</a>
             </li>
         {% endif %}
 
@@ -18,18 +19,17 @@
                  <li><span class="pagination-ellipsis">&hellip;</span></li>
             {% endif %}
             <li>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="Page {{ num }}" class="pagination-link {% if num == page %}is-current{% endif %}">{{ num }}</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="{% blocktranslate with page_number=num %}Page {{ page_number }}{% endblocktranslate %}"{% if num == page %}{{ paginator.active_link.attrs }}{% else %}{{ paginator.link.attrs }}{% endif %}>{{ num }}</a>
             </li>
             {% if forloop.last and num < pages|add:"-1" %}
                  <li><span class="pagination-ellipsis">&hellip;</span></li>
             {% endif %}
         {% endfor %}
 
-
         {% if show_last %}
             <li>
-                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="Last Page" class="pagination-link">{{pages}}</a>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="{% translate 'Last Page' %}"{{ paginator.link.attrs }}>{{ pages }}</a>
             </li>
         {% endif %}
     </ul>
-</nav>
+{{ paginator.iommi_close_tag }}

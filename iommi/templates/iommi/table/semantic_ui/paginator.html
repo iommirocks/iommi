@@ -1,22 +1,18 @@
-<div aria-label="Pages"{{ paginator.attrs }}>
+{% load i18n %}
+{{ paginator.iommi_open_tag }}
     {% if show_first %}
-        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="First Page"{{ paginator.item.attrs }}>&laquo;</a>
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="{% translate 'First Page' %}"{{ paginator.link.attrs }}>&laquo;</a>
     {% endif %}
-
     {% if has_previous %}
-        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="Previous Page"{{ paginator.item.attrs }}>&lt;</a>
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="{% translate 'Previous Page' %}"{{ paginator.link.attrs }}>&lt;</a>
     {% endif %}
-
     {% for num in page_numbers %}
-        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="Page {{ num }}"{% if num == page %}{{ paginator.active_item.attrs }}{% else %}{{ paginator.item.attrs }}{% endif %}>{{ num }}</a>
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="{% blocktranslate with page_number=num %}Page {{ page_number }}{% endblocktranslate %}"{% if num == page %}{{ paginator.active_link.attrs }}{% else %}{{ paginator.link.attrs }}{% endif %}>{{ num }}</a>
     {% endfor %}
-
     {% if has_next %}
-        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="Next Page"{{ paginator.item.attrs }}>&gt;</a>
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="{% translate 'Next Page' %}"{{ paginator.link.attrs }}>&gt;</a>
     {% endif %}
-
     {% if show_last %}
-        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="Last Page"{{ paginator.item.attrs }}>&raquo;</a>
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="{% translate 'Last Page' %}"{{ paginator.link.attrs }}>&raquo;</a>
     {% endif %}
-</div>
-
+{{ paginator.iommi_close_tag }}

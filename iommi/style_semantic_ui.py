@@ -122,13 +122,14 @@ semantic_ui_base = Style(
     MenuItem__a__attrs__class__item=True,
     Paginator=dict(
         template='iommi/table/semantic_ui/paginator.html',
-        item__attrs__class__item=True,
+        tag='div',
         attrs__class=dict(
             ui=True,
             pagination=True,
             menu=True,
         ),
-        active_item__attrs__class=dict(
+        link__attrs__class__item=True,
+        active_link__attrs__class=dict(
             item=True,
             active=True,
         ),
