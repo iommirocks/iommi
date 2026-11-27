@@ -299,6 +299,14 @@ class EditColumn(Column):
         return cls(**kwargs)
 
 
+def get_target_model_from_dunder_path(model, path):
+    target_model = model
+    if path:
+        for part in path.split('__'):
+            target_model = target_model._meta.get_field(part).remote_field.model
+    return target_model
+
+
 def _shift_conflicting_sort_orders(table, reorder_column, existing_rows, created_values, deleted_pks):
     remaining_existing = {pk: data for pk, data in existing_rows.items() if pk not in deleted_pks}
     original_values = {
@@ -318,27 +326,21 @@ def _shift_conflicting_sort_orders(table, reorder_column, existing_rows, created
     other_rows = table.initial_rows.exclude(pk__in=submitted_existing_pks)
 
     if '__' in attr:
-        parts = attr.split('__')
-        relation_path = '__'.join(parts[:-1])
-        field_name = parts[-1]
-        target_model = table.model
-        for part in parts[:-1]:
-            target_model = target_model._meta.get_field(part).remote_field.model
-
-        submitted_target_pks = set()
-        for instance, _, _ in remaining_existing.values():
-            related = getattr_path(instance, relation_path)
-            if related is not None and related.pk is not None:
-                submitted_target_pks.add(related.pk)
-
-        other_target_pks = other_rows.values_list(f'{relation_path}__pk', flat=True)
-        target_qs = target_model._default_manager.filter(pk__in=other_target_pks).exclude(pk__in=submitted_target_pks)
+        relation_path, field_name = attr.rsplit('__', 1)
+        submitted_target_pks = {
+            related.pk
+            for instance, _, _ in remaining_existing.values()
+            if (related := getattr_path(instance, relation_path)) is not None and related.pk is not None
+        }
     else:
+        relation_path = None
         field_name = attr
-        if other_rows.query.distinct or other_rows.query.combinator:
-            target_qs = table.model._default_manager.filter(pk__in=list(other_rows.values_list('pk', flat=True)))
-        else:
-            target_qs = other_rows
+        submitted_target_pks = set(submitted_existing_pks)
+
+    target_model = get_target_model_from_dunder_path(table.model, relation_path)
+    pk_lookup = f'{relation_path}__pk' if relation_path else 'pk'
+    other_target_pks = other_rows.values_list(pk_lookup, flat=True)
+    target_qs = target_model._default_manager.filter(pk__in=other_target_pks).exclude(pk__in=submitted_target_pks)
 
     min_colliding = target_qs.filter(**{f'{field_name}__in': new_values}).aggregate(min_value=Min(field_name))[
         'min_value'

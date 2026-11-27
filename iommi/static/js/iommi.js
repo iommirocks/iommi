@@ -734,10 +734,10 @@ class IommiReorderable {
         const newPosition = newField && newField.value !== '' ? Number(newField.value) : NaN;
 
         while (positions.length < fields.length) {
-            if (positions.length === 0 && Number.isFinite(newPosition)) {
-                positions.push(newPosition);
+            if (positions.length === 0) {
+                positions.push(Number.isFinite(newPosition) ? newPosition : 0);
             } else {
-                positions.push((positions[positions.length - 1] ?? -1) + 1);
+                positions.push(positions[positions.length - 1] + 1);
             }
         }
 
