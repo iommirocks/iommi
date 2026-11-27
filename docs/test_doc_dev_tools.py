@@ -156,11 +156,15 @@ def test_profile():
     -------
 
     Press this tool to get a profile of the current page. By default it
-    will do sorting on the cumulative time, but you can do `?_iommi_prof=tottime`
-    to get the total time.
+    shows a flame graph. Each profiler output has links at the top to switch
+    to the others:
 
     - `?_iommi_prof=flame` gives you a flame graph.
+    - `?_iommi_prof=cumtime` gives you a table sorted on cumulative time. You can
+      also sort on `tottime` or `ncalls`.
     - If you have gprof2dot installed you can also do `?_iommi_prof=graph` to get a graph output.
+
+    The flame graph needs either Python 3.15+ or yappi. Without them the default is the table.
 
     On Python 3.15 and later iommi uses the statistical sampling engine that CPython's
     own sampling profiler is built on. It reads the stack of the thread serving the

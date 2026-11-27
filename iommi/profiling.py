@@ -51,6 +51,7 @@ from django.http.response import (
     StreamingHttpResponse,
 )
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from iommi.debug import src_debug_url_builder
 
@@ -590,6 +591,26 @@ def _yappi_generate_folded_data(func_stats, threshold):
     return '\n'.join(lines)
 
 
+PROFILER_OUTPUTS = [
+    ('flame', 'flamegraph'),
+    ('cumtime', 'table'),
+    ('graph', 'graph'),
+]
+
+
+def _profiler_nav_html(request, current):
+    params = request.GET.copy()
+    links = []
+    for command, label in PROFILER_OUTPUTS:
+        if command == current:
+            links.append(f'<b>{label}</b>')
+        else:
+            params['_iommi_prof'] = command
+            links.append(f'<a href="?{escape(params.urlencode())}">{label}</a>')
+    # language=html
+    return f'<div class="profiler-nav" style="font-family: monospace; padding: 8px 12px">{" ".join(links)}</div>'
+
+
 class Middleware:
     async_capable = True
     sync_capable = True
@@ -636,6 +657,9 @@ class Middleware:
             ps = self._build_stats(request, s)
 
             prof_command = request.GET.get('_iommi_prof')
+            has_flame_data = hasattr(request, '_iommi_sample_aggregate') or hasattr(request, '_iommi_yappi_func_stats')
+            if not prof_command:
+                prof_command = 'flame' if has_flame_data else 'cumtime'
 
             if prof_command == 'graph':
                 with NamedTemporaryFile() as stats_dump:
@@ -649,11 +673,29 @@ class Middleware:
                     with subprocess.Popen(
                         (sys.executable, gprof2dot_path, '-f', 'pstats', stats_dump.name), stdout=subprocess.PIPE
                     ) as gprof2dot:
-                        response['Content-Type'] = 'image/svg+xml'
-
                         dot_path = get_dot_path()
                         if dot_path:
-                            response.content = subprocess.check_output((dot_path, '-Tsvg'), stdin=gprof2dot.stdout)
+                            svg = subprocess.check_output((dot_path, '-Tsvg'), stdin=gprof2dot.stdout).decode()
+                            # Drop the XML declaration and doctype so the svg can be inlined in html
+                            svg = svg[svg.index('<svg') :]
+                            response['Content-Type'] = 'text/html'
+                            # language=html
+                            response.content = f'''\
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>iommi profiler</title>
+        <style>
+            html {{ color-scheme: light dark; }}
+            body {{ background: white; color: black; }}
+        </style>
+    </head>
+    <body>
+        {_profiler_nav_html(request, 'graph')}
+        {svg}
+    </body>
+</html>'''
                         else:
                             response['Content-Type'] = 'text/plain'
                             response['Content-Disposition'] = "attachment; filename=gprof2dot-graph.txt"
@@ -731,6 +773,7 @@ class Middleware:
         </style>
     </head>
     <body>
+        {_profiler_nav_html(request, 'flame')}
         {error_html}
         <div class="legend">
             {legend_html}
@@ -751,16 +794,10 @@ class Middleware:
                 response['Content-Type'] = 'text/html'
 
             else:
-                ps = ps.sort_stats(prof_command or 'cumulative')
+                ps = ps.sort_stats(prof_command)
                 ps.print_stats()
 
                 result = s.getvalue()
-
-                preserved_params = request.GET.copy()
-                preserved_params['_iommi_prof'] = 'flame'
-                flame_url = '?' + preserved_params.urlencode()
-                preserved_params['_iommi_prof'] = 'graph'
-                graph_url = '?' + preserved_params.urlencode()
 
                 # language=html
                 start_html = Template('''
@@ -824,17 +861,13 @@ class Middleware:
                         }
                     </style>
 
-                    <div>
-                        <a href="{{ flame_url }}">flamegraph</a>
-                        <a href="{{ graph_url }}">graph</a>
-                    </div>
+                    {{ nav_html }}
 
                     <p></p>
                 ''').render(
                     Context(
                         dict(
-                            flame_url=flame_url,
-                            graph_url=graph_url,
+                            nav_html=mark_safe(_profiler_nav_html(request, 'cumtime')),
                         )
                     )
                 )

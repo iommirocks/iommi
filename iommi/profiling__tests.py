@@ -50,7 +50,7 @@ def test_profiler_no_access():
 
 def test_profiler_plain():
     middleware = Middleware(lambda request: sentinel)
-    assert 'white-space: nowrap' in middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert 'white-space: nowrap' in middleware(staff_req('get', _iommi_prof='cumtime')).content.decode()
 
 
 def test_profiler_graph_error():
@@ -66,7 +66,29 @@ def test_profiler_graph_error():
 def test_profiler_graph_dot_present():
     if get_dot_path():
         content = middleware(staff_req('get', _iommi_prof='graph')).content.decode()
-        assert '<!DOCTYPE svg ' in content, content
+        assert '<!DOCTYPE html>' in content, content
+        assert '<svg' in content, content
+        assert '<!DOCTYPE svg ' not in content, content
+        assert '<a href="?_iommi_prof=flame">flamegraph</a> <a href="?_iommi_prof=cumtime">table</a> <b>graph</b>' in content
+
+
+def test_profiler_graph_is_inlined_in_html(monkeypatch):
+    svg = '<?xml version="1.0"?>\n<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "x.dtd">\n<svg><g/></svg>\n'
+
+    def fake_check_output(args, stdin):
+        stdin.read()
+        return svg.encode()
+
+    monkeypatch.setattr('iommi.profiling.get_dot_path', lambda: 'dot')
+    monkeypatch.setattr('iommi.profiling.subprocess.check_output', fake_check_output)
+    response = middleware(staff_req('get', _iommi_prof='graph'))
+
+    assert response['Content-Type'] == 'text/html'
+    content = response.content.decode()
+    assert '<svg><g/></svg>' in content
+    assert '<?xml' not in content
+    assert '<!DOCTYPE svg' not in content
+    assert '<a href="?_iommi_prof=flame">flamegraph</a> <a href="?_iommi_prof=cumtime">table</a> <b>graph</b>' in content
 
 
 def test_profiler_graph_dot_not_present():
@@ -280,7 +302,7 @@ def sampling(monkeypatch):
 
 
 def test_profiler_sampling_html(sampling):
-    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+    content = middleware(staff_req('get', _iommi_prof='cumtime')).content.decode()
 
     assert '10 samples in 0.010 seconds' in content
     # Sampled data has no call counts, so the ncalls column becomes samples and the two
@@ -291,6 +313,22 @@ def test_profiler_sampling_html(sampling):
         ['samples', 'tottime', 'cumtime', 'function', '', 'filename', 'lineno']
     )
     assert 'escape</a>' in content
+
+
+def test_profiler_defaults_to_table_without_flame_data():
+    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert '<a href="?_iommi_prof=flame">flamegraph</a> <b>table</b> <a href="?_iommi_prof=graph">graph</a>' in content
+
+
+def test_profiler_sampling_defaults_to_flame(sampling):
+    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert 'flame_graph.js' in content
+    assert '<b>flamegraph</b> <a href="?_iommi_prof=cumtime">table</a> <a href="?_iommi_prof=graph">graph</a>' in content
+
+
+def test_profiler_nav_preserves_other_parameters(sampling):
+    content = middleware(staff_req('get', _iommi_prof='flame', foo='bar')).content.decode()
+    assert '<a href="?_iommi_prof=cumtime&amp;foo=bar">table</a>' in content
 
 
 def test_profiler_sampling_flame(sampling):
@@ -361,7 +399,7 @@ def test_profiler_sampling_without_a_single_sample(monkeypatch):
 
     # A request can finish before the sampler gets going, and that has to render rather
     # than blow up.
-    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+    content = middleware(staff_req('get', _iommi_prof='cumtime')).content.decode()
     assert '0 samples in 0.000 seconds' in content
     assert middleware(staff_req('get', _iommi_prof='flame')).status_code == 200
 
@@ -398,12 +436,12 @@ def test_profiler_sampling_shows_sampling_errors(monkeypatch):
     monkeypatch.setattr('iommi.profiling.SamplingProfiler', AllSamplesFailed)
 
     expected = '<pre class="error">7 of 7 samples failed. The first error was:\n\nTraceback:\nAttributeError: &lt;no lineno&gt;\n</pre>'
-    assert expected in middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert expected in middleware(staff_req('get', _iommi_prof='cumtime')).content.decode()
     assert expected in middleware(staff_req('get', _iommi_prof='flame')).content.decode()
 
 
 def test_profiler_sampling_shows_no_error_when_all_samples_succeed(sampling):
-    assert 'class="error"' not in middleware(staff_req('get', _iommi_prof='')).content.decode()
+    assert 'class="error"' not in middleware(staff_req('get', _iommi_prof='cumtime')).content.decode()
     assert 'class="error"' not in middleware(staff_req('get', _iommi_prof='flame')).content.decode()
 
 
@@ -519,7 +557,7 @@ def sampling_with_waiting(monkeypatch):
 
 
 def test_profiler_sampling_html_shows_waiting(sampling_with_waiting):
-    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+    content = middleware(staff_req('get', _iommi_prof='cumtime')).content.decode()
 
     assert '14 samples in 0.014 seconds' in content
     assert '0.004 seconds spent waiting (sleep, database, network, locks...), see &lt;waiting&gt;' in content
@@ -528,7 +566,7 @@ def test_profiler_sampling_html_shows_waiting(sampling_with_waiting):
 
 
 def test_profiler_sampling_html_shows_no_waiting(sampling):
-    content = middleware(staff_req('get', _iommi_prof='')).content.decode()
+    content = middleware(staff_req('get', _iommi_prof='cumtime')).content.decode()
     assert '0.000 seconds spent waiting' in content
 
 
