@@ -120,6 +120,7 @@ daisyui_base = Style(
                 },
                 attrs__class={
                     'form-control': False,
+                    'flex': True,
                     'flex-row': True,
                     'items-center': True,
                     'gap-3': True,
