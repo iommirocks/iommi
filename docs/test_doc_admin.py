@@ -76,7 +76,7 @@ def test_installation():
     # language=rst
     """
     Installation
-    ~~~~~~~~~~~~
+    ------------
 
     First declare a subclass of `Admin`:
 
@@ -109,7 +109,7 @@ def test_customization():
     # language=rst
     """
     Customization
-    ~~~~~~~~~~~~~
+    -------------
 
     """
 
@@ -118,7 +118,7 @@ def test_add_a_model_to_the_admin():
     # language=rst
     """
     Add a model to the admin
-    ------------------------
+    ~~~~~~~~~~~~~~~~~~~~~~~~
 
     You can add an app to your admin from your global config like this:
 
@@ -144,7 +144,7 @@ def test_remove_a_model_from_the_admin():
     # language=rst
     """
     Remove a model from the admin
-    -----------------------------
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     By default iommi displays the built in Django `User` and `Group` models. You can override this like:
 
@@ -163,10 +163,16 @@ def test_permissions():
     # language=rst
     """
     Permissions
-    -----------
+    ~~~~~~~~~~~
 
-    By default staff users have access to the admin. You can change this by
-    overriding `has_permission`:
+    The admin is for staff users, and it uses Django's permissions. A superuser
+    can do everything. Other staff users need the `view`, `add`, `change` or
+    `delete` permission of a model to list, create, change or delete its rows.
+    With only the `view` permission the edit page of a row can be opened, but
+    it is read only.
+
+    You can change this by overriding `has_permission`. For example, to give
+    all staff users full access:
 
     """
 
@@ -175,7 +181,6 @@ def test_permissions():
     class MyAdmin(Admin):
         @staticmethod
         def has_permission(request, operation, model=None, instance=None):
-            # This is the default implementation
             return request.user.is_staff
 
     # @test
@@ -196,7 +201,7 @@ def test_html_attributes(small_discography):
     # language=rst
     """
     HTML attributes
-    ---------------
+    ~~~~~~~~~~~~~~~
 
     You can configure attributes in the admin similarly to the rest of iommi, on
     the `Meta` class:
@@ -227,7 +232,7 @@ def test_change_grouping(small_discography):
     # language=rst
     """
     Change grouping of models
-    -------------------------
+    ~~~~~~~~~~~~~~~~~~~~~~~~~
 
     By default iommi groups models in the admin by the app they belong to. You can override this with the `group` argument:
     """

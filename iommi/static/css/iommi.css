@@ -33,6 +33,33 @@
 }
 /* /advanced filter */
 
+/* table ajax load error */
+.iommi_table_error_shown {
+    position: relative;
+    min-height: 5em;
+}
+.iommi_table_error_shown > .iommi_table_error {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    padding: 1em;
+    background: rgba(255, 255, 255, 0.85);
+    color: red;
+}
+/* Keep the message on screen even when the table is taller or wider than the viewport */
+.iommi_table_error_shown > .iommi_table_error > .iommi_table_error_content {
+    position: sticky;
+    top: 30vh;
+    left: 1em;
+    width: fit-content;
+    max-width: calc(100vw - 2em);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+    align-items: center;
+}
+/* /table ajax load error */
+
 /* EditTable */
 input[data-iommi-edit-table-delete-row-checkbox] {
     display: none;

@@ -100,3 +100,24 @@ def test_asset_shortcuts():
     )
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected
+
+
+def test_asset_css_inline_text():
+    class MyPage(Page):
+        class Meta:
+            assets__raw_css = Asset.css('p { font-size: 18pt; }')
+
+    expected = prettify(
+        '''
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <title/>
+                <style>p { font-size: 18pt; }</style>
+            </head>
+             <body />
+        </html>
+    '''
+    )
+    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+    assert actual == expected

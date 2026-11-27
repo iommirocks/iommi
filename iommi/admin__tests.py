@@ -17,6 +17,7 @@ from iommi.admin import (
     Admin,
     Messages,
     collect_config,
+    user_password_defaults,
 )
 from iommi.base import values
 from iommi.struct import Struct
@@ -129,6 +130,210 @@ def test_delete(mock_messages, settings):
     mock_messages.add_message.assert_called_with(
         request, mock_messages.INFO, f'Foo {f} was deleted', fail_silently=True
     )
+
+
+def user_form_data(**data):
+    return {
+        'username': 'tony',
+        'first_name': '',
+        'last_name': '',
+        'email': '',
+        'is_active': '1',
+        'date_joined': '2020-01-01 00:00:00',
+        '-submit': '',
+        **data,
+    }
+
+
+@pytest.mark.django_db
+@mock.patch('iommi.admin.messages')
+def test_create_user_hashes_the_password(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
+
+    def page(request):
+        return Admin.create().refine_with_params(app_name='auth', model_name='user').bind(request=request)
+
+    content = page(staff_req('get')).__html__()
+    assert '<input autocomplete="new-password" id="id_password" name="password" type="password" value="">' in content
+
+    form = page(staff_req('post', **user_form_data(password=''))).parts.create_auth_user
+    assert form.get_errors() == {'fields': {'password': {'This field is required'}}}
+
+    p = page(staff_req('post', **user_form_data(password='hunter2')))
+    assert p.parts.create_auth_user.is_valid(), p.parts.create_auth_user.get_errors()
+    p.render_to_response()
+
+    user = User.objects.get(username='tony')
+    assert user.password != 'hunter2'
+    assert user.check_password('hunter2')
+
+
+@pytest.mark.django_db
+@mock.patch('iommi.admin.messages')
+def test_edit_user_keeps_or_hashes_the_password(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
+    user = User.objects.create(username='tony')
+    user.set_password('hunter2')
+    user.save()
+    hashed = user.password
+
+    def page(request):
+        return Admin.edit().refine_with_params(app_name='auth', model_name='user', pk=user.pk).bind(request=request)
+
+    content = page(staff_req('get')).__html__()
+    assert hashed not in content
+    assert '<input autocomplete="new-password" id="id_password" name="password" type="password" value="">' in content
+    assert 'Leave empty to keep the current password' in content
+
+    # What was typed is not sent back when another field is invalid
+    content = page(staff_req('post', **user_form_data(username='', password='changed'))).__html__()
+    assert 'This field is required' in content
+    assert 'changed' not in content
+
+    p = page(staff_req('post', **user_form_data(first_name='Tony', password='')))
+    assert p.parts.edit_auth_user.is_valid(), p.parts.edit_auth_user.get_errors()
+    p.render_to_response()
+    user.refresh_from_db()
+    assert user.first_name == 'Tony'
+    assert user.password == hashed
+
+    page(staff_req('post', **user_form_data(password='changed'))).render_to_response()
+    user.refresh_from_db()
+    assert user.password != 'changed'
+    assert user.check_password('changed')
+
+
+@pytest.mark.django_db
+def test_list_of_a_user_model_does_not_show_the_hash(settings):
+    settings.ROOT_URLCONF = __name__
+    user = User.objects.create(username='tony')
+    user.set_password('hunter2')
+    user.save()
+
+    # A custom user model has no list of columns to show, as `auth.User` has, so it gets a column per field
+    page = (
+        Admin.list(parts__list_auth_user__auto__include=None)
+        .refine_with_params(app_name='auth', model_name='user')
+        .bind(request=staff_req('get'))
+    )
+    assert 'last_login' in page.parts.list_auth_user.columns
+    assert 'password' not in page.parts.list_auth_user.columns
+    assert user.password not in page.__html__()
+
+
+def test_user_password_defaults_are_for_the_configured_user_model():
+    assert list(user_password_defaults('accounts.Person')) == [
+        'parts__list_accounts_person__columns__password__include',
+        'parts__create_accounts_person__fields__password',
+        'parts__edit_accounts_person__fields__password',
+    ]
+
+
+def staff_with_permissions_req(method, *permissions, **data):
+    request = req(method, **data)
+    request.user = Struct(
+        is_staff=True,
+        is_authenticated=True,
+        is_superuser=False,
+        has_perm=lambda permission: permission in permissions,
+    )
+    return request
+
+
+@pytest.mark.django_db
+def test_list_has_no_save_with_only_the_view_permission(settings):
+    settings.ROOT_URLCONF = __name__
+    f = Foo.objects.create(foo=7)
+    view = FooAdmin.list().as_view()
+
+    response = view(staff_with_permissions_req('get', 'tests.view_foo'), app_name='tests', model_name='foo')
+    content = response.content.decode()
+    assert 'name="-save"' not in content
+    assert 'data-iommi-edit-table-add-row-button' not in content
+
+    request = staff_with_permissions_req(
+        'post',
+        'tests.view_foo',
+        **{
+            f'list_tests_foo/pk_delete_{f.pk}': '',
+            'list_tests_foo/foo/-1': '11',
+            '-save': '',
+        },
+    )
+    with pytest.raises(AssertionError, match="No bound value for 'save'"):
+        view(request, app_name='tests', model_name='foo')
+
+    assert list(Foo.objects.values_list('foo', flat=True)) == [7]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'permission, expected',
+    [
+        ('tests.add_foo', [7, 11]),
+        ('tests.change_foo', [8]),
+        ('tests.delete_foo', []),
+    ],
+)
+def test_list_save_needs_the_permission_of_each_operation(settings, permission, expected):
+    settings.ROOT_URLCONF = __name__
+    f = Foo.objects.create(foo=7)
+
+    # The request tries to change a row, delete it and create another one
+    request = staff_with_permissions_req(
+        'post',
+        'tests.view_foo',
+        permission,
+        **{
+            f'list_tests_foo/foo/{f.pk}': '8',
+            f'list_tests_foo/pk_delete_{f.pk}': '',
+            'list_tests_foo/foo/-1': '11',
+            '-save': '',
+        },
+    )
+    view = FooAdmin.list(parts__list_tests_foo__columns__foo__field__include=True).as_view()
+    response = view(request, app_name='tests', model_name='foo')
+    assert response.status_code == 302
+
+    assert sorted(Foo.objects.values_list('foo', flat=True)) == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'permissions, edit_page, delete_page',
+    [
+        ([], None, None),
+        (['tests.view_foo'], 'read only', None),
+        (['tests.change_foo'], 'editable', None),
+        (['tests.delete_foo'], None, 'deletable'),
+        # The permissions of another model don't count
+        (['tests.view_bar', 'tests.change_bar', 'tests.delete_bar'], None, None),
+    ],
+)
+def test_edit_and_delete_pages_need_the_permission_of_the_model(settings, permissions, edit_page, delete_page):
+    settings.ROOT_URLCONF = __name__
+    f = Foo.objects.create(foo=7)
+
+    def content_of(admin):
+        request = staff_with_permissions_req('get', *permissions)
+        try:
+            return admin.as_view()(request, app_name='tests', model_name='foo', pk=f.pk).content.decode()
+        except Http404:
+            return None
+
+    content = content_of(FooAdmin.edit())
+    if edit_page is None:
+        assert content is None
+    else:
+        assert 'value="7"' in content
+        assert ('name="-submit"' in content) == (edit_page == 'editable')
+        assert ('<input disabled' in content) == (edit_page == 'read only')
+
+    content = content_of(FooAdmin.delete())
+    if delete_page is None:
+        assert content is None
+    else:
+        assert 'name="-submit"' in content
 
 
 @pytest.mark.django_db

@@ -135,7 +135,7 @@ def test_edit():
         `'iommi.live_edit.Middleware'` to `settings.MIDDLEWARE`. Note that you need
         to add this at the very top of the middleware list!
 
-    This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true.
+    This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true, and only for a browser on the same machine as the server: requests from other addresses are ignored, which includes a browser on the host when the server runs inside a Docker container.
     """
 
 
@@ -155,12 +155,29 @@ def test_profile():
     Profile
     -------
 
-    Press this tool to get a cProfile output for the current page. By default it
-    will do sorting on the cumulative time, but you can do `?_iommi_prof=tottime`
-    to get the total time.
+    Press this tool to get a profile of the current page. By default it
+    shows a flame graph. Each profiler output has links at the top to switch
+    to the others:
 
+    - `?_iommi_prof=flame` gives you a flame graph.
+    - `?_iommi_prof=cumtime` gives you a table sorted on cumulative time. You can
+      also sort on `tottime` or `ncalls`.
     - If you have gprof2dot installed you can also do `?_iommi_prof=graph` to get a graph output.
-    - If you have snakeviz installed you can also do `?_iommi_prof=snake` to get snakeviz output.
+
+    The flame graph needs either Python 3.15+ or yappi. Without them the default is the table.
+
+    On Python 3.15 and later iommi uses the statistical sampling engine that CPython's
+    own sampling profiler is built on. It reads the stack of the thread serving the
+    request from a separate thread, so the page renders at full speed and the numbers
+    you get aren't distorted by the measuring. Sampled data has no call counts, so the
+    `ncalls` column is replaced by the number of samples the function was on the stack
+    for.
+
+    On older versions of Python there is no such engine available, so iommi falls back
+    to a tracing profiler: `yappi <https://pypi.org/project/yappi/>`_ if it is
+    installed, and `cProfile` otherwise. Tracing makes the page several times slower to
+    render, which does skew the result towards whatever is called the most often, but
+    you do get exact call counts.
 
     .. note::
 

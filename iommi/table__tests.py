@@ -8,6 +8,8 @@ from datetime import (
 from urllib.parse import urlencode
 
 import pytest
+from bs4 import BeautifulSoup
+from django.db import connection
 from django.db.models import (
     F,
     QuerySet,
@@ -15,6 +17,7 @@ from django.db.models import (
 )
 from django.http import HttpResponse
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
@@ -28,6 +31,7 @@ from iommi import (
     Action,
     Fragment,
     Page,
+    PaginatorTrigger,
     html,
 )
 from iommi._web_compat import Template
@@ -66,6 +70,7 @@ from iommi.sql_trace import (
     set_sql_debug,
 )
 from iommi.table import (
+    Cells,
     Column,
     DataRetrievalMethods,
     Struct,
@@ -98,6 +103,8 @@ from tests.models import (
     FieldFromModelOneToOneTest,
     Foo,
     FromModelWithInheritanceTest,
+    OrderedItem,
+    OrderedItemTranslation,
     QueryFromIndexesTestModel,
     Qux,
     SortKeyOnForeignKeyB,
@@ -603,6 +610,29 @@ def test_attr(NoSortTable):  # noqa: N803
     )
 
 
+def test_cells_are_refine_done_once_per_table():
+    refine_done_calls = []
+
+    class MyCells(Cells):
+        def refine_done(self, parent=None):
+            refine_done_calls.append(self)
+            return super().refine_done(parent=parent)
+
+    table = Table(
+        columns__a=Column(),
+        rows=[Struct(a=1), Struct(a=2), Struct(a=3)],
+        cells_class=MyCells,
+        row__attrs__class__odd=lambda row, **_: row.a % 2 == 1,
+    ).bind(request=req('get'))
+    all_cells = list(table.cells_for_rows())
+
+    # Refine done gives the same result for every row, but every row is bound on its own
+    assert len(refine_done_calls) == 1
+    assert [(cells.row.a, cells.row_index) for cells in all_cells] == [(1, 0), (2, 1), (3, 2)]
+    assert [cells.attrs['class'] for cells in all_cells] == [dict(odd=True), dict(odd=False), dict(odd=True)]
+    assert len({id(cells) for cells in all_cells}) == 3
+
+
 # noinspection HtmlUnknownAttribute
 def test_attrs(NoSortTable):  # noqa: N803
     class TestTable(NoSortTable):
@@ -951,6 +981,31 @@ def test_page_size():
             </tbody>
         """,
     )
+
+
+def test_max_page_size_clamps_configured_and_requested_page_size():
+    rows = [Struct(pk=i, value=i) for i in range(1, 11)]
+    table = Table(
+        rows=rows,
+        columns__value=Column(),
+        page_size=8,
+        max_page_size=lambda user, **_: 4 if not user.is_authenticated else 6,
+    )
+
+    assert table.bind(request=req('get')).paginator.page_size == 4
+    assert table.bind(request=req('get', page_size=7)).paginator.page_size == 4
+    assert table.bind(request=user_req('get', page_size=7)).paginator.page_size == 6
+
+
+def test_callable_page_size_is_evaluated():
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 6)],
+        columns__value=Column(),
+        page_size=lambda user, **_: 3,
+        max_page_size=4,
+    ).bind(request=req('get'))
+
+    assert table.paginator.page_size == 3
 
 
 @pytest.mark.django_db
@@ -1399,6 +1454,41 @@ def test_bulk_delete():
     assert response.status_code == 302, response.content.decode()
 
     assert TFoo.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('trigger', [None, *list(PaginatorTrigger)])
+def test_bulk_delete_uses_overridden_delete_queryset(trigger):
+    item = OrderedItem.objects.create(sort_order=1)
+    translation = OrderedItemTranslation.objects.create(item=item, title='translation')
+    other_item = OrderedItem.objects.create(sort_order=2)
+    other_translation = OrderedItemTranslation.objects.create(item=other_item, title='other translation')
+
+    class MappedTable(Table):
+        def get_delete_queryset(self, prefix='pk_'):
+            source = super().get_delete_queryset(prefix=prefix)
+            return OrderedItem.objects.filter(pk__in=source.values_list('item_id', flat=True))
+
+    table = MappedTable(
+        auto__model=OrderedItemTranslation,
+        rows=OrderedItemTranslation.objects.select_related('item').order_by('item__sort_order'),
+        page_size=1,
+        parts__page__trigger=trigger,
+        bulk__actions__delete__include=True,
+    ).refine_done()
+
+    selected = {f'pk_{translation.pk}': ''}
+    t = table.bind(request=req('post', **selected, **{'-delete': ''}))
+    assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
+
+    t = table.bind(request=req('post', **selected, confirmed='confirmed', **{'-delete': ''}))
+    response = t.render_to_response()
+
+    assert response.status_code == 302, response.content.decode()
+    assert not OrderedItem.objects.filter(pk=item.pk).exists()
+    assert not OrderedItemTranslation.objects.filter(pk=translation.pk).exists()
+    assert OrderedItem.objects.filter(pk=other_item.pk).exists()
+    assert OrderedItemTranslation.objects.filter(pk=other_translation.pk).exists()
 
 
 @pytest.mark.django_db
@@ -3202,6 +3292,212 @@ def test_paginator_rendered():
     assert 'aria-label="Pages"' in content
 
 
+@pytest.mark.parametrize('trigger', list(PaginatorTrigger))
+@pytest.mark.parametrize('as_div', [False, True])
+def test_incremental_pagination_chunks(trigger, as_div):
+    rows = [Struct(pk=i, value=i) for i in range(1, 6)]
+    factory = Table.div if as_div else Table
+
+    def make_table():
+        return factory(rows=rows, columns__value=Column(), page_size=2,
+                       parts__page__trigger=trigger, parts__page__show_page_links=False)
+
+    first = make_table().bind(request=req('get'))
+    first_html = str(first)
+    assert 'data-iommi-incremental-items' in first_html
+    assert 'data-iommi-next-cursor="2"' in first_html
+    assert 'data-iommi-incremental-page-link' not in first_html
+    soup = BeautifulSoup(first_html, 'html.parser')
+    assert soup.select_one('[data-iommi-incremental]')['data-iommi-incremental'] == trigger.value
+    assert soup.select_one('[data-iommi-incremental-load-more]').has_attr('hidden') == (trigger == PaginatorTrigger.INFINITE_SCROLL)
+    assert soup.select_one('[data-iommi-incremental-retry]').has_attr('hidden')
+    assert soup.select_one('[data-iommi-incremental-sentinel]')
+    assert soup.select_one('[data-iommi-incremental-status]')['data-iommi-loading-text']
+    assert soup.select_one('[data-iommi-incremental-paginator]')['data-iommi-unsaved-warning']
+    assert first_html.count('data-pk=') == 2
+
+    second = make_table().bind(request=req('get', **{'/incremental_page': '2'})).render_to_response()
+    second_data = json.loads(second.content)
+    assert second_data['has_more'] is True
+    assert second_data['next_cursor'] == '3'
+    assert 'data-pk="3"' in second_data['html']
+    assert 'data-pk="4"' in second_data['html']
+    assert 'data-pk="2"' not in second_data['html']
+    assert '<table' not in second_data['html']
+    assert '<tbody' not in second_data['html']
+
+    third = make_table().bind(request=req('get', **{'/incremental_page': '3'})).render_to_response()
+    third_data = json.loads(third.content)
+    assert third_data['has_more'] is False
+    assert third_data['next_cursor'] is None
+    assert 'data-pk="5"' in third_data['html']
+    assert BeautifulSoup(third_data['paginator_html'], 'html.parser').select_one('[data-iommi-incremental]') is None
+
+
+@pytest.mark.parametrize('style, expected_classes', [
+    ('bootstrap5', {'btn', 'btn-secondary'}),
+    ('bulma', {'button'}),
+])
+def test_incremental_pagination_buttons_use_style(style, expected_classes):
+    with override_settings(IOMMI_DEFAULT_STYLE=style):
+        table = Table(
+            rows=[Struct(pk=i, value=i) for i in range(3)],
+            columns__value=Column(),
+            page_size=1,
+            parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+            parts__page__load_more__attrs__class={'custom-load-more': True},
+        ).bind(request=req('get'))
+        soup = BeautifulSoup(str(table), 'html.parser')
+
+    load_more = soup.select_one('[data-iommi-incremental-load-more]')
+    retry = soup.select_one('[data-iommi-incremental-retry]')
+    assert expected_classes <= set(load_more['class'])
+    assert expected_classes <= set(retry['class'])
+    assert 'custom-load-more' in load_more['class']
+    assert load_more['type'] == retry['type'] == 'button'
+
+
+@pytest.mark.parametrize(
+    'trigger, show_page_links, expected_links',
+    [
+        (None, None, True),
+        (PaginatorTrigger.LOAD_MORE, None, True),
+        (PaginatorTrigger.INFINITE_SCROLL, None, False),
+        (PaginatorTrigger.LOAD_MORE_THEN_INFINITE_SCROLL, None, False),
+        (PaginatorTrigger.INFINITE_SCROLL, True, True),
+        (PaginatorTrigger.LOAD_MORE, False, False),
+    ],
+)
+def test_incremental_pagination_page_link_defaults(trigger, show_page_links, expected_links):
+    page_link_kwargs = {} if show_page_links is None else {'parts__page__show_page_links': show_page_links}
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(3)],
+        columns__value=Column(),
+        page_size=1,
+        parts__page__trigger=trigger,
+        **page_link_kwargs,
+    ).bind(request=req('get'))
+    assert table.paginator.show_page_links is expected_links
+    assert ('iommi_page_link' in str(table)) is expected_links
+
+
+@pytest.mark.parametrize('infinite, expected_trigger, expected_links', [
+    (False, PaginatorTrigger.LOAD_MORE, True),
+    (True, PaginatorTrigger.INFINITE_SCROLL, False),
+])
+@pytest.mark.parametrize('custom_show_page_links', [False, True])
+def test_incremental_pagination_callable_settings(infinite, expected_trigger, expected_links, custom_show_page_links):
+    page_link_kwargs = (
+        {'parts__page__show_page_links': lambda paginator, **_: paginator.trigger == PaginatorTrigger.LOAD_MORE}
+        if custom_show_page_links else {}
+    )
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(3)],
+        columns__value=Column(),
+        page_size=1,
+        parts__page__trigger=lambda request, **_: (
+            PaginatorTrigger.INFINITE_SCROLL if request.GET.get('infinite') else PaginatorTrigger.LOAD_MORE
+        ),
+        **page_link_kwargs,
+    ).bind(request=req('get', **({'infinite': '1'} if infinite else {})))
+    assert table.paginator.trigger == expected_trigger
+    assert table.paginator.show_page_links is expected_links
+    assert ('iommi_page_link' in str(table)) is expected_links
+
+
+@pytest.mark.parametrize('cursor', ['', '0', '-1', 'foo', '100001'])
+def test_incremental_pagination_invalid_cursor(cursor):
+    table = Table(rows=[Struct(pk=1, value=1)], columns__value=Column(), page_size=1,
+                  parts__page__trigger=PaginatorTrigger.LOAD_MORE)
+    response = table.bind(request=req('get', **{'/incremental_page': cursor})).render_to_response()
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('trigger, show_page_links', [
+    (PaginatorTrigger.LOAD_MORE, False),
+    (PaginatorTrigger.INFINITE_SCROLL, None),
+    (PaginatorTrigger.LOAD_MORE_THEN_INFINITE_SCROLL, None),
+])
+def test_incremental_pagination_without_links_avoids_count_query(trigger, show_page_links):
+    for i in range(5):
+        TFoo.objects.create(a=i, b='x')
+    table = Table(auto__model=TFoo, page_size=2, parts__page__trigger=trigger,
+                  parts__page__show_page_links=show_page_links)
+    with CaptureQueriesContext(connection) as queries:
+        str(table.bind(request=req('get')))
+    assert not any('COUNT(' in query['sql'].upper() for query in queries)
+    with CaptureQueriesContext(connection) as queries:
+        Table(auto__model=TFoo, page_size=2, parts__page__trigger=trigger,
+              parts__page__show_page_links=show_page_links).bind(
+                  request=req('get', **{'/incremental_page': '2'})).render_to_response()
+    assert not any('COUNT(' in query['sql'].upper() for query in queries)
+
+
+def test_incremental_page_links_refresh_without_endpoint_parameter():
+    def make_table():
+        return Table(rows=[Struct(pk=i, value=i) for i in range(1, 6)],
+                     columns__value=Column(), page_size=2, parts__page__trigger=PaginatorTrigger.LOAD_MORE)
+
+    first_html = str(make_table().bind(request=req('get')))
+    assert 'iommi_page_link' in first_html
+    assert 'data-iommi-incremental-page-link' in first_html
+    second = make_table().bind(request=req('get', **{'/incremental_page': '2'})).render_to_response()
+    paginator_html = json.loads(second.content)['paginator_html']
+    assert 'aria-label="Page 2"' in paginator_html
+    assert 'data-iommi-incremental-page-link' in paginator_html
+    assert all('/incremental_page' not in link.get('href', '') for link in BeautifulSoup(paginator_html, 'html.parser').find_all('a'))
+
+
+def test_incremental_pagination_two_tables_have_separate_endpoints():
+    def make_page():
+        return Page(parts__left=Table(rows=[Struct(pk=i, value=i) for i in range(3)],
+                                      columns__value=Column(), page_size=1,
+                                      parts__page__trigger=PaginatorTrigger.LOAD_MORE),
+                    parts__right=Table(rows=[Struct(pk=i, value=i) for i in range(10, 13)],
+                                       columns__value=Column(), page_size=1,
+                                       parts__page__trigger=PaginatorTrigger.LOAD_MORE))
+
+    html = str(make_page().bind(request=req('get')))
+    endpoints = [x['data-iommi-incremental-endpoint'] for x in BeautifulSoup(html, 'html.parser').select('[data-iommi-incremental-endpoint]')]
+    assert len(endpoints) == 2 and endpoints[0] != endpoints[1]
+    response = make_page().bind(request=req('get', **{endpoints[0]: '2'})).render_to_response()
+    data = json.loads(response.content)
+    assert 'data-pk="1"' in data['html']
+    assert 'data-pk="11"' not in data['html']
+
+
+def test_incremental_endpoint_is_opt_in_and_get_only():
+    rows = [Struct(pk=i, value=i) for i in range(3)]
+    disabled = Table(rows=rows, columns__value=Column(), page_size=1).bind(request=req('get'))
+    assert 'incremental_page' not in disabled.endpoints
+
+    enabled = Table(rows=rows, columns__value=Column(), page_size=1,
+                    parts__page__trigger=PaginatorTrigger.LOAD_MORE).bind(
+                        request=req('POST', **{'/incremental_page': '2'}))
+    assert enabled.render_to_response().status_code == 405
+
+
+@pytest.mark.django_db
+def test_incremental_endpoint_preserves_filter_and_equal_value_order():
+    foo = [TFoo.objects.create(a=1, b='foo') for _ in range(3)]
+    bar = TFoo.objects.create(a=2, b='bar')
+
+    def make_table():
+        return Table(auto__model=TFoo, rows=TFoo.objects.order_by('-a'),
+                     columns__b__filter__include=True, page_size=2,
+                     parts__page__trigger=PaginatorTrigger.LOAD_MORE, parts__page__show_page_links=False)
+
+    bound = make_table().bind(request=req('get', query='b="foo"'))
+    assert bound.paginator.has_more
+    assert bound.sorted_and_filtered_rows.query.order_by == ('-a', '-pk')
+    response = make_table().bind(request=req('get', query='b="foo"', **{'/incremental_page': '2'})).render_to_response()
+    data = json.loads(response.content)
+    assert f'data-pk="{foo[0].pk}"' in data['html']
+    assert f'data-pk="{bar.pk}"' not in data['html']
+    assert data['has_more'] is False
+
+
 def test_paginator_clamping():
     t = Table(page_size=1, rows=list(range(10)))
     assert t.bind(request=req('get', page='0')).paginator.page == 1
@@ -4097,6 +4393,23 @@ def test_rows_should_not_cache():
 
 
 @pytest.mark.django_db
+def test_choice_queryset_choices_should_not_cache():
+    TFoo.objects.create(a=1)
+    q = TFoo.objects.all()
+    Table(
+        auto__model=TFoo,
+        columns__a=Column.choice_queryset(
+            choices=q,
+            filter__include=True,
+            filter__field__template='iommi/form/choice.html',
+            bulk__include=True,
+            bulk__template='iommi/form/choice.html',
+        ),
+    ).bind(request=req('get')).render_to_response()
+    assert q._result_cache is None, "Cache should be empty"
+
+
+@pytest.mark.django_db
 def test_auto_model_for_text_choices():
     class TestTable(Table):
         class Meta:
@@ -4939,3 +5252,28 @@ def test_csv_download_uses_report_value_override():
     csv = t.render_to_response().getvalue().decode()
 
     assert 'CUSTOM_A' in csv
+
+
+def test_header_escapes_display_name_and_group():
+    table = Table(
+        columns__a=Column(display_name='<script>name</script>'),
+        columns__b=Column(group='<script>group</script>'),
+        rows=[Struct(a=1, b=2)],
+    )
+    html = table.bind(request=req('get')).__html__()
+
+    assert '&lt;script&gt;name&lt;/script&gt;' in html
+    assert '&lt;script&gt;group&lt;/script&gt;' in html
+    assert '<script>' not in html
+
+
+def test_header_keeps_display_name_and_group_that_are_marked_as_safe():
+    table = Table(
+        columns__a=Column(display_name=mark_safe('<i class="name"></i>')),
+        columns__b=Column(group=mark_safe('<i class="group"></i>')),
+        rows=[Struct(a=1, b=2)],
+    )
+    html = table.bind(request=req('get')).__html__()
+
+    assert '<i class="name"></i>' in html
+    assert '<i class="group"></i>' in html

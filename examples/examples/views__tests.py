@@ -1,7 +1,15 @@
 import pytest
+from bs4 import BeautifulSoup
 from django.test import RequestFactory
+from django.urls import (
+    include,
+    path,
+)
 
+from examples.main_menu import main_menu
 from iommi.struct import Struct
+
+urlpatterns = [path('experimental/', include('examples.experimental_examples'))] + main_menu.urlpatterns()
 
 
 def req(method, url='/', **data):
@@ -80,6 +88,104 @@ def test_index_page_renders(album):
     page = IndexPage().bind(request=req('get'))
     response = page.render_to_response()
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_albums_route_uses_album_cards(client, settings, album):
+    from examples.views import AlbumTable, album_card_table
+
+    settings.ROOT_URLCONF = __name__
+
+    response = client.get('/albums/')
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, 'html.parser')
+    assert soup.select_one('.card')
+    assert not soup.select('table, tbody')
+    assert soup.select_one('a[href="/albums/create/"]')
+
+    staff_table = album_card_table(table_class=AlbumTable).bind(request=staff_req('get'))
+    staff_soup = BeautifulSoup(str(staff_table), 'html.parser')
+    assert staff_soup.select_one(f'a[href="/albums/{album.pk}/edit/"]')
+    assert staff_soup.select_one(f'a[href="/albums/{album.pk}/delete/"]')
+
+
+@pytest.mark.django_db
+def test_hybrid_album_cards_append_into_div(client, settings, artist):
+    from examples.models import Album
+
+    settings.ROOT_URLCONF = __name__
+    settings.MIDDLEWARE = [middleware for middleware in settings.MIDDLEWARE if middleware != 'iommi.main_menu.main_menu_middleware']
+    for i in range(12):
+        Album.objects.create(name=f'Album {i:02}', artist=artist, year=1980 + i)
+
+    url = '/experimental/pagination/hybrid/'
+    first = client.get(url)
+    assert first.status_code == 200
+    soup = BeautifulSoup(first.content, 'html.parser')
+    items = soup.select_one('[data-iommi-incremental-items]')
+    assert items.name == 'div'
+    assert len(items.select('.card')) == 10
+    assert not soup.select('table, tbody')
+
+    endpoint = soup.select_one('[data-iommi-incremental]')['data-iommi-incremental-endpoint']
+    second = client.get(url, {endpoint: '2'})
+    assert second.status_code == 200
+    appended = BeautifulSoup(second.json()['html'], 'html.parser')
+    assert len(appended.select('.card')) == 2
+    assert not appended.select('table, tbody')
+    assert second.json()['has_more'] is False
+
+
+@pytest.mark.django_db
+def test_artist_and_incremental_edit_table_example_saves_loaded_rows(client, settings, artist):
+    from examples.models import Album
+
+    settings.ROOT_URLCONF = __name__
+    settings.MIDDLEWARE = [middleware for middleware in settings.MIDDLEWARE if middleware != 'iommi.main_menu.main_menu_middleware']
+    albums = [Album.objects.create(name=f'Album {i}', artist=artist, year=1980 + i) for i in range(6)]
+    url = f'/experimental/pagination/edit-artist/{artist.pk}/'
+
+    first = client.get(url)
+    assert first.status_code == 200
+    first_html = BeautifulSoup(first.content, 'html.parser')
+    assert first_html.select_one('input[name="name"]')
+    assert first_html.select_one('[data-iommi-incremental-load-more]')
+    assert not first_html.select('[data-iommi-incremental-page-link]')
+
+    def assert_album_row_layout(row, pk):
+        assert row.name == 'div'
+        name = row.select_one(f'input[name="albums/name/{pk}"]')
+        year = row.select_one(f'input[name="albums/year/{pk}"]')
+        published_date = row.select_one(f'input[name="albums/published_date/{pk}"]')
+        assert name and year and published_date
+        assert name.find_parent(class_='row') != year.find_parent(class_='row')
+        assert year.find_parent(class_='row') == published_date.find_parent(class_='row')
+
+    assert_album_row_layout(first_html.select_one('[data-iommi-edit-table-row]'), albums[0].pk)
+
+    endpoint = first_html.select_one('[data-iommi-incremental]')['data-iommi-incremental-endpoint']
+    second = client.get(url, {endpoint: '2'})
+    assert second.status_code == 200
+    second_data = second.json()
+    assert f'name="albums/name/{albums[-1].pk}"' in second_data['html']
+    appended_row = BeautifulSoup(second_data['html'], 'html.parser').select_one('[data-iommi-edit-table-row]')
+    assert_album_row_layout(appended_row, albums[-1].pk)
+    token = BeautifulSoup(second_data['paginator_html'], 'html.parser').select_one('input[name$="incremental_pages"]')
+
+    post_data = {'name': 'Black Sabbath updated', '-save': '', token['name']: token['value']}
+    for album in albums:
+        post_data[f'albums/name/{album.pk}'] = 'Updated album' if album == albums[-1] else album.name
+        post_data[f'albums/year/{album.pk}'] = str(album.year)
+        post_data[f'albums/published_date/{album.pk}'] = '2020-01-02' if album == albums[-1] else ''
+
+    response = client.post(url, post_data)
+    assert response.status_code == 302
+    artist.refresh_from_db()
+    albums[-1].refresh_from_db()
+    assert artist.name == 'Black Sabbath updated'
+    assert albums[-1].name == 'Updated album'
+    assert str(albums[-1].published_date) == '2020-01-02'
+    assert client.get(url).status_code == 200
 
 
 @pytest.mark.django_db

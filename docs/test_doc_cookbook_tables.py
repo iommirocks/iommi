@@ -98,6 +98,37 @@ def test_how_do_you_turn_off_pagination(small_discography):
     """
 
 
+def test_how_do_i_limit_page_size():
+    # language=rst
+    """
+    .. _limit-page-size:
+
+    How do I limit the page size?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.page_size
+    .. uses Table.max_page_size
+
+    `page_size` sets the default number of rows per page. `max_page_size` caps that
+    value and any page size requested with the table's `*_size` query parameter.
+    Both options can be integers or callables. For example, set a default page size
+    and a maximum:
+
+    .. code-block:: python
+
+        Table(
+            auto__model=Album,
+            page_size=100,
+            max_page_size=500,
+        )
+
+    Use a callable when the value needs to be computed from request context.
+
+    `EditTable` defaults `max_page_size` to 200. Applications can override that value
+    in a style or on an individual table.
+    """
+
+
 def test_how_do_i_customize_the_rendering_of_a_cell():
     # language=rst
     """
@@ -1021,6 +1052,82 @@ def test_how_do_i_enable_bulk_delete(small_discography):
     # @end
 
 
+def test_how_do_i_delete_related_objects_instead_of_selected_rows():
+    # language=rst
+    """
+
+    .. _delete-related-objects:
+
+    How do I delete related objects instead of the selected rows?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.get_delete_queryset
+
+    Suppose a movie has a row per language. To make the Table bulk-delete
+    action remove the movie and all its translations, map the selected
+    translation rows to their movies. Call `super()` first so iommi applies
+    the selection and bulk filters before the mapping:
+
+    .. code-block:: python
+
+        class Movie(models.Model):
+            year = models.IntegerField()
+            imdb_id = models.CharField(max_length=20, unique=True)
+
+        class MovieI18N(models.Model):
+            movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+            language = models.CharField(max_length=10)
+            title = models.CharField(max_length=255)
+
+        class MovieTable(Table):
+            def get_delete_queryset(self, prefix='pk_'):
+                translations = super().get_delete_queryset(prefix=prefix)
+                return Movie.objects.filter(
+                    pk__in=translations.values_list('movie_id', flat=True)
+                )
+
+        movie_table = MovieTable(
+            auto__rows=MovieI18N.objects.filter(language='en').order_by('-movie__year'),
+            auto__include=['title', 'movie__year', 'movie__imdb_id'],
+            bulk__actions__delete__include=True,
+        )
+
+    Here, deleting a selected `MovieI18N` row deletes its parent `Movie`,
+    which in turn deletes all language rows through the foreign key cascade.
+    If you want to remove only one language, leave `get_delete_queryset()`
+    unchanged and delete the selected `MovieI18N` row itself.
+    """
+
+
+def test_how_do_i_customize_deletion():
+    # language=rst
+    """
+
+    .. _customize-deletion:
+
+    How do I customize deletion?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.delete_queryset
+    .. uses EditTable.delete_queryset
+
+    Override `delete_queryset()` to add behavior around deletion. Call
+    `super()` to perform the delete and return the deleted primary keys:
+
+    .. code-block:: python
+
+        class MyTable(Table):
+            def delete_queryset(self, queryset):
+                deleted_pks = super().delete_queryset(queryset)
+                # Add custom cleanup here.
+                return deleted_pks
+
+    This hook is used by Table bulk deletion and EditTable row deletion. To
+    change which rows are selected for deletion, override
+    `get_delete_queryset()` instead.
+    """
+
+
 def test_how_do_i_make_a_custom_bulk_action(album):
     # language=rst
     """
@@ -1273,7 +1380,7 @@ def test_initial_filter_on_table(really_big_discography):
     t = Table(
         auto__model=Album,
         columns__artist__filter__include=True,
-        query__form__fields__artist__initial=lambda **_: Artist.objects.get(name='Dio'),
+        query__form__fields__artist__initial=lambda **_: Artist.objects.filter(name='Dio'),
     )
 
     # @test
@@ -1783,6 +1890,55 @@ def test_how_do_i_limit_the_choices_for_a_column(small_discography):
     # @end
 
 
+def test_how_do_i_make_all_choice_filters_multi_select(small_discography):
+    # language=rst
+    """
+    .. _multi-select-filters:
+
+    How do I make all choice filters multi select?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. uses Style
+    .. uses Filter.field
+
+    Filters on foreign keys and many-to-many relations are multi select by default,
+    but other choice filters render as a single select, so the user can only
+    filter on one value at a time. Define a custom style that points the
+    `choice` and `choice_queryset` filter shortcuts at the multi select variants
+    of their fields to change this for your entire project:
+    """
+    # @test
+    from iommi.style_bootstrap_docs import bootstrap_docs as bootstrap
+
+    # @end
+
+    my_style = Style(
+        bootstrap,
+        Filter__shortcuts__choice__field__call_target__attribute='multi_choice',
+        Filter__shortcuts__choice_queryset__field__call_target__attribute='multi_choice_queryset',
+    )
+
+    # language=rst
+    """
+    `choice` covers columns with a `choices` list, and `choice_queryset` covers
+    filters you give a queryset of choices. Selecting several values in a
+    filter now means "any of these", so this table finds albums released in
+    1980 *or* 1981:
+    """
+
+    table = Table(
+        auto__model=Album,
+        iommi_style=my_style,
+        columns__year=Column.choice(
+            choices=[1980, 1981],
+            filter__include=True,
+        ),
+    )
+
+    # @test
+    show_output(table.bind(request=req('get', year=['1980', '1981'])))
+    # @end
+
+
 def test_how_do_i_read_the_model_information_of_a_table(small_discography):
     # language=rst
     """
@@ -2001,3 +2157,102 @@ def test_how_do_i_wrap_the_table_tag(small_discography):
     # @test
     show_output(table)
     # @end
+
+
+def test_how_do_i_download_a_table_as_csv(small_discography):
+    # language=rst
+    """
+    .. _table-as-csv:
+
+    How do I let the user download a table as CSV?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses Table.extra_evaluated
+    .. uses EditTable.extra_evaluated
+    .. uses Column.extra_evaluated
+    .. uses EditColumn.extra_evaluated
+    .. uses Table.endpoints
+    .. uses Table.actions
+
+    Every table has a `csv` endpoint, which is turned on by giving the table a report
+    name via `extra_evaluated__report_name`. Then say which columns to include by
+    giving each one a header name, also via `extra_evaluated__report_name`. Add an
+    `Action` pointing at the endpoint to get a download link:
+    """
+
+    class AlbumTable(Table):
+        class Meta:
+            extra_evaluated__report_name = 'Albums'
+            actions__download = Action(
+                attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
+            )
+            rows = Album.objects.all()
+
+        name = Column(extra_evaluated__report_name='Name')
+        artist = Column(extra_evaluated__report_name='Artist')
+        year = Column.number(extra_evaluated__report_name='Year')
+
+    albums = AlbumTable().as_view()
+
+    # language=rst
+    """
+    The table renders as normal, but hitting the csv endpoint returns a text file in
+    CSV format:
+    """
+
+    # @test
+    show_output(
+        b"<pre>"
+        + albums(request=req('get', **{'/csv': ''})).getvalue()
+        + b"</pre>"
+    )
+    # @end
+
+    # language=rst
+    """
+    To include every column without naming each one, set
+    `extra__report_columns_all=True` on the table. Each column then uses its own name
+    as the header, and an explicit `extra_evaluated__report_name` on a column still
+    wins.
+
+    To control the CSV dialect, pass kwargs through to `csv.writer` with
+    `extra_evaluated__csv_writer_kwargs`, e.g.
+    `extra_evaluated__csv_writer_kwargs={'delimiter': ';'}`.
+    """
+
+
+def test_how_do_i_change_the_ajax_timeout_or_the_error_shown_when_a_table_fails_to_load():
+    # language=rst
+    """
+    .. _table-ajax-timeout:
+
+    How do I change the ajax timeout or the error shown when a table fails to load?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Filtering, sorting and paginating a table reloads the table body with an ajax
+    request. If that request doesn't finish within `ajaxTimeout` milliseconds
+    (default 5000) it is aborted, and an error overlay with a retry button is
+    shown over the table. The same overlay is shown if the request fails for
+    any other reason. The overlay has the CSS class `iommi_table_error`, and the
+    table container gets the class `iommi_table_error_shown` while it's visible.
+
+    Both the timeout and the texts are properties on the JavaScript `iommi`
+    object. Set them in an `iommi.init.start` event listener, which runs before
+    iommi wires up any tables:
+
+    .. code-block:: html
+
+        <script>
+            document.addEventListener('iommi.init.start', (event) => {
+                const iommi = event.detail.iommi;
+                iommi.ajaxTimeout = 30000;  // or null to never time out
+                iommi.messages.tableLoadTimeout = gettext('Loading the table took too long and was cancelled.');
+                iommi.messages.tableLoadError = gettext('Loading the table failed.');
+                iommi.messages.retry = gettext('Retry');
+            });
+        </script>
+
+    A timed out request fails with a `TimeoutError`, so you can also tell it
+    apart from other failures in an `iommi.error` event listener via
+    `event.detail.error.name`.
+    """

@@ -89,6 +89,9 @@ f'''Evaluating {get_callable_description(func_or_value)} didn't resolve it into 
 
 
 def evaluate_strict(__func_or_value, *, __signature=None, __match_empty=True, **kwargs):
+    if not is_callable(__func_or_value):
+        # The common case, and passing kwargs on to evaluate() would copy them once more
+        return __func_or_value
     # noinspection PyArgumentEqualDefault
     return evaluate(__func_or_value, __signature=None, __strict=True, __match_empty=__match_empty, **kwargs)
 

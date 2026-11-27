@@ -1,5 +1,6 @@
 import csv
 from collections.abc import Callable, Iterable
+from copy import copy
 from datetime import (
     UTC,
     date,
@@ -8,6 +9,7 @@ from datetime import (
 )
 from enum import (
     Enum,
+    StrEnum,
     auto,
 )
 from functools import total_ordering
@@ -19,6 +21,7 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
+from django.core import signing
 from django.core.exceptions import (
     FieldDoesNotExist,
     ImproperlyConfigured,
@@ -33,8 +36,10 @@ from django.db.models import (
 from django.http import (
     FileResponse,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseRedirect,
 )
+from django.templatetags.static import static
 from django.utils import timezone
 from django.utils.encoding import smart_str
 from django.utils.formats import date_format
@@ -55,6 +60,7 @@ from iommi.action import (
     Actions,
     group_actions,
 )
+from iommi.asset import Asset
 from iommi.attrs import (
     Attrs,
     evaluate_attrs,
@@ -1151,7 +1157,8 @@ class CellConfig(TransientFragment, Tag):
             link: Namespace,
             parent,
         ):
-        super(CellConfig, self).__init__(parent=parent, template=template, attrs=attrs, children=None, tag=tag)
+        # Cell replaces attrs with the evaluated attrs right away, so the attrs defaults aren't needed
+        self._init(parent=parent, template=template, attrs=attrs, children=None, tag=tag)
         self.url = url
         self.url_title = url_title
         self.value = value
@@ -1436,7 +1443,7 @@ class ColumnHeader:
         index_in_group=None,
     ):
         self.table = table
-        self.display_name = mark_safe(display_name)
+        self.display_name = display_name
         self.template = template
         self.url = url
         self.column = column
@@ -1517,7 +1524,7 @@ def bulk_delete__post_handler(table, form, **_):
     if not form.is_valid():
         return
 
-    queryset = table.bulk_queryset()
+    queryset = table.get_delete_queryset()
 
     from iommi.page import (
         Page,
@@ -1556,7 +1563,7 @@ def bulk_delete__post_handler(table, form, **_):
     p = ConfirmPage().bind(request=request)
 
     if request.POST.get(p.parts.confirm.bulk.fields.confirmed.iommi_path) == 'confirmed':
-        queryset.delete()
+        table.delete_queryset(queryset)
         return HttpResponseRedirect(safe_redirect_url(request.META.get('HTTP_REFERER', '/'), request))
 
     return HttpResponse(render_root(part=p))
@@ -1569,6 +1576,32 @@ def paginator__count(rows, **_):
         return len(rows)
     except TypeError:
         return None
+
+
+def incremental_pagination_configured(table, **_):
+    page = table.iommi_namespace.get('parts', {}).get('page', {})
+    return getattr(page, 'trigger', None) is not None
+
+
+def incremental_query_key(table):
+    request = table.get_request()
+    if request is None:
+        return []
+    page_path = table.paginator.iommi_path
+    prefix = table.iommi_path + '/' if table.iommi_path else ''
+    return sorted(
+        (key, list(values))
+        for key, values in request.GET.lists()
+        if not key.startswith('/')
+        and (not prefix or key.startswith(prefix) or key == page_path + '_size')
+        and key not in (page_path, page_path + '_incremental_start')
+    )
+
+
+class PaginatorTrigger(StrEnum):
+    LOAD_MORE = 'load_more'
+    INFINITE_SCROLL = 'infinite_scroll'
+    LOAD_MORE_THEN_INFINITE_SCROLL = 'load_more_then_infinite_scroll'
 
 
 class Paginator(Traversable, Tag):
@@ -1587,6 +1620,11 @@ class Paginator(Traversable, Tag):
     count: int = SpecialEvaluatedRefinable()
     slice = Refinable()
     show_always = Refinable()
+    # None preserves the traditional paginator. Incremental modes share one endpoint.
+    trigger: PaginatorTrigger | str | None = SpecialEvaluatedRefinable()
+    show_page_links: bool = SpecialEvaluatedRefinable()
+    load_more: Action = Refinable()
+    retry: Action = Refinable()
 
     class Meta:
         attrs__class = EMPTY
@@ -1611,6 +1649,20 @@ class Paginator(Traversable, Tag):
             max(1, (paginator.count - (paginator.min_page_size - 1))) / paginator.page_size
         ),
         slice=lambda top, bottom, rows, **_: rows[bottom:top],
+        trigger=None,
+        show_page_links=lambda paginator, **_: paginator.trigger is None or paginator.trigger == PaginatorTrigger.LOAD_MORE,
+        load_more__call_target=Action.button,
+        load_more__display_name=gettext_lazy('Load more'),
+        load_more__attrs__type='button',
+        load_more__attrs__class={'iommi-incremental-load-more': True},
+        load_more__attrs={'data-iommi-incremental-load-more': True},
+        load_more__attrs__hidden=lambda paginator, **_: True if paginator.trigger == PaginatorTrigger.INFINITE_SCROLL else None,
+        retry__call_target=Action.button,
+        retry__display_name=gettext_lazy('Retry'),
+        retry__attrs__type='button',
+        retry__attrs__class={'iommi-incremental-retry': True},
+        retry__attrs={'data-iommi-incremental-retry': True},
+        retry__attrs__hidden=True,
     )
     def __init__(self, **kwargs):
         super(Paginator, self).__init__(**kwargs)
@@ -1624,10 +1676,18 @@ class Paginator(Traversable, Tag):
         self.active_item = Namespace(self.item, self.active_item)
 
         super(Paginator, self).on_refine_done()
+        self.load_more = self.load_more(_name='load_more').refine_done(parent=self)
+        self.retry = self.retry(_name='retry').refine_done(parent=self)
 
     def on_bind(self) -> None:
         request = self.get_request()
         table = self.iommi_evaluate_parameters()['table']
+        evaluate_member(self, 'trigger', **self.iommi_evaluate_parameters())
+        assert self.trigger is None or self.trigger in tuple(PaginatorTrigger)
+        evaluate_member(self, 'show_page_links', **self.iommi_evaluate_parameters())
+        if self.trigger is not None:
+            bind_member(self, name='load_more')
+            bind_member(self, name='retry')
         page_size = None
         if request:
             page_size_str = request.GET.get(self.iommi_path + '_size')
@@ -1636,9 +1696,28 @@ class Paginator(Traversable, Tag):
                     page_size = int(page_size_str)
                 except ValueError:
                     pass
-        self.page_size = page_size if page_size is not None else table.page_size
+        if page_size is None:
+            evaluate_member(table, 'page_size', **table.iommi_evaluate_parameters())
+            self.page_size = table.page_size
+        else:
+            self.page_size = page_size
+        evaluate_member(table, 'max_page_size', **table.iommi_evaluate_parameters())
+        assert (
+            isinstance(table.max_page_size, int) and table.max_page_size > 0
+        ), 'max_page_size must evaluate to a positive integer'
+        if self.page_size is not None:
+            self.page_size = min(self.page_size, table.max_page_size)
+        if self.trigger is not None:
+            assert self.page_size is not None and self.page_size > 0, 'Incremental pagination requires a positive page_size'
 
         rows = table.sorted_and_filtered_rows
+        if self.trigger is not None and isinstance(rows, QuerySet):
+            ordering = rows.query.order_by or (rows.model._meta.ordering if rows.query.default_ordering else ())
+            ordering = tuple(ordering)
+            if not any(key in ('pk', '-pk') for key in ordering):
+                tie_breaker = '-pk' if ordering and isinstance(ordering[0], str) and ordering[0].startswith('-') else 'pk'
+                rows = rows.order_by(*ordering, tie_breaker)
+                table.sorted_and_filtered_rows = rows
         evaluate_parameters = merged(
             self.iommi_evaluate_parameters(),
             page_size=self.page_size,
@@ -1652,6 +1731,9 @@ class Paginator(Traversable, Tag):
         self.item.attrs = evaluate_attrs(self.item, **evaluate_parameters)
         self.link.attrs = evaluate_attrs(self.link, **evaluate_parameters)
         self.active_link.attrs = evaluate_attrs(self.active_link, **evaluate_parameters)
+        if self.trigger is not None:
+            self.link.attrs['data-iommi-incremental-page-link'] = True
+            self.active_link.attrs['data-iommi-incremental-page-link'] = True
 
         self.container.tag = evaluate_strict(self.container.tag, **evaluate_parameters)
         self.active_item.tag = evaluate_strict(self.active_item.tag, **evaluate_parameters)
@@ -1662,6 +1744,10 @@ class Paginator(Traversable, Tag):
         if self.page_size is None:
             self.number_of_pages = 1
             self.count = None
+        elif self.trigger is not None and not self.show_page_links:
+            # A sentinel row tells us whether there is another chunk, without COUNT(*).
+            self.count = None
+            self.number_of_pages = None
         else:
             self.count = evaluate_strict(self.count, **evaluate_parameters) if rows is not None else 0
             if self.count is None:
@@ -1673,14 +1759,21 @@ class Paginator(Traversable, Tag):
         page = evaluate_strict(self.page, **evaluate_parameters) if page is None else int(page)
         self.page = page
 
-        if self.page > self.number_of_pages:
+        if self.number_of_pages is not None and self.page > self.number_of_pages:
             self.page = self.number_of_pages
         elif self.page < 1:
             self.page = 1
+        self.start_page = self.page
 
         self.context = self.iommi_evaluate_parameters().copy()
 
-        if self.number_of_pages != 1:
+        if self.number_of_pages is None:
+            bottom = (self.page - 1) * self.page_size
+            chunk = list(self.slice(**evaluate_parameters, bottom=bottom, top=bottom + self.page_size + 1))
+            self.has_more = len(chunk) > self.page_size
+            self.rows = chunk[:self.page_size]
+            self.count = len(self.rows)  # Used only to distinguish an empty table in templates.
+        elif self.number_of_pages != 1:
             bottom = (self.page - 1) * self.page_size
             top = bottom + self.page_size
             if top + self.min_page_size - 1 >= self.count:
@@ -1689,17 +1782,19 @@ class Paginator(Traversable, Tag):
             self.rows = paginated_rows
         else:
             self.rows = evaluate_parameters['rows']
+        if self.number_of_pages is not None:
+            self.has_more = self.page < self.number_of_pages
 
         foo = self.page
         if foo <= self.adjacent_pages:
             foo = self.adjacent_pages + 1
-        elif foo > self.number_of_pages - self.adjacent_pages:
+        elif self.number_of_pages is not None and foo > self.number_of_pages - self.adjacent_pages:
             foo = self.number_of_pages - self.adjacent_pages
         page_numbers = [
             n
             for n in range(self.page - self.adjacent_pages, foo + self.adjacent_pages + 1)
             if 0 < n <= self.number_of_pages
-        ]
+        ] if self.number_of_pages is not None else []
 
         get = params_of_request(request)
 
@@ -1711,11 +1806,11 @@ class Paginator(Traversable, Tag):
                 extra=get and (get.urlencode() + "&") or "",
                 page_numbers=page_numbers,
                 show_first=1 not in page_numbers,
-                show_last=self.number_of_pages not in page_numbers,
+                show_last=self.number_of_pages not in page_numbers if self.number_of_pages is not None else False,
             )
         )
 
-        has_next = self.page < self.number_of_pages
+        has_next = self.has_more
         has_previous = self.page > 1
         self.context.update(
             {
@@ -1736,10 +1831,60 @@ class Paginator(Traversable, Tag):
 
     def is_paginated(self):
         assert self._is_bound, NOT_BOUND_MESSAGE
+        if self.number_of_pages is None:
+            return self.page > 1 or self.has_more
         return self.number_of_pages > 1
+
+    def set_incremental_page(self, *, page, start_page, rows, has_more):
+        self.page = page
+        self.start_page = start_page
+        self.rows = rows
+        self.has_more = has_more
+        self.context.update(
+            page=page,
+            has_next=has_more,
+            has_previous=page > 1,
+            next=page + 1 if has_more else None,
+            previous=page - 1 if page > 1 else None,
+        )
+        get = params_of_request(self.get_request())
+        for key in list(get):
+            if key.startswith('/') or key in (self.iommi_path, self.iommi_path + '_incremental_start'):
+                del get[key]
+        self.context['extra'] = get.urlencode() + '&' if get else ''
+        if self.show_page_links:
+            range_end = max(self.adjacent_pages + 1, min(page, self.number_of_pages - self.adjacent_pages))
+            page_numbers = [n for n in range(page - self.adjacent_pages, range_end + self.adjacent_pages + 1) if 0 < n <= self.number_of_pages]
+            self.context.update(
+                page_numbers=page_numbers,
+                show_first=1 not in page_numbers,
+                show_last=self.number_of_pages not in page_numbers,
+            )
 
     def __html__(self):
         assert self._is_bound, NOT_BOUND_MESSAGE
+        if self.trigger is not None:
+            table = self.iommi_evaluate_parameters()['table']
+            links = render_template(request=self.get_request(), template=self.template, context=self.context) if self.show_page_links and (self.show_always or self.number_of_pages > 1) else ''
+            edit_token = ''
+            if hasattr(table, 'edit_form'):
+                token = signing.dumps(dict(table=table.iommi_path, start=self.start_page, end=self.page, query=incremental_query_key(table)))
+                edit_token = format_html('<input type="hidden" name="{}" value="{}">', path_join(table.iommi_path, 'incremental_pages'), token)
+            trigger = ''
+            if self.has_more:
+                trigger = render_template(
+                request=self.get_request(),
+                template='iommi/table/incremental_trigger.html',
+                context=dict(
+                    paginator=self,
+                    table=table,
+                    next_cursor=self.page + 1,
+                ),
+                )
+            return format_html(
+                '<div class="iommi-incremental-paginator" data-iommi-incremental-paginator data-iommi-unsaved-warning="{}">{}{}{}</div>',
+                gettext_lazy('Discard unsaved table edits?'), links, trigger, edit_token,
+            )
         if not self.show_always:
             if self.page_size is None:
                 return ''
@@ -1770,6 +1915,48 @@ def endpoint__tbody(table, **_):
         'html': table.container.__html__(
             render=lambda fragment, context: fragment.render_text_or_children(context=context)
         )
+    }
+
+
+def endpoint__incremental_page(table, value, **_):
+    """Return item children and pagination state for the next offset page.
+
+    Applications may override ``Table.render_incremental_items`` for a custom
+    item container; the default uses the same row renderer as the first page.
+    """
+    paginator = table.paginator
+    if paginator.trigger is None or not value or len(value) > 6 or not value.isascii() or not value.isdecimal():
+        return HttpResponseBadRequest('Invalid cursor')
+    cursor = int(value)
+    if str(cursor) != value or cursor < 2 or cursor > 100000 or (cursor - 1) * paginator.page_size > 10000000:
+        return HttpResponseBadRequest('Invalid cursor')
+    if paginator.number_of_pages is not None and cursor > paginator.number_of_pages:
+        return HttpResponseBadRequest('Invalid cursor')
+    start_value = table.get_request().GET.get(paginator.iommi_path + '_incremental_start', '1')
+    if len(start_value) > 6 or not start_value.isascii() or not start_value.isdecimal():
+        return HttpResponseBadRequest('Invalid start page')
+    start_page = int(start_value)
+    if str(start_page) != start_value or start_page < 1 or start_page > cursor:
+        return HttpResponseBadRequest('Invalid start page')
+
+    bottom = (cursor - 1) * paginator.page_size
+    chunk = list(paginator.slice(
+        bottom=bottom,
+        top=bottom + paginator.page_size + 1,
+        rows=table.sorted_and_filtered_rows,
+        page_size=paginator.page_size,
+        **paginator.iommi_evaluate_parameters(),
+    ))
+    if not chunk:
+        return HttpResponseBadRequest('Invalid cursor')
+    has_more = len(chunk) > paginator.page_size
+    rows = chunk[:paginator.page_size]
+    paginator.set_incremental_page(page=cursor, start_page=start_page, rows=rows, has_more=has_more)
+    return {
+        'html': table.render_incremental_items(rows),
+        'next_cursor': str(cursor + 1) if has_more else None,
+        'has_more': has_more,
+        'paginator_html': str(paginator),
     }
 
 
@@ -1919,6 +2106,7 @@ class Table(Part, Tag):
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
+    max_page_size: int = EvaluatedRefinable()
     actions_template: str | Template = EvaluatedRefinable()
     actions_below: bool = EvaluatedRefinable()
     tbody: Fragment = EvaluatedRefinable()
@@ -2008,6 +2196,7 @@ class Table(Part, Tag):
         bulk__title=gettext_lazy('Bulk change'),
         bulk_container__call_target=Fragment,
         page_size=DEFAULT_PAGE_SIZE,
+        max_page_size=lambda user, **_: 10000 if getattr(user, 'is_authenticated', False) else 1000,
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
         tag='table',
@@ -2018,12 +2207,18 @@ class Table(Part, Tag):
         query__form__actions__submit__call_target=Action.button,
         title=MISSING,
         endpoints__tbody__func=endpoint__tbody,
+        endpoints__incremental_page__func=endpoint__incremental_page,
+        endpoints__incremental_page__include=incremental_pagination_configured,
         endpoints__csv__func=endpoint__csv,
         query__advanced__assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html",
         query__form__attrs = {
             'data-iommi-id-of-table': lambda table, **_: table.iommi_path,
         },
         assets__table_js_select_all__template = "iommi/table/js_select_all.html",
+        assets__incremental_js = Asset.js(
+            attrs__src=lambda **_: static('js/iommi-incremental.js'),
+            include=incremental_pagination_configured,
+        ),
         container__attrs ={
             'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
             'data-iommi-id': lambda table, **_: table.iommi_path,
@@ -2330,6 +2525,8 @@ class Table(Part, Tag):
         bind_member(self, name='tbody')
         self.tbody.children.text = _Lazy_tbody(self)
         self.tbody.children = sort_after(self.tbody.children)
+        if incremental_pagination_configured(self):
+            self.tbody.attrs['data-iommi-incremental-items'] = True
 
         bind_member(self, name='container')
         bind_member(self, name='table_tag_wrapper')
@@ -2420,6 +2617,17 @@ class Table(Part, Tag):
             self.visible_rows = self.sorted_and_filtered_rows
 
         return self.visible_rows
+
+    def render_incremental_items(self, rows):
+        """Render children of ``tbody`` for an incremental page.
+
+        Override this for custom item layouts while keeping filtering, ordering,
+        and cursor validation in iommi.
+        """
+        self.visible_rows = rows
+        self._preprocessed_rows = None
+        self._prepare_auto_rowspan()
+        return '\n'.join(cells.__html__() for cells in self.cells_for_rows())
 
     def _bind_query(self):
         """
@@ -2653,8 +2861,24 @@ class Table(Part, Tag):
                     yield self.row_group_class(**column.row_group, value=v).bind(parent=self).__html__()
                 row_group_values[column._name] = v
 
+            yield self._bind_cells(row=row, row_index=i)
+
+    def _bind_cells(self, row, row_index, **kwargs):
+        # Refine done gives the same Cells for every row, so it's only done once per bound table
+        refine_done_cells_by_kwargs = getattr(self, '_refine_done_cells_by_kwargs', None)
+        if refine_done_cells_by_kwargs is None:
+            refine_done_cells_by_kwargs = self._refine_done_cells_by_kwargs = {}
+        key = tuple(sorted(kwargs.items()))
+        refine_done_cells = refine_done_cells_by_kwargs.get(key)
+        if refine_done_cells is None:
             # noinspection PyCallingNonCallable
-            yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
+            refine_done_cells = self.cells_class(row=None, row_index=None, **kwargs, **self.row.as_dict()).refine_done(parent=self)
+            refine_done_cells_by_kwargs[key] = refine_done_cells
+
+        cells = copy(refine_done_cells)
+        cells.row = row
+        cells.row_index = row_index
+        return cells.bind(parent=self)
 
     @classmethod
     @dispatch()
@@ -2713,6 +2937,26 @@ class Table(Part, Tag):
         assert isinstance(self.initial_rows, QuerySet), "bulk_queryset can only be used on querysets"
 
         return self.selection(prefix=prefix).filter(**self.bulk_filter).exclude(**self.bulk_exclude)
+
+    def get_delete_queryset(self, prefix='pk_'):
+        """Return selected source rows to delete, before any domain-specific mapping.
+
+        Override this to map selected rows to a different deletion target. The
+        source selection is restricted to visible rows for EditTable row
+        deletion before an override receives it through ``super()``.
+        """
+        assert isinstance(self.initial_rows, QuerySet), "delete queryset requires queryset-backed rows"
+        queryset = self.selection(prefix=prefix).filter(**self.bulk_filter).exclude(**self.bulk_exclude)
+        if prefix.endswith('pk_delete_'):
+            allowed_pks = [row.pk for row in self.get_visible_rows()]
+            queryset = queryset.filter(pk__in=allowed_pks)
+        return queryset
+
+    def delete_queryset(self, queryset):
+        """Delete a queryset and return the primary keys that were deleted."""
+        deleted_pks = set(queryset.values_list('pk', flat=True))
+        queryset.delete()
+        return deleted_pks
 
     def should_render_form_tag(self):
         return bool(self.bulk and self.bulk.actions)

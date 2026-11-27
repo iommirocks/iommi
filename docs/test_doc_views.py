@@ -26,7 +26,7 @@ def test_auth():
     # language=rst
     """
     Authorization
-    ~~~~~~~~~~~~~
+    -------------
     We have `login`, `logout`, and `change_password` views, and there's a function to get all patterns:
 
     """
@@ -50,7 +50,7 @@ def test_crud_view(big_discography):
     # language=rst
     """
     CRUD views
-    ~~~~~~~~~~
+    ----------
 
     Create a full CRUD set of views:
 

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 
 from iommi._web_compat import (
     format_html,
@@ -16,7 +17,6 @@ from iommi.declarative.namespace import (
     Namespace,
 )
 from iommi.evaluate import (
-    evaluate_as_needed,
     find_static_items,
 )
 from iommi.fragment import (
@@ -59,7 +59,7 @@ class Page(Part):
 
     title: str = EvaluatedRefinable()
     member_class: type[Fragment] = Refinable()
-    context = SpecialEvaluatedRefinable()
+    context: dict | Callable[..., dict] = Refinable()
     h_tag: Fragment | str = SpecialEvaluatedRefinable()
     parts: dict[str, PartType] = RefinableMembers()
 
@@ -67,7 +67,6 @@ class Page(Part):
         member_class = Fragment
 
         parts = EMPTY
-        context = EMPTY
 
     @with_defaults(
         h_tag__call_target=Header,
@@ -95,13 +94,14 @@ class Page(Part):
             members_from_declared=_parts_dict,
             cls=self.member_class,
         )
+        if isinstance(self.context, dict):
+            # A callable context stays as is, it is evaluated into a dict by get_context
+            self.context = Namespace(self.context)
         find_static_items(self.context)
         super(Page, self).on_refine_done()
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
-        if self.context and self.iommi_parent() is not None:
-            assert False, 'The context property is only valid on the root page'
 
         build_and_bind_h_tag(self)
 
@@ -111,7 +111,6 @@ class Page(Part):
     @dispatch(render=lambda rendered: format_html('{}' * len(rendered), *values(rendered)))
     def __html__(self, *, render=None):
         assert self._is_bound, NOT_BOUND_MESSAGE
-        self.context = evaluate_as_needed(self.context or {}, self.iommi_evaluate_parameters())
         request = self.get_request()
         context = {**self.get_context(), **self.iommi_evaluate_parameters()}
         parts = dict(h_tag=self.h_tag)

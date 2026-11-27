@@ -1,7 +1,16 @@
 class IommiBase {
     debug = false;
+    initialized = false;
 
     ajaxTimeout = 5000;
+
+    // Texts shown to the user. Override them with translated strings in an
+    // `iommi.init.start` event listener, see the cookbook.
+    messages = {
+        tableLoadTimeout: 'Loading the table took too long and was cancelled.',
+        tableLoadError: 'Loading the table failed.',
+        retry: 'Retry',
+    };
 
     historyStatePushedByUser = true;
 
@@ -33,6 +42,7 @@ class IommiBase {
             container => SELF.enhanceTableContainer(container)
         );
 
+        this.initialized = true;
         document.dispatchEvent(
             new CustomEvent('iommi.init.end', {
                 bubbles: true,
@@ -93,6 +103,10 @@ class IommiBase {
         return err.name === 'AbortError';
     }
 
+    isAjaxTimeout(err) {
+        return err.name === 'TimeoutError';
+    }
+
     getAbortController(element) {
         if (element.iommi && element.iommi.abortController) {
             return element.iommi.abortController;
@@ -110,7 +124,12 @@ class IommiBase {
         const newAbortController = new AbortController();
         element.iommi.abortController = newAbortController;
         if (this.ajaxTimeout !== null) {
-            setTimeout(() => newAbortController.abort(), this.ajaxTimeout);
+            // Abort with a TimeoutError so it's distinguishable from the AbortError
+            // we get when a newer request supersedes this one.
+            setTimeout(
+                () => newAbortController.abort(new DOMException(`The request took longer than ${this.ajaxTimeout} ms`, 'TimeoutError')),
+                this.ajaxTimeout
+            );
         }
         return newAbortController;
     }
@@ -134,7 +153,8 @@ class IommiBase {
 
             const globalErrorsWrapper = form.parentNode.querySelector('.iommi_query_error');
             if (globalErrors) {
-                globalErrorsWrapper.innerHTML = globalErrors.join(', ');
+                // The errors quote what the user typed, so they are text and not html
+                globalErrorsWrapper.textContent = globalErrors.join(', ');
                 globalErrorsWrapper.classList.remove('hidden');
             } else {
                 globalErrorsWrapper.classList.add('hidden');
@@ -184,7 +204,10 @@ class IommiBase {
     }
 
     async updateTableContainer(container, params, extra) {
+        container.iommiIncrementalGeneration = (container.iommiIncrementalGeneration || 0) + 1;
+        const generation = container.iommiIncrementalGeneration;
         const tbodyPath = container.getAttribute('data-endpoint');
+        this.hideTableError(container);
 
         container.dispatchEvent(
             new CustomEvent('iommi.loading.start', {
@@ -204,6 +227,7 @@ class IommiBase {
 
         try {
             const {html} = await this.fetchJson(ajaxURL, ajaxOptions);
+            if (generation !== container.iommiIncrementalGeneration) return;
 
             // We have to remove each child before setting innerHTML since disconnectedCallback
             // is not fired on the children using IE11
@@ -215,6 +239,7 @@ class IommiBase {
 
             const element = document.createRange().createContextualFragment(html);
             container.appendChild(element);
+            container.iommiIncrementalDirty = false;
 
             container.dispatchEvent(
                 new CustomEvent('iommi.element.populated', {
@@ -225,8 +250,10 @@ class IommiBase {
         } catch (err) {
             if (!this.isAjaxAbort(err)) {
                 if (extra.filterForm) {
-                    extra.filterForm.querySelector('.iommi_query_error').innerHTML = err;
+                    extra.filterForm.querySelector('.iommi_query_error').textContent = err;
                 }
+
+                this.showTableError(container, err, params, extra);
 
                 container.dispatchEvent(
                     new CustomEvent('iommi.error', {
@@ -249,6 +276,39 @@ class IommiBase {
                 })
             );
         }
+    }
+
+    showTableError(container, err, params, extra) {
+        this.hideTableError(container);
+
+        const overlay = document.createElement('div');
+        overlay.className = 'iommi_table_error';
+        overlay.setAttribute('role', 'alert');
+
+        const message = document.createElement('span');
+        message.className = 'iommi_table_error_message';
+        message.textContent = this.isAjaxTimeout(err) ? this.messages.tableLoadTimeout : this.messages.tableLoadError;
+        message.title = String(err);
+
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'iommi_table_error_retry';
+        retry.textContent = this.messages.retry;
+        retry.addEventListener('click', () => this.updateTableContainer(container, params, extra));
+
+        // The overlay covers the whole (possibly very tall) table, so the content
+        // is in its own element that CSS can keep within the viewport.
+        const content = document.createElement('div');
+        content.className = 'iommi_table_error_content';
+        content.append(message, retry);
+        overlay.appendChild(content);
+        container.classList.add('iommi_table_error_shown');
+        container.appendChild(overlay);
+    }
+
+    hideTableError(container) {
+        container.classList.remove('iommi_table_error_shown');
+        container.querySelectorAll(':scope > .iommi_table_error').forEach(x => x.remove());
     }
 
     async queryPopulate(form) {
@@ -650,7 +710,7 @@ class IommiReorderable {
         document.addEventListener('iommi.editTable.newElement', (event) => {
             const tbody = event.target.closest(this.defaultSelector);
             if(tbody) {
-                SELF.recalculate(tbody);
+                SELF.recalculate(tbody, event.target);
             }
         });
     }
@@ -659,12 +719,30 @@ class IommiReorderable {
         this.initAll();
     }
 
-    recalculate(tbody) {
-        let index = 0;
-        for (let item of tbody.children) {
-            item.querySelector(tbody.dataset.iommiReorderableFieldSelector).value = index;
-            index += 1;
+    recalculate(tbody, newRow) {
+        const fields = Array.from(tbody.children).map(item =>
+            item.querySelector(tbody.dataset.iommiReorderableFieldSelector)
+        );
+        const newField = newRow && newRow.querySelector(tbody.dataset.iommiReorderableFieldSelector);
+        // Keep the visible rows' existing sort values as slots. This preserves
+        // gaps and values outside the current page when only one page is loaded.
+        const positions = fields
+            .filter(field => field && field !== newField && field.value !== '')
+            .map(field => Number(field.value))
+            .filter(Number.isFinite)
+            .sort((a, b) => a - b);
+        const newPosition = newField && newField.value !== '' ? Number(newField.value) : NaN;
+
+        while (positions.length < fields.length) {
+            const nextPosition = (positions[positions.length - 1] ?? -1) + 1;
+            positions.push(Number.isFinite(newPosition) ? Math.max(nextPosition, newPosition) : nextPosition);
         }
+
+        fields.forEach((field, index) => {
+            if (field) {
+                field.value = positions[index];
+            }
+        });
     }
 
     initAll(parent, selector, extraOptions) {
@@ -1008,9 +1086,11 @@ window.iommi = new IommiBase({
     extendedFileInput: new IommiExtendedFileInput()
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => window.iommi.onDOMLoad());
+} else {
     window.iommi.onDOMLoad();
-});
+}
 
 window.addEventListener('popstate', function (event) {
     window.iommi.onPopState(event);

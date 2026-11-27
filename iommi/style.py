@@ -4,6 +4,7 @@ from contextlib import (
     AbstractContextManager,
     contextmanager,
 )
+from functools import cache
 from typing import (
     Any,
 )
@@ -35,14 +36,16 @@ def _style_name_for_class(cls):
     return cls.__name__.rpartition('.')[-1]  # this converts iommi.form.Form to just Form
 
 
+@cache  # This is needed for every refine_done(), and the answer for a class never changes
 def class_names_for(cls):
     from iommi import Part
     from iommi.traversable import Traversable
 
-    for base_class in reversed(cls.mro()):
-        if base_class in (object, Part, RefinableObject, Traversable):
-            continue
-        yield _style_name_for_class(base_class)
+    return tuple(
+        _style_name_for_class(base_class)
+        for base_class in reversed(cls.mro())
+        if base_class not in (object, Part, RefinableObject, Traversable)
+    )
 
 
 def recursive_namespace(d):

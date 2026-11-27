@@ -55,7 +55,7 @@ def test_orderable_edit_tables(fav_artists):
     .. _orderable-edit-tables:
 
     Orderable edit tables
-    ~~~~~~~~~~~~~~~~~~~~~
+    ---------------------
 
     iommi edit tables also support manual ordering. That can be especially useful for editing reverse FKs in nested forms.
     """

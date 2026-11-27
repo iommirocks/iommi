@@ -228,7 +228,6 @@ def render_root(*, part, context, **render):
 
     title = get_title(part)
 
-    from iommi import Page
     from iommi.debug import iommi_debug_panel
     from iommi.fragment import Container
 
@@ -243,7 +242,7 @@ def render_root(*, part, context, **render):
         ),
         assets=assets,
         request=request,
-        **(part.context if isinstance(part, Page) else {}),
+        **part.get_context(),
         **context,
     )
 

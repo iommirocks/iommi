@@ -23,17 +23,21 @@ def test_tables(really_big_discography):
     Tables
     ======
 
-    iommi tables make it easy to create full featured HTML tables:
+    iommi tables make it easy to create full featured HTML tables.
 
-    * generates header, rows and cells
-    * sorting
-    * filtering
-    * pagination
-    * bulk edit
-    * link creation
-    * customization on multiple levels, all the way down to templates for cells
-    * automatic rowspan
-    * grouping of headers
+    This page explains what a `Table` is and what you get for free. If you want to
+    *do* something specific, go to the :ref:`table cookbook <cookbook-tables>`; for
+    the exhaustive list of options see :doc:`Table` and :doc:`Column`.
+
+    A table generates the header, rows and cells, and comes with sorting, filtering,
+    pagination, bulk edit, link creation, automatic rowspan and header grouping
+    already wired up. The point is that these aren't features you assemble: they are
+    on by default and you turn them off or reconfigure them from the outside, which
+    is why a useful table is usually one line of code.
+
+    Customization goes all the way down -- table, row, cell, and the template for
+    any of them -- so you rarely have to abandon the abstraction to get the markup
+    you want.
 
     A simple example:
     """
@@ -56,6 +60,50 @@ def test_tables(really_big_discography):
     # language=rst
     """
     Read the full documentation and the :doc:`cookbook` for more.
+    """
+
+
+def test_incremental_pagination():
+    # language=rst
+    """
+    Incremental pagination
+    ----------------------
+
+    By default, people move between numbered pages. You can instead let them
+    see more rows on the same page. This example starts with 30 albums and adds
+    another batch when someone clicks “Load more”:
+
+    .. code-block:: python
+
+        from iommi import PaginatorTrigger
+
+        Table(
+            auto__model=Album,
+            page_size=30,
+            parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+        )
+
+    Choose one of the available loading behaviors:
+
+    * ``PaginatorTrigger.LOAD_MORE`` adds a “Load more” button after each batch.
+    * ``PaginatorTrigger.INFINITE_SCROLL`` loads another batch as people reach
+      the end of the current rows.
+    * ``PaginatorTrigger.LOAD_MORE_THEN_INFINITE_SCROLL`` shows a button for the
+      first batch, then loads further batches as people scroll.
+
+    Numbered page links are shown with the button behavior and hidden with the
+    scrolling behaviors. Set ``parts__page__show_page_links`` to ``True`` or
+    ``False`` to change that. Hiding the links lets iommi check whether more
+    rows exist without first counting all matching rows.
+
+    The buttons use the active iommi style. To add a CSS class to the “Load more”
+    button, for example, add this option:
+
+    .. code-block:: python
+
+        parts__page__load_more__attrs__class__my_button=True
+
+    These loading behaviors also work with ``Table.div()`` and ``EditTable``.
     """
 
 
@@ -153,59 +201,6 @@ def test_explicit_tables(small_discography):
     # @test
     show_output(albums(req('get')))
     # @end
-
-
-def test_table_csv(small_discography):
-    # language=rst
-    """
-    Table as CSV
-    ------------
-
-    Tables are able to render as CSV files. This is enabled if a name is specified for the resulting file,
-    as a value of the table parameter `extra_evaluated__report_name`, and a file header name for each column that is
-    to be included, specified by the column parameter `extra_evaluated__report_name`.
-
-    For example:
-    """
-
-    class AlbumTable(Table):
-        class Meta:
-            extra_evaluated__report_name = 'Albums'
-            actions__download = Action(
-                attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
-            )
-            rows = Album.objects.all()
-
-        name = Column(extra_evaluated__report_name='Name')
-        artist = Column(extra_evaluated__report_name='Artist')
-        year = Column.number(extra_evaluated__report_name='Artist')
-
-    albums = AlbumTable().as_view()
-
-    # language=rst
-    """
-    This will behave like an ordinary table but when the csv rendering endpoint is invoked the content will be
-    returned as a text file in CSV format.
-    """
-
-    # @test
-    show_output(
-        b"<pre>"
-        + albums(request=req('get', **{'/csv': ''})).getvalue()
-        + b"</pre>"
-    )
-    # @end
-
-    # language=rst
-    """
-    You can also pass kwargs to the `csv.writer` such as `delimiter`, `quotechar`, etc.
-    with `extra_evaluated__csv_writer_kwargs = {'delimiter': ';', ...}`.
-
-    Instead of specifying `extra_evaluated__report_name` on each column, you can set
-    `extra__report_columns_all=True` on the table to include all columns, using each
-    column's name as its header. An explicit `extra_evaluated__report_name` on a column
-    still takes precedence over the column name.
-    """
 
 
 def test_table_of_plain_python_objects():

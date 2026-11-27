@@ -849,7 +849,7 @@ def test_boolean_column():
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="text-center"> <i class="bi bi-check-lg fs-3" title="Yes"></i> </td>
+                        <td class="text-center"> <i class="bi bi-check-lg fs-5 lh-1" title="Yes"></i> </td>
                     </tr>
                 </tbody>
             </table>

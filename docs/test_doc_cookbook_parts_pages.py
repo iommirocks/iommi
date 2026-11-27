@@ -181,6 +181,27 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
     show_output(my_page(req('get')))
     # @end
 
+    # language=rst
+    """
+    When several values come out of the same computation, `context` can also be a
+    callable that returns a dict. Unlike `extra_params`, which runs on every request,
+    the context is only evaluated when something is rendered, so ajax requests that
+    don't render anything (like the choices lookup of a select2 field) skip it:
+    """
+
+    def report(request, **_):
+        today = date.today()
+        return {'today': today, 'weekday': today.strftime('%A')}
+
+    my_page = Page(
+        parts__body=Template("""A django template was rendered on {{today}}, a {{weekday}}."""),
+        context=report,
+    ).as_view()
+
+    # @test
+    show_output(my_page(req('get')))
+    # @end
+
 
 def test_how_do_i_make_a_menu():
     # language=rst

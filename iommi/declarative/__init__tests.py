@@ -1,3 +1,5 @@
+import weakref
+
 import pytest
 
 from iommi.declarative import (
@@ -497,13 +499,20 @@ def test_init_hook2():
 
 def test_whitelist_dunder_weakref():
     class Foo:
-        pass
+        def __init__(self, members):
+            pass
 
     Bar = declarative(str)(Foo)  # noqa: N806
 
     assert Bar.__dict__ is not Foo.__dict__
+    # Copying Foo's own __dict__/__weakref__ descriptors into the new class would make them
+    # refuse instances of it (before 3.15, where these descriptors became shared between
+    # classes, so comparing them by identity no longer tells anything).
+    bar = Bar()
+    assert vars(bar) == {}
     # noinspection PyUnresolvedReferences
-    assert Bar.__weakref__ is None or Bar.__weakref__ is not Foo.__weakref__
+    assert bar.__weakref__ is None
+    assert weakref.ref(bar)() is bar
 
 
 def test_wrap_with_meta_preserves_doc_string():

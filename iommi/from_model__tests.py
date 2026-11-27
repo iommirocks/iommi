@@ -41,13 +41,13 @@ from iommi.from_model import (
 from iommi.shortcut import with_defaults
 from tests.helpers import req
 from tests.models import (
+    Bar,
     ChoicesModel,
     Foo,
     FormFromModelTest,
     OtherModel,
     SomeModel,
     UniqueConstraintTest,
-    Bar,
 )
 
 

@@ -13,7 +13,10 @@ from textwrap import (
 from typing import get_type_hints
 from uuid import uuid4
 
-from django.test import RequestFactory
+from django.test import (
+    RequestFactory,
+    override_settings,
+)
 from django.urls import URLPattern
 
 import iommi.experimental.calendar  # noqa: F401
@@ -651,6 +654,15 @@ def _show_path_from_name(name):
 
 
 _show_output_used = set()
+
+
+def render_asset(asset):
+    """Render an asset the way it ends up in the head of a page, without the debug attributes."""
+    request = RequestFactory().get('/')
+    request.user = Struct(is_staff=False, is_authenticated=False, is_superuser=False)
+    with override_settings(IOMMI_DEBUG=False):
+        page = Page(assets__my_asset=asset).bind(request=request)
+        return page.assets.my_asset.__html__()
 
 
 def show_output(part, url='/', user=None, request=None):

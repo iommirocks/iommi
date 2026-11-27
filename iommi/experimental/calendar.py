@@ -6,10 +6,12 @@ from django.db.models import (
     Model,
     QuerySet,
 )
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
 from iommi._web_compat import (
     Template,
+    format_html,
     render_template,
 )
 from iommi.action import (
@@ -106,13 +108,14 @@ class CalendarEvent(Tag):
         self.attrs = attrs if attrs is not None else {}
 
     def __html__(self):
+        # The name and the url come from the data, so they are escaped. A name that is html must be marked as safe.
         if self.url:
-            content = f'<a href="{self.url}">{self.display_name}</a>'
+            content = format_html('<a href="{}">{}</a>', self.url, self.display_name)
         else:
-            content = str(self.display_name)
+            content = conditional_escape(self.display_name)
         if self.tag:
-            return mark_safe(f'<{self.tag}{render_attrs(self.attrs)}>{content}</{self.tag}>')
-        return mark_safe(content)
+            return format_html('<{}{}>{}</{}>', self.tag, render_attrs(self.attrs), content, self.tag)
+        return content
 
 
 class CalendarDayNumber(Tag):

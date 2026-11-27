@@ -100,6 +100,56 @@ def test_how_do_i_change_delete_to_checkboxes(ozzy):
     # @end
 
 
+def test_how_do_i_delete_related_objects_instead_of_selected_rows():
+    # language=rst
+    """
+    .. _edit-table-delete-related-objects:
+
+    How do I delete related objects instead of the selected rows?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. uses EditTable.get_delete_queryset
+    .. uses EditColumn.delete
+
+    Suppose a movie has a row per language, and deleting a movie should remove
+    all its language rows too. Override `get_delete_queryset()` to map the
+    selected translations to their movies. Call `super()` first so iommi
+    applies the selection and limits row deletion to the visible page:
+
+    .. code-block:: python
+
+        class Movie(models.Model):
+            year = models.IntegerField()
+            imdb_id = models.CharField(max_length=20, unique=True)
+
+        class MovieI18N(models.Model):
+            movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+            language = models.CharField(max_length=10)
+            title = models.CharField(max_length=255)
+
+        class MovieEditTable(EditTable):
+            def get_delete_queryset(self, prefix='pk_'):
+                translations = super().get_delete_queryset(prefix=prefix)
+                return Movie.objects.filter(
+                    pk__in=translations.values_list('movie_id', flat=True)
+                )
+
+        movie_table = MovieEditTable(
+            auto__rows=MovieI18N.objects.filter(language='en').order_by('-movie__year'),
+            auto__include=['title', 'movie__year', 'movie__imdb_id'],
+            columns__title__field__include=True,
+            columns__movie_year__field__include=True,
+            columns__movie_imdb_id__field__include=True,
+            columns__delete=EditColumn.delete(),
+        )
+
+    `columns__delete=EditColumn.delete()` enables EditTable's per-row delete
+    control. Deleting one selected translation row then deletes its parent
+    movie and, through the foreign key cascade, all translations. If you want
+    to remove just one language, leave `get_delete_queryset()` unchanged.
+    """
+
+
 def test_how_do_i_include_labels_for_fields(ozzy):
     # language=rst
     """
@@ -214,6 +264,14 @@ def test_how_do_i_customize_the_edit_table_actions(black_sabbath):
     # @test
     show_output(edit_table)
     # @end
+
+    # language=rst
+    """
+    This is more than hiding a button: a table without the `add_row` action ignores new rows in what is posted to it.
+    Passing `create_form=None` does the same, and also leaves out the form for new rows altogether.
+    In the same way rows are only deleted if the table has an `EditColumn.delete()` column, and existing rows are
+    only changed if `edit_form__editable` is true. All three can be callables, so they can depend on the user.
+    """
 
 
 def test_how_do_i_set_defaults_on_newly_added_rows(black_sabbath):

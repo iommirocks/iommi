@@ -144,13 +144,12 @@ def test_namespace_dispatching():
     Namespace dispatching
     ---------------------
 
-    I've already hinted at this above in the example where we do
-    ``columns__foo__include=False``. This is an example of the powerful
-    namespace dispatch mechanism from iommi.declarative. It's inspired by the
-    query syntax of Django where you use ``__`` to jump namespace. (If
-    you're not familiar with Django, here's the gist of it: you can do
-    ``Table.objects.filter(foreign_key__column='foo')``
-    to filter.) We really like this style and have expanded on it. It
+    This section is about how `__` is *implemented*. For what it means as a user,
+    see :ref:`dunder-dict-equivalence`; for why iommi has it at all, see
+    :doc:`philosophy`.
+
+    ``columns__foo__include=False`` is an example of the namespace dispatch mechanism
+    from iommi.declarative. It
     enables functions to expose the *full* API of functions it calls while
     still keeping the code simple. Here's a contrived example:
 

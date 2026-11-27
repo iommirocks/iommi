@@ -7,6 +7,111 @@ Unreleased
 * Always append ``pk`` to queryset ordering so table pagination stays stable when the model or queryset is ordered on a non-unique column (#634)
 
 
+7.37.0 (2026-11-14)
+~~~~~~~~~~~~~~~~~~~
+
+* Security: live edit could be made to run code by requests it should not have trusted. The check that a request is local only looked at the `Host` header, which the client chooses, and posts were not protected against other sites making the browser send them. So with `DEBUG` on and `iommi.live_edit.Middleware` installed, a web page open in the developer's browser, or another machine that could reach the development server, could run Python code on the server. Live edit now only answers requests that come from a local address, and posts must come from the live edit page itself. A consequence is that live edit doesn't work from a browser on the host when the server runs inside a Docker container.
+
+* Security: saving an `EditTable` deleted and created rows whether or not the table offered that, since what is posted is up to the client. Rows are now only deleted if the table has an included `EditColumn.delete()` column, and only created if the `add_row` action is included. If you have built your own controls for this, override `EditTable.can_delete_rows()` or `EditTable.can_create_rows()`.
+
+* Security: in the admin, a staff user with only the view permission for a model could create and delete its rows, and change columns that are editable in the list, by posting to the save of the list. Each of these now needs its own permission.
+
+* Security: in the admin, the edit and delete pages of a row did not check the permissions of the model, so any staff user could read the rows of every model in the admin. The edit page now needs the view or the change permission, and is read only without the change permission. The delete page needs the delete permission.
+
+* Security: creating a user in the admin stored the password as it was typed, not hashed, and the field was a plain text field. The password is now hashed, as it already was when editing a user, and typed in a password field. A user that was created in the admin and never edited there has the typed password in the database, and should get a new one.
+
+* Security: a custom user model (`AUTH_USER_MODEL`) had no password handling in the admin at all: the hash was shown in the list and in the forms, and what was typed was stored. It now gets the same handling as `auth.User`.
+
+* Editing a user in the admin no longer requires typing a password. Leave the field empty to keep the current one.
+
+* Security: the experimental `Calendar` did not escape the name and the url of an event, so html in the data, like in the name of a row, ended up in the page as it was. If your `event__display_name` returns html, mark it as safe, with `format_html` for example.
+
+* Security: `iommi.js` inserted the error of a table filter into the page as html. The error quotes what was searched for, so a link with a crafted query could run a script in the page of whoever followed it and then changed the filter. The error is now inserted as text.
+
+* Security: validating a `Field.phone_number` could take exponential time. Around 30 characters of the right kind kept a worker busy for seconds, and every additional character doubled that. The same phone numbers are valid as before.
+
+* Security: the `display_name` and `group` of a `Column` were put in the header of a table without escaping, so a name that comes from data could put html in the page. They are now escaped like the label of a `Field`. If you have html in a `display_name` or `group` on purpose, mark it as safe, with `format_html` or `mark_safe`.
+
+* Security: the access control of the main menu did not work for paths in `i18n_patterns`. The paths of the menu were only known with the prefix of the language of the first request the process served, so under every other language the pages of items a user did not have were open to them. The paths are now known for each language.
+
+* Fixed: `edit_form__editable=False` on an `EditTable` was ignored. This also means that an `EditTable` nested in a form that isn't editable is no longer editable.
+
+* Fixed: an `EditTable` with `create_form=None` crashed on save, and still showed the "Add row" button. It now saves existing rows, and has neither the button nor the endpoint for new rows.
+
+
+7.36.1 (2026-11-13)
+~~~~~~~~~~~~~~~~~~~
+* Main menu access control access control bug fixed
+
+
+7.36.0 (2026-11-09)
+~~~~~~~~~~~~~~~~~~~
+
+* Incremental pagination: tables can load more rows onto the same page instead of moving between numbered pages. Set `parts__page__trigger` to `PaginatorTrigger.LOAD_MORE`, `PaginatorTrigger.INFINITE_SCROLL` or `PaginatorTrigger.LOAD_MORE_THEN_INFINITE_SCROLL`. Works with `Table.div()` and `EditTable`. See the tables docs.
+
+* New `Table.max_page_size` caps both `page_size` and any page size requested with the `*_size` query parameter. It can be an integer or a callable. The default is 10000 for logged-in users and 1000 for anonymous users, and `EditTable` defaults to 200. Before, the page size requested in the URL had no limit.
+
+* Fixed: adding a row to a reorderable `EditTable` renumbered the sort values of all visible rows from 0, which broke the order of rows outside the current page. Existing sort values are now kept, and new rows get a sort value after the highest one in the whole table, not just the current page. (Thanks sean0407!)
+
+* Czech translation updated
+
+* Fixed: the sampling profiler on Python 3.15
+
+* Fixed: the SQL trace crashed on a line number outside the cached source of a file
+
+
+7.35.0 (2026-10-06)
+~~~~~~~~~~~~~~~~~~~
+
+* `context` can be a callable that returns a dict, for when several values come out of the same computation. Like the values of a dict `context`, it is evaluated the first time `get_context()` is called, so ajax requests that don't render anything (like the choices lookup of a select2 field) skip it, unlike `extra_params` which runs on every request.
+
+
+7.34.0 (2026-10-06)
+~~~~~~~~~~~~~~~~~~~
+
+* `context` is now evaluated the first time `get_context()` is called, instead of when the `Page` renders. Before, an endpoint that renders a nested part on its own, like a table's `tbody` endpoint used for live filtering, skipped that step, so its templates got the unevaluated callables instead of their values.
+
+* `context` on nested parts composes with the context of its parents: `get_context()` returns the parents' context with the part's own context on top. Before, `context` was only allowed on the root `Page`, and a nested `Page` with a `context` raised an `AssertionError`.
+
+
+7.33.0 (2026-10-02)
+~~~~~~~~~~~~~~~~~~~
+
+* Big performance improvements in rendering, especially for tables and edit tables. Compared to 7.32.2 in the new benchmark suite (`make benchmark`), rendering an edit table takes 88% less time and posting one 67% less, pages with several tables 38-47% less, model tables with filters 26-28% less and forms 10-13% less. Among the changes: faster `Namespace` construction and refinable stack resolution, table cells are refine done once per table instead of once per row, edit table cells bind the declared inputs instead of building new ones, and the edit table delete button is rendered once per column.
+
+* Fixed: the options of filter and bulk fields from a `Column` with `choice_queryset` could be cached across requests. The shared queryset was only cloned if `choices` was a queryset to begin with, not when it was handed back by a callable, so a template that iterates the options (like `iommi/form/choice.html`) filled its result cache on the first render and later requests got stale options.
+
+* The bootstrap icons style renders the boolean check mark as `fs-5 lh-1` instead of `fs-3`, so it no longer makes table rows taller
+
+* New cookbook: How do I make all choice filters multi select?
+
+
+7.32.2 (2026-09-17)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed: the French translations, and in fact all translations, were missing from the built package. `iommi/locale/` was never declared as package data, and the locales that did ship got in only because setuptools folded a stale `iommi.egg-info/SOURCES.txt` back into each build. French was added after that file was last regenerated, so it never made it into a release. Locale files are now declared explicitly, and `make clean-build` removes the egg-info directory so the stale list can't come back.
+
+
+7.32.1 (2026-09-14)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed: `MainMenu` items given a lazy `display_name` (`gettext_lazy(...)`) had it resolved under the language active at import time and then re-wrapped in `gettext_lazy`, so the label was stuck in that language for all requests and string extractors picked up the translated text as the msgid. A lazy string is now passed through untouched.
+
+
+7.32.0 (2026-09-11)
+~~~~~~~~~~~~~~~~~~~
+
+* Tables now show an error overlay with a retry button when the ajax reload of the table body fails. Previously a failure was silent, and in particular hitting the 5 second `ajaxTimeout` left the stale table in place with no indication that anything went wrong. The timeout now aborts with a `TimeoutError` instead of an `AbortError`, so it is reported through the `iommi.error` event like other failures. The texts can be translated via `iommi.messages`, see the tables cookbook.
+
+* The profiler now uses the statistical sampling engine behind CPython's own sampling profiler when it's available (Python 3.15+), instead of a tracing profiler. The page renders at full speed while being profiled, so the numbers aren't distorted by the measurement. Sampled data has no call counts, so the `ncalls` column shows the number of samples the function was on the stack for. On older Pythons the previous behavior is kept: yappi if installed, cProfile otherwise.
+
+* Fixed: `EditTable` delete checkboxes of newly added rows all got the same id (`id_pk_delete_0`), so only the first added row could be marked for deletion (Thanks Bery!)
+
+* Paginator `aria-label` texts are now translatable, and the `date_parse` error details ("out of range", "unexpected extra characters") are picked up by `makemessages`. Czech translation updated. (Thanks Bery!)
+
+* The docs are restructured into tutorials, how-to guides, reference and explanation. Existing URLs still work.
+
+
 7.31.0 (2026-06-27)
 ~~~~~~~~~~~~~~~~~~~
 

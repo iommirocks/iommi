@@ -63,6 +63,44 @@ joined_app_name_and_model = {
 }
 
 
+def user_password_defaults(user_model_label):
+    """The configuration that makes the admin hash the password of a user, and not show the hash.
+
+    Without it the password is a text field like any other: what is typed is stored as it is, and the hash is shown.
+
+    `user_model_label` is on the form `app_label.ModelName`, like `settings.AUTH_USER_MODEL`.
+    """
+    key = user_model_label.lower().replace('.', '_')
+
+    password = dict(
+        input__attrs__type='password',
+        # Without this browsers fill in the password of the staff user who is logged in
+        input__attrs__autocomplete='new-password',
+        # The stored hash is not for showing, and neither is what was typed
+        read_from_instance=lambda **_: '',
+        render_value=lambda **_: '',
+        render_value_on_error=lambda **_: '',
+    )
+
+    def set_password_if_given(instance, value, **_):
+        if value:
+            instance.set_password(value)
+
+    return {
+        f'parts__list_{key}__columns__password__include': False,
+        f'parts__create_{key}__fields__password': dict(
+            password,
+            write_to_instance=lambda instance, value, **_: instance.set_password(value),
+        ),
+        f'parts__edit_{key}__fields__password': dict(
+            password,
+            required=False,
+            help_text=gettext_lazy('Leave empty to keep the current password'),
+            write_to_instance=set_password_if_given,
+        ),
+    }
+
+
 class Messages(Fragment):
     class Meta:
         tag = 'div'
@@ -154,8 +192,6 @@ class Admin(Page):
                 or Namespace(admin.apps.get(admin.app_name+'_'+admin.model_name, dict(include=False))).include is True
         ),
         apps__auth_user__include=True,
-        parts__edit_auth_user__fields__password__write_to_instance=lambda instance, value, **_: instance.set_password(value),
-        parts__edit_auth_user__fields__password__read_from_instance=lambda **_: '',
         apps__auth_group__include=True,
         parts__messages=Messages(),
         parts__list_auth_user=dict(
@@ -182,6 +218,7 @@ class Admin(Page):
                 is_superuser__filter__include=True,
             ),
         ),
+        **user_password_defaults(settings.AUTH_USER_MODEL),
     )
     @dispatch(
         apps=EMPTY,
@@ -214,6 +251,8 @@ class Admin(Page):
 
         if instance is not None:
             refined_admin = refined_admin.refine(
+                model=model,
+                instance=instance,
                 parts__edit__auto__instance=instance,
                 parts__delete__auto__instance=instance,
             )
@@ -235,8 +274,16 @@ class Admin(Page):
                 pk=kwargs.pop('pk', None),
             ).refine_done()
 
-            if not self.has_permission(
-                request, instance=final_page.instance, model=final_page.model, operation=final_page.operation
+            operations = [final_page.operation]
+            if final_page.operation == 'edit':
+                # As in the Django admin: without the change permission the form is not editable and has no submit
+                operations.append('view')
+
+            if not any(
+                self.has_permission(
+                    request, instance=final_page.instance, model=final_page.model, operation=operation
+                )
+                for operation in operations
             ):
                 raise Http404()
 
@@ -481,6 +528,24 @@ class Admin(Page):
             ),
             query_from_indexes=True,
         )
+
+        if issubclass(cls.get_meta().table_class, EditTable):
+            # Saving an `EditTable` creates, changes and deletes rows, so each of those needs its own permission.
+            # Deleting follows the delete column above.
+            def has_permission(*operations):
+                return lambda request, table, **_: any(
+                    cls.has_permission(request, instance=None, model=table.model, operation=operation)
+                    for operation in operations
+                )
+
+            table = setdefaults_path(
+                table,
+                edit_form__editable=has_permission('edit'),
+                edit_actions__add_row__include=lambda table, **kwargs: (
+                    table.create_form is not None and has_permission('create')(table=table, **kwargs)
+                ),
+                edit_actions__save__include=has_permission('create', 'edit', 'delete'),
+            )
 
         return cls(
             parts__header__children__link__attrs__href='../..',

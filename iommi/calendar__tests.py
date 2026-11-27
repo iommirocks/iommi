@@ -1,6 +1,8 @@
 from datetime import date
 
+import pytest
 from django.test import RequestFactory
+from django.utils.html import format_html
 
 from iommi.experimental.calendar import (
     Calendar,
@@ -272,6 +274,34 @@ def test_calendar_event_html_with_url():
 def test_calendar_event_html_no_tag():
     event = CalendarEvent(event_object=None, display_name='Test Event', tag=None)
     assert event.__html__() == 'Test Event'
+
+
+@pytest.mark.parametrize('tag', ['div', None])
+def test_calendar_event_html_escapes_the_name_and_the_url(tag):
+    event = CalendarEvent(event_object=None, display_name='<script>name</script>', tag=tag)
+    assert '&lt;script&gt;name&lt;/script&gt;' in event.__html__()
+    assert '<script>' not in event.__html__()
+
+    event = CalendarEvent(event_object=None, display_name='<script>name</script>', url='/"><script>url</script>', tag=tag)
+    assert '<a href="/&quot;&gt;&lt;script&gt;url&lt;/script&gt;">&lt;script&gt;name&lt;/script&gt;</a>' in event.__html__()
+    assert '<script>' not in event.__html__()
+
+
+def test_calendar_event_html_keeps_a_name_that_is_marked_as_safe():
+    event = CalendarEvent(event_object=None, display_name=format_html('<img src="{}">', '/cover.jpg'), url='/test/')
+    assert event.__html__() == '<div><a href="/test/"><img src="/cover.jpg"></a></div>'
+
+
+def test_calendar_escapes_the_default_name_of_an_event():
+    class Event:
+        when = date(2026, 3, 9)
+
+        def __str__(self):
+            return '<script>name</script>'
+
+    html = Calendar(rows=[Event()], event__attr='when', year=2026, month=3).bind(request=req('get')).__html__()
+    assert '&lt;script&gt;name&lt;/script&gt;' in html
+    assert '<script>' not in html
 
 
 def test_calendar_day():

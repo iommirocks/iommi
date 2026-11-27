@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models.fields.files import FieldFile
 from django.test import override_settings
@@ -26,6 +27,7 @@ from iommi.form import (
 from iommi.struct import Struct
 from iommi.table import (
     Column,
+    PaginatorTrigger,
 )
 from tests.helpers import (
     do_post,
@@ -36,6 +38,8 @@ from tests.helpers import (
 )
 from tests.models import (
     AttachmentModel,
+    OrderedItem,
+    OrderedItemTranslation,
     TBar,
     TBaz,
     TFoo,
@@ -66,7 +70,6 @@ def test_edit_table_rendering():
             Struct(pk=2, editable_thing='baz', readonly_thing='buzz'),
         ],
     )
-
     verify_table_html(
         table=edit_table.bind(request=req('get')),
         find__method='post',
@@ -100,6 +103,16 @@ def test_edit_table_rendering():
             </form>
         """,
     )
+
+
+def test_edit_table_class_limits_page_size():
+    table = EditTable(
+        rows=[Struct(pk=1, value='x')],
+        columns__value=EditColumn(),
+        page_size=500,
+    ).bind(request=req('get', page_size=600))
+
+    assert table.paginator.page_size == 200
 
 
 @pytest.mark.django_db
@@ -198,6 +211,112 @@ def test_edit_table_post():
     assert rows[1].editable_thing == 'fusk'
 
     assert post_save_was_called
+
+
+@pytest.mark.django_db
+def test_incremental_edit_table_saves_loaded_rows_and_rejects_unloaded_ids():
+    rows = [TFoo.objects.create(a=i, b='x') for i in range(1, 6)]
+
+    def make_table():
+        return EditTable(
+            auto__model=TFoo,
+            columns__a__field__include=True,
+            page_size=2,
+            parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+            parts__page__show_page_links=False,
+        )
+
+    first = make_table().bind(request=req('get'))
+    assert str(first).count('name="columns/a/') == 2
+    second = make_table().bind(request=req('get', **{'/incremental_page': '2'})).render_to_response()
+    second_data = json.loads(second.content)
+    assert f'name="columns/a/{rows[2].pk}"' in second_data['html']
+    assert f'name="columns/a/{rows[3].pk}"' in second_data['html']
+    token = BeautifulSoup(second_data['paginator_html'], 'html.parser').find('input', {'name': 'incremental_pages'})['value']
+    tampered = make_table().bind(request=req('POST', **{
+        'incremental_pages': token + 'x',
+        f'columns/a/{rows[4].pk}': '99',
+        '-save': '',
+    })).render_to_response()
+    assert tampered.status_code == 400
+
+    invalid = make_table().bind(request=req('POST', **{
+        'incremental_pages': token,
+        f'columns/a/{rows[0].pk}': '11',
+        f'columns/a/{rows[1].pk}': '12',
+        f'columns/a/{rows[2].pk}': 'not a number',
+        f'columns/a/{rows[3].pk}': '14',
+        f'columns/a/{rows[4].pk}': '99',
+        '-save': '',
+    })).render_to_response()
+    assert invalid.status_code == 200
+    assert f'name="columns/a/{rows[2].pk}"' in invalid.content.decode()
+    assert 'not a number' in invalid.content.decode()
+    assert TFoo.objects.get(pk=rows[0].pk).a == 1
+    retry_token = BeautifulSoup(invalid.content, 'html.parser').find('input', {'name': 'incremental_pages'})['value']
+
+    valid = make_table().bind(request=req('POST', **{
+        'incremental_pages': retry_token,
+        f'columns/a/{rows[0].pk}': '11',
+        f'columns/a/{rows[1].pk}': '12',
+        f'columns/a/{rows[2].pk}': '13',
+        f'columns/a/{rows[3].pk}': '14',
+        f'columns/a/{rows[4].pk}': '99',
+        '-save': '',
+    })).render_to_response()
+    assert valid.status_code == 302
+    assert list(TFoo.objects.order_by('pk').values_list('a', flat=True)) == [11, 12, 13, 14, 5]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('trigger', [None, *list(PaginatorTrigger)])
+def test_edit_table_delete_mapped_related_rows_is_page_limited(trigger):
+    visible_item = OrderedItem.objects.create(sort_order=1)
+    visible = OrderedItemTranslation.objects.create(item=visible_item, title='visible')
+    visible_second = OrderedItemTranslation.objects.create(
+        item=OrderedItem.objects.create(sort_order=2), title='visible 2'
+    )
+    other_language = OrderedItemTranslation.objects.create(item=visible_item, title='other language')
+    non_visible_item = OrderedItem.objects.create(sort_order=3)
+    non_visible = OrderedItemTranslation.objects.create(item=non_visible_item, title='non-visible')
+
+    class MappedEditTable(EditTable):
+        def get_delete_queryset(self, prefix='pk_'):
+            source = super().get_delete_queryset(prefix=prefix)
+            return OrderedItem.objects.filter(pk__in=source.values_list('item_id', flat=True))
+
+    def make_table():
+        return MappedEditTable(
+            auto__model=OrderedItemTranslation,
+            auto__include=['title', 'item__sort_order'],
+            columns__title__field__include=True,
+            columns__item_sort_order__field__include=True,
+            columns__delete=EditColumn.delete(),
+            page_size=2,
+            parts__page__trigger=trigger,
+            parts__page__show_page_links=False,
+        )
+
+    initial = make_table().bind(request=req('get'))
+    token_input = BeautifulSoup(str(initial), 'html.parser').find('input', {'name': 'incremental_pages'})
+    post_data = {
+        f'pk_delete_{visible.pk}': '',
+        f'pk_delete_{non_visible.pk}': '',
+        f'columns/title/{visible.pk}': visible.title,
+        f'columns/item_sort_order/{visible.pk}': str(visible_item.sort_order),
+        f'columns/title/{visible_second.pk}': visible_second.title,
+        f'columns/item_sort_order/{visible_second.pk}': str(visible_second.item.sort_order),
+        '-save': '',
+    }
+    if token_input is not None:
+        post_data['incremental_pages'] = token_input['value']
+    response = make_table().bind(request=req('POST', **post_data)).render_to_response()
+
+    assert response.status_code == 302
+    assert not OrderedItem.objects.filter(pk=visible_item.pk).exists()
+    assert not OrderedItemTranslation.objects.filter(pk__in=[visible.pk, other_language.pk]).exists()
+    assert OrderedItem.objects.filter(pk=non_visible_item.pk).exists()
+    assert OrderedItemTranslation.objects.filter(pk=non_visible.pk).exists()
 
 
 @pytest.mark.django_db
@@ -335,6 +454,95 @@ def test_edit_table_post_create():
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('empty', [False, True])
+def test_edit_table_new_reorderable_row_uses_max_sort_order(fav_artists, empty):
+    FavoriteArtist.objects.create(
+        user=fav_artists[0].user,
+        artist=Artist.objects.create(name='Beyond the Realms of Death'),
+        comment='later page',
+        sort_order=20,
+    )
+    edit_table = EditTable(
+        auto__model=FavoriteArtist,
+        rows=FavoriteArtist.objects.none() if empty else FavoriteArtist.objects.all(),
+        auto__include=['artist__name', 'comment', 'sort_order'],
+        columns__comment__field__include=True,
+        reorderable=True,
+        page_size=1,
+        sortable=False,
+    ).refine_done()
+
+    response = edit_table.bind(request=req('get', **{'/new_row': ''})).render_to_response()
+    new_row = BeautifulSoup(json.loads(response.content)['html'], 'html.parser')
+
+    assert new_row.select_one('[data-reordering-value]')['value'] == ('0' if empty else '21')
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('empty', [False, True])
+@pytest.mark.parametrize('renamed', [False, True])
+def test_edit_table_new_row_with_related_sort_order(empty, renamed):
+    for sort_order in [2, 20]:
+        OrderedItemTranslation.objects.create(item=OrderedItem.objects.create(sort_order=sort_order))
+    # An item outside the table's queryset must not affect the new row's value.
+    OrderedItem.objects.create(sort_order=99)
+    rows = OrderedItemTranslation.objects.all()
+    if empty:
+        rows = rows.none()
+    column_name = 'position' if renamed else 'item_sort_order'
+    columns = {}
+    if renamed:
+        columns[column_name] = EditColumn.from_model(
+            model=OrderedItemTranslation,
+            model_field_name='item__sort_order',
+        )
+    edit_table = EditTable(
+        auto__model=OrderedItemTranslation,
+        rows=rows,
+        auto__include=['title'] if renamed else ['title', 'item__sort_order'],
+        columns=columns,
+        page_size=1,
+        sortable=False,
+    ).bind(request=req('get', **{'/new_row': ''}))
+
+    assert edit_table.reorderable
+    assert edit_table.columns[column_name].model_field_name == 'sort_order'
+    assert edit_table.columns[column_name].attr == 'item__sort_order'
+    response = edit_table.render_to_response()
+    new_row = BeautifulSoup(json.loads(response.content)['html'], 'html.parser')
+
+    ordering_input = new_row.select_one('[data-reordering-value]')
+    assert ordering_input['name'] == f'columns/{column_name}/#sentinel#'
+    assert ordering_input['value'] == ('0' if empty else '21')
+    assert OrderedItem.objects.count() == 3
+    assert OrderedItemTranslation.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_edit_table_saves_related_sort_order():
+    translations = [
+        OrderedItemTranslation.objects.create(item=OrderedItem.objects.create(sort_order=sort_order))
+        for sort_order in [2, 20]
+    ]
+    edit_table = EditTable(
+        auto__model=OrderedItemTranslation,
+        auto__include=['item__sort_order'],
+        sortable=False,
+    )
+    rendered = BeautifulSoup(edit_table.bind(request=req('get')).__html__(), 'html.parser')
+    assert [field['value'] for field in rendered.select('[data-reordering-value]')] == ['2', '20']
+
+    response = edit_table.bind(request=req('post', **{
+        f'columns/item_sort_order/{translations[0].pk}': '1',
+        f'columns/item_sort_order/{translations[1].pk}': '0',
+        '-save': '',
+    })).render_to_response()
+
+    assert response.status_code == 302
+    assert list(OrderedItem.objects.order_by('pk').values_list('sort_order', flat=True)) == [1, 0]
+
+
+@pytest.mark.django_db
 def test_edit_table_new_row_delete_checkbox_uses_sentinel_pk():
     edit_table = EditTable(
         auto__model=TFoo,
@@ -409,6 +617,116 @@ def test_edit_table_post_delete():
     assert response.status_code == 302
 
     assert TFoo.objects.all().count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(),
+        dict(columns__delete=EditColumn.delete(include=False)),
+        dict(columns__delete=EditColumn.delete(include=lambda **_: False)),
+        # A link to a delete view, which is not the delete of the table
+        dict(columns__delete=Column.delete()),
+    ],
+)
+def test_edit_table_post_delete_is_ignored_without_a_delete_column(kwargs):
+    tfoo = TFoo.objects.create(a=1, b='asd')
+
+    response = (
+        EditTable(auto__model=TFoo, columns__a__field__include=True, **kwargs)
+        .bind(
+            request=req(
+                'POST',
+                **{
+                    f'columns/a/{tfoo.pk}': '1',
+                    f'pk_delete_{tfoo.pk}': '',
+                    '_all_pks_': '1',
+                    '-save': '',
+                },
+            )
+        )
+        .render_to_response()
+    )
+    assert response.status_code == 302
+
+    assert TFoo.objects.filter(pk=tfoo.pk).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('include', [False, lambda **_: False])
+def test_edit_table_post_create_is_ignored_without_the_add_row_action(include):
+    edit_table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        columns__b__field__include=True,
+        edit_actions__add_row__include=include,
+    )
+
+    response = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                'columns/a/-1': '1',
+                'columns/b/-1': 'new',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+    assert response.status_code == 302
+
+    assert not TFoo.objects.exists()
+
+
+@pytest.mark.django_db
+def test_edit_table_without_create_form():
+    tfoo = TFoo.objects.create(a=1, b='asd')
+
+    def edit_table():
+        return EditTable(auto__model=TFoo, columns__a__field__include=True, create_form=None)
+
+    html = edit_table().bind(request=req('GET')).__html__()
+    assert f'name="columns/a/{tfoo.pk}"' in html
+    assert 'data-iommi-edit-table-add-row-button' not in html
+    assert 'data-new-row-endpoint' not in html
+
+    with pytest.raises(AssertionError, match="No bound value for 'new_row'"):
+        edit_table().bind(request=req('GET', **{'/new_row': ''})).render_to_response()
+
+    # Existing rows are saved, and a new row in what is posted is ignored
+    response = edit_table().bind(
+        request=req(
+            'POST',
+            **{
+                f'columns/a/{tfoo.pk}': '2',
+                'columns/a/-1': '3',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+    assert response.status_code == 302
+    assert list(TFoo.objects.values_list('a', flat=True)) == [2]
+
+    response = edit_table().bind(request=req('POST', **{f'columns/a/{tfoo.pk}': 'x', '-save': ''})).render_to_response()
+    assert response.status_code == 200
+    assert 'Could not convert string to int: x' in response.content.decode()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('editable', [False, lambda **_: False])
+def test_edit_table_post_is_ignored_for_a_non_editable_edit_form(editable):
+    tfoo = TFoo.objects.create(a=1, b='asd')
+
+    def edit_table():
+        return EditTable(auto__model=TFoo, columns__a__field__include=True, edit_form__editable=editable)
+
+    html = edit_table().bind(request=req('GET')).__html__()
+    assert f'<input disabled id="id_columns__a__{tfoo.pk}" name="columns/a/{tfoo.pk}" type="text" value="1">' in html, html
+
+    response = edit_table().bind(request=req('POST', **{f'columns/a/{tfoo.pk}': '2', '-save': ''})).render_to_response()
+    assert response.status_code == 302
+
+    assert TFoo.objects.get().a == 1
 
 
 def test_edit_table_delete_checkbox_for_list_rows_uses_row_index():
@@ -557,6 +875,28 @@ def test_non_editable():
     assert TFoo.objects.get(pk=456).a == 2
     assert TFoo.objects.get(pk=123).b == 'banana'
     assert TFoo.objects.get(pk=456).b == 'fgh'
+
+
+@pytest.mark.django_db
+def test_cells_bind_the_inputs_of_the_declared_field():
+    TFoo(pk=123, a=1, b='asd').save()
+    TFoo(pk=456, a=2, b='fgh').save()
+
+    table = EditTable(
+        auto__model=TFoo,
+        columns__b__field=dict(
+            include=True,
+            editable=lambda instance, **_: instance and instance.pk == 123,
+        ),
+    ).bind(request=req('get'))
+    table.__html__()
+
+    field = table.edit_form.fields.b
+    declared_field = field._declared
+    # The last row isn't editable, so its cell bound the non editable input
+    assert field.input._declared is declared_field.non_editable_input
+    assert not declared_field.input._is_bound
+    assert not declared_field.non_editable_input._is_bound
 
 
 @pytest.mark.django_db

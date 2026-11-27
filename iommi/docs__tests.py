@@ -1,3 +1,4 @@
+from enum import Enum
 from io import StringIO
 from platform import python_implementation
 
@@ -8,6 +9,7 @@ from iommi.docs import (
     _generate_tests_from_class_doc,
     _generate_tests_from_class_docs,
     get_default_classes,
+    get_namespace,
     rst_from_pytest,
 )
 from iommi.refinable import (
@@ -158,9 +160,19 @@ def test_default_classes():
 
     import iommi
 
-    classes_in_all = {x for x in iommi.__all__ if isinstance(getattr(iommi, x), type)}
+    classes_in_all = {
+        x
+        for x in iommi.__all__
+        if isinstance(getattr(iommi, x), type) and not issubclass(getattr(iommi, x), Enum)
+    }
 
     assert (classes_in_all - default_classes) == set()
+
+
+def test_edit_table_api_docs_use_constructor_default():
+    from iommi import EditTable
+
+    assert get_namespace(EditTable)['max_page_size'] == 200
 
 
 @pytest.mark.skipif(

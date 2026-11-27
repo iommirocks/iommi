@@ -208,7 +208,6 @@ docs/tutorial.rst
 docs/middleware.rst
 docs/edit_tables.rst
 docs/access_control.rst
-docs/abstraction_levels.rst
 docs/attr.rst
 docs/after.rst
 docs/attributes.rst
@@ -225,6 +224,8 @@ docs/tag.rst
 docs/template.rst
 docs/assets.rst
 docs/title.rst
+docs/testing.rst
+docs/functions.rst
 
 
 .cache/pip

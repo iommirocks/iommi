@@ -4,9 +4,13 @@ from typing import (
     Any,
 )
 
-from django.db.models import QuerySet
+from django.core import signing
+from django.db.models import Max, QuerySet
 from django.db.models.fields.files import FieldFile
-from django.http import HttpResponseRedirect
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 
@@ -74,6 +78,7 @@ from iommi.table import (
     _column_factory_by_field_type,
     _related_column_factory_by_model,
     _related_multiple_column_factory_by_model,
+    incremental_query_key,
 )
 
 _edit_column_factory_by_field_type = {}
@@ -96,7 +101,7 @@ class EditCell(Cell):
 
         if field:
             orig_attr = field.attr
-            if self.cells.is_create_template:
+            if self.cells.is_create_template and 'reorder_handle' not in getattr(self.column, 'iommi_shortcut_stack', []):
                 field.attr = None
 
             path = self.get_path()
@@ -143,9 +148,11 @@ class EditCell(Cell):
 
 
 def bind_field_from_instance(field, instance):
-    field.input = field.iommi_namespace.get('input')(_name='input')
-    field.non_editable_input = field.iommi_namespace.get('non_editable_input')(_name='non_editable_input')
-    field.editable = field.iommi_namespace.get('editable')
+    # The inputs of the declared field are already refine done, so each cell only needs to bind them
+    field.input = field._declared.input
+    field.non_editable_input = field._declared.non_editable_input
+    # As for a field of any form: a form that isn't editable has no editable fields
+    field.editable = field.iommi_namespace.get('editable') if field.form.editable else False
     field.initial = field.iommi_namespace.get('initial')
     field.label.attrs['for'] = evaluate_strict(default_input_id, **field.label.iommi_evaluate_parameters())
     field._evaluate_parameters['instance'] = instance
@@ -240,20 +247,24 @@ class EditColumn(Column):
                 # row_index is the visible row number
                 # See selection() for the code that does the lookup
                 row_id = cells.row_index
-            button = Action.delete(
-                display_name=column.display_name,
-                attrs__type="button",
-                attrs__accesskey=None,
-                **{
-                    "attrs__data-iommi-edit-table-delete-row-button": True,
-                },
-            ).bind()
+            # The button is the same for every row, so render it once per bound column
+            button_html = getattr(column, '_delete_button_html', None)
+            if button_html is None:
+                button_html = Action.delete(
+                    display_name=column.display_name,
+                    attrs__type="button",
+                    attrs__accesskey=None,
+                    **{
+                        "attrs__data-iommi-edit-table-delete-row-button": True,
+                    },
+                ).bind().__html__()
+                column._delete_button_html = button_html
             path = path_join(table.iommi_path, f'pk_delete_{row_id}')
             checkbox = (
                 f'<input type="checkbox" name="{path}" id="id_{path}" data-iommi-edit-table-delete-row-checkbox="" />'
                 f'<label for="id_{path}"> {column.display_name}</label>'
             )
-            return mark_safe(f'{button.__html__()}{checkbox}')
+            return mark_safe(f'{button_html}{checkbox}')
 
         setdefaults_path(kwargs, dict(cell__value=cell__value))
         return cls(**kwargs)
@@ -289,15 +300,18 @@ class EditColumn(Column):
 
 
 def edit_table__post_handler(table, request, **_):
+    if getattr(table, 'invalid_incremental_token', False):
+        return HttpResponseBadRequest('Invalid loaded pages')
     # 1. Validate all the fields
     table.edit_errors = defaultdict(set)
     table.create_errors = defaultdict(set)
     parsed_data = {}
 
     assert table.edit_form._is_bound
-    assert table.create_form._is_bound
     table.edit_form.mode = FULL_FORM_FROM_REQUEST
-    table.create_form.mode = FULL_FORM_FROM_REQUEST
+    if table.create_form is not None:
+        assert table.create_form._is_bound
+        table.create_form.mode = FULL_FORM_FROM_REQUEST
 
     def validate(cells_iterator, form, errors):
         for cells in cells_iterator:
@@ -326,12 +340,11 @@ def edit_table__post_handler(table, request, **_):
     if table.edit_errors or table.create_errors:
         return None
 
-    deleted_pks = set()
-    if isinstance(table.initial_rows, QuerySet):
+    if table.can_delete_rows() and isinstance(table.initial_rows, QuerySet):
         prefix = path_join(table.iommi_path, 'pk_delete_')
-        qs = table.bulk_queryset(prefix=prefix)
-        deleted_pks = set(qs.values_list('pk', flat=True))
-        qs.delete()
+        deleted_pks = table.delete_queryset(table.get_delete_queryset(prefix=prefix))
+    else:
+        deleted_pks = set()
 
     def save(cells_iterator, form):
         to_save = []
@@ -451,6 +464,12 @@ class EditTable(Table):
     edit_actions: dict[str, Action] = RefinableMembers()
     reorderable: bool | dict[str, Any] | None = EvaluatedRefinable()
 
+    @with_defaults(
+        max_page_size=200,  # it's here and not in Meta, so the docs read the proper value
+    )
+    def __init__(self, **kwargs):
+        super(EditTable, self).__init__(**kwargs)
+
     class Meta:
         form_class = Form
         member_class = EditColumn
@@ -465,6 +484,7 @@ class EditTable(Table):
         edit_actions__add_row = dict(
             call_target__attribute='button',
             display_name=gettext_lazy('Add row'),
+            include=lambda table, **_: table.create_form is not None,
             attrs__type='button',
             **{
                 'attrs__data-iommi-edit-table-add-row-button': True,
@@ -486,7 +506,9 @@ class EditTable(Table):
 
         attrs = {
             'data-next-virtual-pk': '-1',
-            'data-new-row-endpoint': lambda table, **_: table.endpoints.new_row.endpoint_path,
+            'data-new-row-endpoint': lambda table, **_: (
+                table.endpoints.new_row.endpoint_path if table.create_form is not None else None
+            ),
         }
         row__attrs = {
             'data-iommi-edit-table-row': True,
@@ -496,9 +518,35 @@ class EditTable(Table):
         }
 
         @staticmethod
+        def endpoints__new_row__include(table, **_):
+            return table.create_form is not None
+
+        @staticmethod
         def endpoints__new_row__func(table, **kwargs):
             if table.model is not None:
                 sentinel_row = table.model(pk='#sentinel#')
+                if table.reorderable and isinstance(table.sorted_and_filtered_rows, QuerySet):
+                    reorder_column = next(
+                        (
+                            column
+                            for column in values(table.columns)
+                            if 'reorder_handle' in getattr(column, 'iommi_shortcut_stack', [])
+                        ),
+                        None,
+                    )
+                    attr = getattr(reorder_column, 'attr', None)
+                    if attr:
+                        max_value = table.sorted_and_filtered_rows.aggregate(max_value=Max(attr))['max_value']
+                        # Related columns retain their full path in attr; model_field_name
+                        # only contains the leaf name. Build unsaved related instances so
+                        # the create template can read the ordering value through that path.
+                        instance = sentinel_row
+                        parts = attr.split('__')
+                        for part in parts[:-1]:
+                            related_instance = instance._meta.get_field(part).remote_field.model()
+                            setattr(instance, part, related_instance)
+                            instance = related_instance
+                        setattr(instance, parts[-1], (max_value if max_value is not None else -1) + 1)
             else:
                 sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(table.create_form.fields)})
             return {
@@ -600,6 +648,38 @@ class EditTable(Table):
         if result is None:
             return result
 
+        result.invalid_incremental_token = False
+        bound_request = result.get_request()
+        if bound_request is not None and bound_request.method == 'POST' and result.paginator.trigger is not None:
+            token_name = path_join(result.iommi_path, 'incremental_pages')
+            try:
+                loaded = signing.loads(bound_request.POST[token_name])
+                start, end = loaded['start'], loaded['end']
+                valid = (
+                    loaded['table'] == result.iommi_path
+                    and loaded['query'] == incremental_query_key(result)
+                    and isinstance(start, int) and not isinstance(start, bool)
+                    and isinstance(end, int) and not isinstance(end, bool)
+                    and 1 <= start <= end <= 100000
+                    and (end - start + 1) * result.paginator.page_size <= 10000000
+                )
+            except (KeyError, TypeError, ValueError, signing.BadSignature):
+                valid = False
+            if valid:
+                result.visible_rows = result.sorted_and_filtered_rows[
+                    (start - 1) * result.paginator.page_size:end * result.paginator.page_size
+                ]
+                result._preprocessed_rows = None
+                has_more = bool(result.sorted_and_filtered_rows[end * result.paginator.page_size:end * result.paginator.page_size + 1])
+                result.paginator.set_incremental_page(
+                    page=end,
+                    start_page=start,
+                    rows=result.visible_rows,
+                    has_more=has_more,
+                )
+            else:
+                result.invalid_incremental_token = True
+
         reorder_handles = []
         is_sorting_on = None
         for column in values(result.columns):
@@ -657,10 +737,24 @@ class EditTable(Table):
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
 
+    def can_delete_rows(self):
+        """Rows are deleted on save only if the table has an `EditColumn.delete` column that is included for this request.
+
+        What is posted is up to the client, so a table that doesn't offer deletion must not act on it.
+        """
+        return any(
+            isinstance(column, EditColumn) and 'delete' in getattr(column, 'iommi_shortcut_stack', [])
+            for column in values(self.columns)
+        )
+
+    def can_create_rows(self):
+        """Rows are created on save only if the `add_row` action is included for this request."""
+        return self.create_form is not None and self.edit_actions.get('add_row') is not None
+
     def _get_virtual_pks_from_post(self):
         """Extract virtual PKs from POST data."""
         request = self.get_request()
-        if not request or request.method != 'POST':
+        if not request or request.method != 'POST' or not self.can_create_rows():
             return []
 
         prefix = self.iommi_path + DISPATCH_PATH_SEPARATOR if self.iommi_path else ''
@@ -712,12 +806,7 @@ class EditTable(Table):
         for i, row in enumerate(rows):
             row = self.preprocess_row_for_create(table=self, row=row)
             assert row is not None, 'preprocess_row must return the row'
-            yield self.cells_class(
-                is_create_template=True,
-                row=row,
-                row_index=i,
-                **self.row.as_dict(),
-            ).bind(parent=self)
+            yield self._bind_cells(row=row, row_index=i, is_create_template=True)
 
     def get_errors(self):
         return set()

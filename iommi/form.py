@@ -13,10 +13,10 @@ from decimal import (
 from functools import reduce
 from itertools import groupby
 from operator import or_
-from urllib.parse import urlparse
 from typing import (
     Any,
 )
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured, ObjectDoesNotExist, ValidationError
@@ -600,6 +600,9 @@ def date_parse(string_value, **_):
         return datetime.strptime(string_value, date_iso_format).date()
     except ValueError as e:
         msg = str(e)
+        if False:  # so `makemessages` can find it
+            gettext_lazy("out of range")
+            gettext_lazy("unexpected extra characters")
         if 'out of range' in msg or 'must be in' in msg:
             extra_information = f' ({gettext_lazy("out of range")})'
         elif 'unconverted data remains' in msg:
@@ -681,7 +684,9 @@ def email_parse(string_value, field=None, **_):
 
 def phone_number_is_valid(parsed_data, **_):
     return (
-        re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE),
+        # Groups of digits must have a separator between them. With an optional separator there are very many ways to
+        # split a run of digits into groups, and for a number that doesn't match, the regex engine tries them all.
+        re.match(r'^\+\d{1,3}([ \-]?\(\d+\))?[ \-]?\d+([ \-]\d+)*$', parsed_data),
         gettext_lazy(
             'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
         ),
@@ -1055,6 +1060,10 @@ class Field(Part, Tag):
         self.parsed_data = self._parsed_data
         self._errors = set()
         self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
+        if isinstance(self.choices, QuerySet):
+            # Clone queryset to avoid accidental caching across requests. After evaluating, since
+            # a callable can hand back a shared queryset too, like a Column's filter and bulk fields do.
+            self.choices = self.choices.all()
         self.editable = evaluate_strict(self.editable, **self.iommi_evaluate_parameters())
         self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
         self._read_initial()
@@ -1092,10 +1101,6 @@ class Field(Part, Tag):
 
         form = self.form
         assert form is not None, "Each field needs a form."
-
-        if isinstance(self.choices, QuerySet):
-            # Clone queryset to avoid accidental caching across requests
-            self.choices = self.choices.all()
 
         form.all_fields[self._name] = self
 
@@ -1680,12 +1685,12 @@ class Field(Part, Tag):
     @with_defaults(
         choices=related__choices,
     )
-    def related(cls, model_field, model=None, multi_select=False, **kwargs):
+    def related(cls, model_field, model=None, multi_select=None, **kwargs):
         del model
-        if multi_select:
-            return cls.multi_choice_queryset(model_field=model_field, **kwargs)
-        else:
-            return cls.choice_queryset(model_field=model_field, **kwargs)
+        # `multi_select` is kept for backwards compatibility, it's the same as `is_list`
+        if multi_select is not None:
+            kwargs.setdefault('is_list', multi_select)
+        return cls.choice_queryset(model_field=model_field, **kwargs)
 
     @classmethod
     @with_defaults
@@ -1948,6 +1953,33 @@ class Form(Part, Tag):
                     )),
                     p_error=Panel.alert('Error!', level='error'),
                 ))
+
+    .. _form-save-callbacks:
+
+    Save callbacks
+    ~~~~~~~~~~~~~~
+
+    Saving a model in Django mirrors SQL quite closely, and `Form.create`/`Form.edit`
+    have hooks for all the steps in a multi-step commit. They are called in this
+    order:
+
+    - `extra__new_instance`: called to create a new instance of the model. By default it just calls `form.model()`.
+    - `extra__save`: called to save each `model_object`. By default it calls `model_object.save()`. Note that the keyword argument is `model_object`, *not* `instance`, and that it is called once per model when the form spans more than one (e.g. `auto__include=['name', 'artist__name']`), so always check `isinstance` before applying model specific behavior.
+    - `extra__pre_save_all_but_related_fields` (only called for `Form.create`)
+    - `extra__on_save_all_but_related_fields` (only called for `Form.create`)
+    - `extra__pre_save` (before `instance.save()`)
+    - `extra__on_save` (after `instance.save()`)
+
+    Note that `Form.create` saves twice, because Django needs a pk before related
+    fields can be written. The first save happens between
+    `pre_save_all_but_related_fields` and `on_save_all_but_related_fields`, which
+    means `extra__pre_save` runs *after* the row already exists and is too late to
+    fill in a `NOT NULL` column. `Form.edit` saves once, before `extra__on_save`.
+
+    After a POST completes, `extra__redirect` is called if present, otherwise
+    `extra__redirect_to` determines where to redirect to.
+
+    See :ref:`the cookbook <form-save-hooks>` for worked examples.
     """
 
     actions: Namespace = RefinableMembers()

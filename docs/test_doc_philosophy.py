@@ -160,6 +160,9 @@ def test_traversing_a_namespace_is_done_with____when___cant_be_used_in_normal_py
     """
     this is an elegant solution to this problem, one we've stolen from Django's ORM.
 
+    That's the motivation. For the mechanical rules -- exactly how `__` maps onto
+    nested dicts, and how the declarative and programmatic forms correspond -- see
+    :doc:`equivalency`. For how it is implemented, see :ref:`dispatching`.
 
     """
 

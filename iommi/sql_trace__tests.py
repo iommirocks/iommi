@@ -18,6 +18,7 @@ from iommi.sql_trace import (
     format_clickable_filename,
     format_explain_output,
     format_sql,
+    get_line_cached_on_request,
     get_sql_debug,
     is_explainable,
     linkify,
@@ -227,6 +228,23 @@ def test_sql_debug_log_to_request_adds_attribute():
     set_current_request(request)
     sql_debug_log_to_request(sql='q', foo='bar')
     assert request.iommi_sql_debug_log == [dict(sql='q', foo='bar')]
+
+
+def test_get_line_cached_on_request_out_of_range(tmp_path):
+    # linecache can hold a source that doesn't match the frame asking for it, e.g. on
+    # 3.13.1 the one line `python -c` program is registered as "<string>", which is also
+    # the filename of every frame of code compiled from a string. Like linecache.getline,
+    # a line past the end gives an empty string instead of crashing the request.
+    one_line_file = tmp_path / 'one_line.py'
+    one_line_file.write_text('x = 1\n')
+
+    set_current_request(req('get'))
+    try:
+        assert get_line_cached_on_request(str(one_line_file), 1) == 'x = 1\n'
+        assert get_line_cached_on_request(str(one_line_file), 8) == ''
+        assert get_line_cached_on_request(str(one_line_file), 0) == ''
+    finally:
+        set_current_request(None)
 
 
 def test_sql_debug_total_time():

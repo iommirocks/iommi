@@ -1213,3 +1213,52 @@ def test_advanced_toggle_action():
     q = Query(auto__model=Foo).bind(request=req('get'))
     assert q.advanced.toggle._name == 'toggle'
     assert str(q.advanced.toggle.display_name) == 'Switch to advanced search'
+
+
+
+@pytest.mark.django_db
+def test_related_filter_is_multi_select_by_default():
+    query = Query(auto__model=TBar).bind(request=req('get'))
+    assert query.form.fields.foo.is_list is True
+    assert 'multiple' in query.form.fields.foo.__html__()
+
+
+@pytest.mark.django_db
+def test_related_filter_is_list_is_refinable():
+    query = Query(auto__model=TBar).refine(filters__foo__field__is_list=False).bind(request=req('get'))
+    assert query.form.fields.foo.is_list is False
+    assert 'multiple' not in query.form.fields.foo.__html__()
+
+
+@pytest.mark.django_db
+def test_related_filter_is_list_from_style():
+    query = Query(
+        auto__model=TBar,
+        iommi_style=Style(test, Filter__shortcuts__related__field__is_list=False),
+    ).bind(request=req('get'))
+    assert query.form.fields.foo.is_list is False
+
+
+@pytest.mark.django_db
+def test_related_filter_multi_select_backwards_compatibility():
+    query = Query(auto__model=TBar, filters__foo__multi_select=False).bind(request=req('get'))
+    assert query.form.fields.foo.is_list is False
+
+    query = Query(auto__model=TBar, filters__foo__multi_select=True).bind(request=req('get'))
+    assert query.form.fields.foo.is_list is True
+
+    # An explicit field__is_list wins
+    query = Query(
+        auto__model=TBar,
+        filters__foo__multi_select=True,
+        filters__foo__field__is_list=False,
+    ).bind(request=req('get'))
+    assert query.form.fields.foo.is_list is False
+
+
+def test_filter_is_list_on_choice():
+    query = Query(
+        filters__foo=Filter.choice(choices=['a', 'b'], field__is_list=True, field__include=True),
+    ).bind(request=req('get', foo=['a', 'b']))
+    assert query.form.fields.foo.value == ['a', 'b']
+    assert query.get_query_string() == '(foo="a" OR foo="b")'

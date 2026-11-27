@@ -35,11 +35,25 @@ class Asset(Fragment):
 
         .. code-block:: python
 
-            Asset.js(
+            asset = Asset.js(
                 attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
             )
 
-            Asset.js('window.foo = bar')
+            # @test
+            assert render_asset(asset) == (
+                '<script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>'
+            )
+            # @end
+
+        Passing inline JavaScript as text:
+
+        .. code-block:: python
+
+            asset = Asset.js('window.foo = bar')
+
+            # @test
+            assert render_asset(asset) == '<script>window.foo = bar</script>'
+            # @end
         """
         return cls(text, **kwargs)
 
@@ -57,12 +71,32 @@ class Asset(Fragment):
 
         .. code-block:: python
 
-            Asset.css(
+            asset = Asset.css(
                 attrs__href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css',
                 attrs__integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh',
                 attrs__crossorigin='anonymous',
             )
 
-            Asset.css('p { font-size: 18pt; }')
+            # @test
+            assert render_asset(asset) == (
+                '<link crossorigin="anonymous" '
+                'href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" '
+                'integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" '
+                'rel="stylesheet">'
+            )
+            # @end
+
+        Passing inline css as text renders a `<style>` tag instead of a `<link>`:
+
+        .. code-block:: python
+
+            asset = Asset.css('p { font-size: 18pt; }')
+
+            # @test
+            assert render_asset(asset) == '<style>p { font-size: 18pt; }</style>'
+            # @end
         """
+        if text is not None:
+            kwargs.setdefault('tag', 'style')
+            kwargs.setdefault('attrs__rel', None)
         return cls(text, **kwargs)

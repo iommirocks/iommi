@@ -64,6 +64,7 @@ from iommi.style import (
 )
 from iommi.table import (
     Column,
+    PaginatorTrigger,
     Table,
     register_cell_formatter,
     register_column_factory,
@@ -182,6 +183,7 @@ __all__ = [
     'MenuItem',
     'middleware',
     'Page',
+    'PaginatorTrigger',
     'Panel',
     'PanelCol',
     'Part',
