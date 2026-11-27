@@ -152,7 +152,6 @@ daisyui_base = Style(
                 },
             ),
         ),
-        template='iommi/form/daisyui/field.html',
         attrs__class={
             'form-control': True,
             'mb-3': True,
