@@ -180,11 +180,15 @@ bootstrap_base = Style(
         attrs__class={'nav-item': True},
     ),
     Paginator=dict(
-        template='iommi/table/bootstrap/paginator.html',
+        tag='nav',
+        container__tag='ul',
         container__attrs__class__pagination=True,
+        item__tag='li',
+        item__attrs__class={'page-item': True},
+        active_item__tag='li',
         active_item__attrs__class={'page-item': True, 'active': True},
         link__attrs__class={'page-link': True},
-        item__attrs__class={'page-item': True},
+        active_link__attrs__class={'page-link': True},
     ),
     Errors=dict(
         attrs__class={'text-danger': True},

@@ -26,7 +26,10 @@ test = Style(
         shortcuts__number__cell__attrs__class__rj=True,
     ),
     Paginator=dict(
-        template='iommi/table/bootstrap/paginator.html',
+        tag='nav',
+        container__tag='ul',
+        item__tag='li',
+        active_item__tag='li',
     ),
     Calendar=dict(
         attrs__class__iommi_calendar=True,
