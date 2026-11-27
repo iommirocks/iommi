@@ -543,6 +543,291 @@ def test_edit_table_saves_related_sort_order():
 
 
 @pytest.mark.django_db
+def test_edit_table_paginated_reorderable_add_row_shifts_subsequent_rows():
+    from django.contrib.auth.models import User
+
+    user = User.objects.create(username='alice')
+    other_user = User.objects.create(username='bob')
+    artists = [Artist.objects.create(name=f'Artist {i}') for i in range(1, 14)]
+    favs = [
+        FavoriteArtist.objects.create(
+            user=user,
+            artist=artists[i - 1],
+            comment=f'row {i}',
+            sort_order=i,
+        )
+        for i in range(1, 13)
+    ]
+    other_fav = FavoriteArtist.objects.create(
+        user=other_user,
+        artist=artists[0],
+        comment='other user',
+        sort_order=7,
+    )
+
+    edit_table = EditTable(
+        auto__model=FavoriteArtist,
+        rows=FavoriteArtist.objects.filter(user=user),
+        auto__include=['artist', 'comment', 'sort_order'],
+        columns__artist__field__include=True,
+        columns__comment__field__include=True,
+        create_form__extra__new_instance=lambda **_: FavoriteArtist(user=user),
+        page_size=3,
+        sortable=False,
+    )
+
+    # Page 2 has rows 4, 5, 6 (sort_order 4, 5, 6). Add a new row at the end of page 2 (sort_order=7).
+    response = edit_table.bind(
+        request=req(
+            'post',
+            url='/?page=2',
+            **{
+                f'columns/artist/{favs[3].pk}': str(favs[3].artist.pk),
+                f'columns/comment/{favs[3].pk}': 'row 4',
+                f'columns/sort_order/{favs[3].pk}': '4',
+                f'columns/artist/{favs[4].pk}': str(favs[4].artist.pk),
+                f'columns/comment/{favs[4].pk}': 'row 5',
+                f'columns/sort_order/{favs[4].pk}': '5',
+                f'columns/artist/{favs[5].pk}': str(favs[5].artist.pk),
+                f'columns/comment/{favs[5].pk}': 'row 6',
+                f'columns/sort_order/{favs[5].pk}': '6',
+                'columns/artist/-1': str(artists[12].pk),
+                'columns/comment/-1': 'new row',
+                'columns/sort_order/-1': '7',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+
+    assert response.status_code == 302
+    ordered = list(
+        FavoriteArtist.objects.filter(user=user).order_by('sort_order', 'pk').values_list('comment', 'sort_order')
+    )
+    assert ordered == [
+        ('row 1', 1),
+        ('row 2', 2),
+        ('row 3', 3),
+        ('row 4', 4),
+        ('row 5', 5),
+        ('row 6', 6),
+        ('new row', 7),
+        ('row 7', 8),
+        ('row 8', 9),
+        ('row 9', 10),
+        ('row 10', 11),
+        ('row 11', 12),
+        ('row 12', 13),
+    ]
+    other_fav.refresh_from_db()
+    assert other_fav.sort_order == 7
+
+
+@pytest.mark.django_db
+def test_edit_table_paginated_reorderable_multiple_new_rows_and_reordered():
+    from django.contrib.auth.models import User
+
+    user = User.objects.create(username='alice')
+    artists = [Artist.objects.create(name=f'Artist {i}') for i in range(1, 15)]
+    favs = [
+        FavoriteArtist.objects.create(
+            user=user,
+            artist=artists[i - 1],
+            comment=f'row {i}',
+            sort_order=i,
+        )
+        for i in range(1, 13)
+    ]
+
+    edit_table = EditTable(
+        auto__model=FavoriteArtist,
+        rows=FavoriteArtist.objects.filter(user=user),
+        auto__include=['artist', 'comment', 'sort_order'],
+        columns__artist__field__include=True,
+        columns__comment__field__include=True,
+        create_form__extra__new_instance=lambda **_: FavoriteArtist(user=user),
+        page_size=3,
+        sortable=False,
+    )
+
+    # Page 2 has rows 4, 5, 6. Add 2 new rows and reorder them with existing rows on page 2:
+    # new1 (4), row 4 (5), new2 (6), row 5 (7), row 6 (8).
+    response = edit_table.bind(
+        request=req(
+            'post',
+            url='/?page=2',
+            **{
+                'columns/artist/-1': str(artists[12].pk),
+                'columns/comment/-1': 'new 1',
+                'columns/sort_order/-1': '4',
+                f'columns/artist/{favs[3].pk}': str(favs[3].artist.pk),
+                f'columns/comment/{favs[3].pk}': 'row 4',
+                f'columns/sort_order/{favs[3].pk}': '5',
+                'columns/artist/-2': str(artists[13].pk),
+                'columns/comment/-2': 'new 2',
+                'columns/sort_order/-2': '6',
+                f'columns/artist/{favs[4].pk}': str(favs[4].artist.pk),
+                f'columns/comment/{favs[4].pk}': 'row 5',
+                f'columns/sort_order/{favs[4].pk}': '7',
+                f'columns/artist/{favs[5].pk}': str(favs[5].artist.pk),
+                f'columns/comment/{favs[5].pk}': 'row 6',
+                f'columns/sort_order/{favs[5].pk}': '8',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+
+    assert response.status_code == 302
+    ordered = list(
+        FavoriteArtist.objects.filter(user=user).order_by('sort_order', 'pk').values_list('comment', 'sort_order')
+    )
+    assert ordered == [
+        ('row 1', 1),
+        ('row 2', 2),
+        ('row 3', 3),
+        ('new 1', 4),
+        ('row 4', 5),
+        ('new 2', 6),
+        ('row 5', 7),
+        ('row 6', 8),
+        ('row 7', 9),
+        ('row 8', 10),
+        ('row 9', 11),
+        ('row 10', 12),
+        ('row 11', 13),
+        ('row 12', 14),
+    ]
+
+
+@pytest.mark.django_db
+def test_edit_table_paginated_reorderable_gap_and_last_page():
+    # Page 1: [1, 2], Page 2: [3, 4], Page 3: [6, 7] (gap at 5)
+    items = [OrderedItem.objects.create(sort_order=s) for s in [1, 2, 3, 4, 6, 7]]
+    edit_table = EditTable(
+        auto__model=OrderedItem,
+        auto__include=['sort_order'],
+        page_size=2,
+        sortable=False,
+    )
+
+    # Adding 2 rows on page 2 (5, 6) collides only at 6 -> page 3 shifts by +1 (to 7, 8).
+    response = edit_table.bind(
+        request=req(
+            'post',
+            url='/?page=2',
+            **{
+                f'columns/sort_order/{items[2].pk}': '3',
+                f'columns/sort_order/{items[3].pk}': '4',
+                'columns/sort_order/-1': '5',
+                'columns/sort_order/-2': '6',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+
+    assert response.status_code == 302
+    assert list(OrderedItem.objects.order_by('sort_order', 'pk').values_list('sort_order', flat=True)) == [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+    ]
+    items[4].refresh_from_db()
+    items[5].refresh_from_db()
+    assert [items[4].sort_order, items[5].sort_order] == [7, 8]
+
+
+@pytest.mark.django_db
+def test_edit_table_paginated_reorderable_delete_and_add_row():
+    items = [OrderedItem.objects.create(sort_order=s) for s in [1, 2, 3, 4, 5, 6]]
+    edit_table = EditTable(
+        auto__model=OrderedItem,
+        auto__include=['sort_order'],
+        columns__delete=EditColumn.delete(),
+        page_size=2,
+        sortable=False,
+    )
+
+    # Page 2 has items[2] (3) and items[3] (4). Delete items[2] and add a new row at 5.
+    response = edit_table.bind(
+        request=req(
+            'post',
+            url='/?page=2',
+            **{
+                f'pk_delete_{items[2].pk}': '',
+                f'columns/sort_order/{items[2].pk}': '3',
+                f'columns/sort_order/{items[3].pk}': '4',
+                'columns/sort_order/-1': '5',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+
+    assert response.status_code == 302
+    assert list(OrderedItem.objects.order_by('sort_order', 'pk').values_list('sort_order', flat=True)) == [
+        1,
+        2,
+        4,
+        5,
+        6,
+        7,
+    ]
+
+
+@pytest.mark.django_db
+def test_edit_table_paginated_reorderable_related_sort_order_shifts_subsequent_rows():
+    translations = [
+        OrderedItemTranslation.objects.create(
+            item=OrderedItem.objects.create(sort_order=s),
+            title=f'row {s}',
+        )
+        for s in range(1, 7)
+    ]
+    outside_item = OrderedItem.objects.create(sort_order=5)
+
+    edit_table = EditTable(
+        auto__model=OrderedItemTranslation,
+        auto__include=['title', 'item__sort_order'],
+        columns__title__field__include=True,
+        page_size=2,
+        sortable=False,
+    )
+
+    # Page 2 has translations[2] (3) and translations[3] (4).
+    # Updating translations[3] to 5 collides with page 3 (5, 6), shifting page 3 to (6, 7).
+    response = edit_table.bind(
+        request=req(
+            'post',
+            url='/?page=2',
+            **{
+                f'columns/title/{translations[2].pk}': 'row 3',
+                f'columns/item_sort_order/{translations[2].pk}': '4',
+                f'columns/title/{translations[3].pk}': 'row 4',
+                f'columns/item_sort_order/{translations[3].pk}': '5',
+                '-save': '',
+            },
+        )
+    ).render_to_response()
+
+    assert response.status_code == 302
+    assert list(
+        OrderedItemTranslation.objects.order_by('item__sort_order', 'pk').values_list('title', 'item__sort_order')
+    ) == [
+        ('row 1', 1),
+        ('row 2', 2),
+        ('row 3', 4),
+        ('row 4', 5),
+        ('row 5', 6),
+        ('row 6', 7),
+    ]
+    outside_item.refresh_from_db()
+    assert outside_item.sort_order == 5
+
+
+@pytest.mark.django_db
 def test_edit_table_new_row_delete_checkbox_uses_sentinel_pk():
     edit_table = EditTable(
         auto__model=TFoo,
