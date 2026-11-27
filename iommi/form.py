@@ -1685,12 +1685,12 @@ class Field(Part, Tag):
     @with_defaults(
         choices=related__choices,
     )
-    def related(cls, model_field, model=None, multi_select=False, **kwargs):
+    def related(cls, model_field, model=None, multi_select=None, **kwargs):
         del model
-        if multi_select:
-            return cls.multi_choice_queryset(model_field=model_field, **kwargs)
-        else:
-            return cls.choice_queryset(model_field=model_field, **kwargs)
+        # `multi_select` is kept for backwards compatibility, it's the same as `is_list`
+        if multi_select is not None:
+            kwargs.setdefault('is_list', multi_select)
+        return cls.choice_queryset(model_field=model_field, **kwargs)
 
     @classmethod
     @with_defaults

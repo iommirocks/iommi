@@ -486,14 +486,14 @@ def test_filter_form_layout(john_doe_user, fav_artists):
                     <div class="col" data-iommi-type="PanelCol">
                         <div style="min-width: 200px">
                             <label for="id_user">User</label>
-                            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_user" name="user">
+                            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_user" multiple="" name="user">
                             </select>
                         </div>
                     </div>
                     <div class="col" data-iommi-type="PanelCol">
                         <div style="min-width: 200px">
                             <label for="id_artist">Artist</label>
-                            <select class="select2_enhance" data-choices-endpoint="/artist/choices" data-placeholder="" id="id_artist" name="artist">
+                            <select class="select2_enhance" data-choices-endpoint="/artist/choices" data-placeholder="" id="id_artist" multiple="" name="artist">
                             </select>
                         </div>
                     </div>

@@ -588,13 +588,13 @@ class Filter(Part):
     @with_defaults(
         field__call_target__attribute='related',
         choices=related__choices,
+        field__is_list=True,
     )
-    def related(cls, multi_select=False, **kwargs):
-        if multi_select:
-            kwargs['field']['multi_select'] = multi_select
-            return cls.multi_choice_queryset(**kwargs)
-        else:
-            return cls.choice_queryset(**kwargs)
+    def related(cls, multi_select=None, **kwargs):
+        # `multi_select` is kept for backwards compatibility, it's the same as `field__is_list`
+        if multi_select is not None:
+            setdefaults_path(kwargs, dict(field__is_list=multi_select))
+        return cls.choice_queryset(**kwargs)
 
     @classmethod
     @with_defaults

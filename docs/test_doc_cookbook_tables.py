@@ -1380,7 +1380,7 @@ def test_initial_filter_on_table(really_big_discography):
     t = Table(
         auto__model=Album,
         columns__artist__filter__include=True,
-        query__form__fields__artist__initial=lambda **_: Artist.objects.get(name='Dio'),
+        query__form__fields__artist__initial=lambda **_: Artist.objects.filter(name='Dio'),
     )
 
     # @test
@@ -1900,7 +1900,8 @@ def test_how_do_i_make_all_choice_filters_multi_select(small_discography):
     .. uses Style
     .. uses Filter.field
 
-    By default a choice filter renders as a single select, so the user can only
+    Filters on foreign keys and many-to-many relations are multi select by default,
+    but other choice filters render as a single select, so the user can only
     filter on one value at a time. Define a custom style that points the
     `choice` and `choice_queryset` filter shortcuts at the multi select variants
     of their fields to change this for your entire project:
@@ -1919,7 +1920,7 @@ def test_how_do_i_make_all_choice_filters_multi_select(small_discography):
     # language=rst
     """
     `choice` covers columns with a `choices` list, and `choice_queryset` covers
-    foreign keys and many-to-many relations. Selecting several values in a
+    filters you give a queryset of choices. Selecting several values in a
     filter now means "any of these", so this table finds albums released in
     1980 *or* 1981:
     """

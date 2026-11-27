@@ -46,7 +46,7 @@ Table(
     auto__model=Album,
     columns__artist__filter__include=True,
     query__form__fields__artist__initial=
-        lambda **_: Artist.objects.get(name='Dio'),
+        lambda **_: Artist.objects.filter(name='Dio'),
 )
 """,
     'filters': """\

@@ -569,21 +569,21 @@ def test_how_do_i_make_a_foreign_key_field_multi_select(black_sabbath):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. uses Field.related
-    .. uses Field.multi_choice_queryset
+    .. uses Field.is_list
 
     A foreign key uses the `related` shortcut, which renders as a single-value
-    select. Pass `multi_select=True` to render it as a multi-select
-    (`multi_choice_queryset`) instead:
+    select. Set `is_list=True` to render it as a multi-select instead:
     """
 
     form = Form(
         auto__model=Album,
-        fields__artist__multi_select=True,
+        fields__artist__is_list=True,
     )
 
     # @test
     f = form.bind(request=req('get'))
-    assert f.fields.artist.iommi_shortcut_stack[:2] == ['related', 'multi_choice_queryset']
+    assert f.fields.artist.is_list is True
+    assert 'multiple' in f.fields.artist.__html__()
 
     show_output(form)
     # @end

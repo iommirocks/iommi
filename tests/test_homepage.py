@@ -53,7 +53,7 @@ def test_hero_snippet_runs():
 
 
 def test_deep_snippet_runs():
-    # The example's filter initial does `Artist.objects.get(name='Dio')`.
+    # The example's filter initial does `Artist.objects.filter(name='Dio')`.
     Artist.objects.create(name='Dio')
     namespace = _exec('table = (\n' + SNIPPETS['deep'] + '\n)', Album=Album, Artist=Artist)
     _render(namespace['table'])

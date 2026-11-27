@@ -784,7 +784,7 @@
     auto__model=<span class="class-name">Album</span>,
     columns__artist__filter__include=<span class="keyword">True</span>,
     query__form__fields__artist__initial=
-        <span class="keyword">lambda</span> **_: <span class="class-name">Artist</span>.objects.<span class="function">get</span>(name=<span class="string">'Dio'</span>),
+        <span class="keyword">lambda</span> **_: <span class="class-name">Artist</span>.objects.<span class="function">filter</span>(name=<span class="string">'Dio'</span>),
 )
 </code></pre>
                     <div class="bd">

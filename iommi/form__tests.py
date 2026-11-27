@@ -5208,3 +5208,23 @@ def test_date_parse_out_of_range_adds_out_of_range_note():
         date_parse('2020-02-31')
 
     assert 'out of range' in str(e.value)
+
+
+
+@pytest.mark.django_db
+def test_related_field_is_list_is_refinable():
+    form = Form(auto__model=Album).refine(fields__artist__is_list=True).bind(request=req('get'))
+    assert form.fields.artist.is_list is True
+    assert 'multiple' in form.fields.artist.__html__()
+
+    form = Form(auto__model=Album).bind(request=req('get'))
+    assert form.fields.artist.is_list is False
+
+
+@pytest.mark.django_db
+def test_related_field_multi_select_backwards_compatibility():
+    form = Form(auto__model=Album, fields__artist__multi_select=True).bind(request=req('get'))
+    assert form.fields.artist.is_list is True
+
+    form = Form(auto__model=Album, fields__artist__multi_select=False).bind(request=req('get'))
+    assert form.fields.artist.is_list is False
