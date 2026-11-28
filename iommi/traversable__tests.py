@@ -731,3 +731,93 @@ def test_repr_of_unnamed_part():
     from iommi import Part
 
     assert repr(Part()) == '<iommi.part.Part>'
+
+
+def test_trace_worst_offenders_registers_candidate():
+    from iommi import traversable
+    from iommi.traversable import trace_worst_offenders
+
+    assert 'apply_style' in traversable.worst_offenders_candidates
+
+    def my_traced_function_for_test():
+        return 7
+
+    traced = trace_worst_offenders(my_traced_function_for_test)
+    assert traced() == 7
+    assert 'my_traced_function_for_test' in traversable.worst_offenders_candidates
+    traversable.worst_offenders_candidates.discard('my_traced_function_for_test')
+
+
+def test_bind_of_unrefined_child_gets_style_from_parent():
+    from iommi.style_test_base import test
+
+    style = Style(test, Fragment__attrs__class__from_parent_style=True)
+    page = Page(iommi_style=style).bind(request=req('get'))
+    fragment = Fragment(tag='div').bind(parent=page)
+    assert fragment.__html__() == '<div class="from_parent_style"></div>'
+
+
+def test_root_evaluate_parameter():
+    page = Page(
+        parts__foo=Fragment(children__text=lambda root, **_: f'root is {root._name}'),
+    ).bind(request=req('get'))
+    assert page.__html__() == 'root is root'
+
+
+def test_special_evaluated_refinable_not_evaluated_message():
+    class MyTraversable(Traversable):
+        foo = SpecialEvaluatedRefinable()
+
+    with pytest.raises(AssertionError) as e:
+        MyTraversable(foo=lambda a, b, **_: None).bind(request=req('get'))
+
+    assert str(e.value) == (
+        'SpecialEvaluatedRefinable not evaluated\n'
+        '\n'
+        '    Refinable name:\n'
+        '        foo\n'
+        '\n'
+        '    Path:\n'
+        '        \n'
+        '\n'
+        '    Possible inputs:\n'
+        '        request\n'
+        '        user\n'
+        '        root\n'
+        '        traversable\n'
+        '        params\n'
+        '\n'
+        '    Function inputs:\n'
+        '        a\n'
+        '        b\n'
+    )
+
+
+def test_declared_members_requires_refine_done():
+    from iommi.traversable import declared_members
+
+    with pytest.raises(AssertionError) as e:
+        declared_members(Fragment())
+
+    assert (
+        str(e.value) == 'Trying to find declared_member on RefinableObject without doing refine_done() first'
+    )
+
+
+def test_path_maps_are_cached_on_root():
+    from iommi.traversable import (
+        get_long_path_by_path,
+        get_path_by_long_path,
+    )
+
+    page = Page(parts__foo=Fragment(children__bar=Fragment())).bind(request=req('get'))
+    bar = page.parts.foo
+
+    long_path_by_path = get_long_path_by_path(bar)
+    assert page._long_path_by_path is long_path_by_path
+    assert get_long_path_by_path(page) is long_path_by_path
+
+    path_by_long_path = get_path_by_long_path(bar)
+    assert page._path_by_long_path is path_by_long_path
+    assert get_path_by_long_path(page) is path_by_long_path
+    assert path_by_long_path == {v: k for k, v in items(long_path_by_path)}

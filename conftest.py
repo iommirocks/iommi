@@ -50,6 +50,21 @@ def _pin_pytest_django_blocker_to_genuine_ensure_connection():
 _pin_pytest_django_blocker_to_genuine_ensure_connection()
 
 
+def pytest_configure(config):
+    # A first session that never unblocks (e.g. mutmut's collect-only "listing" run when
+    # resuming) never shows the genuine ensure_connection to the patched property above.
+    # The first session's blocker captured it before any blocking was installed, so take
+    # it from there.
+    from pytest_django.plugin import (
+        DjangoDbBlocker,
+        blocking_manager_key,
+    )
+
+    real = getattr(config.stash.get(blocking_manager_key, None), '_real_ensure_connection', None)
+    if real is not None and real.__module__ != 'pytest_django.plugin':
+        DjangoDbBlocker._iommi_genuine_ensure_connection = real
+
+
 # pragma: no cover
 def pytest_runtest_setup(item):
     django_marker = item.get_closest_marker("django_db") or item.get_closest_marker("django")

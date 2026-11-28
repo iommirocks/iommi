@@ -1708,3 +1708,28 @@ def test_register_edit_column_factory_forwards_kwargs_to_shortcut():
     factory = _edit_column_factory_by_field_type[RegisterEditColumnFactoryField]
     assert factory['call_target']['attribute'] == 'text'
     assert factory['extra']['foo'] == 7
+
+
+@pytest.mark.django_db
+def test_incremental_edit_table_pages_token():
+    from django.core import signing
+
+    from iommi import Page
+
+    for i in range(1, 6):
+        TFoo.objects.create(a=i, b='x')
+
+    page = Page(
+        parts__t=EditTable(
+            auto__model=TFoo,
+            columns__a__field__include=True,
+            page_size=2,
+            parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+            parts__page__show_page_links=False,
+        ),
+    ).bind(request=req('get', **{'t/x': '7', 'page': '2'}))
+    paginator_html = page.parts.t.paginator.__html__()
+
+    token = BeautifulSoup(paginator_html, 'html.parser').find('input', {'name': 't/incremental_pages'})['value']
+    assert f'<input type="hidden" name="t/incremental_pages" value="{token}"></div>' in paginator_html
+    assert signing.loads(token) == dict(table='t', start=2, end=2, query=[['t/x', ['7']]])

@@ -952,7 +952,7 @@ class Field(Part, Tag):
 
     @property
     def form(self):
-        return self.iommi_evaluate_parameters()['form']
+        return self.iommi_evaluate_parameters().get('form')
 
     # noinspection PyUnusedLocal
     @staticmethod
@@ -1786,7 +1786,7 @@ def delete_object__post_handler(form, **_):
                 objects = getattr(e, 'protected_objects', None)
             if objects is None:
                 # This message must match the one in Django exactly to get translations for free
-                form.add_error((gettext_lazy("Cannot delete %(name)s") % {"name": str(instance)}) + str(e))
+                form.add_error(f'{gettext_lazy("Cannot delete %(name)s") % {"name": str(instance)}}: {e}')
                 return
 
             # This message must match the one in Django exactly to get translations for free
@@ -2041,7 +2041,6 @@ class Form(Part, Tag):
         )
 
     def on_refine_done(self):
-        extra_member_defaults = dict()
         if self.auto:
             auto = FormAutoConfig(**self.auto).refine_done(parent=self)
             assert not self.model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
@@ -2123,7 +2122,6 @@ class Form(Part, Tag):
             members_from_declared=_fields_dict,
             members_from_auto=fields_from_auto,
             cls=self.member_class,
-            extra_member_defaults=extra_member_defaults,
         )
 
         super(Form, self).on_refine_done()

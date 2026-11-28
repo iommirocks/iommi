@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import pytest
 from django.urls import (
     path,
@@ -221,3 +223,121 @@ def test_menu_item_requires_active_class():
         MyMenu().bind(request=req('GET'))
 
     assert str(e.value) == 'No active_class provided'
+
+
+def test_menu_attrs_and_items_container_attrs_are_rendered():
+    menu = Menu(
+        attrs__class__my_menu=True,
+        items_container__attrs__class__my_items=True,
+        sub_menu__foo__url='/foo/',
+    ).bind(request=req('get'))
+    assert (
+        menu.__html__()
+        == '<nav class="my_menu"><ul class="my_items"><li><a class="link" href="/foo/">Foo</a></li></ul></nav>'
+    )
+
+
+def test_menu_items_container_template():
+    menu = Menu(
+        items_container__template=Template('items container template'),
+        sub_menu__foo__url='/foo/',
+    ).bind(request=req('get'))
+    assert menu.__html__() == '<nav>items container template</nav>'
+
+
+def test_menu_items_container_gets_style_from_menu():
+    from iommi import Style
+    from iommi.style_test_base import test
+
+    style = Style(test, Fragment__attrs__class__from_menu_style=True)
+    menu = Menu(iommi_style=style, sub_menu__foo__url='/foo/').bind(request=req('get'))
+    assert (
+        menu.__html__() == '<nav><ul class="from_menu_style"><li><a class="link" href="/foo/">Foo</a></li></ul></nav>'
+    )
+
+
+def test_validation_ignores_anchor_urls():
+    class MyMenu(Menu):
+        foo = MenuItem(url='#')
+        bar = MenuItem(url='#')
+
+    assert MyMenu().bind(request=req('get')).validate() == {}
+
+
+def test_set_active_ignores_external_urls():
+    class MyMenu(Menu):
+        external = MenuItem(url='https://example.com/foo/')
+
+    menu = MyMenu().bind(request=req('get'))
+    menu.set_active('/foo/')
+    assert menu.sub_menu.external._active is False
+
+
+def test_repr_three_levels():
+    class MyMenu(Menu):
+        a = MenuItem(
+            url='/a/',
+            sub_menu=dict(
+                b=MenuItem(
+                    url='/b/',
+                    sub_menu=dict(c=MenuItem(url='/c/'), d=MenuItem(url='/d/')),
+                ),
+            ),
+        )
+
+    assert repr(MyMenu().bind(request=req('get'))) == dedent('''\
+        root
+            a -> /a/
+                b -> /b/
+                    c -> /c/
+                    d -> /d/''')
+
+
+def test_debug_menu_items_are_list_items_in_a_style_without_menu_item_tag():
+    # The base style doesn't set a tag for MenuItem, so the debug menu must set it itself
+    request = req('get', _iommi_live_edit='')
+    request.iommi_used_templates = {'foo.html': 1}
+    html = get_debug_menu(iommi_style='base').bind(request=request).__html__()
+
+    for item in [
+        '<li><a href="/code/">Code</a></li>',
+        '<li><a href="?/debug_templates_used">Templates</a></li>',
+        '<li><a href="?/debug_tree">Tree</a></li>',
+        '<li onclick="window.iommi_start_pick()"><a href="#">Pick</a></li>',
+        '<li><a href="?_iommi_live_edit=&amp;_iommi_code_finder=">Code finder</a></li>',
+        '<li><a href="?_iommi_live_edit&amp;_iommi_live_edit_flow=row">Edit vertical</a></li>',
+        '<li><a href="?_iommi_live_edit=stop">Stop editing</a></li>',
+        '<li><a href="?_iommi_live_edit=style_editor">Edit style</a></li>',
+        '<li><a href="?_iommi_live_edit=&amp;_iommi_prof=">Profile</a></li>',
+        '<li><a href="?_iommi_live_edit=&amp;_iommi_sql_trace=">SQL trace</a></li>',
+    ]:
+        assert item in html
+
+    profile_post = html[html.index('<li onclick="\n') : html.index('Profile POST</a></li>')]
+    assert 'input.setAttribute(&quot;name&quot;, &quot;_iommi_prof&quot;);' in profile_post
+    assert 'form.appendChild(input);' in profile_post
+
+
+def test_debug_menu_edit_in_row_flow():
+    html = get_debug_menu().bind(request=req('get', _iommi_live_edit='', _iommi_live_edit_flow='row')).__html__()
+    assert '<li><a class="link" href="?_iommi_live_edit">Edit</a></li>' in html
+    assert 'Edit vertical' not in html
+
+
+def test_debug_menu_without_debug_middlewares(settings):
+    settings.MIDDLEWARE = [
+        x
+        for x in settings.MIDDLEWARE
+        if x not in ('iommi.live_edit.Middleware', 'iommi.profiling.Middleware', 'iommi.sql_trace.Middleware')
+    ]
+    html = get_debug_menu().bind(request=req('get')).__html__()
+    assert html == (
+        '<nav style="background: white; border: 1px solid black; bottom: -1px; position: fixed; right: -1px; z-index: 100">'
+        '<ul style="list-style: none">'
+        '<li><a class="link" href="/code/">Code</a></li>'
+        '<li><a class="link" href="?/debug_tree">Tree</a></li>'
+        '<li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li>'
+        '<li><a class="link" href="?_iommi_code_finder=">Code finder</a></li>'
+        '</ul>'
+        '</nav>'
+    )

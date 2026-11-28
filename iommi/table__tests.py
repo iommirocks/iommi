@@ -5280,3 +5280,725 @@ def test_header_keeps_display_name_and_group_that_are_marked_as_safe():
 
     assert '<i class="name"></i>' in html
     assert '<i class="group"></i>' in html
+
+
+def _incremental_table(**kwargs):
+    return Table(
+        **{
+            'rows': [Struct(pk=i, value=i) for i in range(1, 7)],
+            'columns__value': Column(),
+            'page_size': 2,
+            'parts__page__trigger': PaginatorTrigger.LOAD_MORE,
+            'parts__page__show_page_links': False,
+            **kwargs,
+        }
+    )
+
+
+def _incremental_request(cursor, start=None, **extra):
+    data = {'/incremental_page': cursor, **extra}
+    if start is not None:
+        data['page_incremental_start'] = start
+    return req('get', **data)
+
+
+@pytest.mark.parametrize('show_page_links', [False, True])
+@pytest.mark.parametrize(
+    'cursor, start, expected_pks, expected_has_more',
+    [
+        ('2', None, [3, 4], True),
+        ('3', None, [5, 6], False),
+        ('2', '2', [3, 4], True),
+        ('3', '2', [5, 6], False),
+    ],
+)
+def test_incremental_endpoint_valid_cursor(show_page_links, cursor, start, expected_pks, expected_has_more):
+    table = _incremental_table(parts__page__show_page_links=show_page_links).bind(
+        request=_incremental_request(cursor, start)
+    )
+    response = table.render_to_response()
+    assert response.status_code == 200
+    data = json.loads(response.content)
+    assert data['has_more'] is expected_has_more
+    assert data['next_cursor'] == (str(int(cursor) + 1) if expected_has_more else None)
+    assert [x.pk for x in table.paginator.rows] == expected_pks
+    assert table.paginator.has_more is expected_has_more
+    assert table.paginator.page == int(cursor)
+    assert table.paginator.start_page == int(start or '1')
+    assert [int(x['data-pk']) for x in BeautifulSoup(data['html'], 'html.parser').select('[data-pk]')] == expected_pks
+
+
+@pytest.mark.parametrize('show_page_links', [False, True])
+@pytest.mark.parametrize(
+    'cursor, start, expected',
+    [
+        ('1', None, 'Invalid cursor'),
+        ('02', None, 'Invalid cursor'),
+        ('x', None, 'Invalid cursor'),
+        ('1234567', None, 'Invalid cursor'),
+        # past the last row
+        ('4', None, 'Invalid cursor'),
+        ('2', '0', 'Invalid start page'),
+        ('3', '02', 'Invalid start page'),
+        ('2', 'x', 'Invalid start page'),
+        ('2', '١', 'Invalid start page'),
+        ('2', '3', 'Invalid start page'),
+        ('2', '1234567', 'Invalid start page'),
+    ],
+)
+def test_incremental_endpoint_invalid_input(show_page_links, cursor, start, expected):
+    table = _incremental_table(parts__page__show_page_links=show_page_links)
+    response = table.bind(request=_incremental_request(cursor, start)).render_to_response()
+    assert response.status_code == 400
+    assert response.content.decode() == expected
+
+
+def test_incremental_endpoint_invalid_when_trigger_evaluates_to_none():
+    table = _incremental_table(parts__page__trigger=lambda **_: None)
+    response = table.bind(request=_incremental_request('2')).render_to_response()
+    assert response.status_code == 400
+    assert response.content.decode() == 'Invalid cursor'
+
+
+@pytest.mark.parametrize(
+    'page_size, cursor, start, expected_status',
+    [
+        (1, '100000', '100000', 200),
+        (1, '100001', None, 400),
+        (1, '1', None, 400),
+        # (cursor - 1) * page_size may not be more than 10 000 000
+        (1000, '10001', None, 200),
+        (1000, '10002', None, 400),
+        (909091, '11', None, 200),
+        (909091, '12', None, 400),
+    ],
+)
+def test_incremental_endpoint_cursor_limits(page_size, cursor, start, expected_status):
+    calls = []
+
+    def slice(bottom, top, page_size, table, rows, **_):
+        calls.append((bottom, top, page_size))
+        return [Struct(pk=bottom + 1, value=0)]
+
+    table = _incremental_table(
+        page_size=page_size,
+        max_page_size=page_size,
+        parts__page__slice=slice,
+    ).bind(request=_incremental_request(cursor, start))
+    assert table.paginator.page == 1  # binds the paginator, which slices the first page
+    calls.clear()
+
+    response = table.render_to_response()
+    assert response.status_code == expected_status
+    if expected_status == 200:
+        bottom = (int(cursor) - 1) * page_size
+        assert calls == [(bottom, bottom + page_size + 1, page_size)]
+    else:
+        assert response.content.decode() == 'Invalid cursor'
+        assert calls == []
+
+
+@pytest.mark.parametrize(
+    'cursor, expected_page_numbers, expected_show_first, expected_show_last, expected_has_more',
+    [
+        ('2', list(range(1, 14)), False, True, True),
+        ('10', list(range(4, 17)), True, True, True),
+        ('20', list(range(14, 21)), True, False, False),
+    ],
+)
+def test_incremental_endpoint_updates_paginator_context(
+    cursor, expected_page_numbers, expected_show_first, expected_show_last, expected_has_more
+):
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 21)],
+        columns__value=Column(),
+        page_size=1,
+        parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+    ).bind(request=_incremental_request(cursor, '2', foo='bar', page='5'))
+    table.render_to_response()
+
+    page = int(cursor)
+    context = table.paginator.context
+    assert {
+        k: context[k]
+        for k in [
+            'page',
+            'has_next',
+            'has_previous',
+            'next',
+            'previous',
+            'extra',
+            'page_numbers',
+            'show_first',
+            'show_last',
+        ]
+    } == dict(
+        page=page,
+        has_next=expected_has_more,
+        has_previous=True,
+        next=page + 1 if expected_has_more else None,
+        previous=page - 1,
+        extra='foo=bar&',
+        page_numbers=expected_page_numbers,
+        show_first=expected_show_first,
+        show_last=expected_show_last,
+    )
+
+
+def test_incremental_endpoint_without_extra_parameters():
+    table = _incremental_table().bind(request=_incremental_request('2'))
+    table.render_to_response()
+    assert table.paginator.context['extra'] == ''
+
+
+def test_incremental_query_key():
+    from iommi.table import incremental_query_key
+
+    data = {
+        '/incremental_page': '2',
+        'page': '3',
+        'page_incremental_start': '2',
+        'page_size': '5',
+        'b': ['2', '1'],
+        'a': '1',
+        't/x': '1',
+    }
+
+    root = Table(rows=[], columns__value=Column(), page_size=1).bind(request=req('get', **data))
+    assert incremental_query_key(root) == [
+        ('a', ['1']),
+        ('b', ['2', '1']),
+        ('page_size', ['5']),
+        ('t/x', ['1']),
+    ]
+
+    page = Page(
+        parts__t=Table(rows=[], columns__value=Column(), page_size=1),
+    ).bind(request=req('get', **data))
+    nested = page.parts.t
+    assert nested.iommi_path == 't'
+    assert nested.paginator.iommi_path == 'page'
+    assert incremental_query_key(nested) == [
+        ('page_size', ['5']),
+        ('t/x', ['1']),
+    ]
+
+    assert incremental_query_key(Table(rows=[], columns__value=Column(), page_size=1).bind()) == []
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'make_rows, expected_order_by',
+    [
+        # Meta.ordering = ('name',)
+        (lambda: Artist.objects.all(), ('name', 'pk')),
+        (lambda: Artist.objects.order_by('-name'), ('-name', '-pk')),
+        (lambda: Artist.objects.order_by('name', '-pk'), ('name', '-pk')),
+        # .order_by() drops the Meta ordering
+        (lambda: Artist.objects.order_by(), ('pk',)),
+    ],
+)
+def test_incremental_pagination_adds_pk_tie_breaker(make_rows, expected_order_by):
+    # An unknown sort column makes table sorting bail out before it adds its own pk
+    # tie-breaker, so the incremental paginator has to make the ordering stable itself
+    table = Table(
+        auto__model=Artist,
+        rows=make_rows(),
+        page_size=2,
+        parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+    ).bind(request=req('get', order='does_not_exist'))
+    assert table.paginator.rows is not None
+    assert table.sorted_and_filtered_rows.query.order_by == expected_order_by
+
+
+@pytest.mark.parametrize('max_page_size', [0, '10'])
+def test_max_page_size_must_be_a_positive_int(max_page_size):
+    table = Table(rows=[1, 2], page_size=1, max_page_size=max_page_size).bind(request=req('get'))
+    with pytest.raises(AssertionError) as e:
+        table.paginator
+
+    assert str(e.value) == 'max_page_size must evaluate to a positive integer'
+
+
+@pytest.mark.parametrize('page_size', [0, None])
+def test_incremental_pagination_requires_a_positive_page_size(page_size):
+    table = Table(
+        rows=[1, 2],
+        page_size=page_size,
+        parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+    ).bind(request=req('get'))
+    with pytest.raises(AssertionError) as e:
+        table.paginator
+
+    assert str(e.value) == 'Incremental pagination requires a positive page_size'
+
+
+def test_paginator_without_page_size():
+    table = Table(rows=[1, 2], page_size=None).bind(request=req('get'))
+    assert table.paginator.count is None
+    assert table.paginator.number_of_pages == 1
+    assert table.paginator.__html__() == ''
+
+
+def test_incremental_pagination_slice_arguments():
+    calls = []
+
+    def slice(bottom, top, page_size, table, rows, **_):
+        calls.append((bottom, top, page_size))
+        return rows[bottom:top]
+
+    table = _incremental_table(parts__page__slice=slice).bind(request=req('get', page='2'))
+    assert [x.pk for x in table.paginator.rows] == [3, 4]
+    assert table.paginator.has_more is True
+    assert calls == [(2, 5, 2)]
+
+
+@pytest.mark.parametrize(
+    'page, expected_pks, expected_has_more, expected_is_paginated',
+    [
+        ('1', [1, 2], True, True),
+        ('3', [5, 6], False, True),
+        # page links aren't counted, so a page far beyond the end is just empty
+        ('8', [], False, True),
+    ],
+)
+def test_incremental_pagination_without_page_links(page, expected_pks, expected_has_more, expected_is_paginated):
+    table = _incremental_table().bind(request=req('get', page=page))
+    paginator = table.paginator
+    assert paginator.number_of_pages is None
+    assert [x.pk for x in paginator.rows] == expected_pks
+    assert paginator.count == len(expected_pks)
+    assert paginator.has_more is expected_has_more
+    assert paginator.is_paginated() is expected_is_paginated
+    assert paginator.context['page_numbers'] == []
+    assert paginator.context['show_last'] is False
+
+
+@pytest.mark.parametrize(
+    'rows, expected_is_paginated',
+    [
+        ([Struct(pk=1, value=1), Struct(pk=2, value=2)], False),
+        ([Struct(pk=1, value=1), Struct(pk=2, value=2), Struct(pk=3, value=3)], True),
+    ],
+)
+def test_incremental_pagination_is_paginated_on_first_page(rows, expected_is_paginated):
+    table = _incremental_table(rows=rows).bind(request=req('get'))
+    assert table.paginator.is_paginated() is expected_is_paginated
+
+
+def test_incremental_pagination_is_paginated_on_last_page():
+    table = _incremental_table(rows=[Struct(pk=i, value=i) for i in range(1, 4)]).bind(request=req('get', page='2'))
+    assert table.paginator.has_more is False
+    assert table.paginator.is_paginated() is True
+
+
+def test_incremental_pagination_without_page_links_empty_message():
+    non_empty = _incremental_table(empty_message='EMPTY').bind(request=req('get'))
+    assert 'EMPTY' not in non_empty.__html__()
+
+    empty = _incremental_table(rows=[], empty_message='EMPTY').bind(request=req('get'))
+    assert 'EMPTY' in empty.__html__()
+
+
+@pytest.mark.parametrize(
+    'page, expected_page_numbers, expected_show_first, expected_show_last',
+    [
+        ('1', list(range(1, 14)), False, True),
+        ('10', list(range(4, 17)), True, True),
+        ('20', list(range(14, 21)), True, False),
+    ],
+)
+def test_paginator_context(page, expected_page_numbers, expected_show_first, expected_show_last):
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 21)],
+        columns__value=Column(),
+        page_size=1,
+    ).bind(request=req('get', page=page))
+    context = table.paginator.context
+    assert {
+        k: context[k]
+        for k in ['page', 'page_size', 'pages', 'hits', 'extra', 'page_numbers', 'show_first', 'show_last']
+    } == dict(
+        page=int(page),
+        page_size=1,
+        pages=20,
+        hits=20,
+        extra='',
+        page_numbers=expected_page_numbers,
+        show_first=expected_show_first,
+        show_last=expected_show_last,
+    )
+
+
+def test_paginator_min_page_size_merges_small_last_page():
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 6)],
+        columns__value=Column(),
+        page_size=2,
+        parts__page__min_page_size=2,
+    ).bind(request=req('get', page='2'))
+    assert table.paginator.number_of_pages == 2
+    assert [x.pk for x in table.paginator.rows] == [3, 4, 5]
+
+
+def test_paginator_single_page_rows():
+    rows = [Struct(pk=1, value=1)]
+    table = Table(rows=rows, columns__value=Column(), page_size=10).bind(request=req('get'))
+    assert table.paginator.number_of_pages == 1
+    assert table.paginator.rows is rows
+
+
+def test_paginator_callable_attrs_and_tags():
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 4)],
+        columns__value=Column(),
+        page_size=1,
+        parts__page__container__tag=lambda paginator, **_: 'ol',
+        parts__page__container__attrs__class__my_container=lambda paginator, **_: True,
+        parts__page__item__attrs__class__my_item=lambda paginator, **_: True,
+        parts__page__active_item__tag=lambda paginator, **_: 'span',
+        parts__page__active_item__attrs__class__my_active_item=lambda paginator, **_: True,
+        parts__page__link__attrs__class__my_link=lambda paginator, **_: True,
+        parts__page__active_link__attrs__class__my_active_link=lambda paginator, **_: True,
+    ).bind(request=req('get', page='2'))
+    soup = BeautifulSoup(table.paginator.__html__(), 'html.parser')
+    container = soup.select_one('ol')
+    assert container['class'] == ['my_container']
+    items = container.find_all(recursive=False)
+    assert [(x.name, x.get('class')) for x in items] == [
+        ('li', ['my_item']),
+        ('span', ['my_item']),
+        ('span', ['my_active_item', 'my_item']),
+        ('span', ['my_item']),
+        ('li', ['my_item']),
+    ]
+    assert [{'my_link', 'my_active_link'} & set(x.a['class']) for x in items] == [
+        {'my_link'},
+        {'my_link'},
+        {'my_active_link', 'my_link'},
+        {'my_link'},
+        {'my_link'},
+    ]
+
+
+def test_paginator_link_tags_are_evaluated():
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 4)],
+        columns__value=Column(),
+        page_size=1,
+        parts__page__link__tag=lambda paginator, **_: 'a',
+        parts__page__active_link__tag=lambda paginator, **_: 'b',
+    ).bind(request=req('get'))
+    assert table.paginator.link.tag == 'a'
+    assert table.paginator.active_link.tag == 'b'
+
+
+def test_incremental_pagination_marks_every_page_link():
+    table = Table(
+        rows=[Struct(pk=i, value=i) for i in range(1, 4)],
+        columns__value=Column(),
+        page_size=1,
+        parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+    ).bind(request=req('get', page='2'))
+    links = BeautifulSoup(table.paginator.__html__(), 'html.parser').select('a[aria-label]')
+    assert [x['aria-label'] for x in links] == ['Previous Page', 'Page 1', 'Page 2', 'Page 3', 'Next Page']
+    assert all(x.has_attr('data-iommi-incremental-page-link') for x in links)
+
+
+def test_incremental_pagination_buttons_use_table_style():
+    table = Table(
+        iommi_style='bulma',
+        rows=[Struct(pk=i, value=i) for i in range(3)],
+        columns__value=Column(),
+        page_size=1,
+        parts__page__trigger=PaginatorTrigger.LOAD_MORE,
+    ).bind(request=req('get'))
+    soup = BeautifulSoup(str(table), 'html.parser')
+    assert 'button' in soup.select_one('[data-iommi-incremental-load-more]')['class']
+    assert 'button' in soup.select_one('[data-iommi-incremental-retry]')['class']
+
+
+def test_incremental_paginator_html():
+    table = _incremental_table().bind(request=req('get'))
+    assert table.paginator.__html__() == (
+        '<div class="iommi-incremental-paginator" data-iommi-incremental-paginator'
+        ' data-iommi-unsaved-warning="Discard unsaved table edits?">\n'
+        '<div class="iommi-incremental-pagination"\n'
+        '     data-iommi-incremental="load_more"\n'
+        '     data-iommi-incremental-endpoint="/incremental_page"\n'
+        '     data-iommi-page-parameter="page"\n'
+        '     data-iommi-start-page="1"\n'
+        '     data-iommi-next-cursor="2">\n'
+        '    <button class="iommi-incremental-load-more" data-iommi-incremental-load-more type="button">Load more</button>\n'
+        '    <button class="iommi-incremental-retry" data-iommi-incremental-retry hidden type="button">Retry</button>\n'
+        '    <div class="iommi-incremental-sentinel" data-iommi-incremental-sentinel aria-hidden="true"'
+        ' style="min-height: 1px;"></div>\n'
+        '    <span class="iommi-incremental-status" data-iommi-incremental-status role="status" aria-live="polite"\n'
+        '          data-iommi-loading-text="Loading…"\n'
+        '          data-iommi-error-text="Loading failed. Please retry."></span>\n'
+        '</div>\n'
+        '</div>'
+    )
+
+    last_page = _incremental_table().bind(request=req('get', page='3'))
+    assert last_page.paginator.__html__() == (
+        '<div class="iommi-incremental-paginator" data-iommi-incremental-paginator'
+        ' data-iommi-unsaved-warning="Discard unsaved table edits?"></div>'
+    )
+
+    single_page_with_links = _incremental_table(rows=[Struct(pk=1, value=1)], parts__page__show_page_links=True).bind(
+        request=req('get')
+    )
+    assert single_page_with_links.paginator.__html__() == (
+        '<div class="iommi-incremental-paginator" data-iommi-incremental-paginator'
+        ' data-iommi-unsaved-warning="Discard unsaved table edits?"></div>'
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('referer, expected_location', [(None, '/'), ('/the/referrer/?x=1', '/the/referrer/?x=1')])
+def test_bulk_edit_skips_empty_fields_and_fields_without_attr(referer, expected_location):
+    foos = [TFoo.objects.create(a=i, b='') for i in range(1, 3)]
+    calls = []
+
+    def post_bulk_edit(pks, updates, **_):
+        calls.append((sorted(pks), updates))
+
+    request = req('post', _all_pks_='1', nothing='x', **{'bulk/a': '', 'bulk/b': 'changed', '-bulk/submit': ''})
+    if referer is not None:
+        request.META['HTTP_REFERER'] = referer
+
+    table = Table(
+        auto__model=TFoo,
+        columns__a__bulk__include=True,
+        columns__b__bulk__include=True,
+        bulk__fields__nothing=Field(attr=None, after=0),
+        post_bulk_edit=post_bulk_edit,
+    ).bind(request=request)
+    assert list(table.bulk.fields.keys())[:3] == ['nothing', 'a', 'b']
+    assert table.bulk.fields.nothing.value == 'x'
+
+    response = table.render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == expected_location
+    assert calls == [([x.pk for x in foos], dict(b='changed'))]
+    assert [(x.a, x.b) for x in TFoo.objects.order_by('pk')] == [(1, 'changed'), (2, 'changed')]
+
+
+@pytest.mark.django_db
+def test_bulk_delete_confirmation_page():
+    foos = [TFoo.objects.create(a=i, b='x') for i in range(1, 3)]
+    table = Table(auto__model=TFoo, bulk__actions__delete__include=True).refine_done()
+
+    response = table.bind(request=req('post', _all_pks_='1', **{'-delete': ''})).render_to_response()
+    soup = BeautifulSoup(response.content.decode(), 'html.parser')
+    assert soup.find('h1').text == 'Are you sure you want to delete these 2 items?'
+    assert [(x['name'], x.has_attr('checked')) for x in soup.select('input.checkbox')] == [
+        (f'pk_{x.pk}', True) for x in foos
+    ]
+    assert soup.find('input', {'name': 'select'}).parent['style'] == 'display: none'
+    assert (
+        str(soup.find('input', {'name': 'confirmed'}))
+        == '<input id="id_confirmed" name="confirmed" type="hidden" value="confirmed"/>'
+    )
+    assert [str(x) for x in soup.find_all('button')] == [
+        '<button accesskey="s" name="-delete">Yes, delete all!</button>'
+    ]
+    assert TFoo.objects.count() == 2
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('referer, expected_location', [(None, '/'), ('/the/referrer/?x=1', '/the/referrer/?x=1')])
+def test_bulk_delete_confirmed_redirects_to_referer(referer, expected_location):
+    TFoo.objects.create(a=1, b='x')
+    request = req('post', _all_pks_='1', confirmed='confirmed', **{'-delete': ''})
+    if referer is not None:
+        request.META['HTTP_REFERER'] = referer
+
+    response = Table(auto__model=TFoo, bulk__actions__delete__include=True).bind(request=request).render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == expected_location
+    assert TFoo.objects.count() == 0
+
+
+def test_table_auto_and_explicit_model_is_an_error():
+    with pytest.raises(AssertionError) as e:
+        Table(auto__model=TFoo, model=TFoo).refine_done()
+
+    assert str(e.value) == (
+        "You can't use the auto feature and explicitly pass model. "
+        "Either pass auto__model, or we will set the model for you from auto__rows"
+    )
+
+
+@pytest.mark.django_db
+def test_table_auto_exclude_and_default_included():
+    assert list(Table(auto__model=TFoo, auto__exclude=['b']).bind(request=req('get')).columns.keys()) == ['a']
+
+    table = Table(auto__model=TFoo, auto__default_included=False, columns__b__include=True).bind(request=req('get'))
+    assert list(table.columns.keys()) == ['b']
+
+
+@pytest.mark.django_db
+def test_bulk_all_pks_field():
+    TFoo.objects.create(a=1, b='x')
+    table = Table(auto__model=TFoo, columns__a__bulk__include=True).bind(request=req('get'))
+    soup = BeautifulSoup(table.__html__(), 'html.parser')
+    assert (
+        str(soup.find('input', {'name': '_all_pks_'}))
+        == '<input class="all_pks" id="id__all_pks_" name="_all_pks_" type="hidden" value="0"/>'
+    )
+
+
+@pytest.mark.django_db
+def test_bulk_field_from_column_uses_column_attr_and_display_name():
+    table = Table(
+        auto__model=TFoo,
+        columns__foo=Column(attr='b', display_name='Foo bar', bulk__include=True),
+    ).bind(request=req('get'))
+    assert table.bulk.fields.foo.attr == 'b'
+    assert table.bulk.fields.foo.display_name == 'Foo bar'
+
+
+def test_table_parts_from_dict():
+    table = Table(rows=[], columns__a=Column(), parts__extra__children__text='hello from a part').bind(
+        request=req('get')
+    )
+    assert isinstance(table.parts.extra, Fragment)
+    assert table.parts.extra.__html__() == 'hello from a part'
+
+
+@pytest.mark.django_db
+def test_nested_relation_columns_are_fetched_together_with_the_rows():
+    from tests.models import FieldFromModelOneToOneTest
+
+    table = Table(
+        rows=Track.objects.all(),
+        # a column with an attr that isn't a model field doesn't stop the following columns
+        columns__not_a_field=Column(attr='not_a_field__x', cell__value=lambda **_: 'x', sortable=False),
+        columns__artist_name=Column(attr='album__artist__name'),
+    ).bind(request=req('get'))
+    assert table.sorted_and_filtered_rows._prefetch_related_lookups == ('album__artist',)
+    assert table.sorted_and_filtered_rows.query.select_related is False
+
+    table = Table(
+        rows=FieldFromModelOneToOneTest.objects.all(),
+        columns__foo=Column(attr='foo_one_to_one__foo'),
+    ).bind(request=req('get'))
+    assert table.sorted_and_filtered_rows._prefetch_related_lookups == ()
+    assert table.sorted_and_filtered_rows.query.select_related == {'foo_one_to_one': {}}
+
+
+def test_nested_table_sort_parameter():
+    page = Page(
+        parts__t=Table(rows=[Struct(value=i) for i in [2, 3, 1]], columns__value=Column()),
+    ).bind(request=req('get', **{'t/order': '-value'}))
+    assert [x.value for x in page.parts.t.sorted_rows] == [3, 2, 1]
+
+
+@pytest.mark.django_db
+def test_sorting_does_not_add_pk_after_descending_pk():
+    table = Table(auto__model=TFoo, rows=TFoo.objects.order_by('a', '-pk')).bind(request=req('get'))
+    assert table.sorted_rows.query.order_by == ('a', '-pk')
+
+
+def test_incremental_pagination_marks_tbody():
+    table = _incremental_table().bind(request=req('get'))
+    tbody = BeautifulSoup(table.__html__(), 'html.parser').select_one('tbody')
+    assert tbody.has_attr('data-iommi-incremental-items')
+
+
+@pytest.mark.django_db
+def test_csv_last_modified_is_now_in_utc():
+    from datetime import UTC, datetime
+    from email.utils import parsedate_to_datetime
+
+    TFoo.objects.create(a=1, b='x')
+    table = Table(
+        auto__model=TFoo,
+        columns__a__extra_evaluated__report_name='a',
+        extra_evaluated__report_name='foo',
+    ).bind(request=req('get', **{'/csv': ''}))
+    response = table.render_to_response()
+    last_modified = parsedate_to_datetime(response['Last-Modified'])
+    assert abs((datetime.now(UTC) - last_modified).total_seconds()) < 60
+
+
+def test_preprocess_row_must_return_the_row():
+    table = Table(rows=[Struct(value=1)], columns__value=Column(), preprocess_row=lambda row, **_: None).bind(
+        request=req('get')
+    )
+    with pytest.raises(AssertionError) as e:
+        table.__html__()
+
+    assert str(e.value) == 'preprocess_row must return the row'
+
+
+def test_row_layout_only_for_div_tables():
+    from iommi.panel import Panel
+
+    with pytest.raises(AssertionError) as e:
+        Table(rows=[], columns__value=Column(), row__layout=Panel.div(dict(value=Panel.cell()))).refine_done()
+
+    assert str(e.value) == 'row.layout can be used only for Table.div()'
+
+
+def test_row_layout_and_template_cannot_be_combined():
+    from iommi.panel import Panel
+
+    table = Table.div(
+        rows=[Struct(value=1)],
+        columns__value=Column(),
+        row__layout=Panel.div(dict(value=Panel.cell())),
+        row__template=Template('x'),
+    ).bind(request=req('get'))
+    with pytest.raises(AssertionError) as e:
+        table.__html__()
+
+    assert str(e.value) == 'row.layout cannot be used together with row.template'
+
+
+def test_row_layout_must_have_all_columns():
+    from iommi.panel import Panel
+
+    table = Table.div(
+        rows=[Struct(a=1, b=2, c=3)],
+        columns__a=Column(),
+        columns__b=Column(),
+        columns__c=Column(),
+        row__layout=Panel.div(dict(a=Panel.cell())),
+    ).bind(request=req('get'))
+    from django.core.exceptions import ImproperlyConfigured
+
+    with pytest.raises(ImproperlyConfigured) as e:
+        table.__html__()
+
+    assert str(e.value) == (
+        'Some columns are missing in Table.row.layout as Panel.cell. '
+        'Either add them or exclude them.\n'
+        'Missing columns:\n'
+        'b,\n'
+        'c'
+    )
+
+
+@pytest.mark.django_db
+def test_bulk_delete_button():
+    TFoo.objects.create(a=1, b='x')
+    table = Table(auto__model=TFoo, bulk__actions__delete__include=True).bind(request=req('get'))
+    delete = table.bulk.actions.delete
+    assert delete.iommi_shortcut_stack == ['delete', 'submit', 'button']
+    assert [str(x) for x in BeautifulSoup(table.__html__(), 'html.parser').find_all('button')] == [
+        '<button accesskey="s" name="-delete">Bulk delete</button>'
+    ]
+
+
+def test_builtin_bulk_actions_require_a_queryset():
+    with pytest.raises(AssertionError) as e:
+        Table(
+            rows=[Struct(a=1)],
+            columns__a=Column(bulk__include=True),
+            bulk__actions__foo=Action.button(),
+        ).refine_done()
+
+    assert str(e.value) == 'The builtin bulk actions only work on querysets.'

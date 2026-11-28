@@ -4625,8 +4625,16 @@ def test_nested_form_respects_parents_editable_false():
 
 
 def test_is_django_promise_with_string_proxy():
+    from django.utils.functional import lazy
+
     assert not is_django_promise_with_string_proxy('')
+    assert not is_django_promise_with_string_proxy(42)
     assert is_django_promise_with_string_proxy(gettext_lazy('yes'))
+
+    lazy_str = lazy(lambda *args, **kwargs: 'x', str)
+    assert not is_django_promise_with_string_proxy(lazy_str('a', 'b'))
+    assert not is_django_promise_with_string_proxy(lazy_str('a', foo=1))
+    assert not is_django_promise_with_string_proxy(lazy_str(1))
 
 
 @pytest.mark.django_db
@@ -5041,12 +5049,14 @@ def test_delete_object_integrity_error_no_restricted_objects():
     result = delete_object__post_handler(form=form)
     assert result is None
     errors = form.get_errors()
-    assert 'global' in errors
+    assert list(errors) == ['global']
+    assert errors['global'] == {'Cannot delete Doomed Artist: foreign key constraint failed'}
 
 
 @pytest.mark.django_db
-def test_delete_object_integrity_error_with_restricted_objects():
-    from django.db.models.deletion import ProtectedError
+@pytest.mark.parametrize('error_class', ['ProtectedError', 'RestrictedError'])
+def test_delete_object_integrity_error_with_restricted_objects(error_class):
+    from django.db.models import deletion
 
     from iommi.form import delete_object__post_handler
 
@@ -5056,14 +5066,20 @@ def test_delete_object_integrity_error_with_restricted_objects():
     form = Form.delete(auto__instance=artist).bind(request=req('post', **{'-submit': ''}))
 
     def failing_delete_with_protected():
-        error = ProtectedError('cannot delete', protected_objects=[album])
-        raise error
+        if error_class == 'ProtectedError':
+            raise deletion.ProtectedError('cannot delete', protected_objects=[album])
+        raise deletion.RestrictedError('cannot delete', restricted_objects=[album])
 
     form.instance.delete = failing_delete_with_protected
     result = delete_object__post_handler(form=form)
     assert result is None
     errors = form.get_errors()
-    assert 'global' in errors
+    assert list(errors) == ['global']
+    [error] = errors['global']
+    assert ' '.join(error.split()) == (
+        "<p>Deleting the artist 'Protected Artist' would require deleting the following protected related objects:</p>"
+        f' <ul> <li> <a href="/albums/{album.pk}/">Protected Album</a> </li> </ul>'
+    )
 
 
 def test_form_with_panel_layout():
@@ -5200,14 +5216,16 @@ def test_date_parse_unconverted_data_adds_extra_characters_note():
     with pytest.raises(ValidationError) as e:
         date_parse('2020-01-01xx')
 
-    assert 'unexpected extra characters' in str(e.value)
+    assert e.value.messages[0].endswith(
+        'and is not a relative date like "2d" or "2 weeks ago" (unexpected extra characters)'
+    )
 
 
 def test_date_parse_out_of_range_adds_out_of_range_note():
     with pytest.raises(ValidationError) as e:
         date_parse('2020-02-31')
 
-    assert 'out of range' in str(e.value)
+    assert e.value.messages[0].endswith('and is not a relative date like "2d" or "2 weeks ago" (out of range)')
 
 
 
@@ -5228,3 +5246,246 @@ def test_related_field_multi_select_backwards_compatibility():
 
     form = Form(auto__model=Album, fields__artist__multi_select=False).bind(request=req('get'))
     assert form.fields.artist.is_list is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'next_url, expected_location',
+    [
+        (None, '.'),
+        ('/after/', '/after/'),
+        ('http://evil.example.com/', '.'),
+    ],
+)
+def test_save_nested_forms_default_redirect(next_url, expected_location):
+    form = Form(
+        fields__create_form=Form.create(
+            auto__model=Artist,
+            # an action without a post handler before the submit action must not stop the save
+            actions__a_link=Action(attrs__href='/somewhere/', after=0),
+        ),
+        actions__submit__post_handler=save_nested_forms,
+    )
+    data = {'name': 'Black Sabbath', '-submit': ''}
+    if next_url is not None:
+        data['next'] = next_url
+    bound = form.bind(request=req('POST', **data))
+    assert list(bound.nested_forms.create_form.actions.keys())[0] == 'a_link'
+
+    response = bound.render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == expected_location
+    assert bound.get_request().method == 'GET'
+    assert list(Artist.objects.values_list('name', flat=True)) == ['Black Sabbath']
+
+
+@pytest.mark.django_db
+def test_save_nested_forms_redirect_to_none_and_custom_redirect():
+    from django.http import HttpResponse
+
+    form = Form(
+        fields__create_form=Form.create(auto__model=Artist),
+        actions__submit__post_handler=save_nested_forms,
+        extra__redirect_to=lambda **_: None,
+        extra__redirect=lambda redirect_to, **_: HttpResponse(f'redirect to {redirect_to}'),
+    )
+    response = form.bind(request=req('POST', name='Black Sabbath', **{'-submit': ''})).render_to_response()
+    assert response.content.decode() == 'redirect to ../../'
+
+
+@pytest.mark.django_db
+def test_save_nested_forms_does_not_abort_on_fail_by_default():
+    def failing_post_handler(**_):
+        return None
+
+    form = Form(
+        fields__failing=Form(
+            fields__foo=Field(),
+            actions__submit__post_handler=failing_post_handler,
+        ),
+        fields__create_form=Form.create(auto__model=Artist),
+        actions__submit__post_handler=save_nested_forms,
+    )
+    bound = form.bind(request=req('POST', name='Black Sabbath', **{'-submit': ''}))
+    assert list(bound.nested_forms.keys()) == ['failing', 'create_form']
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert list(Artist.objects.values_list('name', flat=True)) == ['Black Sabbath']
+
+
+@override_settings(IOMMI_FULL_CLEAN=True)
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'extra_field',
+    [
+        # a field without a model field
+        Field(attr='not_on_the_model', after=0),
+        # a field without attr
+        Field(attr=None, after=0),
+    ],
+)
+def test_create_object_full_clean_skips_fields_that_are_not_model_fields(extra_field):
+    from tests.models import ModelWithCleanMethod
+
+    form = Form.create(auto__model=ModelWithCleanMethod, fields__extra=extra_field)
+    bound = form.bind(request=req('post', **{'name': 'field-invalid', 'other': '', 'extra': 'x', '-submit': ''}))
+    assert list(bound.fields.keys())[0] == 'extra'
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert bound.get_errors() == {'fields': {'name': {'name is field invalid'}}}
+    assert not ModelWithCleanMethod.objects.exists()
+
+
+@override_settings(IOMMI_FULL_CLEAN=True)
+@pytest.mark.django_db
+def test_create_object_full_clean_only_validates_model_fields_on_the_form():
+    # b is not blank=True, but it's not on the form, so it's not validated
+    form = Form.create(auto__model=TFoo, auto__include=['a'])
+    response = form.bind(request=req('post', a='1', **{'-submit': ''})).render_to_response()
+    assert response.status_code == 302
+    assert list(TFoo.objects.values_list('a', 'b')) == [(1, '')]
+
+
+@pytest.mark.django_db
+def test_crud_submit_display_name_and_title():
+    foo = TFoo.objects.create(a=1, b='x')
+    for form, expected_submit, expected_title in [
+        (Form.create(auto__model=TFoo), 'Create', 'Create t foo'),
+        (Form.edit(auto__instance=foo), 'Save', 'Edit t foo'),
+        (Form.delete(auto__instance=foo), 'Delete', 'Delete t foo'),
+    ]:
+        bound = form.bind(request=req('get'))
+        assert str(bound.actions.submit.display_name) == expected_submit
+        assert str(bound.title) == expected_title
+
+    assert Form.create(auto__model=TFoo, title='Custom').bind(request=req('get')).title == 'Custom'
+
+
+def test_form_auto_and_explicit_model_is_an_error():
+    with pytest.raises(AssertionError) as e:
+        Form(auto__model=TFoo, model=TFoo).refine_done()
+
+    assert str(e.value) == (
+        "You can't use the auto feature and explicitly pass model. "
+        "Either pass auto__model, or we will set the model for you from auto__instance"
+    )
+
+
+def test_field_parts_have_names_and_get_the_form_style():
+    form = Form(
+        iommi_style='bulma',
+        fields__foo=Field(help_text='helpful'),
+        fields__bar=Field(editable=False, initial='x'),
+    ).bind(request=req('get'))
+    foo = form.fields.foo
+    assert [foo.input._name, foo.label._name, foo.help._name, foo.non_editable_input._name] == [
+        'input',
+        'label',
+        'help',
+        'non_editable_input',
+    ]
+    assert foo.input.__html__() == '<input class="input" id="id_foo" name="foo" type="text" value="">'
+    assert foo.label.__html__() == '<label class="label" for="id_foo">Foo</label>'
+    assert foo.help.__html__() == '<div class="help helptext">helpful</div>'
+    assert (
+        form.fields.bar.input.__html__()
+        == '<input class="input" disabled id="id_bar" name="bar" type="text" value="x">'
+    )
+
+
+def test_textarea_renders_value_as_text():
+    form = Form(
+        fields__plain=Field.textarea(initial='hello'),
+        fields__with_value_attr=Field.textarea(initial='hello', input__attrs__value='ignored'),
+        fields__with_text=Field.textarea(initial='hello', input__children__text='preset'),
+    ).bind(request=req('get'))
+    assert form.fields.plain.input.__html__() == '<textarea id="id_plain" name="plain">hello</textarea>'
+    assert (
+        form.fields.with_value_attr.input.__html__()
+        == '<textarea id="id_with_value_attr" name="with_value_attr">hello</textarea>'
+    )
+    assert form.fields.with_text.input.__html__() == '<textarea id="id_with_text" name="with_text">preset</textarea>'
+
+
+def test_form_instance_evaluate_parameter():
+    foo = TFoo(a=7, b='x')
+    form = Form(instance=foo, fields__x=Field(initial=lambda instance, **_: f'a is {instance.a}')).bind(
+        request=req('get')
+    )
+    assert form.fields.x.value == 'a is 7'
+
+
+def test_choice_field_requires_choices():
+    with pytest.raises(AssertionError) as e:
+        Form(fields__foo=Field.choice()).bind(request=req('get'))
+
+    assert str(e.value) == 'To use Field.choice, you must pass the choices list'
+
+
+def test_form_attr_only_for_nested_forms():
+    with pytest.raises(AssertionError) as e:
+        Form(attr='foo', fields__x=Field()).bind(request=req('get'))
+
+    assert str(e.value) == 'Set Form.attr only if the form is nested in another form.'
+
+
+def test_form_layout_must_have_all_rendered_fields():
+    from django.core.exceptions import ImproperlyConfigured
+
+    from iommi.panel import Panel
+
+    form = Form(
+        fields__a=Field(),
+        fields__b=Field(),
+        # non rendered fields don't need to be in the layout
+        fields__c=Field.non_rendered(initial=1),
+        fields__nested=Form(fields__d=Field()),
+        layout=Panel(dict(a=Panel.field())),
+    )
+    with pytest.raises(ImproperlyConfigured) as e:
+        form.bind(request=req('get'))
+
+    assert str(e.value) == (
+        'Some fields are missing in self.layout. '
+        'Either add them, exclude them, or set self.layout_render_unused_fields=True.\n'
+        'Missing fields:\n'
+        'b,\n'
+        'd'
+    )
+
+
+def test_form_layout_name():
+    from iommi.panel import Panel
+
+    form = Form(fields__a=Field(), layout=Panel(dict(a=Panel.field()))).bind(request=req('get'))
+    assert form.layout._name == 'layout'
+
+    form = Form(fields__a=Field(), layout__children__a=Panel.field()).bind(request=req('get'))
+    assert form.layout._name == 'layout'
+
+
+def test_post_validation_error_is_reported_on_the_field():
+    def post_validation(**_):
+        raise ValidationError('nope')
+
+    form = Form(
+        fields__a=Field(post_validation=post_validation),
+        actions__submit__post_handler=lambda **_: None,
+    ).bind(request=req('post', a='1', **{'-submit': ''}))
+    assert form.get_errors() == {'fields': {'a': {'nope'}}}
+
+
+def test_field_errors_config():
+    form = Form(
+        fields__a=Field.integer(errors__attrs__class__my_errors=True),
+        actions__submit__post_handler=lambda **_: None,
+    ).bind(request=req('post', a='x', **{'-submit': ''}))
+    assert 'my_errors' in form.fields.a.errors.attrs['class']
+    assert 'my_errors' in form.fields.a.__html__()
+
+
+def test_field_needs_a_form():
+    with pytest.raises(AssertionError) as e:
+        Field().bind(request=req('get'))
+
+    assert str(e.value) == 'Each field needs a form.'

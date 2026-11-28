@@ -1007,9 +1007,13 @@ class Query(Part, Tag):
 
         # Define a where expression
         where_expression = Forward()
-        binary_operator_statement = (identifier + binary_op + value_string).set_parse_action(self._binary_op_to_q)
-        unary_operator_statement = (identifier | (Char('!') + identifier)).set_parse_action(self._unary_op_to_q)
-        free_text_statement = quotedString.copy().set_parse_action(self._freetext_to_q)
+        binary_operator_statement = (identifier + binary_op + value_string).set_parse_action(
+            lambda token: self._binary_op_to_q(token)
+        )
+        unary_operator_statement = (identifier | (Char('!') + identifier)).set_parse_action(
+            lambda token: self._unary_op_to_q(token)
+        )
+        free_text_statement = quotedString.copy().set_parse_action(lambda token: self._freetext_to_q(token))
         operator_statement = binary_operator_statement | free_text_statement | unary_operator_statement
         where_condition = Group(operator_statement | ('(' + where_expression + ')'))
         where_expression << where_condition + ZeroOrMore((and_ | or_) + where_expression)

@@ -1739,7 +1739,7 @@ class Paginator(Traversable, Tag):
         self.active_item.tag = evaluate_strict(self.active_item.tag, **evaluate_parameters)
         self.item.tag = evaluate_strict(self.item.tag, **evaluate_parameters)
         self.link.tag = evaluate_strict(self.link.tag, **evaluate_parameters)
-        self.active_link.tag = evaluate_strict(self.active_link, **evaluate_parameters)
+        self.active_link.tag = evaluate_strict(self.active_link.tag, **evaluate_parameters)
 
         if self.page_size is None:
             self.number_of_pages = 1
