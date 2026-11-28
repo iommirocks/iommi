@@ -804,3 +804,296 @@ def test_path_decoding_include_denied_by_the_middleware(settings, ozzy, black_sa
 
         assert inner(req('get', url=f'/table/{black_sabbath.pk}/')) == 'ok'
         assert isinstance(inner(req('get', url=f'/table/{ozzy.pk}/')), HttpResponseForbidden)
+
+
+def test_path_helper_passes_name_and_kwargs():
+    from iommi import Page
+
+    def view_function(request):
+        pass  # pragma: no cover
+
+    class MyPage(Page):
+        pass
+
+    class HasAsView:
+        def as_view(self):
+            return view_function
+
+    p = path('a/', view_function, name='a', kwargs={'x': 1})
+    assert (p.name, p.default_args, p.callback) == ('a', {'x': 1}, view_function)
+
+    p = path('b/', MyPage, name='b', kwargs={'x': 2})
+    assert (str(p.pattern), p.name, p.default_args, p.callback.__name__) == ('b/', 'b', {'x': 2}, 'MyPage.as_view')
+
+    p = path('c/', HasAsView(), name='c', kwargs={'x': 3})
+    assert (p.name, p.default_args, p.callback) == ('c', {'x': 3}, view_function)
+
+
+def test_path_helper_with_django_class_based_view():
+    from django.views import View
+
+    class ClassBasedView(View):
+        pass
+
+    p = path('d/', ClassBasedView, name='d', kwargs={'x': 4})
+    assert (p.name, p.default_args, p.callback.view_class) == ('d', {'x': 4}, ClassBasedView)
+
+
+def test_urlpatterns_names_kwargs_and_items():
+    # The urlpatterns must be built in the test, not at import time, for the code building them to be tested
+    menu = MainMenu(
+        items=dict(
+            foo=M(
+                view=fake_view,
+                view_kwargs={'x': 1},
+                items=dict(bar=M(view=fake_view)),
+            ),
+            with_url_and_path=M(view=fake_view, url='/somewhere/', path='somewhere/'),
+        ),
+    )
+    foo, with_url_and_path = menu.urlpatterns()
+    assert foo.iommi_menu_item is menu.items['foo']
+    own, bar = foo.url_patterns
+    assert (str(own.pattern), own.name, own.default_args) == ('', 'main_menu.foo', {'x': 1})
+    assert bar.iommi_menu_item is menu.items['foo'].items['bar']
+    assert [(str(x.pattern), x.name) for x in bar.url_patterns] == [('', 'main_menu.foo.bar')]
+    assert str(with_url_and_path.pattern) == 'somewhere/'
+    assert [x.name for x in with_url_and_path.url_patterns] == ['main_menu.with_url_and_path']
+
+
+def test_urlpatterns_require_the_middleware(settings):
+    settings.MIDDLEWARE = [x for x in settings.MIDDLEWARE if x != 'iommi.main_menu.main_menu_middleware']
+    with pytest.raises(AssertionError) as e:
+        MainMenu(items=dict(foo=M(view=fake_view))).urlpatterns()
+
+    assert str(e.value) == (
+        'To use the iommi main menu, you must add `iommi.main_menu.main_menu_middleware` to the MIDDLEWARE list.'
+    )
+
+
+def test_join_routes():
+    from iommi.main_menu import join_routes
+
+    assert join_routes('', '^foo/') == '^foo/'
+    assert join_routes('a/', '^foo/') == 'a/foo/'
+    assert join_routes('a/', 'foo/') == 'a/foo/'
+
+
+@pytest.mark.parametrize(
+    'route, item_route, expected',
+    [
+        ('users/', 'users/', True),
+        ('users/1/', 'users/', True),
+        ('users', 'users', True),
+        ('users/1', 'users', True),
+        ('users_archive/', 'users', False),
+        ('other/', 'users/', False),
+        ('anything/', '', True),
+    ],
+)
+def test_is_route_below(route, item_route, expected):
+    from iommi.main_menu import is_route_below
+
+    assert is_route_below(route, item_route=item_route) is expected
+
+
+def test_menu_routes():
+    from iommi.main_menu import (
+        MenuRoutes,
+        get_menu_routes,
+    )
+
+    staff_only = access_menu_declaration.items['staff_only']
+    child = staff_only.items['child']
+    routes = MenuRoutes(access_menu_declaration.urlpatterns() + [path('staff_only/beside/', fake_view)])
+
+    assert routes.item_by_declared_route['staff_only/'] is staff_only
+    # declared in the paths of the item
+    assert routes.item_by_declared_route['staff_only/extra/'] is staff_only
+    assert routes.item_by_declared_route['staff_only/child/'] is child
+    assert routes.find_item('staff_only/extra/') is staff_only
+    # below an item, but not declared in it
+    assert routes.find_item('staff_only/beside/') is staff_only
+    assert routes.find_item('staff_only/child/whatever/') is child
+    assert routes.find_item('not_in_the_menu/') is None
+
+    assert get_menu_routes(url_conf_of_access_menu) is get_menu_routes(url_conf_of_access_menu)
+
+
+def test_main_menu_template_and_attrs_from_style(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_main_menu_style'
+    style = Style(
+        base,
+        MainMenu__template=Template('{{ main_menu.attrs }}'),
+        BoundM__template=Template('item'),
+        BoundM__attrs__class__from_style=True,
+    )
+    with register_style('test_main_menu_style', style):
+        menu = MainMenu(
+            attrs__class__mine=True,
+            items=dict(foo=M(view=fake_view, attrs__class__own=True)),
+        ).bind(request=req('get'))
+        assert str(menu) == ' class="main_menu mine"'
+        foo = menu.items['foo']
+        assert foo.__html__() == 'item'
+        assert foo.attrs['class'] == {'own': True, 'from_style': True}
+
+
+def test_evaluated_attrs_render_and_dynamic_items():
+    menu = MainMenu(
+        attrs__class__staff=lambda user, **_: user.is_staff,
+        items=dict(
+            foo=M(
+                view=fake_view,
+                attrs__class__staff=lambda user, **_: user.is_staff,
+                render=lambda user, **_: user.is_staff,
+                items__call_target=lambda user, **_: dict(
+                    dynamic=M(view=EXTERNAL, url='/dynamic/', display_name=f'staff {user.is_staff}'),
+                ),
+            ),
+        ),
+    )
+    staff_menu = menu.bind(request=staff_req('get'))
+    assert staff_menu.attrs['class']['staff'] is True
+    staff_foo = staff_menu.items['foo']
+    assert staff_foo.attrs['class']['staff'] is True
+    assert staff_foo.__html__() != ''
+    assert staff_foo.items['dynamic'].display_name == 'staff True'
+
+    menu = menu.bind(request=req('get'))
+    assert menu.attrs['class']['staff'] is False
+    foo = menu.items['foo']
+    assert foo.attrs['class']['staff'] is False
+    assert foo.__html__() == ''
+    assert foo.items['dynamic'].display_name == 'staff False'
+
+
+def test_evaluate_parameters():
+    request = staff_req('get', url='/foo/')
+    request.iommi_view_params = dict(artist='the artist')
+    menu = MainMenu(
+        extra_evaluated__menu_params=lambda request, user, main_menu, artist, **_: (
+            request.path,
+            user.is_staff,
+            main_menu,
+            artist,
+        ),
+        items=dict(
+            foo=M(
+                view=fake_view,
+                extra_evaluated__item_params=lambda request, user, item, main_menu, artist, **_: (
+                    request.path,
+                    user.is_staff,
+                    item,
+                    main_menu,
+                    artist,
+                ),
+            ),
+        ),
+    ).bind(request=request)
+    assert menu.extra_evaluated.menu_params == ('/foo/', True, menu, 'the artist')
+    foo = menu.items['foo']
+    assert foo.extra_evaluated.item_params == ('/foo/', True, foo, menu, 'the artist')
+
+
+def test_item_tag_and_details_tags():
+    menu = menu_declaration.bind(request=staff_req('get', url='/table/'))
+    foo = menu.items['foo']
+    assert foo.tag == 'li'
+    assert str(foo.iommi_open_tag()).startswith('<li')
+    assert not foo.is_active()
+    assert foo.iommi_open_details_tag() == '<details>'
+    assert foo.iommi_close_details_tag() == '</details>'
+
+    menu = menu_declaration.bind(request=staff_req('get', url='/foo/'))
+    assert menu.items['foo'].iommi_open_details_tag() == '<details open>'
+
+
+def test_active_item_is_the_best_match():
+    menu = MainMenu(
+        items=dict(
+            root=M(view=fake_view, url='/', path=''),
+            deep=M(view=fake_view, url='/x/y/', path='x/y/'),
+            shallow=M(view=fake_view, url='/x/', path='x/'),
+        ),
+    )
+    assert menu.bind(request=staff_req('get', url='/')).active_item.m.name == 'root'
+    assert menu.bind(request=staff_req('get', url='/x/y/')).active_item.m.name == 'deep'
+    assert menu.bind(request=staff_req('get', url='/x/')).active_item.m.name == 'shallow'
+
+
+def test_check_access_to_resolved_path_skips():
+    from types import SimpleNamespace
+
+    def check(resolver_match):
+        request = req('get', url='/staff_only/')
+        request.urlconf = url_conf_of_access_menu
+        menu = access_menu_declaration.bind(request=request)
+        request.resolver_match = resolver_match
+        menu.check_access_to_resolved_path()
+
+    with pytest.raises(PermissionDenied):
+        check(SimpleNamespace(route='staff_only/', app_name=''))
+    # django-ninja paths are not checked
+    check(SimpleNamespace(route='staff_only/', app_name='ninja'))
+    check(SimpleNamespace(route=None, app_name=''))
+    check(None)
+
+
+def test_check_access_checks_all_active_items():
+    menu = MainMenu(
+        items=dict(
+            first=M(view=fake_view),
+            second=M(
+                view=fake_view,
+                items=dict(
+                    not_active=M(view=fake_view),
+                    staff=M(view=fake_view, include=lambda user, **_: user.is_staff),
+                ),
+            ),
+        ),
+    )
+    menu.bind(request=staff_req('get', url='/second/staff/')).check_access()
+    bound = menu.bind(request=req('get', url='/second/staff/'))
+    assert bound.active_item.m.name == 'staff'
+    with pytest.raises(PermissionDenied):
+        bound.check_access()
+
+
+def test_menu_routes_with_a_root_item():
+    from iommi.main_menu import MenuRoutes
+
+    menu = MainMenu(
+        items=dict(
+            root=M(view=fake_view, url='/', path=''),
+            x=M(view=fake_view, url='/x/', path='x/'),
+        ),
+    )
+    routes = MenuRoutes(menu.urlpatterns())
+    assert routes.find_item('other/') is menu.items['root']
+    assert routes.find_item('x/y/') is menu.items['x']
+
+
+def test_main_menu_with_a_style_without_main_menu_config(settings):
+    settings.IOMMI_DEFAULT_STYLE = 'test_empty_main_menu_style'
+    with register_style('test_empty_main_menu_style', Style()):
+        menu = MainMenu(items=dict(foo=M(view=fake_view))).bind(request=req('get'))
+        assert menu.template == 'iommi/main_menu/menu.html'
+        assert menu.assets == {}
+        assert menu.items['foo'].template == 'iommi/main_menu/menu_item.html'
+
+
+def test_external_url_is_never_the_active_item():
+    menu = MainMenu(
+        items=dict(
+            external=M(view=EXTERNAL, url='https://example.com/x/'),
+        ),
+    )
+    assert menu.bind(request=staff_req('get', url='/x/')).active_item is None
+
+
+def test_check_access_to_resolved_path_without_resolver_match():
+    request = req('get', url='/staff_only/')
+    menu = access_menu_declaration.bind(request=request)
+    del request.resolver_match
+    menu.check_access_to_resolved_path()

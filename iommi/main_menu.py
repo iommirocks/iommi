@@ -56,7 +56,12 @@ def path(path, view_or_list, name=None, kwargs=None):
         assert kwargs is None
         return orig_path(path, include(view_or_list), name=name)
     elif isinstance(view_or_list, type):
-        return orig_path(path, view_or_list().as_view(), name=name, kwargs=kwargs)
+        from iommi.part import Part
+
+        if issubclass(view_or_list, Part):
+            return orig_path(path, view_or_list().as_view(), name=name, kwargs=kwargs)
+        # A Django class based view: `as_view` is a classmethod
+        return orig_path(path, view_or_list.as_view(), name=name, kwargs=kwargs)
     else:
         try:
             return orig_path(path, view_or_list.as_view(), name=name, kwargs=kwargs)
