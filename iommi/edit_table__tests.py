@@ -1733,3 +1733,280 @@ def test_incremental_edit_table_pages_token():
     token = BeautifulSoup(paginator_html, 'html.parser').find('input', {'name': 't/incremental_pages'})['value']
     assert f'<input type="hidden" name="t/incremental_pages" value="{token}"></div>' in paginator_html
     assert signing.loads(token) == dict(table='t', start=2, end=2, query=[['t/x', ['7']]])
+
+
+@pytest.mark.django_db
+def test_edit_table_delete_first_row_and_edit_the_next():
+    first = TFoo.objects.create(a=1, b='x')
+    second = TFoo.objects.create(a=2, b='y')
+    response = (
+        EditTable(auto__model=TFoo, columns__a__field__include=True, columns__delete=EditColumn.delete())
+        .bind(
+            request=req(
+                'POST',
+                **{
+                    f'pk_delete_{first.pk}': '',
+                    f'columns/a/{first.pk}': '1',
+                    f'columns/a/{second.pk}': '20',
+                    '-save': '',
+                },
+            )
+        )
+        .render_to_response()
+    )
+    assert response.status_code == 302
+    assert list(TFoo.objects.values_list('pk', 'a')) == [(second.pk, 20)]
+
+
+@pytest.mark.django_db
+def test_edit_table_saves_only_changed_fields():
+    foo = TFoo.objects.create(a=1, b='x')
+    bound = EditTable(
+        auto__model=TFoo,
+        rows=list(TFoo.objects.all()),
+        columns__a__field__include=True,
+    ).bind(request=req('POST', **{f'columns/a/{foo.pk}': '2', '-save': ''}))
+    # Changed by someone else after the rows were read
+    TFoo.objects.filter(pk=foo.pk).update(b='changed elsewhere')
+    assert bound.render_to_response().status_code == 302
+    assert TFoo.objects.filter(pk=foo.pk).values_list('a', 'b').get() == (2, 'changed elsewhere')
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('referer, expected_location', [(None, '/'), ('/the/referrer/?x=1', '/the/referrer/?x=1')])
+def test_edit_table_save_redirects_to_referer(referer, expected_location):
+    foo = TFoo.objects.create(a=1, b='x')
+    request = req('POST', **{f'columns/a/{foo.pk}': '2', '-save': ''})
+    if referer is not None:
+        request.META['HTTP_REFERER'] = referer
+    response = EditTable(auto__model=TFoo, columns__a__field__include=True).bind(request=request).render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == expected_location
+
+
+@pytest.mark.django_db
+def test_edit_table_errors_are_rendered_on_existing_and_new_rows():
+    foo = TFoo.objects.create(a=1, b='x')
+    response = (
+        EditTable(auto__model=TFoo, columns__a__field__include=True)
+        .bind(
+            request=req('POST', **{f'columns/a/{foo.pk}': 'x', 'columns/a/-1': 'y', 'columns/b/-1': 'q', '-save': ''})
+        )
+        .render_to_response()
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(), 'html.parser')
+    assert [
+        (tr['data-pk'], [x.get_text(strip=True) for x in tr.select('ul li')]) for tr in soup.select('tbody tr')
+    ] == [
+        (str(foo.pk), ['Could not convert string to int: x']),
+        ('-1', ['Could not convert string to int: y']),
+    ]
+    assert TFoo.objects.count() == 1
+
+
+def _incremental_edit_table(**kwargs):
+    return EditTable(
+        **{
+            'auto__model': TFoo,
+            'columns__a__field__include': True,
+            'page_size': 2,
+            'parts__page__trigger': PaginatorTrigger.LOAD_MORE,
+            'parts__page__show_page_links': False,
+            **kwargs,
+        }
+    )
+
+
+def _post_with_token(edit_table, **token):
+    from django.core import signing
+
+    data = dict(table='', start=1, end=1, query=[])
+    data.update(token)
+    return edit_table.bind(request=req('POST', incremental_pages=signing.dumps(data)))
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'token, expected_valid',
+    [
+        (dict(), True),
+        (dict(table='other'), False),
+        (dict(query=[['x', ['1']]]), False),
+        (dict(start=True), False),
+        (dict(end=True), False),
+        (dict(start='1'), False),
+        (dict(start=0), False),
+        (dict(start=2, end=1), False),
+        (dict(start=100000, end=100000), True),
+        (dict(start=100001, end=100001), False),
+    ],
+)
+def test_incremental_edit_table_token_validation(token, expected_valid):
+    bound = _post_with_token(_incremental_edit_table(), **token)
+    assert bound.invalid_incremental_token is (not expected_valid)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('end, expected_valid', [(50000, True), (50001, False)])
+def test_incremental_edit_table_token_size_limit(end, expected_valid):
+    # (end - start + 1) * page_size may be at most 10 000 000 rows
+    bound = _post_with_token(_incremental_edit_table(page_size=200), start=1, end=end)
+    assert bound.invalid_incremental_token is (not expected_valid)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'start, end, expected_pks, expected_has_more',
+    [
+        (2, 2, [3, 4], True),
+        (1, 3, [1, 2, 3, 4, 5], False),
+    ],
+)
+def test_incremental_edit_table_token_selects_the_loaded_rows(start, end, expected_pks, expected_has_more):
+    foos = [TFoo.objects.create(a=i, b='x') for i in range(1, 6)]
+    bound = _post_with_token(_incremental_edit_table(), start=start, end=end)
+    assert bound.invalid_incremental_token is False
+    expected = [foos[i - 1].pk for i in expected_pks]
+    assert [x.pk for x in bound.visible_rows] == expected
+    assert [x.pk for x in bound.paginator.rows] == expected
+    assert bound.paginator.has_more is expected_has_more
+    assert (bound.paginator.start_page, bound.paginator.page) == (start, end)
+
+
+@pytest.mark.django_db
+def test_incremental_edit_table_invalid_token_response():
+    bound = _incremental_edit_table().bind(request=req('POST', incremental_pages='garbage', **{'-save': ''}))
+    response = bound.render_to_response()
+    assert response.status_code == 400
+    assert response.content.decode() == 'Invalid loaded pages'
+
+
+@pytest.mark.django_db
+def test_nested_edit_table_virtual_pks():
+    from iommi import Page
+
+    page = Page(parts__t=EditTable(auto__model=TFoo, columns__a__field__include=True)).bind(
+        request=req('POST', **{'t/a/-1': '1', 't/a/-2': '2', 't/pk_delete_-2': '', 'other/a/-5': '5'})
+    )
+    assert page.parts.t._get_virtual_pks_from_post() == [-1]
+
+
+@pytest.mark.django_db
+def test_edit_table_preprocess_row_for_create():
+    def preprocess_row_for_create(row, table, **_):
+        row.b = f'from {table.__class__.__name__}'
+        return row
+
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        preprocess_row_for_create=preprocess_row_for_create,
+    ).bind(request=req('POST', **{'columns/a/-1': '1'}))
+    [cells] = list(table.cells_for_rows_for_create())
+    assert cells.row.b == 'from EditTable'
+    assert cells.row_index == 0
+
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        preprocess_row_for_create=lambda **_: None,
+    ).bind(request=req('POST', **{'columns/a/-1': '1'}))
+    with pytest.raises(AssertionError) as e:
+        list(table.cells_for_rows_for_create())
+
+    assert str(e.value) == 'preprocess_row must return the row'
+
+
+@pytest.mark.django_db
+def test_reorder_handle_is_turned_off_when_sorted_by_another_column():
+    TFoo.objects.create(a=1, b='x')
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a=EditColumn.reorder_handle(),
+    ).bind(request=req('get', order='b'))
+    assert table.reorderable is False
+    a = table.columns.a
+    assert a.render_column is False
+    assert a.cell.attrs['class']['reordering-handle-cell'] is False
+    assert 'data-iommi-reorderable' not in table.tbody.attrs
+    assert table.tbody.attrs['data-iommi-reorderable-handle-selector'] is None
+
+
+@pytest.mark.django_db
+def test_reorderable_options_on_tbody():
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a=EditColumn.reorder_handle(),
+        sortable=False,
+        reorderable=dict(animation=150),
+    ).bind(request=req('get'))
+    assert table.tbody.attrs['data-iommi-reorderable'] == '{"animation":150}'
+
+
+def test_only_one_reorder_handle():
+    with pytest.raises(AssertionError) as e:
+        EditTable(
+            auto__model=TFoo,
+            columns__a=EditColumn.reorder_handle(),
+            columns__b=EditColumn.reorder_handle(),
+        ).bind(request=req('get'))
+
+    assert str(e.value) == 'You cannot have multiple EditColumn.reorder_handle in an EditTable!'
+
+
+def test_edit_table_default_bulk_form_and_excluded_columns():
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a__field__include=True,
+        columns__b__include=False,
+        columns__b__field__include=True,
+    ).bind(request=req('get'))
+    assert table.bulk.attrs['method'] == 'post'
+    assert list(table.edit_form.fields.keys()) == ['a']
+
+
+@pytest.mark.django_db
+def test_nested_incremental_edit_table_token():
+    from django.core import signing
+
+    from iommi import Page
+
+    token = signing.dumps(dict(table='t', start=1, end=1, query=[]))
+    page = Page(parts__t=_incremental_edit_table()).bind(request=req('POST', **{'t/incremental_pages': token}))
+    assert page.parts.t.invalid_incremental_token is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'abort_on_fail, x, other_save_fails, expected_new_rows',
+    [
+        (True, 'not a number', False, 1),
+        (False, 'not a number', False, 0),
+        (None, 'not a number', False, 0),
+        # Another save failed, so nothing was saved and the new rows are shown again
+        (True, '1', True, 1),
+    ],
+)
+def test_new_rows_are_rendered_when_another_nested_form_fails(abort_on_fail, x, other_save_fails, expected_new_rows):
+    from iommi.form import save_nested_forms
+
+    def other_post_handler(form, **_):
+        # A post handler that returns None is a failed save
+        if other_save_fails or not form.is_valid():
+            return None
+        return True
+
+    extra = {} if abort_on_fail is None else dict(extra_evaluated__nested_forms_abort_save_on_fail=abort_on_fail)
+    form = Form(
+        fields__other=Form(fields__x=Field.integer(), actions__submit__post_handler=other_post_handler),
+        fields__t=EditTable(auto__model=TFoo, columns__a__field__include=True, columns__b__field__include=True),
+        actions__submit__post_handler=save_nested_forms,
+        **extra,
+    )
+    response = form.bind(
+        request=req('POST', x=x, **{'t/a/-1': '1', 't/b/-1': 'new', '-submit': ''})
+    ).render_to_response()
+    assert response.status_code == 200
+    new_rows = BeautifulSoup(response.content.decode(), 'html.parser').select('tr[data-pk="-1"]')
+    assert len(new_rows) == expected_new_rows

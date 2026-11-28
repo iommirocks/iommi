@@ -579,8 +579,6 @@ class EditTable(Table):
 
             if not edit_conf:
                 continue
-            if getattr(column.field, 'include', None) is False:
-                continue
 
             if isinstance(edit_conf, dict):
                 field = setdefaults_path(
@@ -610,7 +608,6 @@ class EditTable(Table):
             form_params = setdefaults_path(
                 Namespace(),
                 self.create_form,
-                fields=fields,
                 _name='create_form',
                 auto=auto,
                 extra__new_instance=lambda form, **_: form.model(),
@@ -637,8 +634,9 @@ class EditTable(Table):
             members_cls=Actions,
         )
 
+        # The create form gets the fields of the edit form, including any edit_form__fields config
         declared_fields = self.edit_form.iommi_namespace.get('fields', {})
-        self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
+        self.edit_form = self.edit_form.refine_done()
         if self.create_form is not None:
             self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
 
